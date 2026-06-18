@@ -1,0 +1,727 @@
+/* ==========================================================================
+   1. VARIABLES & BASE RESETS (Typography & Theme Colors)
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+
+:root {
+    --bg-pure: #ffffff;
+    --bg-surface: #f4f7f5;
+    --text-main: #1a2e22;
+    --text-muted: #556b5c;
+    --primary: #007a48;
+    --primary-light: #10b981;
+    --primary-glow: rgba(16, 185, 129, 0.15);
+    --border-color: #e2e9e4;
+    
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body) !important;
+    color: var(--text-main);
+    background-color: var(--bg-pure);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, .navbar-cta, .btn-primary, .btn-secondary, .hero-badge, .role-tab {
+    font-family: var(--font-display) !important;
+}
+
+/* ==========================================================================
+   2. FIXED NAVIGATION BAR (Layout, Sizing & True Hover States)
+   ========================================================================== */
+nav.navbar {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1rem 5% !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    height: auto !important;
+}
+
+/* Logo Wrapper */
+.navbar-logo {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+/* Logo Image Sizing (75px) */
+.navbar-logo-icon img {
+    height: 75px; 
+    width: auto;
+    border-radius: 6px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+/* Logo Pop Effect on Hover */
+.navbar-logo:hover .navbar-logo-icon img {
+    transform: scale(1.04);
+}
+
+/* Navigation Links Container */
+nav.navbar .navbar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 2rem !important;
+    margin-left: auto !important;
+    padding-left: 0;
+    margin-right: 2rem; /* Clean gap spacing before the Sign In button */
+}
+
+/* Individual Links (Features / About) */
+nav.navbar .navbar-nav a {
+    position: relative;
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    color: var(--text-muted) !important;
+    text-decoration: none !important;
+    font-size: 0.95rem !important;
+    padding: 0.5rem 0 !important;
+    transition: color 0.25s ease;
+}
+
+/* Link Color Change ONLY on Hover */
+nav.navbar .navbar-nav a:hover {
+    color: var(--primary) !important;
+    background: none !important;
+}
+
+/* Elegant sliding underline effect (Starts hidden at 0 width) */
+nav.navbar .navbar-nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0; 
+    height: 2px;
+    background-color: var(--primary);
+    transition: width 0.25s ease;
+}
+
+/* Underline triggers ONLY when cursor is pointing */
+nav.navbar .navbar-nav a:hover::after {
+    width: 100%;
+}
+
+/* ==========================================================================
+   SIGN IN CTA BUTTON STYLING (FOR NATIVE BUTTON ELEMENT)
+   ========================================================================== */
+.btn-signin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display), sans-serif !important;
+    font-weight: 700;
+    background-color: var(--primary);
+    color: var(--bg-pure, #ffffff) !important;
+    border: none;
+    outline: none;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Sign In Button Hover Effect */
+.btn-signin:hover {
+    background-color: #006138 !important; /* Rich corporate dark green */
+    color: var(--bg-pure, #ffffff) !important;
+    transform: translateY(-2px); /* Sleek micro-elevation lift */
+    box-shadow: 0 4px 12px rgba(0, 122, 72, 0.2);
+}
+
+/* Active compression click animation state */
+.btn-signin:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 72, 0.15);
+}
+
+/* Sign In Button Click Behavior */
+.navbar-cta:active {
+    transform: translateY(-0.5px);
+}
+
+/* ==========================================================================
+   3. HERO SECTION
+   ========================================================================== */
+.hero {
+    min-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 5%;
+    background: radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-pure) 0%, var(--bg-surface) 100%);
+    text-align: center;
+}
+
+.hero-content {
+    max-w: 900px;
+    margin: 0 auto;
+}
+
+.hero-badge {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color: var(--bg-pure);
+    color: var(--primary);
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.hero-title {
+    font-weight: 800;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.15;
+    color: var(--text-main);
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+}
+
+.hero-subtitle {
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+    max-w: 750px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-cta-group {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-bottom: 4.5rem;
+}
+
+.btn-primary, .btn-secondary {
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #006138 100%);
+    color: var(--bg-pure);
+    border: none;
+    box-shadow: 0 4px 14px rgba(0, 122, 72, 0.25);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 72, 0.35);
+}
+
+.btn-secondary {
+    background-color: var(--bg-pure);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: #fafdfb;
+    border-color: var(--text-muted);
+    transform: translateY(-2px);
+}
+
+/* HERO STATS BANNER */
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background-color: var(--bg-pure);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(26, 46, 34, 0.04);
+}
+
+.stat {
+    text-align: center;
+    border-right: 1px solid var(--border-color);
+}
+
+.stat:last-child {
+    border-right: none;
+}
+
+.stat-value {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   4. FEATURES & GRID SECTION
+   ========================================================================= */
+.features-section {
+    padding: 7rem 5%;
+    background-color: var(--bg-pure);
+}
+
+.section-header {
+    text-align: center;
+    max-w: 650px;
+    margin: 0 auto 4rem auto;
+}
+
+.section-title {
+    font-weight: 700;
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-w: 1200px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background-color: var(--bg-surface);
+    border: 1px solid transparent;
+    padding: 2.5rem 2rem;
+    border-radius: 14px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feature-card:hover {
+    background-color: var(--bg-pure);
+    border-color: var(--primary-light);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(16, 185, 129, 0.08);
+}
+
+.feature-title {
+    font-weight: 700;
+    font-size: 1.35rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-main);
+}
+
+.feature-description {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   5. ABOUT CORPORATION SECTION
+   ========================================================================== */
+.about-section {
+    padding: 7rem 5%;
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+}
+
+.about-content {
+    max-w: 1200px;
+    margin: 0 auto;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.about-grid h2 {
+    font-weight: 700;
+    font-size: 2.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.about-grid p {
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
+}
+
+.about-list {
+    list-style: none;
+    margin-top: 2rem;
+}
+
+.about-list li {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.about-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--primary-light);
+    font-weight: 900;
+}
+
+/* METRICS PANEL */
+.about-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.metric-item {
+    background-color: var(--bg-pure);
+    border: 1px solid var(--border-color);
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.metric-number {
+    font-weight: 800;
+    font-size: 2.25rem;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.metric-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   6. SECURITY / ACCESS CONTROL FOOTER
+   ========================================================================== */
+.footer {
+    background-color: #0d1a12;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 5rem 5% 2rem 5%;
+    border-top: 4px solid var(--primary);
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 3rem;
+    max-w: 1200px;
+    margin: 0 auto 4rem auto;
+}
+
+.footer-col h4 {
+    color: var(--bg-pure);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.footer-col ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.footer-col ul li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-col ul li a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-col ul li a:hover {
+    color: var(--primary-light);
+}
+
+.footer-bottom {
+    max-w: 1200px;
+    margin: 0 auto;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* ==========================================================================
+   7. INTERACTIVE ROLE-BASED LOGIN MODAL
+   ========================================================================== */
+.login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(13, 26, 18, 0.45);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 2000;
+}
+
+.login-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.login-card {
+    background-color: var(--bg-pure);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(13, 26, 18, 0.15);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-color);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-modal.active .login-card {
+    transform: translateY(0);
+}
+
+.login-form-section {
+    padding: 3rem 2.5rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: var(--bg-surface);
+    border: none;
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background-color: #e2ede5;
+    color: var(--text-main);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo img {
+    height: 50px;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.login-title {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--text-main);
+}
+
+.login-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* SYSTEM ROLE TABS */
+.role-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background-color: var(--bg-surface);
+    padding: 0.35rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.role-tab {
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.6rem 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.2s ease;
+}
+
+.role-tab.active {
+    background-color: var(--bg-pure);
+    color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0, 122, 72, 0.08);
+}
+
+/* MODERN FLOATING LABELS */
+.form-group {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1.25rem 1rem 0.5rem 1rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-pure);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.form-label {
+    position: absolute;
+    top: 0.4rem;
+    left: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+}
+
+/* PASSWORD EXTRAS */
+.password-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-10%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+.password-toggle:hover {
+    opacity: 1;
+}
+
+.login-message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.login-message.error {
+    background-color: #fdf2f2;
+    color: #9b1c1c;
+    border: 1px solid #fbd5d5;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 1rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    background: linear-gradient(135deg, var(--primary) 0%, #006138 100%);
+    color: var(--bg-pure);
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 122, 72, 0.15);
+}
+
+.login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 122, 72, 0.25);
+}
+
+.login-btn:disabled {
+    background: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.demo-credentials {
+    margin-top: 2rem;
+    background-color: var(--bg-surface);
+    border: 1px dashed var(--border-color);
+    padding: 1.25rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.demo-credentials strong {
+    color: var(--text-main);
+    display: inline-block;
+    margin-bottom: 0.25rem;
+}

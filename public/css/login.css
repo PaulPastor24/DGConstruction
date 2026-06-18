@@ -1,0 +1,24 @@
+/* Custom Login Page Overrides */
+.login-page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bg-surface) 0%, #e2ede5 100%);
+    padding: 2rem;
+}
+
+.login-card {
+    box-shadow: 0 20px 40px rgba(13, 26, 18, 0.08) !important;
+}
+
+/* Ensure clean display layout for verification messages */
+.login-message.error-banner {
+    background-color: rgba(255, 74, 74, 0.1);
+    color: #ff4a4a;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(255, 74, 74, 0.2);
+}
