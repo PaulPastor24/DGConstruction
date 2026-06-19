@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class RegisteredUserController extends Controller
+class UserController extends Controller
 {
     /**
      * Display a listing of users.
@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
     {
         try {
             User::create([
-                'full_name' => $request->full_name,
+                'name' => $request->name,
                 'email' => $request->email,
                 'password_hash' => Hash::make($request->password),
                 'role' => $request->role,
@@ -70,13 +70,30 @@ class RegisteredUserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         try {
-            $data = [
-                'full_name' => $request->full_name,
-                'email' => $request->email,
-                'role' => $request->role,
-                'contact_number' => $request->contact_number,
-                'is_active' => $request->is_active ?? false,
+            $originalData = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'contact_number' => $user->contact_number,
+                'is_active' => (int) $user->is_active,
             ];
+
+            $newData = [
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+                'role' => $request->input('role'),
+                'contact_number' => $request->input('contact_number'),
+                'is_active' => (int) $request->input('is_active', $user->is_active),
+            ];
+
+            if ($originalData == $newData && !$request->filled('password')) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('info', 'No changes were detected.');
+            }
+
+            $data = $newData;
 
             // Only update password if provided
             if ($request->filled('password')) {
@@ -115,6 +132,41 @@ class RegisteredUserController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'Failed to update user status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified user from storage.
+     */
+    public function destroy(User $user)
+    {
+        try {
+            $hasRelatedRecords = (
+                $user->engineeredProjects()->exists() ||
+                $user->supervisedProjects()->exists() ||
+                $user->client()->exists() ||
+                $user->attendanceLogs()->exists() ||
+                $user->submittedReports()->exists()
+            );
+
+            if ($hasRelatedRecords) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'This user cannot be deleted because they are assigned to or related to existing records.');
+            }
+
+            DB::table('users')
+                ->where('user_id', $user->user_id)
+                ->delete();
+
+            return redirect()
+                ->route('admin.users.index')
+                ->with('success', 'User deleted successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to delete user: ' . $e->getMessage());
         }
     }
 }

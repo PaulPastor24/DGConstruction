@@ -19,7 +19,8 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string $role): Response
     {
         // If the user isn't logged in, or doesn't match the required role, boot them out
-        if (!auth()->check() || auth()->user()->role !== $role) {
+        $user = $request->user();
+        if (!$user || $user->role !== $role) {
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 
