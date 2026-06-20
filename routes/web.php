@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
 
-
 Route::get('/', function () {
     return view('welcome');
 });
@@ -34,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
+// ==================== ENGINEER / ADMIN MANAGEMENT ====================
 Route::middleware(['auth', 'role:engineer'])->group(function () {
 
     // Management Dashboard Base
@@ -59,17 +58,6 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('destroy');
         Route::patch('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
     });
-});
-
-// Only Site Supervisors can enter here
-Route::middleware(['auth', 'role:site_supervisor'])->group(function () {
-    Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
-});
-
-// Only Clients can enter here
-Route::middleware(['auth', 'role:client'])->group(function () {
-    Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
-});
 
     // ==================== USER MANAGEMENT ====================
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
@@ -81,4 +69,34 @@ Route::middleware(['auth', 'role:client'])->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggleStatus');
     });
+});
+
+// ==================== SUPERVISOR PORTAL ROUTES ====================
+Route::middleware(['auth', 'role:site_supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
+    Route::get('/dashboard', [SupervisorController::class, 'index'])->name('dashboard');
+    Route::get('/timeline', [SupervisorController::class, 'timeline'])->name('timeline');
+    
+    // Attendance view and storage processing paths
+    Route::get('/attendance', [SupervisorController::class, 'attendance'])->name('attendance');
+    Route::post('/attendance', [SupervisorController::class, 'saveAttendance'])->name('attendance.save');
+    
+    // Material view and tracking update paths
+    Route::get('/materials', [SupervisorController::class, 'materials'])->name('materials');
+    Route::post('/materials', [SupervisorController::class, 'logDelivery'])->name('materials.log');
+});
+
+// ==================== CLIENT MANAGEMENT ====================
+Route::middleware(['auth', 'role:client'])->prefix('client')->name('client.')->group(function () {
+    
+    // Client Dashboard Page
+    Route::get('/dashboard', [ClientController::class, 'index'])->name('dashboard');
+    
+    // Timeline & Milestones Page (Maps to status.blade.php)
+    Route::get('/timeline', [ClientController::class, 'timeline'])->name('timeline');
+    
+    // Site Updates Feed Page (Maps to update.blade.php)
+    Route::get('/updates', [ClientController::class, 'updates'])->name('updates');
+    
+});
+
 require __DIR__.'/auth.php';
