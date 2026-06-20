@@ -1,171 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Portal - D&G Construction Monitor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
-    <style>
-        :root {
-            --bg-primary: #11141a;
-            --bg-secondary: #171b26;
-            --border-color: #262c3d;
-            --accent-color: #00b0ff; /* Clean dynamic blue for corporate interface */
-        }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-primary);
-            color: #ffffff;
-        }
-        .heading-syne {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-        }
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            min-height: 100vh;
-        }
-        .nav-link-custom {
-            color: #a0aec0;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(38, 44, 61, 0.3);
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        .nav-link-custom:hover, .nav-link-custom.active {
-            color: #ffffff;
-            background-color: rgba(0, 176, 255, 0.05);
-            border-left: 4px solid var(--accent-color);
-        }
-        .card-custom {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 8px var(--accent-color);
-        }
-        .timeline-track {
-            border-left: 2px solid var(--border-color);
-            padding-left: 20px;
-            position: relative;
-        }
-        .timeline-dot {
-            position: absolute;
-            left: -6px;
-            top: 6px;
-            height: 10px;
-            width: 10px;
-            border-radius: 50%;
-            background-color: var(--border-color);
-        }
-        .timeline-dot.active {
-            background-color: var(--accent-color);
-            box-shadow: 0 0 8px var(--accent-color);
-        }
-    </style>
-</head>
-<body>
+@extends('layouts.client')
 
-<div class="container-fluid m-0 p-0">
-    <div class="row g-0">
-        <div class="col-md-3 col-lg-2 sidebar p-0 d-flex flex-column justify-content-between">
-            <div>
-                <div class="p-4 border-bottom border-secondary d-flex align-items-center gap-2">
-                    <div class="text-dark rounded px-2 py-1 heading-syne fw-bold" style="background-color: var(--accent-color);">CL</div>
-                    <span class="heading-syne tracking-wider text-uppercase fs-6">CoreConstruct</span>
-                </div>
-                <div class="nav flex-column">
-                    <a href="#" class="nav-link-custom active"><i class="bi bi-eye"></i> Project Progress</a>
-                    <a href="#" class="nav-link-custom"><i class="bi bi-file-earmark-bar-graph"></i> Financial Status</a>
-                </div>
-            </div>
+@section('title', 'Project Status - Client Portal')
+
+@section('content')
+<div class="container-fluid p-0">
+    
+    <div class="mb-4">
+        <h1 class="heading-syne fw-extrabold text-dark tracking-tight mb-1" style="font-size: 38px;">Project Timeline</h1>
+        <p class="text-muted" style="font-size: 13px;">Real-time construction phase status and progress milestones.</p>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <select class="form-select border-0 shadow-sm heading-syne fw-bold px-3 py-2 text-dark" style="width: auto; border-radius: 8px; min-width: 240px; font-size: 14px; background-color: #fff;">
+                <option value="{{ $project->id ?? '' }}" selected>{{ $project->name ?? 'Select Project Site...' }}</option>
+            </select>
             
-            <div class="p-3 border-top border-secondary">
-                <div class="mb-3 px-2">
-                    <p class="m-0 small text-white fw-bold">{{ $user->name }}</p>
-                    <p class="m-0 small text-muted text-uppercase font-mono tracking-tighter" style="font-size: 10px;">Corporate Client</p>
-                </div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2">
-                        <i class="bi bi-box-arrow-left"></i> Sign Out
-                    </button>
-                </form>
-            </div>
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-medium" style="font-size: 12px;">
+                {{ $project->status_text ?? 'On Track' }}
+            </span>
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-medium" style="font-size: 12px;">
+                {{ $project->progress_percentage ?? 0 }}% Complete
+            </span>
+            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-medium" style="font-size: 12px;">
+                {{ $project->current_phase_name ?? 'Initial Phase' }}
+            </span>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <h6 class="heading-syne fw-bold m-0 text-dark text-uppercase tracking-wider" style="font-size: 14px;">
+                Construction Phases – {{ $project->name ?? 'Project Profile Overview' }}
+            </h6>
+            <small class="text-muted fw-medium">Target: {{ isset($project->target_end_date) ? date('M Y', strtotime($project->target_end_date)) : 'N/A' }}</small>
         </div>
 
-        <div class="col-md-9 col-lg-10 p-4" style="max-height: 100vh; overflow-y: auto;">
-            
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-                <div>
-                    <h1 class="heading-syne fs-2 m-0" style="color: var(--accent-color);">Project Progress Portal</h1>
-                    <p class="text-muted small m-0">Transparent milestone oversight, construction metrics, and timeline transparency verification.</p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="status-dot"></span>
-                    <span class="text-muted small font-mono">PORTAL_SECURE</span>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Overall Progress</span>
-                        <h2 class="heading-syne my-2 text-info">68% <span class="fs-6 text-muted">Complete</span></h2>
-                        <div class="progress bg-dark mt-2" style="height: 4px;">
-                            <div class="progress-bar" style="width: 68%; background-color: var(--accent-color);"></div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                
+                <div class="col-12 col-lg-7">
+                    <div class="p-4 border rounded-3 bg-white h-100" style="border-color: #f1f3f5 !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="heading-syne fw-bold m-0 text-dark" style="font-size: 13px;">Project Summary</h6>
+                            <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 10px;">Read Only</span>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Project Location</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->location ?? 'Not Specified' }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Project Architect</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->architect_name ?? 'Not Assigned' }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Primary Contractor</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->contractor_name ?? 'Not Assigned' }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block" style="font-size: 11px;">Project Manager</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->manager_name ?? 'Not Assigned' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Next Critical Phase</span>
-                        <h2 class="heading-syne my-2 fs-4 text-white pt-1">Slab Pouring - Level 4</h2>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Disbursement Status</span>
-                        <h2 class="heading-syne my-2 text-success">Clear</h2>
-                    </div>
-                </div>
-            </div>
 
-            <div class="card-custom">
-                <h4 class="heading-syne fs-5 mb-4">Development Milestones</h4>
-                <div class="ms-2">
-                    <div class="timeline-track pb-4">
-                        <span class="timeline-dot active"></span>
-                        <h5 class="fs-6 text-info m-0 fw-bold">Foundation Structural Matrix Completed</h5>
-                        <p class="text-muted small m-0">Excavation logs fully validated by Project Engineering Office.</p>
-                    </div>
-                    <div class="timeline-track">
-                        <span class="timeline-dot"></span>
-                        <h5 class="fs-6 text-white m-0">Vertical Structural Framing (In Progress)</h5>
-                        <p class="text-muted small m-0">Ongoing concrete operations monitored via system sensors.</p>
+                <div class="col-12 col-lg-5">
+                    <div class="d-flex flex-column gap-3">
+                        
+                        <div class="p-3 border rounded-3 bg-white" style="border-color: #f1f3f5 !important;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6 class="heading-syne fw-bold m-0 text-dark" style="font-size: 13px;">Project Snapshot</h6>
+                                <small class="text-muted" style="font-size: 11px;">Last updated: {{ isset($project->updated_at) ? $project->updated_at->format('M d, Y') : date('M d, Y') }}</small>
+                            </div>
+                            <div class="progress mb-2" style="height: 6px; background-color: #e9ecef; border-radius: 4px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $project->progress_percentage ?? 0 }}%;" aria-valuenow="{{ $project->progress_percentage ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                                <span class="fw-medium text-success">{{ $project->progress_percentage ?? 0 }}% complete</span>
+                                <span>Target: {{ isset($project->target_end_date) ? date('M d, Y', strtotime($project->target_end_date)) : 'N/A' }}</span>
+                            </div>
+                            
+                            <hr class="my-2" style="opacity: 0.08;">
+                            
+                            <div class="row g-2 text-dark" style="font-size: 12px;">
+                                <div class="col-6 text-muted" style="font-size: 11px;">Phase owner</div>
+                                <div class="col-6 text-end fw-medium" style="font-size: 11px;">{{ $project->phase_owner ?? 'Site Engineering Team' }}</div>
+                                <div class="col-6 text-muted" style="font-size: 11px;">Latest review</div>
+                                <div class="col-6 text-end fw-medium text-success" style="font-size: 11px;">{{ $project->review_status ?? 'Approved for next phase' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 border rounded-3 bg-white" style="border-color: #f1f3f5 !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="heading-syne fw-bold m-0 text-dark" style="font-size: 13px;">Latest Site Update</h6>
+                                @if(isset($latest_update))
+                                    <span class="badge bg-primary-subtle text-primary rounded" style="font-size: 10px;">{{ date('M d, Y', strtotime($latest_update->log_date)) }}</span>
+                                @endif
+                            </div>
+                            <p class="text-muted mb-0 lh-base" style="font-size: 12px;">
+                                {{ $latest_update->content ?? 'No operational activity reports or log entries have been submitted to date for this site allocation.' }}
+                            </p>
+                        </div>
+
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
-</div>
 
-</body>
-</html>
+</div>
+@endsection

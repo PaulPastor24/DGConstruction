@@ -1,0 +1,103 @@
+/* Custom Typography Configurations */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+/* Hardened Syne Display Typography Headers */
+.heading-syne {
+    font-family: 'Syne', sans-serif;
+    letter-spacing: -0.03em;
+}
+
+/* Sidebar Structural Navigation Element Blocks */
+.sidebar {
+    background-color: #eefaf4;
+    min-height: 100vh;
+    width: 260px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 24px;
+    border-right: 1px solid #e2ebd9;
+}
+
+.main-content {
+    margin-left: 260px;
+    padding: 40px;
+}
+
+/* Nav Link Hover and Active Operational Interaction Highlights */
+.nav-link-custom {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #495057;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: all 0.15s ease-in-out;
+}
+
+.nav-link-custom:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+    color: #198754;
+}
+
+.nav-link-custom.active {
+    background-color: #d1f2e1;
+    color: #198754;
+    font-weight: 600;
+}
+
+.section-title-muted {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6c757d;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding-left: 16px;
+}
+
+/* Reusable Container Card Modifiers matching your Panel Snapshots */
+.card {
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.04) !important;
+}
+
+.card-header {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+}
+
+/* Custom Horizontal Alignment Separation Rules */
+hr {
+    opacity: 0.06;
+    margin: 1.5rem 0;
+}
+
+/* Uniform Transition Smoothers for Hover states */
+.transition-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.transition-hover:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Specific Context Badges Styling Overrides */
+.badge {
+    letter-spacing: 0.02em;
+}
+.bg-success-subtle {
+    background-color: #e8f5e9 !important;
+}
+.bg-primary-subtle {
+    background-color: #e3f2fd !important;
+}
