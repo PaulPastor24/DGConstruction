@@ -37,8 +37,13 @@
             <div class="section-header">
                 <div class="section-title">Active Projects</div>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button class="topbar-btn primary" onclick="window.location.href='{{ route('admin.projects.create') }}'" style="padding: 6px 12px; font-size: 12px;">+ New Project</button>
-                    <a href="{{ route('admin.projects.index') }}" class="section-link">View All</a>
+                    <a href="{{ route('admin.projects.create') }}" class="topbar-btn primary {{ request()->routeIs('admin.projects.create') ? 'active' : '' }}" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
+                        + New Project
+                    </a>
+                    
+                    <a href="{{ route('admin.projects.index') }}" class="section-link {{ request()->routeIs('admin.projects.index') ? 'active' : '' }}">
+                        View All
+                    </a>
                 </div>
             </div>
             
