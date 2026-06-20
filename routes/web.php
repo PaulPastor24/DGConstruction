@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminDashboardController;
-use App\Http\Controllers\SupervisorController; 
+use App\Http\Controllers\TimelineController;
+use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
@@ -41,7 +43,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
     // Sidebar Operational Framework Target Links (Routed to Controller Methods)
-    Route::get('/admin/timeline', [AdminDashboardController::class, 'timeline'])->name('admin.timeline');
+    Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
     Route::get('/admin/phases', [AdminDashboardController::class, 'phases'])->name('admin.phases');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
@@ -59,17 +61,6 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('destroy');
         Route::patch('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
     });
-});
-
-// Only Site Supervisors can enter here
-Route::middleware(['auth', 'role:site_supervisor'])->group(function () {
-    Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
-});
-
-// Only Clients can enter here
-Route::middleware(['auth', 'role:client'])->group(function () {
-    Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
-});
 
     // ==================== USER MANAGEMENT ====================
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
@@ -81,4 +72,20 @@ Route::middleware(['auth', 'role:client'])->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggleStatus');
     });
+});
+
+// Only Site Supervisors can enter here
+Route::middleware(['auth', 'role:site_supervisor'])->group(function () {
+    Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
+    Route::get('/supervisor/timeline', [TimelineController::class, 'supervisorTimeline'])->name('supervisor.timeline');
+    Route::get('/supervisor/reports', [ReportController::class, 'supervisorReports'])->name('supervisor.reports');
+    Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
+});
+
+// Only Clients can enter here
+Route::middleware(['auth', 'role:client'])->group(function () {
+    Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
+    Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
+});
+
 require __DIR__.'/auth.php';

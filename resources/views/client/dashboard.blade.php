@@ -1,171 +1,388 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Portal - D&G Construction Monitor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
-    <style>
-        :root {
-            --bg-primary: #11141a;
-            --bg-secondary: #171b26;
-            --border-color: #262c3d;
-            --accent-color: #00b0ff; /* Clean dynamic blue for corporate interface */
-        }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-primary);
-            color: #ffffff;
-        }
-        .heading-syne {
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-        }
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            min-height: 100vh;
-        }
-        .nav-link-custom {
-            color: #a0aec0;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(38, 44, 61, 0.3);
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        .nav-link-custom:hover, .nav-link-custom.active {
-            color: #ffffff;
-            background-color: rgba(0, 176, 255, 0.05);
-            border-left: 4px solid var(--accent-color);
-        }
-        .card-custom {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 8px var(--accent-color);
-        }
-        .timeline-track {
-            border-left: 2px solid var(--border-color);
-            padding-left: 20px;
-            position: relative;
-        }
-        .timeline-dot {
-            position: absolute;
-            left: -6px;
-            top: 6px;
-            height: 10px;
-            width: 10px;
-            border-radius: 50%;
-            background-color: var(--border-color);
-        }
-        .timeline-dot.active {
-            background-color: var(--accent-color);
-            box-shadow: 0 0 8px var(--accent-color);
-        }
-    </style>
-</head>
-<body>
+@extends('layouts.client')
 
-<div class="container-fluid m-0 p-0">
-    <div class="row g-0">
-        <div class="col-md-3 col-lg-2 sidebar p-0 d-flex flex-column justify-content-between">
-            <div>
-                <div class="p-4 border-bottom border-secondary d-flex align-items-center gap-2">
-                    <div class="text-dark rounded px-2 py-1 heading-syne fw-bold" style="background-color: var(--accent-color);">CL</div>
-                    <span class="heading-syne tracking-wider text-uppercase fs-6">CoreConstruct</span>
-                </div>
-                <div class="nav flex-column">
-                    <a href="#" class="nav-link-custom active"><i class="bi bi-eye"></i> Project Progress</a>
-                    <a href="#" class="nav-link-custom"><i class="bi bi-file-earmark-bar-graph"></i> Financial Status</a>
+@section('title', 'Client Portal - Project Progress Dashboard')
+
+@section('content')
+<div class="client-dashboard">
+    <section class="client-shell">
+        <div class="client-header row g-3 align-items-stretch">
+            <div class="col-12 col-xl-8">
+                <div class="client-hero">
+                    <p class="eyebrow">Project Client</p>
+                    <h1>{{ optional($projects->first())->project_name ?? 'Project Monitoring Portal' }}</h1>
+                    <div class="hero-meta">
+                        <span><i class="bi bi-layers"></i> {{ optional($currentPhases->first())->phase_name ?? 'Current phase' }}</span>
+                        <span><i class="bi bi-calendar-range"></i> {{ now()->format('M d, Y') }}</span>
+                    </div>
                 </div>
             </div>
-            
-            <div class="p-3 border-top border-secondary">
-                <div class="mb-3 px-2">
-                    <p class="m-0 small text-white fw-bold">{{ $user->name }}</p>
-                    <p class="m-0 small text-muted text-uppercase font-mono tracking-tighter" style="font-size: 10px;">Corporate Client</p>
+            <div class="col-12 col-xl-4">
+                <div class="client-highlight">
+                    <span class="small-label">Overall Progress</span>
+                    <h2>{{ $stats['overall_completion'] }}%</h2>
+                    <div class="progress custom-progress">
+                        <div class="progress-bar" style="width: {{ $stats['overall_completion'] }}%"></div>
+                    </div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2">
-                        <i class="bi bi-box-arrow-left"></i> Sign Out
-                    </button>
-                </form>
             </div>
         </div>
 
-        <div class="col-md-9 col-lg-10 p-4" style="max-height: 100vh; overflow-y: auto;">
-            
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-                <div>
-                    <h1 class="heading-syne fs-2 m-0" style="color: var(--accent-color);">Project Progress Portal</h1>
-                    <p class="text-muted small m-0">Transparent milestone oversight, construction metrics, and timeline transparency verification.</p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="status-dot"></span>
-                    <span class="text-muted small font-mono">PORTAL_SECURE</span>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Overall Progress</span>
-                        <h2 class="heading-syne my-2 text-info">68% <span class="fs-6 text-muted">Complete</span></h2>
-                        <div class="progress bg-dark mt-2" style="height: 4px;">
-                            <div class="progress-bar" style="width: 68%; background-color: var(--accent-color);"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Next Critical Phase</span>
-                        <h2 class="heading-syne my-2 fs-4 text-white pt-1">Slab Pouring - Level 4</h2>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card-custom">
-                        <span class="text-muted small text-uppercase">Disbursement Status</span>
-                        <h2 class="heading-syne my-2 text-success">Clear</h2>
+        <div class="stats-grid row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="bi bi-building"></i></span>
+                    <div>
+                        <div class="stat-value">{{ $stats['total_projects'] }}</div>
+                        <div class="stat-label">Project Status</div>
                     </div>
                 </div>
             </div>
-
-            <div class="card-custom">
-                <h4 class="heading-syne fs-5 mb-4">Development Milestones</h4>
-                <div class="ms-2">
-                    <div class="timeline-track pb-4">
-                        <span class="timeline-dot active"></span>
-                        <h5 class="fs-6 text-info m-0 fw-bold">Foundation Structural Matrix Completed</h5>
-                        <p class="text-muted small m-0">Excavation logs fully validated by Project Engineering Office.</p>
-                    </div>
-                    <div class="timeline-track">
-                        <span class="timeline-dot"></span>
-                        <h5 class="fs-6 text-white m-0">Vertical Structural Framing (In Progress)</h5>
-                        <p class="text-muted small m-0">Ongoing concrete operations monitored via system sensors.</p>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                    <div>
+                        <div class="stat-value">{{ $stats['overall_completion'] }}%</div>
+                        <div class="stat-label">Overall Progress</div>
                     </div>
                 </div>
             </div>
-
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <span class="stat-icon"><i class="bi bi-arrow-repeat"></i></span>
+                    <div>
+                        <div class="stat-value">{{ $stats['ongoing_projects'] }}</div>
+                        <div class="stat-label">Current Phase</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card alert-card">
+                    <span class="stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
+                    <div>
+                        <div class="stat-value">{{ $stats['delayed_milestones_count'] }}</div>
+                        <div class="stat-label">Alerts</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-xl-8">
+                <div class="panel-card">
+                    <div class="panel-head">
+                        <h5><i class="bi bi-graph-up"></i> Project Progress</h5>
+                        <span>{{ $stats['completed_projects'] }} completed</span>
+                    </div>
+                    <div class="panel-body">
+                        @foreach ($projectSummaries->take(4) as $summary)
+                            <div class="project-panel-item">
+                                <div class="project-panel-top">
+                                    <div>
+                                        <h6>{{ $summary['project']->project_name }}</h6>
+                                        <small>{{ $summary['project']->project_location }}</small>
+                                    </div>
+                                    <span>{{ $summary['completion'] }}%</span>
+                                </div>
+                                <div class="progress custom-progress">
+                                    <div class="progress-bar" style="width: {{ $summary['completion'] }}%"></div>
+                                </div>
+                                @if ($summary['current_phase'])
+                                    <div class="phase-badge">
+                                        <i class="bi bi-arrow-right-circle"></i> {{ $summary['current_phase']->phase_name }}
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="panel-card mt-4">
+                    <div class="panel-head">
+                        <h5><i class="bi bi-signpost-split"></i> Timeline Roadmap</h5>
+                    </div>
+                    <div class="panel-body roadmap-list">
+                        @foreach ($upcomingMilestones->take(5) as $milestone)
+                            <div class="roadmap-item">
+                                <div class="roadmap-icon"><i class="bi bi-calendar2-week"></i></div>
+                                <div>
+                                    <h6>{{ $milestone->milestone_name }}</h6>
+                                    <small>{{ $milestone->phase->phase_name }}</small>
+                                </div>
+                                <span>{{ $milestone->planned_date->format('M d') }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="panel-card alert-panel">
+                    <div class="panel-head">
+                        <h5><i class="bi bi-exclamation-circle"></i> Alerts</h5>
+                    </div>
+                    <div class="panel-body">
+                        @if ($delayedMilestones->isNotEmpty())
+                            @foreach ($delayedMilestones->take(3) as $milestone)
+                                <div class="alert-item">
+                                    <strong>{{ $milestone->milestone_name }}</strong>
+                                    <small>{{ $milestone->phase->project->project_name }}</small>
+                                    <span>Delayed</span>
+                                </div>
+                            @endforeach
+                        @else
+                            <p class="mb-0">No active alerts at this time.</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="panel-card mt-4">
+                    <div class="panel-head">
+                        <h5><i class="bi bi-bell"></i> Recent Updates</h5>
+                    </div>
+                    <div class="panel-body update-list">
+                        @foreach ($recentReports->take(4) as $report)
+                            <div class="update-item">
+                                <div>
+                                    <h6>{{ $report->project->project_name }}</h6>
+                                    <small>{{ $report->phase->phase_name }}</small>
+                                </div>
+                                <span>{{ optional($report->created_at)->diffForHumans() }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
-</body>
-</html>
+<style>
+.client-dashboard {
+    padding: 0.25rem 0 1rem;
+}
+
+.client-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.client-hero,
+.client-highlight,
+.stat-card,
+.panel-card {
+    border-radius: 18px;
+}
+
+.client-hero {
+    background: linear-gradient(135deg, #003366 0%, #336699 100%);
+    color: #fff;
+    padding: 1.5rem;
+    box-shadow: 0 12px 28px rgba(0, 51, 102, 0.18);
+}
+
+.client-hero h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 800;
+}
+
+.hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+    font-size: 0.92rem;
+    opacity: 0.95;
+}
+
+.client-highlight {
+    background: #fff;
+    border: 1px solid #d7e7f5;
+    padding: 1.25rem;
+    height: 100%;
+}
+
+.client-highlight h2 {
+    margin: 0.35rem 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #003366;
+}
+
+.stats-grid .stat-card {
+    background: #fff;
+    border: 1px solid #d7e7f5;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-height: 112px;
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #eef7ff;
+    color: #003366;
+    font-size: 1.15rem;
+}
+
+.stat-value {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #15304d;
+}
+
+.stat-label {
+    font-size: 0.82rem;
+    color: #5b6b7f;
+}
+
+.alert-card .stat-icon,
+.alert-card .stat-value {
+    color: #b42318;
+}
+
+.alert-card .stat-icon {
+    background: #fff4f1;
+}
+
+.panel-card {
+    background: #fff;
+    border: 1px solid #d7e7f5;
+    box-shadow: 0 10px 22px rgba(0, 51, 102, 0.05);
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid #eef6fb;
+}
+
+.panel-head h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #15304d;
+}
+
+.panel-head span {
+    font-size: 0.9rem;
+    color: #5b6b7f;
+}
+
+.panel-body {
+    padding: 1rem;
+}
+
+.project-panel-item + .project-panel-item {
+    margin-top: 1rem;
+}
+
+.project-panel-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.45rem;
+}
+
+.project-panel-top h6,
+.roadmap-item h6,
+.update-item h6,
+.alert-item strong {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.project-panel-top small,
+.roadmap-item small,
+.update-item small,
+.alert-item small,
+.project-panel-top span,
+.roadmap-item span,
+.update-item span {
+    color: #5b6b7f;
+}
+
+.phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    background: #eef7ff;
+    color: #003366;
+    padding: 0.4rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.custom-progress {
+    height: 10px;
+    background: #eaf3fb;
+}
+
+.custom-progress .progress-bar {
+    background: linear-gradient(90deg, #6699CC 0%, #99CCFF 100%);
+}
+
+.roadmap-list,
+.update-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.roadmap-item,
+.update-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+}
+
+.roadmap-icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #eef7ff;
+    color: #003366;
+}
+
+.alert-panel {
+    background: linear-gradient(180deg, #fff9f6 0%, #fff4f1 100%);
+}
+
+.alert-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #f7e0d7;
+}
+
+.alert-item:last-child { border-bottom: 0; }
+
+@media (max-width: 768px) {
+    .client-hero { padding: 1.1rem; }
+    .stats-grid .stat-card { min-height: 96px; }
+    .roadmap-item,
+    .update-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+@endsection

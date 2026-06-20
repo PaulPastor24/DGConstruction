@@ -1,20 +1,20 @@
-@extends('layouts.admin')
+@extends('layouts.supervisor')
 
-@section('title', 'Project Timeline - D&G Construction Monitor')
+@section('title', 'Project Timeline - Supervisor View')
 @section('page_title', 'Project Timeline')
 
 @push('styles')
 <style>
     :root {
-        --primary-green: #22c55e;
-        --primary-green-hover: #16a34a;
-        --primary-green-light: rgba(34, 197, 94, 0.08);
-        --blue: #3b82f6;
-        --cyan: #06b6d4;
-        --amber: #f59e0b;
-        --red: #ef4444;
-        --gray: #6b7280;
-        --light-gray: #f3f4f6;
+        --supervisor-primary: #2E7D32;
+        --supervisor-secondary: #7CB342;
+        --supervisor-accent: #C0CA33;
+        --supervisor-highlight: #FDD835;
+        --supervisor-bg: #FFF8E1;
+        --supervisor-surface: #fff;
+        --supervisor-border: #e7edd7;
+        --supervisor-muted: #6b7280;
+        --supervisor-text: #1f2937;
     }
 
     #pg-timeline {
@@ -25,7 +25,7 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         gap: 1rem;
         flex-wrap: wrap;
     }
@@ -40,57 +40,22 @@
     .timeline-project-selector select {
         width: 100%;
         padding: 0.8rem 0.9rem;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--supervisor-border);
         border-radius: 10px;
         font-size: 14px;
         font-family: 'Syne', sans-serif;
         font-weight: 600;
-    }
-
-    .timeline-status-badges {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .timeline-status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .timeline-status-badge.planning {
-        background: #e0e7ff;
-        color: #3730a3;
-    }
-
-    .timeline-status-badge.ongoing {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .timeline-status-badge.completed {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .timeline-status-badge.on-hold {
-        background: #fef3c7;
-        color: #92400e;
+        color: var(--supervisor-text);
+        background: var(--supervisor-surface);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.03);
     }
 
     .timeline-container {
-        background: #fff;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
+        background: var(--supervisor-surface);
+        border-radius: 18px;
+        border: 1px solid var(--supervisor-border);
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 24px rgba(46, 125, 50, 0.08);
     }
 
     .timeline-main {
@@ -102,8 +67,9 @@
 
     .timeline-phases {
         padding: 2rem;
-        border-right: 1px solid #e5e7eb;
+        border-right: 1px solid var(--supervisor-border);
         overflow-y: auto;
+        background: linear-gradient(180deg, #fffef8 0%, var(--supervisor-bg) 100%);
     }
 
     .timeline-phases h3 {
@@ -111,15 +77,15 @@
         font-weight: 700;
         font-size: 16px;
         margin-bottom: 0.5rem;
-        color: #1f2937;
+        color: var(--supervisor-text);
     }
 
     .timeline-header-info {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--supervisor-muted);
         margin-bottom: 1.5rem;
         padding-bottom: 1.5rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--supervisor-border);
     }
 
     .status-columns {
@@ -132,13 +98,17 @@
     .status-column {
         flex: 1;
         min-width: 120px;
+        background: #fff;
+        border: 1px solid var(--supervisor-border);
+        border-radius: 14px;
+        padding: 0.9rem;
     }
 
     .status-column-header {
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        color: #6b7280;
+        color: var(--supervisor-muted);
         letter-spacing: 0.05em;
         margin-bottom: 0.5rem;
         display: flex;
@@ -149,424 +119,134 @@
     .status-column-count {
         font-size: 20px;
         font-weight: 800;
-        color: #1f2937;
+        color: var(--supervisor-text);
         font-family: 'Syne', sans-serif;
     }
 
-    .status-column.completed .status-column-count {
-        color: var(--primary-green);
-    }
+    .status-column.completed .status-column-count { color: var(--supervisor-primary); }
+    .status-column.in-progress .status-column-count { color: var(--supervisor-secondary); }
+    .status-column.upcoming .status-column-count { color: var(--supervisor-highlight); }
 
-    .status-column.in-progress .status-column-count {
-        color: var(--blue);
-    }
-
-    .status-column.upcoming .status-column-count {
-        color: var(--amber);
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
 
     .phase-item {
         display: flex;
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         position: relative;
         padding: 1rem;
-        border-radius: 8px;
-        background: #f9fafb;
+        border-radius: 14px;
+        background: #fff;
         transition: all 0.2s ease;
-        border: 1px solid transparent;
+        border: 1px solid var(--supervisor-border);
     }
 
     .phase-item:hover {
-        background: #f3f4f6;
-        border-color: #e5e7eb;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        background: #fffef5;
+        border-color: var(--supervisor-accent);
+        box-shadow: 0 6px 16px rgba(46, 125, 50, 0.06);
     }
 
-    .phase-item.completed {
-        background: rgba(34, 197, 94, 0.04);
-    }
+    .phase-item.completed { background: #f7fbf3; }
+    .phase-item.in-progress { background: #fbfcef; }
+    .phase-item.planning { background: #fffaf0; }
 
-    .phase-item.completed:hover {
-        background: rgba(34, 197, 94, 0.08);
-        border-color: #bbf7d0;
-    }
-
-    .phase-item.in-progress {
-        background: rgba(59, 130, 246, 0.04);
-    }
-
-    .phase-item.in-progress:hover {
-        background: rgba(59, 130, 246, 0.08);
-        border-color: #bfdbfe;
-    }
-
-    .phase-item.planning {
-        background: rgba(245, 158, 11, 0.04);
-    }
-
-    .phase-item.planning:hover {
-        background: rgba(245, 158, 11, 0.08);
-        border-color: #fcd34d;
-    }
-
-    .phase-indicator {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-        min-width: 32px;
-    }
+    .phase-indicator { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; min-width: 32px; }
 
     .phase-dot {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: #e5e7eb;
-        border: 2px solid #d1d5db;
+        background: #e7edd7;
+        border: 2px solid #d7e3c6;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 12px;
         font-weight: 700;
-        color: #6b7280;
+        color: var(--supervisor-text);
         transition: all 0.2s;
     }
 
     .phase-item.completed .phase-dot {
-        background: var(--primary-green);
-        border-color: #16a34a;
+        background: var(--supervisor-primary);
+        border-color: #1b5e20;
         color: #fff;
     }
 
     .phase-item.in-progress .phase-dot {
-        background: var(--blue);
-        border-color: #1d4ed8;
+        background: var(--supervisor-secondary);
+        border-color: #5f8d2c;
         color: #fff;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.12);
     }
 
     .phase-item.planning .phase-dot {
-        background: #fef3c7;
-        border-color: #f59e0b;
-        color: #92400e;
+        background: var(--supervisor-highlight);
+        border-color: #e1be17;
+        color: #5a4700;
     }
 
     .phase-line {
         width: 2px;
         height: 60px;
-        background: #e5e7eb;
-        margin-bottom: 0;
+        background: var(--supervisor-border);
     }
 
-    .phase-item.completed .phase-line {
-        background: var(--primary-green);
-    }
+    .phase-item.completed .phase-line { background: var(--supervisor-primary); }
+    .phase-item.in-progress .phase-line { background: var(--supervisor-secondary); }
 
-    .phase-item.in-progress .phase-line {
-        background: var(--blue);
-    }
+    .phase-content { flex: 1; padding-top: 0.25rem; }
+    .phase-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--supervisor-text); margin-bottom: 0.25rem; }
+    .phase-dates { font-size: 12px; color: var(--supervisor-muted); margin-bottom: 0.5rem; }
+    .phase-progress-bar { background: #eef4dd; height: 8px; border-radius: 999px; overflow: hidden; margin-bottom: 0.5rem; }
+    .phase-progress-fill { height: 100%; background: linear-gradient(90deg, var(--supervisor-secondary), var(--supervisor-highlight)); transition: width 0.3s ease; }
+    .phase-progress-text { font-size: 11px; font-weight: 600; color: var(--supervisor-muted); }
 
-    .phase-content {
-        flex: 1;
-        padding-top: 0.25rem;
-    }
+    .timeline-sidebar { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; background: #fff; }
+    .phase-progress-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .circular-progress { position: relative; width: 160px; height: 160px; margin-bottom: 1rem; }
+    .circular-progress svg { width: 100%; height: 100%; }
+    .circular-progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .circular-progress-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; color: var(--supervisor-text); line-height: 1; }
+    .circular-progress-label { font-size: 11px; font-weight: 600; color: var(--supervisor-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+    .progress-legend { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+    .legend-item { display: flex; align-items: center; gap: 0.75rem; font-size: 12px; font-weight: 600; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .legend-item.done .legend-dot { background: var(--supervisor-primary); }
+    .legend-item.progress .legend-dot { background: var(--supervisor-secondary); }
+    .legend-item.upcoming .legend-dot { background: var(--supervisor-highlight); }
 
-    .phase-title {
-        font-family: 'Syne', sans-serif;
-        font-weight: 700;
-        font-size: 14px;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-
-    .phase-dates {
-        font-size: 12px;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-
-    .phase-progress-bar {
-        background: #e5e7eb;
-        height: 6px;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-bottom: 0.5rem;
-    }
-
-    .phase-progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary-green), #10b981);
-        transition: width 0.3s ease;
-    }
-
-    .phase-progress-text {
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-    }
-
-    .timeline-sidebar {
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    .phase-progress-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .circular-progress {
-        position: relative;
-        width: 160px;
-        height: 160px;
-        margin-bottom: 1rem;
-    }
-
-    .circular-progress svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .circular-progress-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-    }
-
-    .circular-progress-value {
-        font-family: 'Syne', sans-serif;
-        font-weight: 800;
-        font-size: 32px;
-        color: #1f2937;
-        line-height: 1;
-    }
-
-    .circular-progress-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-top: 0.25rem;
-    }
-
-    .progress-legend {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        width: 100%;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .legend-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-
-    .legend-item.done .legend-dot {
-        background: var(--primary-green);
-    }
-
-    .legend-item.progress .legend-dot {
-        background: var(--blue);
-    }
-
-    .legend-item.upcoming .legend-dot {
-        background: var(--amber);
-    }
-
-    .milestones-section {
-        border-top: 1px solid #e5e7eb;
-        padding-top: 1.5rem;
-    }
-
-    .milestones-section h4 {
-        font-family: 'Syne', sans-serif;
-        font-weight: 700;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #6b7280;
-        margin-bottom: 1rem;
-    }
-
-    .milestone-item {
-        display: flex;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        padding: 0.75rem;
-        border-radius: 8px;
-        background: #f9fafb;
-        border-left: 3px solid #e5e7eb;
-    }
-
-    .milestone-item.warning {
-        background: #fef3c7;
-        border-left-color: #f59e0b;
-    }
-
-    .milestone-item.info {
-        background: #dbeafe;
-        border-left-color: #3b82f6;
-    }
-
-    .milestone-flag {
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-top: 0;
-        font-size: 16px;
-    }
-
-    .milestone-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.35rem 0.65rem;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.5rem;
-        border: 1px solid;
-    }
-
-    .milestone-badge.warning {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fcd34d;
-    }
-
-    .milestone-badge.info {
-        background: #dbeafe;
-        color: #1e40af;
-        border-color: #93c5fd;
-    }
-
-    .milestone-badge.milestone {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #86efac;
-    }
-
-    .milestone-badge.completed {
-        background: #d1fae5;
-        color: #065f46;
-        border-color: #6ee7b7;
-    }
-
-    .milestone-badge.alert {
-        background: #fee2e2;
-        color: #991b1b;
-        border-color: #fca5a5;
-    }
-
-    .milestone-text {
-        flex: 1;
-        font-size: 12px;
-    }
-
-    .milestone-title {
-        font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-
-    .milestone-date {
-        font-size: 11px;
-        color: #9ca3af;
-    }
-
-    .no-project-selected {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 400px;
-        color: #9ca3af;
-        font-size: 14px;
-        text-align: center;
-    }
+    .milestones-section { border-top: 1px solid var(--supervisor-border); padding-top: 1.5rem; }
+    .milestones-section h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--supervisor-muted); margin-bottom: 1rem; }
+    .milestone-item { display: flex; gap: 0.75rem; margin-bottom: 1rem; padding: 0.85rem; border-radius: 12px; background: #fff; border-left: 3px solid var(--supervisor-border); }
+    .milestone-item.warning { background: #fffbe3; border-left-color: var(--supervisor-highlight); }
+    .milestone-item.info { background: #f7fbf3; border-left-color: var(--supervisor-secondary); }
+    .milestone-flag { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0; font-size: 16px; }
+    .milestone-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .milestone-badge.warning { background: #fff7ca; color: #7a5a00; }
+    .milestone-badge.info { background: #eef7de; color: #2e7d32; }
+    .milestone-badge.milestone { background: #eef7de; color: #2e7d32; }
+    .milestone-badge.completed { background: #e9f6e7; color: #1b5e20; }
+    .milestone-badge.alert { background: #fff1f1; color: #9b1c1c; }
+    .milestone-text { flex: 1; font-size: 12px; }
+    .milestone-title { font-weight: 600; color: var(--supervisor-text); margin-bottom: 0.25rem; }
+    .milestone-date { font-size: 11px; color: var(--supervisor-muted); }
+    .no-project-selected { display: flex; align-items: center; justify-content: center; min-height: 400px; color: var(--supervisor-muted); font-size: 14px; text-align: center; }
 
     @media (max-width: 1024px) {
-        .timeline-main {
-            grid-template-columns: 1fr;
-        }
-
-        .timeline-phases {
-            border-right: none;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .timeline-sidebar {
-            flex-direction: row;
-            gap: 1rem;
-        }
-
-        .phase-progress-section,
-        .milestones-section {
-            flex: 1;
-        }
+        .timeline-main { grid-template-columns: 1fr; }
+        .timeline-phases { border-right: none; border-bottom: 1px solid var(--supervisor-border); }
+        .timeline-sidebar { flex-direction: row; gap: 1rem; }
     }
 
     @media (max-width: 768px) {
-        .timeline-header {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .timeline-project-selector {
-            min-width: unset;
-        }
-
-        .timeline-status-badges {
-            justify-content: flex-start;
-        }
-
-        .timeline-phases {
-            padding: 1.5rem;
-        }
-
-        .timeline-sidebar {
-            padding: 1.5rem;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .circular-progress {
-            width: 120px;
-            height: 120px;
-        }
-
-        .circular-progress-value {
-            font-size: 24px;
-        }
+        .timeline-header { flex-direction: column; align-items: stretch; }
+        .timeline-project-selector { min-width: unset; }
+        .timeline-phases { padding: 1.5rem; }
+        .timeline-sidebar { padding: 1.5rem; flex-direction: column; gap: 1.5rem; }
+        .circular-progress { width: 120px; height: 120px; }
+        .circular-progress-value { font-size: 24px; }
     }
 </style>
 @endpush
@@ -582,11 +262,6 @@
                     <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                 @endforeach
             </select>
-        </div>
-        <div class="timeline-status-badges" id="statusBadges" style="display: none;">
-            <span class="timeline-status-badge planning"><span class="legend-dot" style="background: #f59e0b; width: 8px; height: 8px;"></span> Planning</span>
-            <span class="timeline-status-badge ongoing"><span class="legend-dot" style="background: var(--blue); width: 8px; height: 8px;"></span> Ongoing</span>
-            <span class="timeline-status-badge completed"><span class="legend-dot" style="background: var(--primary-green); width: 8px; height: 8px;"></span> Completed</span>
         </div>
     </div>
 
@@ -613,14 +288,12 @@
                     </div>
                 </div>
             `;
-            document.getElementById('statusBadges').style.display = 'none';
             return;
         }
 
         const project = projectsData.find(p => p.id == projectId);
         if (!project) return;
 
-        document.getElementById('statusBadges').style.display = 'flex';
         renderTimeline(project);
     }
 

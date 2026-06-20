@@ -40,4 +40,9 @@ class ConstructionPhase extends Model
     {
         return $this->hasMany(Report::class, 'phase_id', 'phase_id');
     }
+
+    public function milestones()
+    {
+        return $this->hasMany(Milestone::class, 'phase_id', 'phase_id');
+    }
 }

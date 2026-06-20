@@ -20,6 +20,7 @@ class AdminDashboardController extends Controller
 
         // 1. Core Metrics Calculations (with existence checks)
         $hasProjects = Schema::hasTable('projects');
+        $hasReportsTable = Schema::hasTable('accomplishment_reports');
         $activeProjectsCount = 0;
         $totalProjectsCount = 0;
         
@@ -37,10 +38,11 @@ class AdminDashboardController extends Controller
             'projects_change_label' => 'Updated live',
             'on_track_projects' => $activeProjectsCount,
             'completion_rate_label' => "↑ {$executionRate}% execution rate",
-        'total_workforce'  => Schema::hasTable('users')
-            ? User::query()->where('role', 'site_supervisor')->count() : 0,
-        'pending_reports'  => Schema::hasTable('accomplishment_reports')
-            ? Report::query()->where('ai_status', 'pending')->count() : 0,
+            'total_workforce' => Schema::hasTable('users')
+                ? User::query()->where('role', 'site_supervisor')->count() : 0,
+            'pending_reports' => $hasReportsTable
+                ? Report::query()->count('*')
+                : 0,
         ];
 
         // 2. Active Projects Collection
