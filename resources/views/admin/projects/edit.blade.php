@@ -3,6 +3,44 @@
 @section('title', 'Edit Project - D&G Construction Monitor')
 @section('page_title', 'Edit Project')
 
+@push('styles')
+<style>
+    :root {
+        --primary-green: #22c55e;
+        --primary-green-hover: #16a34a;
+        --primary-green-light: rgba(34, 197, 94, 0.08);
+    }
+
+    .form-control:focus, 
+    .form-select:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px var(--primary-green-light);
+    }
+
+    .form-control.is-valid,
+    .form-select.is-valid {
+        border-color: var(--primary-green);
+    }
+
+    .form-control.is-valid:focus,
+    .form-select.is-valid:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px var(--primary-green-light);
+    }
+
+    .card {
+        border-radius: 0.75rem;
+        border: 1px solid #eceff4;
+    }
+
+    .card-header {
+        background: #f8f9fb;
+        border-bottom: 1px solid #eef2f7;
+        border-radius: 0.75rem 0.75rem 0 0;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -238,10 +276,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-success">
                                 <i class="bi bi-save"></i> Update Project
                             </button>
-                            <a href="{{ route('admin.projects.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
                         </div>

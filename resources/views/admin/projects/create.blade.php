@@ -167,10 +167,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-success">
                                 <i class="bi bi-save"></i> Create Project
                             </button>
-                            <a href="{{ route('admin.projects.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Cancel
                             </a>
                         </div>

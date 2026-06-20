@@ -17,8 +17,8 @@ class DatabaseSeeder extends Seeder
         // 1. Clean the database safely
         Schema::disableForeignKeyConstraints();
         
-        DB::table('reports')->truncate();
-        DB::table('attendances')->truncate();
+        DB::table('accomplishment_reports')->truncate();
+        DB::table('attendance_logs')->truncate();
         DB::table('projects')->truncate();
         DB::table('clients')->truncate();
         DB::table('users')->truncate();
@@ -32,7 +32,6 @@ class DatabaseSeeder extends Seeder
         DB::table('users')->insert([
             [
                 'name' => 'Lead Project Engineer',
-                'full_name' => 'Lead Project Engineer',
                 'email' => 'admin@dg-corp.ph',
                 'password_hash' => $password,
                 'role' => 'engineer',
@@ -43,7 +42,6 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'name' => 'Site Supervisor Alpha',
-                'full_name' => 'Site Supervisor Alpha',
                 'email' => 'supervisor@dg-corp.ph',
                 'password_hash' => $password,
                 'role' => 'site_supervisor',
@@ -53,8 +51,7 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'John Doe (Client)',
-                'full_name' => 'John Doe (Client Representative)',
+                'name' => 'John Doe (Client Representative)',
                 'email' => 'client@dg-corp.ph',
                 'password_hash' => $password,
                 'role' => 'client',

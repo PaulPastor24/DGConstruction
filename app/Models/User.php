@@ -12,9 +12,11 @@ class User extends Authenticatable
 
     protected $table = 'users';
     protected $primaryKey = 'user_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
-        'name',  // FIXED: Changed from 'full_name' to 'name'
+        'name',
         'email',
         'password_hash',
         'role',

@@ -10,6 +10,7 @@ class Project extends Model
     protected $primaryKey = 'project_id';
     public $incrementing = true;
     protected $keyType = 'int';
+    public $timestamps = true;
 
     protected $fillable = [
         'project_name',

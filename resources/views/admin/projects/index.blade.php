@@ -4,32 +4,93 @@
 @section('page_title', 'Projects Management')
 
 @section('topbar_actions')
-    <a href="{{ route('admin.projects.create') }}" class="btn btn-primary btn-sm">
+    <a href="{{ route('admin.projects.create') }}" class="btn btn-success btn-sm">
         <i class="bi bi-plus-circle"></i> New Project
     </a>
 @endsection
 
 @push('styles')
 <style>
+    :root {
+        --primary-green: #22c55e;
+        --primary-green-hover: #16a34a;
+        --primary-green-light: rgba(34, 197, 94, 0.08);
+    }
+
     #pg-projects {
         padding-bottom: 1.5rem;
     }
 
-    .project-summary-card {
-        border-radius: 0.9rem;
-        border: 1px solid #eef2f7;
-        background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    /* Stat Cards using Dashboard Design */
+    .project-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
-    .project-summary-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.08) !important;
+    .project-stat-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .project-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--stat-color, var(--primary-green));
+    }
+
+    .project-stat-card .stat-label {
+        font-size: 12px;
+        color: #666666;
+        font-weight: 500;
+    }
+
+    .project-stat-card .stat-value {
+        font-family: 'Syne', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        margin: 4px 0;
+        color: #1a1a1a;
+    }
+
+    /* Section Header using Dashboard Design */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .section-title {
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: #666666;
+    }
+
+    .project-filters-wrapper {
+        flex: 1;
+        min-width: 300px;
     }
 
     .project-card-shell {
         background: #fff;
-        border-radius: 1rem;
+        border-radius: 0.75rem;
         border: 1px solid #eceff4;
         overflow: hidden;
         box-shadow: 0 0.2rem 0.8rem rgba(15, 23, 42, 0.06);
@@ -38,20 +99,45 @@
     .project-card-shell .card-header {
         background: #f8f9fb;
         border-bottom: 1px solid #eef2f7;
-        padding: 0.95rem 1rem;
+        padding: 1rem;
     }
 
     .project-filters-form {
         width: 100%;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
     }
 
     .project-filters-form input,
     .project-filters-form select {
-        border-radius: 0.7rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        min-height: 36px;
+    }
+
+    .project-filters-form input {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .project-filters-form select {
+        width: 180px;
     }
 
     .project-filters-form .btn {
-        border-radius: 0.7rem;
+        border-radius: 0.5rem;
+        height: 36px;
+        padding: 0 12px;
+        font-size: 14px;
+    }
+
+    .project-filters-form input:focus,
+    .project-filters-form select:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 3px var(--primary-green-light);
     }
 
     .table-responsive {
@@ -59,40 +145,133 @@
     }
 
     .table thead th {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
         color: #6c757d;
         background: #f8f9fb;
+        border-bottom: 2px solid #e5e7eb;
     }
 
     .table tbody td {
         vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    /* Consistent action button styling - square and rounded */
+    .table-actions {
+        display: flex;
+        gap: 0.35rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .table-actions .d-inline {
+        display: inline-flex !important;
+    }
+
+    .table-actions .btn {
+        width: 2.2rem;
+        height: 2.2rem;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        border: 1.5px solid;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .table-actions .btn-outline-info {
+        border-color: #06b6d4;
+        color: #06b6d4;
+    }
+
+    .table-actions .btn-outline-info:hover {
+        background-color: #06b6d4;
+        color: #fff;
+    }
+
+    .table-actions .btn-outline-primary {
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+    }
+
+    .table-actions .btn-outline-primary:hover {
+        background-color: var(--primary-green);
+        color: #fff;
+    }
+
+    .table-actions .btn-outline-warning {
+        border-color: #f59e0b;
+        color: #f59e0b;
+    }
+
+    .table-actions .btn-outline-warning:hover {
+        background-color: #f59e0b;
+        color: #fff;
+    }
+
+    .table-actions .btn-outline-danger {
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+
+    .table-actions .btn-outline-danger:hover {
+        background-color: #ef4444;
+        color: #fff;
     }
 
     @media (max-width: 767.98px) {
-        .project-summary-row .card-body {
-            padding: 0.6rem !important;
+        .project-stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
         }
-        .project-summary-row .fs-5 {
-            font-size: 1rem !important;
+
+        .project-stat-card {
+            padding: 12px;
         }
-        .project-filters-form {
+
+        .project-stat-card .stat-label {
+            font-size: 10px;
+        }
+
+        .project-stat-card .stat-value {
+            font-size: 18px;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .project-filters-wrapper {
             width: 100%;
+            min-width: unset;
         }
+
+        .project-filters-form {
+            flex-direction: column;
+        }
+
         .project-filters-form input,
         .project-filters-form select,
-        .project-filters-form a {
+        .project-filters-form .btn {
             width: 100%;
         }
-        .project-filters-form select {
-            max-width: 100% !important;
-        }
+
         .project-mobile-card {
             display: block !important;
             background: #fff;
             border: 1px solid #eef1f4;
-            border-radius: 0.9rem;
+            border-radius: 0.75rem;
             box-shadow: 0 0.125rem 0.5rem rgba(15, 23, 42, 0.06);
             margin-bottom: 0.9rem;
             padding: 0.95rem;
@@ -107,6 +286,8 @@
         .project-mobile-card h6 {
             font-size: 0.98rem;
             margin-bottom: 0.2rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
         }
         .project-mobile-card .project-mobile-meta {
             display: grid;
@@ -118,17 +299,21 @@
         }
         .project-mobile-card .project-mobile-actions {
             display: flex;
-            gap: 0.35rem;
+            gap: 0.5rem;
             justify-content: flex-end;
             flex-wrap: wrap;
             margin-top: 0.75rem;
         }
         .project-mobile-card .project-mobile-actions .btn {
-            width: 2.45rem;
-            height: 2.45rem;
+            width: 2.2rem;
+            height: 2.2rem;
+            padding: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border-radius: 0.5rem;
+            border: 1.5px solid;
+            font-size: 0.85rem;
         }
         .table-wrapper-desktop {
             display: none;
@@ -169,77 +354,53 @@
         </div>
     @endif
 
-    <div class="row g-2 g-md-3 mb-3 project-summary-row">
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">Total</div>
-                    <div class="fs-5 fs-md-4 fw-semibold">{{ $stats['total'] }}</div>
-                </div>
-            </div>
+    <div class="project-stats-grid">
+        <div class="project-stat-card" style="--stat-color: #16a34a;">
+            <div class="stat-label">Total</div>
+            <div class="stat-value">{{ $stats['total'] }}</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">Planning</div>
-                    <div class="fs-5 fs-md-4 fw-semibold text-secondary">{{ $stats['planning'] }}</div>
-                </div>
-            </div>
+        <div class="project-stat-card" style="--stat-color: #3b82f6;">
+            <div class="stat-label">Planning</div>
+            <div class="stat-value">{{ $stats['planning'] }}</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">Ongoing</div>
-                    <div class="fs-5 fs-md-4 fw-semibold text-primary">{{ $stats['ongoing'] }}</div>
-                </div>
-            </div>
+        <div class="project-stat-card" style="--stat-color: #06b6d4;">
+            <div class="stat-label">Ongoing</div>
+            <div class="stat-value">{{ $stats['ongoing'] }}</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">Completed</div>
-                    <div class="fs-5 fs-md-4 fw-semibold text-success">{{ $stats['completed'] }}</div>
-                </div>
-            </div>
+        <div class="project-stat-card" style="--stat-color: #10b981;">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value">{{ $stats['completed'] }}</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">On Hold</div>
-                    <div class="fs-5 fs-md-4 fw-semibold text-warning">{{ $stats['on_hold'] }}</div>
-                </div>
-            </div>
+        <div class="project-stat-card" style="--stat-color: #f59e0b;">
+            <div class="stat-label">On Hold</div>
+            <div class="stat-value">{{ $stats['on_hold'] }}</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="card border-0 shadow-sm h-100 project-summary-card">
-                <div class="card-body p-2 p-md-3">
-                    <div class="text-muted small">Archived</div>
-                    <div class="fs-5 fs-md-4 fw-semibold text-dark">{{ $stats['archived'] }}</div>
-                </div>
-            </div>
+        <div class="project-stat-card" style="--stat-color: #6b7280;">
+            <div class="stat-label">Archived</div>
+            <div class="stat-value">{{ $stats['archived'] }}</div>
         </div>
     </div>
 
     <div class="card project-card-shell">
-        <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-            <div>
-                <h5 class="mb-0">All Projects</h5>
-            </div>
-            <div class="project-filters-wrapper w-100 w-md-auto">
-                <form method="GET" class="project-filters-form d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center">
-                    <input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search projects or client">
-                    <select name="status" class="form-select form-select-sm project-status-filter" style="width: 100%; max-width: 200px;">
-                        <option value="">All statuses</option>
-                        <option value="planning" {{ request('status') == 'planning' ? 'selected' : '' }}>Planning</option>
-                        <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                        <option value="on_hold" {{ request('status') == 'on_hold' ? 'selected' : '' }}>On Hold</option>
-                        <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
-                    </select>
-                    @if(request('search') || request('status'))
-                        <a href="{{ route('admin.projects.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
-                    @endif
-                </form>
+        <div class="card-header">
+            <div class="section-header">
+                <div class="section-title">All Projects</div>
+                <div class="project-filters-wrapper">
+                    <form method="GET" class="project-filters-form">
+                        <input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search projects or client">
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All statuses</option>
+                            <option value="planning" {{ request('status') == 'planning' ? 'selected' : '' }}>Planning</option>
+                            <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="on_hold" {{ request('status') == 'on_hold' ? 'selected' : '' }}>On Hold</option>
+                            <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
+                        </select>
+                        @if(request('search') || request('status'))
+                            <a href="{{ route('admin.projects.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                        @endif
+                    </form>
+                </div>
             </div>
         </div>
         <div class="card-body p-0">
@@ -290,7 +451,7 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group btn-group-sm table-actions" role="group">
+                                        <div class="table-actions" role="group">
                                             <a href="{{ route('admin.projects.show', $project) }}" 
                                                class="btn btn-outline-info" 
                                                title="View">

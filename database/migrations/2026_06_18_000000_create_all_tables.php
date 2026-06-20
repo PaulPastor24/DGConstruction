@@ -24,7 +24,7 @@ return new class extends Migration
         // 2. CLIENTS TABLE
         Schema::create('clients', function (Blueprint $table) {
             $table->increments('client_id');
-            $table->unsignedInteger('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('company_name', 200)->nullable();
             $table->text('address')->nullable();
             $table->timestamps();
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->string('project_name', 200);
             $table->text('project_location');
             $table->unsignedInteger('client_id');
-            $table->unsignedInteger('engineer_id');
+            $table->unsignedBigInteger('engineer_id');
             $table->date('start_date');
             $table->date('target_end_date');
             $table->date('actual_end_date')->nullable();
@@ -69,7 +69,7 @@ return new class extends Migration
             $table->increments('report_id');
             $table->unsignedInteger('project_id');
             $table->unsignedInteger('phase_id');
-            $table->unsignedInteger('submitted_by');
+            $table->unsignedBigInteger('submitted_by');
             $table->date('report_date');
             $table->longText('report_text');
             $table->json('site_images')->nullable();
@@ -109,7 +109,7 @@ return new class extends Migration
             $table->increments('log_id');
             $table->unsignedInteger('project_id');
             $table->unsignedInteger('worker_id');
-            $table->unsignedInteger('recorded_by');
+            $table->unsignedBigInteger('recorded_by');
             $table->date('log_date');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
@@ -125,7 +125,7 @@ return new class extends Migration
         Schema::create('project_supervisors', function (Blueprint $table) {
             $table->increments('assignment_id');
             $table->unsignedInteger('project_id');
-            $table->unsignedInteger('supervisor_id');
+            $table->unsignedBigInteger('supervisor_id');
             $table->date('assigned_date');
             $table->tinyInteger('is_active')->default(1);
             $table->timestamp('created_at')->useCurrent();
@@ -161,28 +161,17 @@ return new class extends Migration
         // 12. SYSTEM LOGS TABLE
         Schema::create('system_logs', function (Blueprint $table) {
             $table->increments('log_id');
-            $table->unsignedInteger('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('action', 200);
             $table->text('description')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('set null')->onUpdate('cascade');
         });
-
-        // 13. SESSIONS TABLE
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('sessions');
         Schema::dropIfExists('system_logs');
         Schema::dropIfExists('timeline_milestones');
         Schema::dropIfExists('project_workers');

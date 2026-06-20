@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
@@ -19,8 +20,13 @@ class AdminDashboardController extends Controller
 
         // 1. Core Metrics Calculations (with existence checks)
         $hasProjects = Schema::hasTable('projects');
-        $activeProjectsCount = $hasProjects ? Project::query()->where('status', 'ongoing')->count() : 0;
-        $totalProjectsCount  = $hasProjects ? Project::query()->count() : 0;
+        $activeProjectsCount = 0;
+        $totalProjectsCount = 0;
+        
+        if ($hasProjects) {
+            $activeProjectsCount = (int) DB::table('projects')->where('status', 'ongoing')->count();
+            $totalProjectsCount = (int) DB::table('projects')->count();
+        }
         
         $executionRate = $totalProjectsCount > 0 
             ? round(($activeProjectsCount / $totalProjectsCount) * 100, 1) 

@@ -43,7 +43,8 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         // 1. Fetch user by email AND role
-        $user = User::where('email', $this->input('email'))
+        $user = User::query()
+            ->where('email', $this->input('email'))
             ->where('role', $this->input('role'))
             ->first();
 

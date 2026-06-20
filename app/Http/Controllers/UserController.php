@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Client;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
@@ -17,8 +18,13 @@ class UserController extends Controller
     public function index()
     {
         $users = User::orderBy('created_at', 'desc')->paginate(15);
+        
+        $total_users = DB::table('users')->count();
+        $engineers_count = DB::table('users')->where('role', 'engineer')->count();
+        $supervisors_count = DB::table('users')->where('role', 'site_supervisor')->count();
+        $clients_count = DB::table('users')->where('role', 'client')->count();
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'total_users', 'engineers_count', 'supervisors_count', 'clients_count'));
     }
 
     /**
@@ -35,7 +41,10 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         try {
-            User::create([
+            DB::beginTransaction();
+
+            // Create the user
+            $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password_hash' => Hash::make($request->password),
@@ -44,11 +53,23 @@ class UserController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
+            // If the user is a client, create a corresponding client profile
+            if ($request->role === 'client') {
+                Client::create([
+                    'user_id' => $user->user_id,
+                    'company_name' => null,
+                    'address' => null,
+                ]);
+            }
+
+            DB::commit();
+
             return redirect()
                 ->route('admin.users.index')
                 ->with('success', 'User created successfully!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()
                 ->back()
                 ->withInput()
@@ -70,6 +91,8 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         try {
+            DB::beginTransaction();
+
             $originalData = [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -87,6 +110,7 @@ class UserController extends Controller
             ];
 
             if ($originalData == $newData && !$request->filled('password')) {
+                DB::rollBack();
                 return redirect()
                     ->back()
                     ->withInput()
@@ -102,11 +126,23 @@ class UserController extends Controller
 
             $user->update($data);
 
+            // If role changed to 'client' and client profile doesn't exist, create it
+            if ($newData['role'] === 'client' && !$user->client) {
+                Client::create([
+                    'user_id' => $user->user_id,
+                    'company_name' => null,
+                    'address' => null,
+                ]);
+            }
+
+            DB::commit();
+
             return redirect()
                 ->route('admin.users.index')
                 ->with('success', 'User updated successfully!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()
                 ->back()
                 ->withInput()

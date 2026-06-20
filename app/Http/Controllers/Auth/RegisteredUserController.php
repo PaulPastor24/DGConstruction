@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Client;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -35,8 +37,11 @@ class RegisteredUserController extends Controller
     public function store(StoreUserRequest $request)
     {
         try {
-            User::create([
-                'full_name' => $request->full_name,
+            DB::beginTransaction();
+
+            // Create the user
+            $user = User::create([
+                'name' => $request->name,
                 'email' => $request->email,
                 'password_hash' => Hash::make($request->password),
                 'role' => $request->role,
@@ -44,11 +49,23 @@ class RegisteredUserController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
+            // If the user is a client, create a corresponding client profile
+            if ($request->role === 'client') {
+                Client::create([
+                    'user_id' => $user->user_id,
+                    'company_name' => null,
+                    'address' => null,
+                ]);
+            }
+
+            DB::commit();
+
             return redirect()
                 ->route('admin.users.index')
                 ->with('success', 'User created successfully!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()
                 ->back()
                 ->withInput()
@@ -70,8 +87,10 @@ class RegisteredUserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         try {
+            DB::beginTransaction();
+
             $data = [
-                'full_name' => $request->full_name,
+                'name' => $request->name,
                 'email' => $request->email,
                 'role' => $request->role,
                 'contact_number' => $request->contact_number,
@@ -85,11 +104,23 @@ class RegisteredUserController extends Controller
 
             $user->update($data);
 
+            // If role changed to 'client' and client profile doesn't exist, create it
+            if ($data['role'] === 'client' && !$user->client) {
+                Client::create([
+                    'user_id' => $user->user_id,
+                    'company_name' => null,
+                    'address' => null,
+                ]);
+            }
+
+            DB::commit();
+
             return redirect()
                 ->route('admin.users.index')
                 ->with('success', 'User updated successfully!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()
                 ->back()
                 ->withInput()
