@@ -60,7 +60,7 @@
                         </div>
                         <div class="proj-meta">
                             <span>{{ $project->progress_percentage }}% complete</span>
-                            <span>Due: {{ \Carbon\Carbon::parse($project->due_date)->format('M Y') }}</span>
+                            <span>Due: {{ \Carbon\Carbon::parse($project->target_end_date)->format('M Y') }}</span>
                         </div>
                     </div>
                 @empty

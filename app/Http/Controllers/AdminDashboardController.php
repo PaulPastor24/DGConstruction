@@ -19,8 +19,8 @@ class AdminDashboardController extends Controller
 
         // 1. Core Metrics Calculations (with existence checks)
         $hasProjects = Schema::hasTable('projects');
-        $activeProjectsCount = $hasProjects ? Project::where('status', '=', 'On-Track')->count() : 0;
-        $totalProjectsCount = $hasProjects ? Project::count() : 0;
+        $activeProjectsCount = $hasProjects ? Project::query()->where('status', 'ongoing')->count() : 0;
+        $totalProjectsCount  = $hasProjects ? Project::query()->count() : 0;
         
         $executionRate = $totalProjectsCount > 0 
             ? round(($activeProjectsCount / $totalProjectsCount) * 100, 1) 
@@ -31,40 +31,46 @@ class AdminDashboardController extends Controller
             'projects_change_label' => 'Updated live',
             'on_track_projects' => $activeProjectsCount,
             'completion_rate_label' => "↑ {$executionRate}% execution rate",
-            'total_workforce' => Schema::hasTable('users') ? User::whereIn('role', ['worker', 'site_supervisor'])->count() : 0,
-            'pending_reports' => Schema::hasTable('reports') ? Report::where('status', '=', 'Awaiting Review')->count() : 0,
+        'total_workforce'  => Schema::hasTable('users')
+            ? User::query()->where('role', 'site_supervisor')->count() : 0,
+        'pending_reports'  => Schema::hasTable('accomplishment_reports')
+            ? Report::query()->where('ai_status', 'pending')->count() : 0,
         ];
 
         // 2. Active Projects Collection
-        $activeProjects = $hasProjects ? Project::where('status', '=', 'On-Track')
-            ->orderBy('due_date', 'asc')
-            ->take(5)
-            ->get()
-            ->map(function ($project) {
-                $color = 'blue';
-                if ($project->progress_percentage >= 80) $color = 'green';
-                if ($project->progress_percentage < 40) $color = 'orange';
+        $activeProjects = collect();
+        if ($hasProjects) {
+            $activeProjects = Project::query()->where('status', 'ongoing')
+                ->orderBy('target_end_date', 'asc')
+                ->take(5)
+                ->get()
+                ->map(function ($project) {
+                    $progressPercentage = $project->progress_percentage ?? 0;
+                    $color = 'blue';
+                    if ($progressPercentage >= 80) $color = 'green';
+                    if ($progressPercentage < 40) $color = 'orange';
 
-                return (object)[
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'location' => $project->location,
-                    'status_label' => $project->status,
-                    'current_phase' => $project->current_phase ?? 'Phase 1: Mobilization',
-                    'progress_percentage' => $project->progress_percentage,
-                    'progress_color_class' => $color,
-                    'due_date' => $project->due_date
-                ];
-            }) : collect();
+                    return (object)[
+                        'id' => $project->project_id,
+                        'name' => $project->project_name,
+                        'location' => $project->project_location,
+                        'status_label' => ucfirst($project->status),
+                        'current_phase' => $project->current_phase ?? 'Phase 1: Mobilization',
+                        'progress_percentage' => $progressPercentage,
+                        'progress_color_class' => $color,
+                        'target_end_date' => $project->target_end_date
+                    ];
+                });
+        }
 
         // 3. Dynamic Daily Attendance Tracking
         $today = Carbon::today();
         $attendance = ['present' => 0, 'absent' => 0, 'late' => 0, 'rate' => 0];
 
-        if (Schema::hasTable('attendances')) {
-            $present = Attendance::whereDate('date', $today)->where('status', '=', 'Present')->count();
-            $absent = Attendance::whereDate('date', $today)->where('status', '=', 'Absent')->count();
-            $late = Attendance::whereDate('date', $today)->where('status', '=', 'Late')->count();
+        if (Schema::hasTable('attendance_logs')) {
+            $present = Attendance::query()->where('log_date', $today, '=')->where('status', 'present')->count();
+            $absent  = Attendance::query()->where('log_date', $today, '=')->where('status', 'absent')->count();
+            $late    = Attendance::query()->where('log_date', $today, '=')->where('status', 'half_day')->count();
             $totalExpected = $present + $absent + $late;
             
             $attendance = [
@@ -84,7 +90,6 @@ class AdminDashboardController extends Controller
     {
         $months = [];
         $bars = [];
-        $currentMonthCost = 0;
 
         for ($i = 4; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
