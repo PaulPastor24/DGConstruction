@@ -27,8 +27,16 @@ class DatabaseSeeder extends Seeder
 
         // 2. Define standard password
         $password = Hash::make('password123');
-
-        // 3. Insert users with BOTH 'name' and 'full_name' to satisfy database constraints
+        
+        DB::table('materials')->insert([
+            ['name' => 'Portland Cement', 'unit' => 'bags', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => '10mm Deformed Steel Bar', 'unit' => 'pcs', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Gravel (3/4")', 'unit' => 'm³', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Sand (Washed)', 'unit' => 'm³', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Ceramic Tiles (60x60)', 'unit' => 'boxes', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        
+        // 3. Insert non-client users
         DB::table('users')->insert([
             [
                 'name' => 'Lead Project Engineer',
@@ -52,20 +60,28 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'name' => 'John Doe (Client)',
-                'full_name' => 'John Doe (Client Representative)',
-                'email' => 'client@dg-corp.ph',
-                'password_hash' => $password,
-                'role' => 'client',
-                'contact_number' => '+639159998888',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
         ]);
 
-        // 4. Verification Note: 
-        // Run 'php artisan migrate:fresh --seed' after saving this file.
+        // 4. Insert John Doe into the users table and grab his user_id right away
+        $clientId = DB::table('users')->insertGetId([
+            'name' => 'John Doe',
+            'full_name' => 'John Doe (Client Representative)',
+            'email' => 'client@dg-corp.ph',
+            'password_hash' => $password,
+            'role' => 'client',
+            'contact_number' => '+639159998888',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 5. FIX: Insert the linked client profile row using his generated user_id
+        DB::table('clients')->insert([
+            'user_id' => $clientId,
+            'company_name' => 'D&G Construction Corp', // You can customize this
+            'address' => 'Lipa City, Batangas',       // You can customize this
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

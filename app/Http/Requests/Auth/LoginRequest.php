@@ -42,12 +42,36 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // 1. Fetch user by email AND role
+        // 1. Capture the raw input and clean it up (lowercase and trim spaces)
+        $rawRole = trim(strtolower($this->input('role')));
+
+        // 2. Map frontend tab text variants to exact database strings
+        $inputRole = match($rawRole) {
+            'engineer' => 'engineer',
+            'supervisor', 'site supervisor', 'site_supervisor' => 'site_supervisor',
+            'client' => 'client',
+            default => $rawRole // fallback if it's already a clean string
+        };
+
+        // 3. Fetch the user by email and normalized role
         $user = User::where('email', $this->input('email'))
-            ->where('role', $this->input('role'))
+            ->where('role', $inputRole)
             ->first();
 
-        // 2. Verify password against your custom column
+        // 4. Fallback check: If matching by role fails, try matching by email only 
+        // to see if the account actually exists in the database
+        if (!$user) {
+            $userByEmail = User::where('email', $this->input('email'))->first();
+            
+            if ($userByEmail) {
+                // If the user exists but the role mismatched, throw an informative error
+                throw ValidationException::withMessages([
+                    'email' => "Account found, but role mismatch. Form sent: '{$this->input('role')}', Database expects: '{$userByEmail->role}'.",
+                ]);
+            }
+        }
+
+        // 5. Verify password against your custom column
         if (!$user || !Hash::check($this->input('password'), $user->password_hash)) {
             RateLimiter::hit($this->throttleKey());
 
@@ -56,7 +80,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // 3. Log the user in
+        // 6. Log the user in
         Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
