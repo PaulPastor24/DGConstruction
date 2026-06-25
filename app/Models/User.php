@@ -14,7 +14,8 @@ class User extends Authenticatable
     protected $primaryKey = 'user_id';
 
     protected $fillable = [
-        'name',  // FIXED: Changed from 'full_name' to 'name'
+        'name',
+        'full_name', // ADDED: Must be fillable if your database table or registration form uses it
         'email',
         'password_hash',
         'role',
@@ -91,6 +92,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Report::class, 'submitted_by', 'user_id');
     }
+
     /**
      * Get role badge color
      */
