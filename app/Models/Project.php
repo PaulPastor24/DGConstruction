@@ -37,6 +37,59 @@ class Project extends Model
         return 'project_id';
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | BLADE VIEW COMPATIBILITY ACCESSORS
+    |--------------------------------------------------------------------------
+    | These align your column names with the expressions inside status.blade.php
+    */
+
+    /**
+     * Maps $project->name to project_name
+     */
+    public function getNameAttribute()
+    {
+        return $this->project_name;
+    }
+
+    /**
+     * Maps $project->location to project_location
+     */
+    public function getLocationAttribute()
+    {
+        return $this->project_location;
+    }
+
+    /**
+     * Maps $project->status_text to your formatted status
+     */
+    public function getStatusTextAttribute()
+    {
+        return $this->status_label;
+    }
+
+    /**
+     * Maps $project->current_phase_name to your current phase helper
+     */
+    public function getCurrentPhaseNameAttribute()
+    {
+        return $this->current_phase;
+    }
+
+    /**
+     * Maps $project->manager_name to the assigned Engineer's name
+     */
+    public function getManagerNameAttribute()
+    {
+        return $this->engineer ? $this->engineer->name : 'Not Assigned';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     /**
      * Relationship: Project belongs to a Client
      */
@@ -94,6 +147,12 @@ class Project extends Model
         return $this->hasManyThrough(Report::class, ConstructionPhase::class, 'project_id', 'phase_id', 'project_id', 'phase_id');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes / Computed Attributes
+    |--------------------------------------------------------------------------
+    */
+
     /**
      * Get active supervisor for the project
      */
@@ -105,7 +164,7 @@ class Project extends Model
     }
 
     /**
-     * OPTIMIZED: Calculate progress automatically whether relations are eager-loaded or lazy-loaded
+     * Calculate progress automatically whether relations are eager-loaded or lazy-loaded
      */
     public function getProgressPercentageAttribute()
     {
@@ -117,7 +176,7 @@ class Project extends Model
     }
 
     /**
-     * OPTIMIZED: Retrieve current phase cleanly with query fallbacks
+     * Retrieve current phase cleanly with query fallbacks
      */
     public function getCurrentPhaseAttribute()
     {
@@ -130,7 +189,7 @@ class Project extends Model
     }
 
     /**
-     * ADDED: Maps back to controller custom field wrapper targets if missing from structural objects
+     * Maps back to controller custom field wrapper targets if missing from structural objects
      */
     public function getStatusLabelAttribute()
     {

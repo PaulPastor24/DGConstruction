@@ -110,11 +110,13 @@ class ProjectController extends Controller
 
             foreach ($defaultPhases as $index => $phase) {
                 $project->phases()->create([
-                    'phase_name' => $phase['phase_name'],
-                    'status' => $index === 0 ? 'ongoing' : 'pending', // First phase kicks off as active automatically
+                    'phase_name'            => $phase['phase_name'],
+                    // Standardized statuses matching the enum choices in your migration exactly[cite: 6]
+                    'status'                => $index === 0 ? 'in_progress' : 'not_started', 
                     'completion_percentage' => 0,
-                    'start_date' => $project->start_date,
-                    'end_date' => $project->target_end_date,
+                    'planned_start_date'    => $project->start_date,      
+                    'planned_end_date'      => $project->target_end_date, 
+                    'phase_order'           => $index + 1,
                 ]);
             }
 

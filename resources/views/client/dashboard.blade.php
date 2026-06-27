@@ -12,12 +12,21 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <select class="form-select border-0 shadow-sm heading-syne fw-bold px-3 py-2 text-dark" style="width: auto; border-radius: 8px; min-width: 240px; font-size: 14px; background-color: #fff;">
-                <option value="{{ $project->id ?? '' }}" selected>{{ $project->name ?? 'Select Project Site...' }}</option>
-            </select>
+            <!-- Project Selection Form Context Handler -->
+            <form action="{{ route('client.dashboard') }}" method="GET" id="projectSelectorForm">
+                <select name="project_id" onchange="document.getElementById('projectSelectorForm').submit();" class="form-select border-0 shadow-sm heading-syne fw-bold px-3 py-2 text-dark" style="width: auto; border-radius: 8px; min-width: 240px; font-size: 14px; background-color: #fff;">
+                    @forelse($projects as $proj)
+                        <option value="{{ $proj->project_id }}" {{ (isset($project) && $project->project_id == $proj->project_id) ? 'selected' : '' }}>
+                            {{ $proj->project_name }}
+                        </option>
+                    @empty
+                        <option value="" disabled selected>No Project Sites Allocated</option>
+                    @endforelse
+                </select>
+            </form>
             
             <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-medium" style="font-size: 12px;">
-                {{ $project->status_text ?? 'On Track' }}
+                {{ isset($project) ? ucfirst(str_replace('_', ' ', $project->status)) : 'No Active Status' }}
             </span>
             <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-medium" style="font-size: 12px;">
                 {{ $project->progress_percentage ?? 0 }}% Complete
@@ -31,7 +40,7 @@
     <div class="card border-0 shadow-sm" style="border-radius: 12px;">
         <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
             <h6 class="heading-syne fw-bold m-0 text-dark text-uppercase tracking-wider" style="font-size: 14px;">
-                Construction Phases – {{ $project->name ?? 'Project Profile Overview' }}
+                Construction Phases – {{ $project->project_name ?? 'Project Profile Overview' }}
             </h6>
             <small class="text-muted fw-medium">Target: {{ isset($project->target_end_date) ? date('M Y', strtotime($project->target_end_date)) : 'N/A' }}</small>
         </div>
@@ -48,19 +57,27 @@
                         <div class="row g-4">
                             <div class="col-6">
                                 <small class="text-muted d-block" style="font-size: 11px;">Project Location</small>
-                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->location ?? 'Not Specified' }}</span>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->project_location ?? 'Not Specified' }}</span>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block" style="font-size: 11px;">Project Architect</small>
-                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->architect_name ?? 'Not Assigned' }}</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Assigned Engineer</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->engineer->name ?? 'Not Assigned' }}</span>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block" style="font-size: 11px;">Primary Contractor</small>
-                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->contractor_name ?? 'Not Assigned' }}</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Project Timeline</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">
+                                    {{ isset($project->start_date) ? date('M d, Y', strtotime($project->start_date)) : 'N/A' }}
+                                </span>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block" style="font-size: 11px;">Project Manager</small>
-                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">{{ $project->manager_name ?? 'Not Assigned' }}</span>
+                                <small class="text-muted d-block" style="font-size: 11px;">Site Supervisors</small>
+                                <span class="fw-medium text-dark d-block mt-1" style="font-size: 13px;">
+                                    @if(isset($project) && $project->supervisors->isNotEmpty())
+                                        {{ $project->supervisors->pluck('name')->implode(', ') }}
+                                    @else
+                                        No Supervisor Active
+                                    @endif
+                                </span>
                             </div>
                         </div>
                     </div>
