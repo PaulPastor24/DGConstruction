@@ -38,6 +38,59 @@ class Project extends Model
         return 'project_id';
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | BLADE VIEW COMPATIBILITY ACCESSORS
+    |--------------------------------------------------------------------------
+    | These align your column names with the expressions inside status.blade.php
+    */
+
+    /**
+     * Maps $project->name to project_name
+     */
+    public function getNameAttribute()
+    {
+        return $this->project_name;
+    }
+
+    /**
+     * Maps $project->location to project_location
+     */
+    public function getLocationAttribute()
+    {
+        return $this->project_location;
+    }
+
+    /**
+     * Maps $project->status_text to your formatted status
+     */
+    public function getStatusTextAttribute()
+    {
+        return $this->status_label;
+    }
+
+    /**
+     * Maps $project->current_phase_name to your current phase helper
+     */
+    public function getCurrentPhaseNameAttribute()
+    {
+        return $this->current_phase;
+    }
+
+    /**
+     * Maps $project->manager_name to the assigned Engineer's name
+     */
+    public function getManagerNameAttribute()
+    {
+        return $this->engineer ? $this->engineer->name : 'Not Assigned';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     /**
      * Relationship: Project belongs to a Client
      */
@@ -61,7 +114,6 @@ class Project extends Model
     {
         return $this->belongsToMany(User::class, 'project_supervisors', 'project_id', 'supervisor_id', 'project_id', 'user_id')
             ->withPivot('assigned_date', 'is_active');
-        // FIXED: Removed ->withTimestamps() because project_supervisors table doesn't have updated_at
     }
 
     /**
@@ -96,6 +148,12 @@ class Project extends Model
         return $this->hasManyThrough(Report::class, ConstructionPhase::class, 'project_id', 'phase_id', 'project_id', 'phase_id');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes / Computed Attributes
+    |--------------------------------------------------------------------------
+    */
+
     /**
      * Get active supervisor for the project
      */
@@ -107,30 +165,36 @@ class Project extends Model
     }
 
     /**
-     * Get progress percentage from phases
+     * Calculate progress automatically whether relations are eager-loaded or lazy-loaded
      */
     public function getProgressPercentageAttribute()
     {
-        if ($this->relationLoaded('phases') && $this->phases->count() > 0) {
-            return round($this->phases->avg('completion_percentage'), 2);
+        $phasesCount = $this->phases()->count();
+        if ($phasesCount > 0) {
+            return round($this->phases()->avg('completion_percentage'), 2);
         }
         return 0;
     }
 
     /**
-     * Get current phase
+     * Retrieve current phase cleanly with query fallbacks
      */
     public function getCurrentPhaseAttribute()
     {
-        if ($this->relationLoaded('phases')) {
-            $currentPhase = $this->phases
-                ->where('status', 'in_progress')
-                ->sortBy('phase_order')
-                ->first();
+        $currentPhase = $this->phases()
+            ->where('status', 'in_progress')
+            ->orderBy('phase_order', 'asc')
+            ->first();
 
-            return $currentPhase ? $currentPhase->phase_name : null;
-        }
-        return null;
+        return $currentPhase ? $currentPhase->phase_name : 'Phase 1: Mobilization';
+    }
+
+    /**
+     * Maps back to controller custom field wrapper targets if missing from structural objects
+     */
+    public function getStatusLabelAttribute()
+    {
+        return ucfirst($this->status ?? 'Planning');
     }
 
     /**

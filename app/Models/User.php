@@ -17,6 +17,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'full_name',
         'email',
         'password_hash',
         'role',
@@ -93,6 +94,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Report::class, 'submitted_by', 'user_id');
     }
+
     /**
      * Get role badge color
      */

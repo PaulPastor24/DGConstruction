@@ -94,8 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <option value="">-- Select Client --</option>
                                     @foreach($clients as $client)
                                         <option value="{{ $client->client_id }}" {{ old('client_id') == $client->client_id ? 'selected' : '' }}>
-                                            {{ $client->user->name }}
-                                            @if($client->company_name)
+                                            {{ $client->user->name ?? 'Unknown Client User' }}
+                                            @if(!empty($client->company_name))
                                                 ({{ $client->company_name }})
                                             @endif
                                         </option>
@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 @enderror
                             </div>
 
-                            <!-- Status is hidden and defaults to "planning" on project creation -->
                             <input type="hidden" name="status" value="planning">
                         </div>
 

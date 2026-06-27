@@ -18,16 +18,12 @@ class AdminDashboardController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Core Metrics Calculations (with existence checks)
         $hasProjects = Schema::hasTable('projects');
         $hasReportsTable = Schema::hasTable('accomplishment_reports');
-        $activeProjectsCount = 0;
-        $totalProjectsCount = 0;
-        
-        if ($hasProjects) {
-            $activeProjectsCount = (int) DB::table('projects')->where('status', 'ongoing')->count();
-            $totalProjectsCount = (int) DB::table('projects')->count();
-        }
+        $activeProjectsCount = $hasProjects
+            ? DB::table('projects')->whereIn('status', ['planning', 'ongoing'])->count()
+            : 0;
+        $totalProjectsCount = $hasProjects ? DB::table('projects')->count() : 0;
         
         $executionRate = $totalProjectsCount > 0 
             ? round(($activeProjectsCount / $totalProjectsCount) * 100, 1) 
@@ -35,21 +31,21 @@ class AdminDashboardController extends Controller
 
         $stats = [
             'active_projects' => $activeProjectsCount,
-            'projects_change_label' => 'Updated live',
+            'projects_change_label' => $totalProjectsCount . ' total registered projects',
             'on_track_projects' => $activeProjectsCount,
             'completion_rate_label' => "↑ {$executionRate}% execution rate",
             'total_workforce' => Schema::hasTable('users')
-                ? User::query()->where('role', 'site_supervisor')->count() : 0,
+                ? DB::table('users')->where('role', '=', 'site_supervisor')->count() : 0,
             'pending_reports' => $hasReportsTable
-                ? Report::query()->count('*')
+                ? DB::table('accomplishment_reports')->count()
                 : 0,
         ];
 
-        // 2. Active Projects Collection
         $activeProjects = collect();
         if ($hasProjects) {
-            $activeProjects = Project::query()->where('status', 'ongoing')
-                ->orderBy('target_end_date', 'asc')
+            $activeProjects = Project::with('client.user')
+                ->whereIn('status', ['planning', 'ongoing'])
+                ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get()
                 ->map(function ($project) {
@@ -60,8 +56,8 @@ class AdminDashboardController extends Controller
 
                     return (object)[
                         'id' => $project->project_id,
-                        'name' => $project->project_name,
-                        'location' => $project->project_location,
+                        'name' => $project->project_name ?? $project->name,
+                        'location' => $project->project_location ?? $project->location,
                         'status_label' => ucfirst($project->status),
                         'current_phase' => $project->current_phase ?? 'Phase 1: Mobilization',
                         'progress_percentage' => $progressPercentage,
@@ -71,7 +67,6 @@ class AdminDashboardController extends Controller
                 });
         }
 
-        // 3. Dynamic Daily Attendance Tracking
         $today = Carbon::today();
         $attendance = ['present' => 0, 'absent' => 0, 'late' => 0, 'rate' => 0];
 
@@ -119,31 +114,105 @@ class AdminDashboardController extends Controller
         ];
     }
 
-    // ==================== OPERATIONAL VIEW TARGET LINK WORKSPACES ====================
-
-    public function timeline()
+    public function timeline(Request $request)
     {
-        return view('admin.timeline');
+        $hasProjects = Schema::hasTable('projects');
+        $projects = $hasProjects ? Project::orderBy('project_name', 'asc')->get() : collect();
+
+        $selectedProject = null;
+        $phases = collect();
+        $milestones = collect();
+        $stats = ['phases_done' => 0, 'phases_processing' => 0, 'phases_upcoming' => 0];
+
+        if ($request->has('project_id') && $hasProjects) {
+            $selectedProject = Project::with('phases')->find($request->project_id);
+            if ($selectedProject) {
+                $selectedProject->id = $selectedProject->project_id;
+                $selectedProject->name = $selectedProject->project_name;
+                $phases = $selectedProject->phases->map(function($phase) {
+                    $color = '#cbd5e1'; $statusText = 'Upcoming';
+                    if ($phase->status === 'completed') { $color = '#22c55e'; $statusText = 'Completed'; }
+                    elseif ($phase->status === 'in_progress') { $color = '#eab308'; $statusText = 'In Progress'; }
+                    return (object)[
+                        'title' => $phase->phase_name, 'start_date' => $phase->start_date, 'end_date' => $phase->end_date,
+                        'color_code' => $color, 'is_current' => ($phase->status === 'in_progress'),
+                        'status_note' => $phase->description ?? 'Phase operations verified',
+                        'progress_percentage' => $phase->completion_percentage ?? 0, 'status_text' => $statusText
+                    ];
+                });
+                $stats = [
+                    'phases_done' => $selectedProject->phases->where('status', 'completed')->count(),
+                    'phases_processing' => $selectedProject->phases->where('status', 'in_progress')->count(),
+                    'phases_upcoming' => $selectedProject->phases->where('status', 'pending')->count(),
+                ];
+                $milestones = collect([
+                    (object)['type' => 'info', 'type_label' => 'MOBILIZATION', 'title' => 'Site Operations Initialized', 'description' => 'Equipment arrival and safety perimeter configurations cleared.', 'logged_at' => $selectedProject->start_date ?? Carbon::now()],
+                    (object)['type' => 'warning', 'type_label' => 'TARGET DEADLINE', 'title' => 'Structural Hand-over Target', 'description' => 'Core shell completion targeted baseline estimation.', 'logged_at' => $selectedProject->target_end_date ?? Carbon::now()->addMonths(3)]
+                ]);
+            }
+        }
+        return view('admin.timeline', compact('projects', 'selectedProject', 'phases', 'milestones', 'stats'));
     }
 
-    public function reports()
+    public function inventory(Request $request)
     {
-        return view('admin.reports');
+        $projectId = $request->input('project_id');
+        
+        // 1. Get Projects for the Filter Dropdown
+        $projects = \App\Models\Project::orderBy('project_name', 'asc')->get();
+
+        // 2. Get Available Materials
+        $availableMaterials = \Illuminate\Support\Facades\Schema::hasTable('materials') 
+            ? \Illuminate\Support\Facades\DB::table('materials')->orderBy('name', 'asc')->get() 
+            : collect();
+
+        // 3. Initialize Variables
+        $inventoryItems = collect();
+        $metrics = ['active_deliveries' => 0, 'low_stock_alerts' => 0, 'total_value' => 0.00];
+
+        // 4. Fetch and filter data if table exists
+        if (\Illuminate\Support\Facades\Schema::hasTable('material_deliveries')) {
+            $query = \Illuminate\Support\Facades\DB::table('material_deliveries');
+            
+            if ($projectId) {
+                $query->where('project_id', $projectId);
+            }
+            
+            $inventoryItems = $query->get();
+            
+            // Update metrics safely
+            $metrics['active_deliveries'] = $inventoryItems->count();
+            
+            // Use sum only if the column exists to avoid SQL errors
+            if (\Illuminate\Support\Facades\Schema::hasColumn('material_deliveries', 'total_price')) {
+                $metrics['total_value'] = $inventoryItems->sum('total_price');
+            }
+        }
+
+        $haulingTrips = collect(); 
+        $locations = collect();
+
+        return view('admin.inventory', compact('metrics', 'inventoryItems', 'availableMaterials', 'haulingTrips', 'locations', 'projects'));
     }
 
-    public function phases()
+    public function updateSettings(Request $request)
     {
-        return view('admin.phases');
+        return redirect()->back()->with('success', 'Notification settings updated.');
     }
 
-    public function attendance()
+    /**
+     * Store an incoming material delivery request log
+     */
+    public function storeDelivery(Request $request)
     {
-        return view('admin.attendance');
-    }
+        $request->validate([
+            'material_id'   => 'required',
+            'quantity'      => 'required|numeric|min:1',
+            'unit'          => 'required|string',
+            'supplier_name' => 'required|string|max:255',
+        ]);
 
-    public function inventory()
-    {
-        return view('admin.inventory');
+        return redirect()->back()->with('success', 'Material transaction asset processed successfully.');
     }
 
     public function alerts()

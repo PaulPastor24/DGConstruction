@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Client;
 use App\Models\User;
+use App\Models\Report; // Added explicitly to prevent class structural errors
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use Illuminate\Http\Request;
@@ -55,11 +56,12 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        $clients = Client::with('user')->get();
-        $supervisors = User::query()
-            ->where('role', 'site_supervisor')
-            ->where('is_active', true)
-            ->orderBy('name')
+        // Fetch all client profiles along with their user profile data cleanly
+        $clients = \App\Models\Client::with('user')->get();
+        
+        // Fetch site supervisors
+        $supervisors = \App\Models\User::where('role', 'site_supervisor')
+            ->where('is_active', 1)
             ->get();
 
         return view('admin.projects.create', compact('clients', 'supervisors'));
@@ -98,11 +100,31 @@ class ProjectController extends Controller
                 ]);
             }
 
+            // AUTOMATION LINK: Seed default physical construction timelines into 'phases' table
+            $defaultPhases = [
+                ['phase_name' => 'Phase 1: Mobilization & Site Clearance', 'weight' => 10],
+                ['phase_name' => 'Phase 2: Substructure & Foundation Works', 'weight' => 30],
+                ['phase_name' => 'Phase 3: Structural Frame & Superstructure', 'weight' => 40],
+                ['phase_name' => 'Phase 4: Architectural Works & Finishing', 'weight' => 20],
+            ];
+
+            foreach ($defaultPhases as $index => $phase) {
+                $project->phases()->create([
+                    'phase_name'            => $phase['phase_name'],
+                    // Standardized statuses matching the enum choices in your migration exactly[cite: 6]
+                    'status'                => $index === 0 ? 'in_progress' : 'not_started', 
+                    'completion_percentage' => 0,
+                    'planned_start_date'    => $project->start_date,      
+                    'planned_end_date'      => $project->target_end_date, 
+                    'phase_order'           => $index + 1,
+                ]);
+            }
+
             DB::commit();
 
             return redirect()
                 ->route('admin.projects.show', $project)
-                ->with('success', 'Project created successfully!');
+                ->with('success', 'Project created and architectural milestones initialized successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -401,5 +423,29 @@ class ProjectController extends Controller
                 ->back()
                 ->with('error', 'Failed to delete project: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Render the custom Phase Management Workspace.
+     * Aligned explicitly with the Project Engineer / Admin approval ecosystem.
+     */
+    public function phaseManagement()
+    {
+        // Aligned with system mapping: Uses Report model mapping tracking table references
+        $pendingReports = Report::where('status', 'pending')
+            ->with(['project', 'supervisor']) 
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Safety wrap prevents system runtime crashing if structural log models haven't migrated yet
+        $auditLogs = [];
+        if (class_exists('\App\Models\PhaseAuditLog')) {
+            $auditLogs = \App\Models\PhaseAuditLog::with(['project', 'user'])
+                ->orderBy('created_at', 'desc')
+                ->take(10)
+                ->get();
+        }
+
+        return view('admin.phases', compact('pendingReports', 'auditLogs'));
     }
 }

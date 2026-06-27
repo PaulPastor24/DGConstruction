@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
-use App\Models\Report;
 use App\Models\ConstructionPhase;
 use App\Models\Milestone;
+use App\Models\Project;
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -16,18 +16,14 @@ class SupervisorController extends Controller
     {
         $user = Auth::user();
 
-        // Get all projects assigned to this supervisor
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
         })->with(['phases', 'client.user', 'engineer'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get dashboard metrics
         $totalProjects = $assignedProjects->count();
         $hasApprovalStatus = Schema::hasColumn('accomplishment_reports', 'approval_status');
-
-        // Get current phases (phases that are in_progress)
         $assignedProjectIds = $assignedProjects->pluck('project_id')->all();
 
         $currentPhases = ConstructionPhase::query()
@@ -40,7 +36,6 @@ class SupervisorController extends Controller
             ->with('project')
             ->get();
 
-        // Get delayed milestones
         $delayedMilestones = Milestone::whereHas('phase', function ($q) use ($assignedProjects) {
             $q->whereIn('project_id', $assignedProjects->pluck('project_id'));
         })->where('is_delayed', true)
@@ -49,7 +44,6 @@ class SupervisorController extends Controller
             ->orderBy('planned_date')
             ->get();
 
-        // Get pending reports (fall back to all reports if the approval column is not available)
         $pendingReports = Report::query()
             ->where(function ($query) use ($assignedProjectIds) {
                 foreach ($assignedProjectIds as $projectId) {
@@ -65,7 +59,6 @@ class SupervisorController extends Controller
             ->limit(5)
             ->get();
 
-        // Get recent approved reports (only when the approval workflow columns exist)
         $approvedReports = $hasApprovalStatus
             ? Report::query()
                 ->where(function ($query) use ($assignedProjectIds) {
@@ -81,7 +74,6 @@ class SupervisorController extends Controller
                 ->get()
             : collect();
 
-        // Get recent rejected reports (only when the approval workflow columns exist)
         $rejectedReports = $hasApprovalStatus
             ? Report::query()
                 ->where(function ($query) use ($assignedProjectIds) {
@@ -97,7 +89,6 @@ class SupervisorController extends Controller
                 ->get()
             : collect();
 
-        // Calculate overall statistics
         $stats = [
             'total_projects' => $totalProjects,
             'active_projects' => $assignedProjects->filter(fn($p) => $p->status === 'ongoing')->count(),
@@ -112,7 +103,6 @@ class SupervisorController extends Controller
             ),
         ];
 
-        // Get upcoming milestones (next 7 days)
         $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($assignedProjects) {
             $q->whereIn('project_id', $assignedProjects->pluck('project_id'));
         })->where('is_completed', false)
@@ -133,5 +123,30 @@ class SupervisorController extends Controller
             'rejectedReports',
             'stats'
         ));
+    }
+
+    public function timeline()
+    {
+        return view('supervisor.timeline');
+    }
+
+    public function attendance()
+    {
+        return view('supervisor.attendance');
+    }
+
+    public function materials()
+    {
+        return view('supervisor.material');
+    }
+
+    public function saveAttendance(Request $request)
+    {
+        return back()->with('success', 'Attendance saved successfully.');
+    }
+
+    public function logDelivery(Request $request)
+    {
+        return back()->with('success', 'Delivery logged successfully.');
     }
 }

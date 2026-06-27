@@ -37,8 +37,13 @@
             <div class="section-header">
                 <div class="section-title">Active Projects</div>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button class="topbar-btn primary" onclick="window.location.href='{{ route('admin.projects.create') }}'" style="padding: 6px 12px; font-size: 12px;">+ New Project</button>
-                    <a href="{{ route('admin.projects.index') }}" class="section-link">View All</a>
+                    <a href="{{ route('admin.projects.create') }}" class="topbar-btn primary {{ request()->routeIs('admin.projects.create') ? 'active' : '' }}" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: inline-block;">
+                        + New Project
+                    </a>
+                    
+                    <a href="{{ route('admin.projects.index') }}" class="section-link {{ request()->routeIs('admin.projects.index') ? 'active' : '' }}">
+                        View All
+                    </a>
                 </div>
             </div>
             
@@ -72,33 +77,6 @@
         </div>
 
         <div>
-            <div class="card mb-0" style="margin-bottom:16px;">
-                <div class="card-header">
-                    <div class="card-title">Project Burn Rate</div>
-                    <div style="font-size:12px;color:var(--muted)">Monthly</div>
-                </div>
-                
-                <div class="mini-chart" style="height:60px; margin-bottom: 8px;">
-                    @foreach($burnRateData['bars'] ?? [] as $bar)
-                        <div class="mini-bar {{ $bar['is_active'] ? 'active' : '' }}" style="height:{{ $bar['percentage'] }}%"></div>
-                    @endforeach
-                </div>
-                
-                <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom: 14px;">
-                    @foreach($burnRateData['months'] ?? [] as $month)
-                        <span>{{ $month }}</span>
-                    @endforeach
-                </div>
-                <div style="font-family:var(--heading); font-size:22px; font-weight:800; margin-bottom:4px;">
-                    ₱{{ number_format($burnRateData['current_cost'] ?? 0, 1) }}M
-                </div>
-                <div style="font-size:12px; color:var(--muted);">
-                    Total cost this month <span style="{{ ($burnRateData['trend_up'] ?? true) ? 'color:var(--red)' : 'color:var(--green)' }}">
-                        {{ ($burnRateData['trend_up'] ?? true) ? '↑' : '↓' }} {{ $burnRateData['variance_percentage'] ?? 0 }}%
-                    </span>
-                </div>
-            </div>
-
             <div class="card mb-0">
                 <div class="card-header">
                     <div class="card-title">Workforce Summary</div>
