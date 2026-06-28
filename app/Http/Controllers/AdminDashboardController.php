@@ -219,4 +219,72 @@ class AdminDashboardController extends Controller
     {
         return view('admin.alerts');
     }
+
+    public function reports(Request $request)
+    {
+        $queueCount = [
+            'awaiting_review' => 0,
+            'in_review' => 0,
+            'approved' => 0,
+            'needs_revision' => 0,
+        ];
+
+        $submissions = collect();
+        $selectedReport = null;
+
+        if (Schema::hasTable('accomplishment_reports')) {
+            $reportColumns = Schema::getColumnListing('accomplishment_reports');
+            $hasApprovalStatus = in_array('approval_status', $reportColumns, true);
+            $hasStatus = in_array('status', $reportColumns, true);
+
+            $reportsQuery = DB::table('accomplishment_reports as ar')
+                ->leftJoin('projects as p', 'p.project_id', '=', 'ar.project_id')
+                ->leftJoin('users as u', 'u.user_id', '=', 'ar.submitted_by')
+                ->select(
+                    'ar.report_id as id',
+                    'p.project_name',
+                    'u.name as supervisor_name',
+                    'ar.created_at as submitted_at',
+                    'ar.report_text as notes_summary',
+                    'ar.project_id',
+                    'ar.phase_id'
+                );
+
+            if ($hasApprovalStatus) {
+                $reportsQuery->addSelect(DB::raw('ar.approval_status as status'));
+            } elseif ($hasStatus) {
+                $reportsQuery->addSelect(DB::raw('ar.status as status'));
+            } else {
+                $reportsQuery->addSelect(DB::raw('NULL as status'));
+            }
+
+            $reportsQuery->orderBy('ar.created_at', 'desc');
+            $submissions = $reportsQuery->get();
+
+            $queueCount['awaiting_review'] = $submissions->where('status', 'pending')->count();
+            $queueCount['in_review'] = $submissions->where('status', 'reviewed')->count();
+            $queueCount['approved'] = $submissions->where('status', 'approved')->count();
+            $queueCount['needs_revision'] = $submissions->where('status', 'rejected')->count();
+
+            if ($request->filled('report_id')) {
+                $selectedReport = $submissions->firstWhere('id', $request->report_id);
+            }
+        }
+
+        return view('admin.reports', compact('queueCount', 'submissions', 'selectedReport'));
+    }
+
+    public function attendance()
+    {
+        $attendance = collect();
+
+        if (Schema::hasTable('attendance_logs')) {
+            $attendance = Attendance::query()
+                ->orderBy('log_date', 'desc')
+                ->take(20)
+                ->get();
+        }
+
+        return view('admin.attendance', compact('attendance'));
+    }
 }

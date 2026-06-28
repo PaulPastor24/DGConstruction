@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateProjectRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class ProjectController extends Controller
 {
@@ -60,8 +61,9 @@ class ProjectController extends Controller
         $clients = \App\Models\Client::with('user')->get();
         
         // Fetch site supervisors
-        $supervisors = \App\Models\User::where('role', 'site_supervisor')
-            ->where('is_active', 1)
+        $supervisors = \App\Models\User::query()
+            ->where('role', '=', 'site_supervisor')
+            ->where('is_active', '=', 1)
             ->get();
 
         return view('admin.projects.create', compact('clients', 'supervisors'));
@@ -431,13 +433,21 @@ class ProjectController extends Controller
      */
     public function phaseManagement()
     {
-        // Aligned with system mapping: Uses Report model mapping tracking table references
-        $pendingReports = Report::where('status', 'pending')
-            ->with(['project', 'supervisor']) 
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $pendingReports = collect();
 
-        // Safety wrap prevents system runtime crashing if structural log models haven't migrated yet
+        if (Schema::hasTable('accomplishment_reports')) {
+            $reportColumns = Schema::getColumnListing('accomplishment_reports');
+            $query = Report::query()->with(['project', 'submittedBy'])->orderBy('created_at', 'desc');
+
+            if (in_array('approval_status', $reportColumns, true)) {
+                $query->where('approval_status', 'pending');
+            } elseif (in_array('status', $reportColumns, true)) {
+                $query->where('status', 'pending');
+            }
+
+            $pendingReports = $query->get();
+        }
+
         $auditLogs = [];
         if (class_exists('\App\Models\PhaseAuditLog')) {
             $auditLogs = \App\Models\PhaseAuditLog::with(['project', 'user'])

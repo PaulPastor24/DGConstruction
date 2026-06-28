@@ -253,11 +253,16 @@
 
 @section('content')
 <div class="page active" id="pg-timeline">
-    
-    <div class="timeline-header">
-        <div class="timeline-project-selector">
-            <select id="projectSelector" onchange="selectProject(this.value)">
-                <option value="">-- Select Project --</option>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">Project Timeline</h4>
+                    <p class="text-muted mb-0 small">Track project phases, milestones, and progress for your assigned work.</p>
+                </div>
+                <div class="timeline-project-selector">
+                    <select id="projectSelector" onchange="selectProject(this.value)" class="form-select">
+                        <option value="">-- Select Project --</option>
                 @foreach($projectsWithStats as $project)
                     <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                 @endforeach
@@ -270,6 +275,7 @@
             <div>
                 <i class="bi bi-calendar-check" style="font-size: 48px; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
                 Select a project to view timeline and milestones
+                </div>
             </div>
         </div>
     </div>

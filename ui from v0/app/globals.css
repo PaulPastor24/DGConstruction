@@ -1,0 +1,18 @@
+/* Fluent UI v9 styles components via Griffel (CSS-in-JS).
+   Global CSS stays minimal: a reset and full-height shell only.
+   All colors, typography, and spacing come from Fluent design tokens. */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#__fluent-root {
+  min-height: 100vh;
+}
