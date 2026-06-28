@@ -21,7 +21,7 @@ class UserController extends Controller
         
         $total_users = DB::table('users')->count();
         $engineers_count = DB::table('users')->where('role', 'engineer')->count();
-        $supervisors_count = DB::table('users')->where('role', 'site_supervisor')->count();
+        $supervisors_count = DB::table('users')->where('role', 'supervisor')->count();
         $clients_count = DB::table('users')->where('role', 'client')->count();
 
         return view('admin.users.index', compact('users', 'total_users', 'engineers_count', 'supervisors_count', 'clients_count'));
@@ -43,11 +43,16 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
+            $parts = preg_split('/\s+/', trim($request->name), 2);
+            $first = $parts[0] ?? $request->name;
+            $last = $parts[1] ?? '';
+
             // Create the user
             $user = User::create([
-                'name' => $request->name,
+                'first_name' => $first,
+                'last_name' => $last,
                 'email' => $request->email,
-                'password_hash' => Hash::make($request->password),
+                'password' => Hash::make($request->password),
                 'role' => $request->role,
                 'contact_number' => $request->contact_number,
                 'is_active' => $request->is_active ?? true,
@@ -94,15 +99,21 @@ class UserController extends Controller
             DB::beginTransaction();
 
             $originalData = [
-                'name' => $user->name,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
                 'email' => $user->email,
                 'role' => $user->role,
                 'contact_number' => $user->contact_number,
                 'is_active' => (int) $user->is_active,
             ];
 
+            $parts = preg_split('/\s+/', trim($request->input('name')), 2);
+            $first = $parts[0] ?? $request->input('name');
+            $last = $parts[1] ?? '';
+
             $newData = [
-                'name' => $request->input('name'),
+                'first_name' => $first,
+                'last_name' => $last,
                 'email' => $request->input('email'),
                 'role' => $request->input('role'),
                 'contact_number' => $request->input('contact_number'),
@@ -121,7 +132,7 @@ class UserController extends Controller
 
             // Only update password if provided
             if ($request->filled('password')) {
-                $data['password_hash'] = Hash::make($request->password);
+                $data['password'] = Hash::make($request->password);
             }
 
             $user->update($data);

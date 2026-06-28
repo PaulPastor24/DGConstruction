@@ -18,7 +18,7 @@ class ReportPolicy
         }
 
         // Supervisor can view reports from their assigned projects
-        if ($user->role === 'site_supervisor') {
+        if ($user->role === 'supervisor') {
             return $report->project->supervisors()
                 ->where('supervisor_id', $user->user_id)
                 ->exists();
@@ -38,7 +38,7 @@ class ReportPolicy
     public function submit(User $user, Report $report): bool
     {
         // Only supervisors can submit reports, and for their assigned projects
-        if ($user->role !== 'site_supervisor') {
+        if ($user->role !== 'supervisor') {
             return false;
         }
 
@@ -84,7 +84,7 @@ class ReportPolicy
         }
 
         // Supervisor can only delete their own pending reports
-        if ($user->role === 'site_supervisor' && $user->user_id === $report->submitted_by) {
+        if ($user->role === 'supervisor' && $user->user_id === $report->submitted_by) {
             return $report->approval_status === 'pending';
         }
 

@@ -1,5 +1,5 @@
-import { SupervisorDashboard } from '@/components/supervisor-dashboard'
+import { AttendanceModule } from '@/components/attendance-module'
 
 export default function Home() {
-  return <SupervisorDashboard />
+  return <AttendanceModule />
 }

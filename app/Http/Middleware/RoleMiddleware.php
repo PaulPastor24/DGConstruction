@@ -20,7 +20,14 @@ class RoleMiddleware
     {
         // If the user isn't logged in, or doesn't match the required role, boot them out
         $user = $request->user();
-        if (!$user || $user->role !== $role) {
+        if (!$user) {
+            return redirect('/login')->with('error', 'Unauthorized access.');
+        }
+
+
+
+
+            if ($user->role !== $role) {
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 

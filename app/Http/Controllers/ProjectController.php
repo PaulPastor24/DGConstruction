@@ -62,7 +62,7 @@ class ProjectController extends Controller
         
         // Fetch site supervisors
         $supervisors = \App\Models\User::query()
-            ->where('role', '=', 'site_supervisor')
+            ->where('role', '=', 'supervisor')
             ->where('is_active', '=', 1)
             ->get();
 
@@ -175,9 +175,9 @@ class ProjectController extends Controller
     {
         $clients = Client::with('user')->get();
         $supervisors = User::query()
-            ->where('role', 'site_supervisor')
+            ->where('role', 'supervisor')
             ->where('is_active', true)
-            ->orderBy('name')
+            ->orderBy('first_name')
             ->get();
 
         // Get current assigned supervisor

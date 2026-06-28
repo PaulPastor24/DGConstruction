@@ -124,7 +124,6 @@ const useStyles = makeStyles({
     paddingLeft: '24px',
     paddingRight: '24px',
     borderRadius: '10px',
-    border: 'none',
     backgroundColor: 'transparent',
     color: '#2F6B3C',
     cursor: 'pointer',

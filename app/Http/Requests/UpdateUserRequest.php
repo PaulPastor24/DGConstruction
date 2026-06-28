@@ -32,7 +32,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($user?->user_id ?? $this->route('user')?->user_id, 'user_id'),
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:engineer,site_supervisor,client'],
+            'role' => ['required', 'in:engineer,supervisor,client'],
             'contact_number' => ['nullable', 'string', 'max:20'],
             'is_active' => ['nullable', 'boolean'],
         ];

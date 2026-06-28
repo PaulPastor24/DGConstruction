@@ -22,7 +22,7 @@ Route::get('/dashboard', function () {
     // Dynamically route users to their correct workspace matching web.php gates
     return match ($user->role) {
         'engineer'        => redirect()->route('admin.dashboard'),
-        'site_supervisor' => redirect()->route('supervisor.dashboard'),
+        'supervisor'      => redirect()->route('supervisor.dashboard'),
         'client'          => redirect()->route('client.dashboard'),
         default           => abort(403, 'Unauthorized role assignment.'),
     };
@@ -88,7 +88,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
 });
 
 // Only Site Supervisors can enter here
-Route::middleware(['auth', 'role:site_supervisor'])->group(function () {
+Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
@@ -97,8 +97,10 @@ Route::middleware(['auth', 'role:site_supervisor'])->group(function () {
     Route::get('/supervisor/materials', [SupervisorController::class, 'materials'])->name('supervisor.materials');
     Route::post('/supervisor/materials', [SupervisorController::class, 'logDelivery'])->name('supervisor.materials.log');
     Route::get('/supervisor/reports', [ReportController::class, 'supervisorReports'])->name('supervisor.reports');
+    Route::get('/supervisor/reports/{id}', [ReportController::class, 'show'])->name('supervisor.reports.show');
     Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
+    Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
 });
 
 // Only Clients can enter here

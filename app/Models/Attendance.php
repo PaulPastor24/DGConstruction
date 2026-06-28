@@ -13,33 +13,41 @@ class Attendance extends Model
     public $timestamps = false; // This table only has created_at
 
     protected $fillable = [
-        'project_id',
-        'worker_id',
+        'deployment_id',
         'recorded_by',
         'log_date',
         'time_in',
         'time_out',
         'status',
         'remarks',
+        'biometric_matched',
     ];
 
     protected $casts = [
         'log_date' => 'date',
+        'biometric_matched' => 'boolean',
     ];
 
     // Relationships
     public function project()
     {
-        return $this->belongsTo(Project::class, 'project_id', 'project_id');
+        // Attendance now links to a ProjectWorker deployment which links to a project
+        return $this->hasOneThrough(Project::class, ProjectWorker::class, 'deployment_id', 'project_id', 'deployment_id', 'project_id');
     }
 
     public function worker()
     {
+        // Prefer accessing via the deployment relation
         return $this->belongsTo(Worker::class, 'worker_id', 'worker_id');
     }
 
     public function recordedBy()
     {
         return $this->belongsTo(User::class, 'recorded_by', 'user_id');
+    }
+
+    public function deployment()
+    {
+        return $this->belongsTo(ProjectWorker::class, 'deployment_id', 'deployment_id');
     }
 }

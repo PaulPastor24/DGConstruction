@@ -217,6 +217,10 @@ class ReportController extends Controller
     {
         $user = auth('web')->user();
 
+        $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
+            $q->where('supervisor_id', $user->user_id);
+        })->orderBy('project_name')->get();
+
         $query = Report::whereHas('project', function ($q) use ($user) {
             $q->whereHas('supervisors', function ($sq) use ($user) {
                 $sq->where('supervisor_id', $user->user_id);
@@ -227,9 +231,20 @@ class ReportController extends Controller
             $query->where('approval_status', $request->status);
         }
 
-        $reports = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->only(['status']));
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
 
-        return view('supervisor.reports.index', compact('reports'));
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('project', function ($q) use ($search) {
+                $q->where('project_name', 'like', "%{$search}%");
+            });
+        }
+
+        $reports = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->only(['status', 'project_id', 'search']));
+
+        return view('supervisor.reports.index', compact('reports', 'assignedProjects'));
     }
 
     /**
@@ -275,7 +290,7 @@ class ReportController extends Controller
         }
 
         // Supervisor can view reports from their assigned projects
-        if ($user->role === 'site_supervisor') {
+        if ($user->role === 'supervisor') {
             if ($report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
                 return true;
             }
@@ -289,7 +304,7 @@ class ReportController extends Controller
      */
     private function authorizeSupervisor(Project $project)
     {
-        if (auth('web')->user()->role !== 'site_supervisor') {
+        if (auth('web')->user()->role !== 'supervisor') {
             abort(403, 'Only supervisors can submit reports');
         }
 

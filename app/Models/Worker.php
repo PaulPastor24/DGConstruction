@@ -12,7 +12,8 @@ class Worker extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
-        'full_name',
+        'first_name',
+        'last_name',
         'trade',
         'contact_number',
         'is_active',
@@ -25,5 +26,13 @@ class Worker extends Model
     public function attendanceLogs()
     {
         return $this->hasMany(Attendance::class, 'worker_id', 'worker_id');
+    }
+
+    /**
+     * Compatibility accessor for templates expecting `full_name`.
+     */
+    public function getFullNameAttribute()
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
     }
 }

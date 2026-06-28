@@ -16,17 +16,17 @@ class User extends Authenticatable
     protected $keyType = 'int';
 
     protected $fillable = [
-        'name',
-        'full_name',
+        'first_name',
+        'last_name',
         'email',
-        'password_hash',
+        'password',
         'role',
         'contact_number',
         'is_active',
     ];
 
     protected $hidden = [
-        'password_hash',
+        'password',
         'remember_token',
     ];
 
@@ -51,8 +51,18 @@ class User extends Authenticatable
      */
     public function getAuthPassword()
     {
-        return $this->password_hash;
+        return $this->password;
     }
+
+    /**
+     * Compatibility accessor for templates expecting `name`.
+     */
+    public function getNameAttribute()
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? '')) ?: ($this->full_name ?? null);
+    }
+
+    // Role attribute uses the database value directly (no legacy normalization)
 
     /**
      * Relationship: User has one Client profile
@@ -102,7 +112,7 @@ class User extends Authenticatable
     {
         return match($this->role) {
             'engineer' => 'danger',
-            'site_supervisor' => 'warning',
+            'supervisor' => 'warning',
             'client' => 'info',
             default => 'secondary',
         };
@@ -123,7 +133,7 @@ class User extends Authenticatable
     {
         return match($this->role) {
             'engineer' => 'Engineer/Administrator',
-            'site_supervisor' => 'Site Supervisor',
+            'supervisor' => 'Site Supervisor',
             'client' => 'Client',
             default => ucfirst($this->role),
         };

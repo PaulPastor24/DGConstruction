@@ -174,7 +174,7 @@ export function CurrentPhaseMilestones() {
       </div>
 
       <div>
-        <div style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '12px', display: 'grid', gridTemplateColumns: '40px 1fr 100px 100px 100px', gap: '24px', '@media (max-width: 900px)': { gridTemplateColumns: '40px 1fr' } }}>
+        <div className={styles.headerRow}>
           <div></div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Milestone</div>
           <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target Date</div>

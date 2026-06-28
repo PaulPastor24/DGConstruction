@@ -112,34 +112,88 @@
 
         .content-shell {
             flex: 1;
-            padding: 1.5rem 1.5rem 2rem;
+            padding: 1rem 1rem 1.25rem;
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             background: linear-gradient(180deg, #fafafa 0%, var(--supervisor-bg) 100%);
         }
-        .page-frame { display: flex; flex-direction: column; gap: 1.25rem; max-width: 1500px; margin: 0 auto; }
-        .page-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 22px; box-shadow: 0 10px 32px rgba(9,96,86,0.06); }
-        .page-card-body { padding: 1.5rem; }
-        .page-hero { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-        .eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; color: var(--supervisor-muted); text-transform: uppercase; }
-        .page-title { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--supervisor-primary); margin-bottom: 0.25rem; }
-        .page-subtitle { color: var(--supervisor-muted); font-size: 0.95rem; line-height: 1.6; }
-        .section-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 18px; box-shadow: 0 10px 24px rgba(9,96,86,0.05); }
-        .section-card-body { padding: 1.25rem; }
-        .stat-card { background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%); border: 1px solid rgba(9,96,86,0.08); border-left: 4px solid var(--supervisor-accent); border-radius: 18px; padding: 1rem 1rem 1.1rem; height: 100%; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 8px 20px rgba(9,96,86,0.04); }
+        .page-frame { display: flex; flex-direction: column; gap: 1rem; max-width: 1500px; margin: 0 auto; }
+        .page-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 18px; box-shadow: 0 8px 22px rgba(9,96,86,0.05); }
+        .page-card-body { padding: 1rem; }
+        .page-hero { padding: 1.1rem 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
+        .eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; color: var(--supervisor-muted); text-transform: uppercase; }
+        .page-title { font-family: 'Syne', sans-serif; font-size: 1.55rem; font-weight: 700; color: var(--supervisor-primary); margin-bottom: 0.2rem; line-height: 1.1; }
+        .page-subtitle { color: var(--supervisor-muted); font-size: 0.95rem; line-height: 1.45; }
+        .section-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 18px; box-shadow: 0 10px 24px rgba(9,96,86,0.05); height: auto; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .section-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(9,96,86,0.08); }
+        .section-card-body { padding: 0.9rem 0.95rem; display: flex; flex-direction: column; gap: 0.6rem; }
+        .section-card-body > :last-child { margin-bottom: 0 !important; }
+        .section-card-body > :last-child > :last-child { margin-bottom: 0 !important; }
+        .dashboard-card-grid { align-items: start; }
+        .dashboard-card-grid > [class*="col-"] { display: flex; }
+        .dashboard-card-grid > [class*="col-"] > .section-card { width: 100%; height: auto; }
+        .dashboard-inline-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.28rem 0; border-bottom: none; }
+        .dashboard-inline-item + .dashboard-inline-item { padding-top: 0.5rem; margin-top: 0.35rem; border-top: 1px solid rgba(9,96,86,0.06); }
+        .dashboard-surface { background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%); border: 1px solid rgba(9,96,86,0.08); border-radius: 14px; padding: 0.75rem 0.8rem; }
+        .dashboard-key-value { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.7rem; background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%); border: 1px solid rgba(9,96,86,0.08); border-radius: 14px; min-height: 72px; }
+        .dashboard-summary-pill { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.7rem; border-radius: 999px; background: rgba(9,96,86,0.06); color: var(--supervisor-primary); font-size: 0.82rem; font-weight: 600; }
+        .dashboard-summary-highlight { padding: 0.8rem 0.9rem; border-radius: 14px; background: linear-gradient(135deg, #f8fcf9 0%, #eef8f2 100%); border: 1px solid rgba(9,96,86,0.08); }
+        .dashboard-kpi { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--supervisor-primary); line-height: 1.05; }
+        .dashboard-info-stack { display: flex; flex-direction: column; gap: 0.25rem; }
+        .dashboard-action-btn { width: fit-content; align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; }
+        .dashboard-empty-state { display: flex; align-items: center; gap: 0.7rem; padding: 0.85rem 0.95rem; border-radius: 14px; background: #fafcfb; border: 1px dashed rgba(9,96,86,0.16); color: var(--supervisor-muted); }
+        .dashboard-empty-icon { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(9,96,86,0.08); color: var(--supervisor-primary); flex-shrink: 0; }
+        .dashboard-card-grid.dashboard-row-equal > [class*="col-"] { display: flex; }
+        .dashboard-card-grid.dashboard-row-equal > [class*="col-"] > .section-card { width: 100%; height: 100%; }
+        .stat-card { background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%); border: 1px solid rgba(9,96,86,0.08); border-left: 4px solid var(--supervisor-accent); border-radius: 16px; padding: 0.9rem 0.95rem; height: 100%; display: flex; flex-direction: column; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 6px 16px rgba(9,96,86,0.04); }
         .stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(9,96,86,0.08); }
         .stat-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--supervisor-muted); }
-        .stat-value { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 700; color: var(--supervisor-primary); line-height: 1.1; }
+        .stat-value { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--supervisor-primary); line-height: 1.1; }
         .stat-meta { font-size: 0.85rem; color: var(--supervisor-muted); }
-        .btn-primary-soft { background: var(--supervisor-primary); color: #fff; border: none; border-radius: 12px; padding: 0.8rem 1.15rem; font-weight: 700; box-shadow: 0 8px 18px rgba(9,96,86,0.16); }
-        .btn-primary-soft:hover { background: var(--supervisor-primary-deep); color: #fff; }
-        .btn-outline-soft { background: transparent; border: 1px solid rgba(9,96,86,0.2); color: var(--supervisor-primary); border-radius: 12px; padding: 0.8rem 1.15rem; font-weight: 700; }
-        .btn-outline-soft:hover { background: rgba(9,96,86,0.08); color: var(--supervisor-primary); }
-        .empty-state { padding: 2rem; text-align: center; color: var(--supervisor-muted); background: #fafafa; border: 1px dashed rgba(9,96,86,0.16); border-radius: 16px; }
-        .progress-track { height: 10px; border-radius: 999px; background: #ebf2ee; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--supervisor-secondary), var(--supervisor-accent)); }
+        .btn-primary-soft { background: var(--supervisor-primary); color: #fff; border: none; border-radius: 12px; padding: 0.8rem 1.15rem; font-weight: 700; box-shadow: 0 8px 18px rgba(9,96,86,0.16); transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
+        .btn-primary-soft:hover { background: var(--supervisor-primary-deep); color: #fff; transform: translateY(-1px); box-shadow: 0 10px 20px rgba(9,96,86,0.18); }
+        .btn-outline-soft { background: transparent; border: 1px solid rgba(9,96,86,0.2); color: var(--supervisor-primary); border-radius: 12px; padding: 0.8rem 1.15rem; font-weight: 700; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; }
+        .btn-outline-soft:hover { background: rgba(9,96,86,0.08); color: var(--supervisor-primary); transform: translateY(-1px); box-shadow: 0 8px 16px rgba(9,96,86,0.08); }
+        .empty-state { padding: 0.9rem 1rem; text-align: center; color: var(--supervisor-muted); background: #fafafa; border: 1px dashed rgba(9,96,86,0.16); border-radius: 12px; }
+        .progress-track { height: 8px; border-radius: 999px; background: #ebf2ee; overflow: hidden; position: relative; }
+        .progress-track::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0)); animation: shimmer 2.4s ease-in-out infinite; }
+        .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--supervisor-secondary), var(--supervisor-accent)); transition: width 0.8s ease; }
+        .compact-grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .compact-item { background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%); border: 1px solid rgba(9,96,86,0.08); border-radius: 12px; padding: 0.6rem 0.7rem; }
+        .compact-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--supervisor-muted); margin-bottom: 0.2rem; }
+        .compact-value { font-size: 0.9rem; font-weight: 700; color: var(--supervisor-text); line-height: 1.35; }
+        .activity-item { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.6rem 0.7rem; background: #fcfdfd; border: 1px solid rgba(9,96,86,0.08); border-radius: 12px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .activity-item:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(9,96,86,0.06); }
+        .dashboard-icon { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--supervisor-soft); color: var(--supervisor-primary); flex-shrink: 0; }
+        .activity-icon { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--supervisor-soft); color: var(--supervisor-primary); flex-shrink: 0; }
+        .activity-group { margin-bottom: 0.7rem; }
+        .activity-group-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--supervisor-muted); margin-bottom: 0.45rem; }
+        .activity-timeline { display: flex; flex-direction: column; gap: 0.5rem; }
+        .dashboard-stepper { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.2rem; }
+        .dashboard-layout-row { align-items: flex-start; }
+        .dashboard-layout-row > [class*="col-"] { display: flex; align-items: flex-start; }
+        .dashboard-layout-row > [class*="col-"] > .section-card { width: 100%; height: auto; align-self: flex-start; }
+        .dashboard-step-item { position: relative; display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.6rem 0.7rem; border-radius: 12px; border: 1px solid rgba(9,96,86,0.08); background: #fcfdfd; }
+        .dashboard-step-item.current { border-color: rgba(9,96,86,0.2); box-shadow: 0 8px 18px rgba(9,96,86,0.06); }
+        .dashboard-step-item.upcoming { opacity: 0.85; }
+        .dashboard-step-dot { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; border: 2px solid rgba(9,96,86,0.16); background: #fff; color: var(--supervisor-primary); }
+        .dashboard-step-item.completed .dashboard-step-dot { background: var(--supervisor-secondary); border-color: var(--supervisor-secondary); color: #fff; }
+        .dashboard-step-item.current .dashboard-step-dot { background: var(--supervisor-primary); border-color: var(--supervisor-primary); color: #fff; }
+        .dashboard-step-item.upcoming .dashboard-step-dot { background: #f6f8f8; color: var(--supervisor-muted); }
+        .dashboard-step-title { font-size: 0.94rem; font-weight: 700; color: var(--supervisor-text); }
+        .dashboard-step-meta { font-size: 0.8rem; color: var(--supervisor-muted); }
+        .badge-soft { background: rgba(9,96,86,0.08); color: var(--supervisor-primary); }
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 1040; }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @media (max-width: 768px) {
+            .compact-grid { grid-template-columns: 1fr; }
+        }
 
         @media (max-width: 1024px) {
             .app { display: block; }
@@ -227,131 +281,4 @@
 @stack('scripts')
 </body>
 </html>
-    </style>
-    @stack('styles')
-</head>
-<body>
-<div class="app">
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-badge">
-                <div class="logo-icon">SV</div>
-                <div>
-                    <div class="logo-text">Supervisor</div>
-                </div>
-            </div>
-            <div class="logo-sub">D&G Construction</div>
-        </div>
 
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Operations</div>
-            <a href="{{ route('supervisor.dashboard') }}" class="nav-item {{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-            <a href="{{ route('supervisor.timeline') }}" class="nav-item {{ request()->routeIs('supervisor.timeline') ? 'active' : '' }}">
-                <i class="bi bi-calendar3"></i> Project Timeline
-            </a>
-            <a href="{{ route('supervisor.timeline') }}" class="nav-item {{ request()->routeIs('supervisor.timeline') ? 'active' : '' }}">
-                <i class="bi bi-building"></i> Construction Phases
-            </a>
-            <a href="{{ route('supervisor.attendance') }}" class="nav-item {{ request()->routeIs('supervisor.attendance*') ? 'active' : '' }}">
-                <i class="bi bi-person-check"></i> Attendance
-            </a>
-            <a href="{{ route('supervisor.materials') }}" class="nav-item {{ request()->routeIs('supervisor.materials*') ? 'active' : '' }}">
-                <i class="bi bi-box-seam"></i> Materials
-            </a>
-            <a href="{{ route('supervisor.reports') }}" class="nav-item {{ request()->routeIs('supervisor.reports*') ? 'active' : '' }}">
-                <i class="bi bi-file-earmark-text"></i> Accomplishment Reports
-            </a>
-
-            <div class="nav-section-label">Account</div>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-            <a href="#" class="nav-item" onclick="event.preventDefault(); if(confirm('Are you sure you want to sign out?')) document.getElementById('logout-form').submit();">
-                <i class="bi bi-box-arrow-left"></i> Sign Out
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="user-card">
-                <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
-                <div>
-                    <div class="user-name">{{ Auth::user()->name ?? 'Supervisor' }}</div>
-                    <div class="user-role">{{ Auth::user()->title ?? 'Site Supervisor' }}</div>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <div class="main">
-        <div class="topbar">
-            <div style="display:flex; align-items:center; gap:.75rem; flex:1; min-width:0;">
-                <button id="sidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
-                <div class="topbar-title" id="pageTitle">@yield('page_title', 'Supervisor Dashboard')</div>
-            </div>
-            <div style="font-size:12px; color:var(--supervisor-muted);">{{ now()->format('D, d M Y') }}</div>
-        </div>
-        <div class="content">
-            @yield('content')
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        function updateToggleVisibility() {
-            if (window.innerWidth <= 1024) {
-                sidebarToggle.style.display = 'flex';
-            } else {
-                sidebarToggle.style.display = 'none';
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            }
-        }
-
-        updateToggleVisibility();
-        window.addEventListener('resize', updateToggleVisibility);
-
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-            });
-
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            });
-
-            const navItems = document.querySelectorAll('.sidebar .nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                });
-            });
-
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape' && sidebar.classList.contains('show')) {
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                }
-            });
-        }
-    });
-</script>
-@stack('scripts')
-</body>
-</html>

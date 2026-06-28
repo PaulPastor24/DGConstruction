@@ -39,11 +39,16 @@ class RegisteredUserController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create the user
+            // Create the user (split name into first/last for revised schema)
+            $parts = preg_split('/\s+/', trim($request->name), 2);
+            $first = $parts[0] ?? $request->name;
+            $last = $parts[1] ?? '';
+
             $user = User::create([
-                'name' => $request->name,
+                'first_name' => $first,
+                'last_name' => $last,
                 'email' => $request->email,
-                'password_hash' => Hash::make($request->password),
+                'password' => Hash::make($request->password),
                 'role' => $request->role,
                 'contact_number' => $request->contact_number,
                 'is_active' => $request->is_active ?? true,
@@ -89,8 +94,13 @@ class RegisteredUserController extends Controller
         try {
             DB::beginTransaction();
 
+            $parts = preg_split('/\s+/', trim($request->name), 2);
+            $first = $parts[0] ?? $request->name;
+            $last = $parts[1] ?? '';
+
             $data = [
-                'name' => $request->name,
+                'first_name' => $first,
+                'last_name' => $last,
                 'email' => $request->email,
                 'role' => $request->role,
                 'contact_number' => $request->contact_number,
@@ -99,7 +109,7 @@ class RegisteredUserController extends Controller
 
             // Only update password if provided
             if ($request->filled('password')) {
-                $data['password_hash'] = Hash::make($request->password);
+                $data['password'] = Hash::make($request->password);
             }
 
             $user->update($data);

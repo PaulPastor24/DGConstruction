@@ -1,7 +1,7 @@
 'use client'
 
 import { makeStyles, mergeClasses, tokens, Body2, Body1, Caption1 } from '@fluentui/react-components'
-import { CheckmarkCircle24Regular, Clock24Regular, CheckmarkCircleFilled24Filled } from '@fluentui/react-icons'
+import { CheckmarkCircle24Regular, Clock24Regular, CheckmarkCircle24Filled } from '@fluentui/react-icons'
 
 const useStyles = makeStyles({
   root: {
@@ -194,7 +194,6 @@ const useStyles = makeStyles({
     paddingLeft: '24px',
     paddingRight: '24px',
     borderRadius: '10px',
-    border: 'none',
     backgroundColor: 'transparent',
     color: '#2F6B3C',
     cursor: 'pointer',

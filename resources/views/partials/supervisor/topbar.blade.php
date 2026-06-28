@@ -10,9 +10,9 @@
     </div>
 
     <div class="topbar-right">
-        <button class="topbar-icon" type="button" aria-label="Notifications">
+        <a class="topbar-icon" href="{{ route('supervisor.notifications') }}" aria-label="Notifications">
             <i class="bi bi-bell"></i>
-        </button>
+        </a>
         <div class="topbar-date">{{ now()->format('D, M d, Y') }}</div>
     </div>
 </header>

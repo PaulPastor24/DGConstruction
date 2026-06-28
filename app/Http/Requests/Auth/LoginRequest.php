@@ -45,7 +45,7 @@ class LoginRequest extends FormRequest
         $rawRole = trim(strtolower($this->input('role')));
         $inputRole = match($rawRole) {
             'engineer' => 'engineer',
-            'supervisor', 'site supervisor', 'site_supervisor' => 'site_supervisor',
+            'supervisor', 'site supervisor', 'site_supervisor' => 'supervisor',
             'client' => 'client',
             default => $rawRole,
         };
@@ -69,7 +69,9 @@ class LoginRequest extends FormRequest
         }
 
         // 5. Verify password against your custom column
-        if (!$user || !Hash::check($this->input('password'), $user->password_hash)) {
+        $storedHash = $user ? ($user->password ?? null) : null;
+
+        if (!$user || !$storedHash || !Hash::check($this->input('password'), $storedHash)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

@@ -4,39 +4,54 @@
 @section('page_title', 'Material Tracking')
 
 @section('content')
-<div class="container-fluid p-0">
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 16px;">
-                <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.16em;">Active Deliveries</small>
-                <h3 class="fw-bold text-success mt-2 mb-1" style="font-size: 28px;">{{ $metrics['active_deliveries'] ?? 0 }}</h3>
-                <small class="text-muted">This week</small>
+<div class="d-flex flex-column gap-3">
+    <section class="page-card">
+        <div class="page-hero">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3">
+                <div>
+                    <div class="eyebrow">Site Operations</div>
+                    <h1 class="page-title mb-2">Material Monitoring</h1>
+                    <p class="page-subtitle mb-0">Track deliveries, stock health, and site material value in the same workspace language as the dashboard.</p>
+                </div>
+                <span class="badge rounded-pill badge-soft">
+                    <i class="bi bi-box-seam me-2"></i>Inventory overview
+                </span>
             </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 16px;">
-                <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.16em;">Low Stock Alerts</small>
-                <h3 class="fw-bold text-dark mt-2 mb-1" style="font-size: 28px;">{{ $metrics['low_stock_alerts'] ?? 0 }}</h3>
-                <small class="text-muted">Immediate reorder needed</small>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 16px;">
-                <small class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.16em;">Material Asset Value</small>
-                <h3 class="fw-bold text-success mt-2 mb-1" style="font-size: 28px;">₱{{ isset($metrics['total_value']) ? number_format($metrics['total_value'] / 1000000, 1) . 'M' : '0.0M' }}</h3>
-                <small class="text-muted">Total allocated to site</small>
-            </div>
-        </div>
-    </div>
 
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
-        <div class="card-body p-4">
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-lg-4">
+                    <div class="stat-card">
+                        <div class="stat-title">Active Deliveries</div>
+                        <div class="stat-value">{{ $metrics['active_deliveries'] ?? 0 }}</div>
+                        <div class="stat-meta">This week</div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="stat-card">
+                        <div class="stat-title">Low Stock Alerts</div>
+                        <div class="stat-value">{{ $metrics['low_stock_alerts'] ?? 0 }}</div>
+                        <div class="stat-meta">Immediate reorder needed</div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="stat-card">
+                        <div class="stat-title">Material Asset Value</div>
+                        <div class="stat-value">₱{{ isset($metrics['total_value']) ? number_format($metrics['total_value'] / 1000000, 1) . 'M' : '0.0M' }}</div>
+                        <div class="stat-meta">Total allocated to site</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-card mb-3">
+        <div class="section-card-body">
             <h5 class="fw-bold mb-1">Inventory Status</h5>
-            <p class="text-muted small mb-4">Monitor stock levels for your assigned site resources.</p>
+            <p class="text-muted small mb-3">Monitor stock levels for your assigned site resources.</p>
             <div class="d-flex flex-column gap-3">
                 @if(isset($inventory) && $inventory->count() > 0)
                     @foreach($inventory as $item)
-                        <div class="p-3 border rounded-3 bg-white d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #eef2e5 !important;">
+                        <div class="dashboard-surface d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
                                 <h6 class="mb-1 text-dark fw-semibold">{{ $item->name }}</h6>
                                 <p class="mb-0 text-muted small">
@@ -51,18 +66,19 @@
                         </div>
                     @endforeach
                 @else
-                    <div class="p-4 text-center text-muted border rounded-3 bg-light-subtle">
-                        No current material storage allocations managed for this structure block.
+                    <div class="dashboard-empty-state">
+                        <div class="dashboard-empty-icon"><i class="bi bi-box-seam"></i></div>
+                        <div>No current material storage allocations are managed for this structure block.</div>
                     </div>
                 @endif
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-        <div class="card-body p-4">
+    <section class="section-card">
+        <div class="section-card-body">
             <h5 class="fw-bold mb-1">Log Material Delivery</h5>
-            <p class="text-muted small mb-4">Capture incoming materials and supplier details.</p>
+            <p class="text-muted small mb-3">Capture incoming materials and supplier details.</p>
             <form action="{{ route('supervisor.materials.log') }}" method="POST">
                 @csrf
                 <div class="row g-3">
@@ -100,12 +116,12 @@
                 </div>
 
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-success px-4 py-2 fw-semibold">
+                    <button type="submit" class="btn btn-primary-soft px-4 py-2">
                         Log Receipt Entry
                     </button>
                 </div>
             </form>
         </div>
-    </div>
+    </section>
 </div>
 @endsection

@@ -141,6 +141,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: raw project_workers deployments
+     */
+    public function projectWorkers()
+    {
+        return $this->hasMany(ProjectWorker::class, 'project_id', 'project_id');
+    }
+
+    /**
      * Relationship: Project has many reports through phases
      */
     public function reports()

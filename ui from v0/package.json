@@ -10,14 +10,21 @@
   "dependencies": {
     "@fluentui/react-components": "^9.74.1",
     "@fluentui/react-icons": "^2.0.329",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.525.0",
     "next": "^16.2.9",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.4.5"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
 }

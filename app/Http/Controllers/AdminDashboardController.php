@@ -35,7 +35,7 @@ class AdminDashboardController extends Controller
             'on_track_projects' => $activeProjectsCount,
             'completion_rate_label' => "↑ {$executionRate}% execution rate",
             'total_workforce' => Schema::hasTable('users')
-                ? DB::table('users')->where('role', '=', 'site_supervisor')->count() : 0,
+                ? DB::table('users')->where('role', '=', 'supervisor')->count() : 0,
             'pending_reports' => $hasReportsTable
                 ? DB::table('accomplishment_reports')->count()
                 : 0,
@@ -162,8 +162,8 @@ class AdminDashboardController extends Controller
         $projects = Project::orderBy('project_name', 'asc')->get();
 
         // 2. Get Available Materials
-        $availableMaterials = Schema::hasTable('materials') 
-            ? DB::table('materials')->orderBy('name', 'asc')->get() 
+        $availableMaterials = Schema::hasTable('materials')
+            ? \App\Models\Material::orderBy('name', 'asc')->get()
             : collect();
 
         // 3. Initialize Variables
@@ -172,18 +172,16 @@ class AdminDashboardController extends Controller
 
         // 4. Fetch and filter data if table exists
         if (Schema::hasTable('material_deliveries')) {
-            $query = DB::table('material_deliveries');
-            
+            $query = DB::table('material_deliveries')->orderBy('delivered_at', 'desc');
+
             if ($projectId) {
                 $query->where('project_id', $projectId);
             }
-            
+
             $inventoryItems = $query->get();
-            
-            // Update metrics safely
+
             $metrics['active_deliveries'] = $inventoryItems->count();
-            
-            // Use sum only if the column exists to avoid SQL errors
+
             if (Schema::hasColumn('material_deliveries', 'total_price')) {
                 $metrics['total_value'] = $inventoryItems->sum('total_price');
             }
@@ -296,6 +294,23 @@ class AdminDashboardController extends Controller
             'unit'          => 'required|string',
             'supplier_name' => 'required|string|max:255',
         ]);
+
+        $data = [
+            'material_id' => $request->input('material_id'),
+            'quantity' => $request->input('quantity'),
+            'unit' => $request->input('unit'),
+            'supplier_name' => $request->input('supplier_name'),
+            'delivered_at' => now(),
+        ];
+
+        if ($request->filled('project_id')) {
+            $data['project_id'] = $request->input('project_id');
+        }
+
+        // Use DB insert to avoid model PK assumptions
+        if (Schema::hasTable('material_deliveries')) {
+            DB::table('material_deliveries')->insert($data);
+        }
 
         return redirect()->back()->with('success', 'Material transaction asset processed successfully.');
     }

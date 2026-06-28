@@ -42,7 +42,7 @@ const useStyles = makeStyles({
     fontSize: '14px',
     '&:focus': {
       outline: 'none',
-      borderColor: '#2F6B3C',
+      border: '1px solid #2F6B3C',
       boxShadow: '0 0 0 3px rgba(47, 107, 60, 0.1)',
     },
   },

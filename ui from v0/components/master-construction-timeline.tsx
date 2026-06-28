@@ -70,12 +70,12 @@ const useStyles = makeStyles({
   },
   phaseNodeCompleted: {
     backgroundColor: '#66BB6A',
-    borderColor: '#2F6B3C',
+    border: '2px solid #2F6B3C',
     color: '#FFFFFF',
   },
   phaseNodeCurrent: {
     backgroundColor: '#2F6B3C',
-    borderColor: '#2F6B3C',
+    border: '2px solid #2F6B3C',
     color: '#FFFFFF',
     width: '72px',
     height: '72px',

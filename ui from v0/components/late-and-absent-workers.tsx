@@ -119,7 +119,7 @@ const useStyles = makeStyles({
     transition: 'all 0.2s ease',
     '&:hover': {
       backgroundColor: '#F5F5F0',
-      borderColor: '#2F6B3C',
+      border: '1px solid #2F6B3C',
     },
   },
 })

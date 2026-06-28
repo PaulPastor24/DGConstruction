@@ -53,7 +53,7 @@ class SupervisorController extends Controller
             })
             ->where('submitted_by', $user->user_id)
             ->when($hasApprovalStatus, function ($query) {
-                $query->where('approval_status', 'pending');
+                return $query->where('approval_status', 'pending');
             })
             ->with(['project', 'phase'])
             ->orderBy('created_at', 'desc')
@@ -104,8 +104,8 @@ class SupervisorController extends Controller
             ),
         ];
 
-        $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($assignedProjects) {
-            $q->whereIn('project_id', $assignedProjects->pluck('project_id'));
+        $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($assignedProjectIds) {
+            $q->whereIn('project_id', $assignedProjectIds);
         })->where('is_completed', false)
             ->where('is_delayed', false)
             ->whereBetween('planned_date', [now(), now()->addDays(7)])
@@ -119,10 +119,22 @@ class SupervisorController extends Controller
         $projectWorkersCount = $primaryProject ? max(0, $primaryProject->workers()->count()) : 0;
 
         if ($primaryProject) {
-            $attendanceRecords = Attendance::query()
-                ->where('project_id', $primaryProject->project_id)
-                ->whereDate('log_date', now()->toDateString())
-                ->get();
+            try {
+                $attendanceQuery = Attendance::query()
+                    ->whereHas('deployment', function ($q) use ($primaryProject) {
+                        $q->where('project_id', $primaryProject->project_id);
+                    });
+
+                if (Schema::hasColumn('attendance_logs', 'log_date')) {
+                    $attendanceQuery->whereDate('log_date', now()->toDateString());
+                }
+
+                $attendanceRecords = $attendanceQuery->with(['deployment.worker', 'recordedBy'])->get();
+            } catch (\Throwable $e) {
+                // If DB schema mismatch or other query error happens, avoid crashing the dashboard.
+                report($e);
+                $attendanceRecords = collect();
+            }
         } else {
             $attendanceRecords = collect();
         }
@@ -233,12 +245,16 @@ class SupervisorController extends Controller
         $user = Auth::user();
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
-        })->with('workers')->get();
+        })->with(['projectWorkers.worker'])->get();
 
-        $workers = $assignedProjects->flatMap(fn($project) => $project->workers)->unique('worker_id')->values();
+        $deployments = $assignedProjects->flatMap(fn($project) => $project->projectWorkers)->unique('deployment_id')->values();
+        $workers = $deployments->map(fn($d) => $d->worker)->unique('worker_id')->values();
         $activeProject = $assignedProjects->first();
 
-        return view('supervisor.attendance', compact('workers', 'activeProject'));
+        // Provide deployments for the active project if the view needs deployment_id
+        $activeDeployments = $activeProject ? $activeProject->projectWorkers()->with('worker')->get() : collect();
+
+        return view('supervisor.attendance', compact('workers', 'activeProject', 'activeDeployments'));
     }
 
     public function profile()
@@ -248,18 +264,114 @@ class SupervisorController extends Controller
             $query->where('supervisor_id', $user->user_id);
         })->orderBy('created_at', 'desc')->get();
 
-        return view('supervisor.profile', compact('user', 'assignedProjects'));
+        $assignedProjectIds = $assignedProjects->pluck('project_id')->all();
+
+        // Compute lightweight actionable metrics for the profile (decision support)
+        $pendingReportsCount = Report::query()
+            ->where('submitted_by', '=', $user->user_id)
+            ->when(Schema::hasColumn('accomplishment_reports', 'approval_status'), function ($q) {
+                return $q->where('approval_status', 'pending');
+            })->count();
+
+        $avgProjectCompletion = $assignedProjects->isEmpty() ? 0 : round($assignedProjects->flatMap(fn($p) => $p->phases)->avg('completion_percentage') ?? 0, 2);
+
+        $upcomingMilestone = null;
+        if ($assignedProjects->isNotEmpty()) {
+            $upcomingMilestone = Milestone::whereHas('phase', function ($q) use ($assignedProjectIds) {
+                $q->whereIn('project_id', $assignedProjectIds);
+            })->where('is_completed', false)->where('is_delayed', false)->orderBy('planned_date')->first();
+        }
+
+        return view('supervisor.profile', compact('user', 'assignedProjects', 'pendingReportsCount', 'avgProjectCompletion', 'upcomingMilestone'));
+    }
+
+    public function notifications()
+    {
+        $user = Auth::user();
+
+        $notifications = collect([
+            [
+                'id' => 1,
+                'title' => 'Daily report reminder',
+                'message' => 'Your project update is due before 6:00 PM.',
+                'type' => 'Reports',
+                'status' => 'Unread',
+                'priority' => 'High',
+                'created_at' => now()->subHours(2),
+                'module' => 'supervisor.reports',
+            ],
+            [
+                'id' => 2,
+                'title' => 'Material delivery confirmed',
+                'message' => 'Steel deliveries for the North Tower Fit-Out are now logged.',
+                'type' => 'Materials',
+                'status' => 'Unread',
+                'priority' => 'Medium',
+                'created_at' => now()->subHours(5),
+                'module' => 'supervisor.materials',
+            ],
+            [
+                'id' => 3,
+                'title' => 'Timeline update available',
+                'message' => 'The next construction phase is now visible in the schedule.',
+                'type' => 'Project Timeline',
+                'status' => 'Read',
+                'priority' => 'Low',
+                'created_at' => now()->subDay(),
+                'module' => 'supervisor.timeline',
+            ],
+        ]);
+
+        return view('supervisor.notifications', compact('user', 'notifications'));
     }
 
     public function materials()
     {
+        $user = Auth::user();
+
+        $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
+            $q->where('supervisor_id', $user->user_id);
+        })->pluck('project_id')->all();
+
         $metrics = [
             'active_deliveries' => 0,
             'low_stock_alerts' => 0,
             'total_value' => 0,
         ];
+
+        $materials_list = Schema::hasTable('materials') ? \App\Models\Material::orderBy('name', 'asc')->get() : collect();
+
         $inventory = collect();
-        $materials_list = collect();
+
+        if (Schema::hasTable('material_deliveries')) {
+            $query = \App\Models\MaterialDelivery::query();
+            if (!empty($assignedProjects)) {
+                $query->whereIn('project_id', $assignedProjects, 'and', false);
+            }
+
+            $deliveries = $query->with('material', 'project')->orderBy('delivered_at', 'desc')->get();
+
+            $metrics['active_deliveries'] = $deliveries->count();
+            if (Schema::hasColumn('material_deliveries', 'total_price')) {
+                $metrics['total_value'] = $deliveries->sum('total_price');
+            }
+
+            // Build inventory summary grouped by material matching view expectations
+            $inventory = $deliveries->groupBy('material_id')->map(function ($group, $materialId) {
+                $material = $group->first()->material ?? null;
+                $delivered = $group->sum('quantity');
+                return (object)[
+                    'id' => $materialId,
+                    'name' => $material ? ($material->name ?? 'Material') : 'Material',
+                    'delivered' => $delivered,
+                    'used' => 0,
+                    'unit' => $group->first()->unit ?? ($material->unit ?? null),
+                    'last_delivered' => optional($group->first())->delivered_at,
+                    'status_text' => $delivered > 0 ? 'In stock' : 'Out of stock',
+                    'status_color' => $delivered > 0 ? 'success' : 'danger',
+                ];
+            })->values();
+        }
 
         return view('supervisor.material', compact('metrics', 'inventory', 'materials_list'));
     }

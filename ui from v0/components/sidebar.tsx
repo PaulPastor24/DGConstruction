@@ -8,6 +8,7 @@ import {
   People24Regular,
   Document24Regular,
   SignOut24Regular,
+  Alert24Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -161,6 +162,10 @@ export function Sidebar({ open }: SidebarProps) {
           <Document24Regular />
           <span>Accomplishment Reports</span>
         </Link>
+        <Link href="/notifications" className={mergeClasses(styles.navItem, pathname === '/notifications' && styles.navItemActive)}>
+          <Alert24Regular />
+          <span>Notifications</span>
+        </Link>
       </div>
 
       <div className={styles.flex} />
@@ -168,10 +173,10 @@ export function Sidebar({ open }: SidebarProps) {
       <div className={styles.divider} />
 
       <div className={styles.section}>
-        <button className={styles.navItem}>
+        <Link href="/profile" className={mergeClasses(styles.navItem, pathname === '/profile' && styles.navItemActive)}>
           <People24Regular />
           <span>Profile</span>
-        </button>
+        </Link>
         <button className={styles.navItem}>
           <SignOut24Regular />
           <span>Logout</span>

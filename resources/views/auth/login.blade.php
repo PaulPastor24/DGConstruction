@@ -26,7 +26,7 @@
 
             <div class="role-tabs" id="roleTabs">
                 <button type="button" class="role-tab active" onclick="selectRole(this, 'engineer')">Engineer</button>
-                <button type="button" class="role-tab" onclick="selectRole(this, 'site_supervisor')">Supervisor</button>
+                <button type="button" class="role-tab" onclick="selectRole(this, 'supervisor')">Supervisor</button>
                 <button type="button" class="role-tab" onclick="selectRole(this, 'client')">Client</button>
             </div>
 
@@ -77,7 +77,7 @@
         // Dynamically shifts demo accounts based on chosen enum values
         const emailInput = document.getElementById('loginEmail');
         if(role === 'engineer') emailInput.value = 'admin@dg-corp.ph';
-        if(role === 'site_supervisor') emailInput.value = 'supervisor@dg-corp.ph';
+        if(role === 'supervisor') emailInput.value = 'supervisor@dg-corp.ph';
         if(role === 'client') emailInput.value = 'client@dg-corp.ph';
     }
 

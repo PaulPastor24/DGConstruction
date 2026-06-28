@@ -24,7 +24,7 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],  // FIXED: Changed from 'full_name' to 'name'
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:engineer,site_supervisor,client'],
+            'role' => ['required', 'in:engineer,supervisor,client'],
             'contact_number' => ['nullable', 'string', 'max:20'],
             'is_active' => ['nullable', 'boolean'],
         ];

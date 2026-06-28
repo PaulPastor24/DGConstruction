@@ -138,7 +138,7 @@
                                         required>
                                     <option value="">-- Select Role --</option>
                                     <option value="engineer" {{ old('role', $user->role) == 'engineer' ? 'selected' : '' }}>Engineer/Administrator</option>
-                                    <option value="site_supervisor" {{ old('role', $user->role) == 'site_supervisor' ? 'selected' : '' }}>Site Supervisor</option>
+                                    <option value="supervisor" {{ old('role', $user->role) == 'supervisor' ? 'selected' : '' }}>Site Supervisor</option>
                                     <option value="client" {{ old('role', $user->role) == 'client' ? 'selected' : '' }}>Client</option>
                                 </select>
                                 @error('role')

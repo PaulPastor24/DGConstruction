@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
         DB::table('attendance_logs')->truncate();
         DB::table('construction_phases')->truncate();
         DB::table('project_supervisors')->truncate();
+        DB::table('project_workers')->truncate();
+        DB::table('workers')->truncate();
+        DB::table('timeline_milestones')->truncate();
+        DB::table('worker_biometric_profiles')->truncate();
         DB::table('projects')->truncate();
         DB::table('clients')->truncate();
         DB::table('users')->truncate();
@@ -38,44 +42,42 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Ceramic Tiles (60x60)', 'unit' => 'boxes', 'created_at' => now(), 'updated_at' => now()],
         ]);
         
-        // 3. Insert non-client users
-        DB::table('users')->insert([
-            [
-                'name' => 'Lead Project Engineer',
-                'email' => 'admin@dg-corp.ph',
-                'password_hash' => $password,
-                'role' => 'engineer',
-                'contact_number' => '+639171234567',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Site Supervisor Alpha',
-                'email' => 'supervisor@dg-corp.ph',
-                'password_hash' => $password,
-                'role' => 'site_supervisor',
-                'contact_number' => '+639177654321',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
-
-        $clientId = DB::table('users')->insertGetId([
-            'name' => 'John Doe',
-            'full_name' => 'John Doe (Client Representative)',
-            'email' => 'client@dg-corp.ph',
-            'password_hash' => $password,
-            'role' => 'client',
-            'contact_number' => '+639159998888',
-            'is_active' => 1,
+        // 3. Insert users (engineer, supervisor, client) using revised schema columns
+        $engineerId = DB::table('users')->insertGetId([
+            'first_name' => 'Lead',
+            'last_name' => 'Engineer',
+            'name' => 'Lead Engineer',
+            'email' => 'admin@dg-corp.ph',
+            'password' => $password,
+            'role' => 'engineer',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        DB::table('clients')->insert([
-            'user_id' => $clientId,
+        $supervisorId = DB::table('users')->insertGetId([
+            'first_name' => 'Site',
+            'last_name' => 'Supervisor',
+            'name' => 'Site Supervisor',
+            'email' => 'supervisor@dg-corp.ph',
+            'password' => $password,
+            'role' => 'supervisor',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $clientUserId = DB::table('users')->insertGetId([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'name' => 'John Doe',
+            'email' => 'client@dg-corp.ph',
+            'password' => $password,
+            'role' => 'client',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $clientId = DB::table('clients')->insertGetId([
+            'user_id' => $clientUserId,
             'company_name' => 'D&G Construction Corp',
             'address' => 'Lipa City, Batangas',
             'created_at' => now(),
@@ -84,11 +86,11 @@ class DatabaseSeeder extends Seeder
 
         DB::table('projects')->insert([
             [
-                'project_id' => 1,
                 'project_name' => 'Kulas and Rene',
-                'project_location' => 'Quezon City',
-                'client_id' => 1,
-                'engineer_id' => 1,
+            'location' => 'Quezon City',
+            'project_location' => 'Quezon City',
+                'client_id' => $clientId,
+                'engineer_id' => $engineerId,
                 'start_date' => now()->addDays(5),
                 'target_end_date' => now()->addMonths(8),
                 'actual_end_date' => null,
@@ -98,11 +100,11 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'project_id' => 2,
                 'project_name' => 'Ghost Project',
+                'location' => 'Pasig',
                 'project_location' => 'Pasig',
-                'client_id' => 1,
-                'engineer_id' => 1,
+                'client_id' => $clientId,
+                'engineer_id' => $engineerId,
                 'start_date' => now(),
                 'target_end_date' => now()->addMonths(6),
                 'actual_end_date' => null,
@@ -116,14 +118,14 @@ class DatabaseSeeder extends Seeder
         DB::table('project_supervisors')->insert([
             [
                 'project_id' => 1,
-                'supervisor_id' => 2,
+                'supervisor_id' => $supervisorId,
                 'assigned_date' => now()->toDateString(),
                 'is_active' => 1,
                 'created_at' => now(),
             ],
             [
                 'project_id' => 2,
-                'supervisor_id' => 2,
+                'supervisor_id' => $supervisorId,
                 'assigned_date' => now()->toDateString(),
                 'is_active' => 1,
                 'created_at' => now(),
@@ -131,6 +133,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(ConstructionPhaseSeeder::class);
+        $this->call(DevelopmentDataSeeder::class);
 
     }
 }

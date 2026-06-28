@@ -36,18 +36,18 @@
                             @if(isset($workers) && $workers->count() > 0)
                                 @foreach($workers as $worker)
                                     <tr class="border-bottom">
-                                        <td class="py-3 fw-semibold">{{ $worker->name }}</td>
-                                        <td class="py-3 text-muted">{{ $worker->role }}</td>
+                                        <td class="py-3 fw-semibold">{{ $worker->full_name ?? ($worker->first_name . ' ' . $worker->last_name) ?? 'Worker' }}</td>
+                                        <td class="py-3 text-muted">{{ $worker->trade ?? 'General' }}</td>
                                         <td class="py-3">
                                             <div class="d-flex justify-content-center flex-wrap gap-2">
-                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->id }}]" id="present-{{ $worker->id }}" value="present" checked>
-                                                <label class="btn btn-outline-success btn-sm px-3 rounded-pill fw-medium" for="present-{{ $worker->id }}">Present</label>
+                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->worker_id ?? $worker->id }}]" id="present-{{ $worker->worker_id ?? $worker->id }}" value="present" checked>
+                                                <label class="btn btn-outline-success btn-sm px-3 rounded-pill fw-medium" for="present-{{ $worker->worker_id ?? $worker->id }}">Present</label>
 
-                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->id }}]" id="late-{{ $worker->id }}" value="late">
-                                                <label class="btn btn-outline-warning btn-sm px-3 rounded-pill fw-medium" for="late-{{ $worker->id }}">Late</label>
+                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->worker_id ?? $worker->id }}]" id="late-{{ $worker->worker_id ?? $worker->id }}" value="late">
+                                                <label class="btn btn-outline-warning btn-sm px-3 rounded-pill fw-medium" for="late-{{ $worker->worker_id ?? $worker->id }}">Late</label>
 
-                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->id }}]" id="absent-{{ $worker->id }}" value="absent">
-                                                <label class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-medium" for="absent-{{ $worker->id }}">Absent</label>
+                                                <input type="radio" class="btn-check" name="attendance[{{ $worker->worker_id ?? $worker->id }}]" id="absent-{{ $worker->worker_id ?? $worker->id }}" value="absent">
+                                                <label class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-medium" for="absent-{{ $worker->worker_id ?? $worker->id }}">Absent</label>
                                             </div>
                                         </td>
                                     </tr>
