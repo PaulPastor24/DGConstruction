@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
@@ -158,11 +159,11 @@ class AdminDashboardController extends Controller
         $projectId = $request->input('project_id');
         
         // 1. Get Projects for the Filter Dropdown
-        $projects = \App\Models\Project::orderBy('project_name', 'asc')->get();
+        $projects = Project::orderBy('project_name', 'asc')->get();
 
         // 2. Get Available Materials
-        $availableMaterials = \Illuminate\Support\Facades\Schema::hasTable('materials') 
-            ? \Illuminate\Support\Facades\DB::table('materials')->orderBy('name', 'asc')->get() 
+        $availableMaterials = Schema::hasTable('materials') 
+            ? DB::table('materials')->orderBy('name', 'asc')->get() 
             : collect();
 
         // 3. Initialize Variables
@@ -170,8 +171,8 @@ class AdminDashboardController extends Controller
         $metrics = ['active_deliveries' => 0, 'low_stock_alerts' => 0, 'total_value' => 0.00];
 
         // 4. Fetch and filter data if table exists
-        if (\Illuminate\Support\Facades\Schema::hasTable('material_deliveries')) {
-            $query = \Illuminate\Support\Facades\DB::table('material_deliveries');
+        if (Schema::hasTable('material_deliveries')) {
+            $query = DB::table('material_deliveries');
             
             if ($projectId) {
                 $query->where('project_id', $projectId);
@@ -183,7 +184,7 @@ class AdminDashboardController extends Controller
             $metrics['active_deliveries'] = $inventoryItems->count();
             
             // Use sum only if the column exists to avoid SQL errors
-            if (\Illuminate\Support\Facades\Schema::hasColumn('material_deliveries', 'total_price')) {
+            if (Schema::hasColumn('material_deliveries', 'total_price')) {
                 $metrics['total_value'] = $inventoryItems->sum('total_price');
             }
         }
@@ -192,6 +193,34 @@ class AdminDashboardController extends Controller
         $locations = collect();
 
         return view('admin.inventory', compact('metrics', 'inventoryItems', 'availableMaterials', 'haulingTrips', 'locations', 'projects'));
+    }
+
+    /**
+     * Display the admin reports layout interface.
+     */
+    public function reports()
+    {
+        $hasReports = Schema::hasTable('accomplishment_reports');
+        
+        $reports = $hasReports 
+            ? Report::with(['project', 'user'])->orderBy('created_at', 'desc')->get() 
+            : collect();
+
+        return view('admin.reports', compact('reports'));
+    }
+
+    /**
+     * Display the attendance monitoring records dashboard.
+     */
+    public function attendance()
+    {
+        $hasAttendance = Schema::hasTable('attendance_logs');
+
+        $logs = $hasAttendance 
+            ? Attendance::with('user')->orderBy('log_date', 'desc')->get() 
+            : collect();
+
+        return view('admin.attendance', compact('logs'));
     }
 
     public function updateSettings(Request $request)
