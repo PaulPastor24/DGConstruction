@@ -64,20 +64,28 @@
         }
 
         .brand-icon, .sidebar-logo-img {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            background: #ffffff;
+            border-radius: 50%;
+            background: transparent;
+            overflow: hidden;
         }
 
         .sidebar-logo-img {
+            border-radius: 50%;
+            padding: 0;
+            background: transparent;
+        }
+
+        .sidebar-logo-img img {
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            border-radius: 12px;
-            background: #ffffff;
+            display: block;
         }
 
         .brand-icon {
