@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Milestone;
+use App\Models\Project;
+use App\Models\Report;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +25,31 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('layouts.client', function ($view) {
+            $user = Auth::user();
+            $notifications = collect();
+            $notificationCount = 0;
+
+            if ($user && $user->client) {
+                $notifications = collect([
+                    [
+                        'title' => 'New milestone scheduled',
+                        'message' => 'A new milestone has been added to your active project timeline.',
+                        'time' => Carbon::now()->subHours(2)->diffForHumans(),
+                    ],
+                    [
+                        'title' => 'Report uploaded',
+                        'message' => 'Engineering report has been submitted for review.',
+                        'time' => Carbon::now()->subDay()->diffForHumans(),
+                    ],
+                ]);
+                $notificationCount = $notifications->count();
+            }
+
+            $view->with([
+                'clientNotifications' => $notifications,
+                'clientNotificationCount' => $notificationCount,
+            ]);
+        });
     }
 }

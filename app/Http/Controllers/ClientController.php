@@ -112,41 +112,53 @@ class ClientController extends Controller
         ));
     }
 
-    public function timeline(Request $request)
+    public function myProjects(Request $request)
     {
         $user = Auth::user();
-        $projects = collect();
-        $project = null;
-        $latest_update = null;
+        $client = $user?->client;
 
-        if ($user && $user->client) {
-            $projects = Project::query()
-                ->where('client_id', '=', $user->client->client_id)
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            if ($request->filled('project_id')) {
-                $project = $projects->firstWhere('project_id', $request->project_id);
-            }
-
-            if (!$project) {
-                $project = $projects->first();
-            }
+        if (!$client) {
+            abort(403, 'User is not associated with a client account');
         }
 
-        if ($project) {
-            $latest_update = Report::query()
-                ->where('project_id', '=', $project->project_id)
-                ->latest('report_date')
-                ->first();
+        $query = Project::query()
+            ->where('client_id', '=', $client->client_id)
+            ->with(['phases', 'engineer', 'supervisors'])
+            ->orderBy('created_at', 'desc');
 
-            if ($latest_update) {
-                $latest_update->content = $latest_update->report_text;
-                $latest_update->log_date = $latest_update->report_date;
-            }
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($query) use ($search) {
+                $query->where('project_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
+            });
         }
 
-        return view('client.status', compact('projects', 'project', 'latest_update'));
+        $projects = $query->get();
+
+        $projectSummaries = $projects->map(function ($project) {
+            $phases = $project->phases;
+            $completedPhases = $phases->filter(fn($p) => $p->status === 'completed')->count();
+
+            return [
+                'project' => $project,
+                'total_phases' => $phases->count(),
+                'completed_phases' => $completedPhases,
+                'current_phase' => $phases->firstWhere('status', 'in_progress'),
+                'completion' => round($phases->avg('completion_percentage') ?? 0, 2),
+            ];
+        })->sortByDesc('completion');
+
+        return view('client.myprojects', compact('projectSummaries'));
+    }
+
+    public function timeline(Request $request)
+    {
+        // Client timeline is now consolidated under TimelineController::clientTimeline.
+        // Preserve this action as a redirect for any legacy references.
+        return redirect()->route('client.timeline');
     }
 
     public function updates(Request $request)
@@ -178,6 +190,7 @@ class ClientController extends Controller
                 ->get();
         }
 
-        return view('client.update', compact('projects', 'project', 'updates'));
+        $reports = $updates;
+        return view('client.report', compact('projects', 'project', 'reports'));
     }
 }
