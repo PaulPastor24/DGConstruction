@@ -3,13 +3,11 @@
 @section('title', 'Timeline & Milestones - Client Portal')
 
 @section('content')
+@section('pageHeaderLabel', 'PROJECT TRACKING')
+@section('pageHeaderTitle', 'Timeline & Milestones')
+@section('pageHeaderCopy', 'Real-time progress overview of construction phases and target milestones.')
+
 <div class="container-fluid p-0">
-    
-    <div class="mb-4">
-        <span class="text-uppercase tracking-wider text-success fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">PROJECT TRACKING</span>
-        <h2 class="fw-extrabold text-dark m-0 mt-1" style="font-size: 1.75rem; font-weight: 800;">Timeline & Milestones</h2>
-        <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Real-time progress overview of construction phases and target milestones.</p>
-    </div>
 
     <div class="card timeline-ui-panel border-0">
         <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">

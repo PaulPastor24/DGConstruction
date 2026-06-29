@@ -4,14 +4,11 @@
 
 
 @section('content')
+@section('pageHeaderLabel', 'OVERVIEW')
+@section('pageHeaderTitle', 'My Projects')
+@section('pageHeaderCopy', 'Your active projects and current construction status at a glance.')
+
 <div class="container-fluid p-0">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <span class="text-uppercase tracking-wider text-success fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">OVERVIEW</span>
-            <h2 class="m-0" style="font-size: 1.75rem; font-weight: 800; color: var(--text-primary);">My Projects</h2>
-        </div>
-    </div>
 
     @php
         $totalProjects = count($projectSummaries ?? []);

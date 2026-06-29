@@ -3,13 +3,11 @@
 @section('title', 'Reports & Documents - Client Portal')
 
 @section('content')
+@section('pageHeaderLabel', 'WORKSPACE DOCUMENTATION')
+@section('pageHeaderTitle', 'Reports & Transmittals')
+@section('pageHeaderCopy', 'Access formal engineering write-ups, material certifications, and digital site receipts.')
+
 <div class="container-fluid p-0">
-    
-    <div class="mb-4">
-        <span class="text-uppercase tracking-wider text-success fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">WORKSPACE DOCUMENTATION</span>
-        <h2 class="fw-extrabold text-dark m-0 mt-1" style="font-size: 1.75rem; font-weight: 800;">Reports & Transmittals</h2>
-        <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Access formal engineering write-ups, material certifications, and digital site receipts.</p>
-    </div>
 
     <div class="row g-4 mb-4">
         <div class="col-12 col-sm-6 col-md-4">
