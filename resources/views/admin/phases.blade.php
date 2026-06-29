@@ -59,13 +59,13 @@
                             </td>
                             <td class="pe-4 text-end" style="padding: 16px;">
                                 <div class="d-inline-flex gap-2">
-                                    <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" class="m-0">
+                                    <form action="{{ route('admin.reports.approve', $report->report_id) }}" method="POST" class="m-0">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-success px-3 d-flex align-items-center gap-1" style="font-size: 12px; padding: 4px 12px;">
                                             ✓ Approve
                                         </button>
                                     </form>
-                                    <form action="{{ route('admin.reports.revise', $report->id) }}" method="POST" class="m-0">
+                                    <form action="{{ route('admin.reports.revise', $report->report_id) }}" method="POST" class="m-0">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-secondary px-3" style="font-size: 12px; padding: 4px 12px; background-color: #f8fafc;">
                                             Request Revision
@@ -142,4 +142,4 @@
     </div>
 
 </div>
-@endsection 
+@endsection
