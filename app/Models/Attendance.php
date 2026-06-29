@@ -3,14 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
     protected $table = 'attendance_logs';
+
     protected $primaryKey = 'log_id';
+
     public $incrementing = true;
+
     protected $keyType = 'int';
-    public $timestamps = false; // This table only has created_at
+
+    /**
+     * Disable Laravel's automatic created_at and updated_at handling.
+     */
+    public $timestamps = false;
 
     protected $fillable = [
         'deployment_id',
@@ -28,26 +36,49 @@ class Attendance extends Model
         'biometric_matched' => 'boolean',
     ];
 
-    // Relationships
-    public function project()
+    /**
+     * Deployment connected to the attendance record.
+     *
+     * attendance_logs.deployment_id
+     * connects to project_workers.deployment_id.
+     */
+    public function deployment(): BelongsTo
     {
-        // Attendance now links to a ProjectWorker deployment which links to a project
-        return $this->hasOneThrough(Project::class, ProjectWorker::class, 'deployment_id', 'project_id', 'deployment_id', 'project_id');
+        return $this->belongsTo(
+            ProjectWorker::class,
+            'deployment_id',
+            'deployment_id'
+        );
     }
 
-    public function worker()
+    /**
+     * User who recorded the attendance.
+     *
+     * attendance_logs.recorded_by
+     * connects to users.user_id.
+     */
+    public function recordedBy(): BelongsTo
     {
-        // Prefer accessing via the deployment relation
-        return $this->belongsTo(Worker::class, 'worker_id', 'worker_id');
+        return $this->belongsTo(
+            User::class,
+            'recorded_by',
+            'user_id'
+        );
     }
 
-    public function recordedBy()
+    /**
+     * Convenient access to the worker through the deployment.
+     */
+    public function getWorkerAttribute()
     {
-        return $this->belongsTo(User::class, 'recorded_by', 'user_id');
+        return $this->deployment?->worker;
     }
 
-    public function deployment()
+    /**
+     * Convenient access to the project through the deployment.
+     */
+    public function getProjectAttribute()
     {
-        return $this->belongsTo(ProjectWorker::class, 'deployment_id', 'deployment_id');
+        return $this->deployment?->project;
     }
 }

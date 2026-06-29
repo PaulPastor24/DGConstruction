@@ -45,7 +45,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
     
-    // UPDATED: Phase Management route now references ProjectController instead of AdminDashboardController
+    // Phase Management route
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
     
     // ACTION WORKSPACE ENDPOINTS: For approving/revising reports inside Phase Management
@@ -61,11 +61,10 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     // Alerts Management Routes
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
-    Route::post('/admin/inventory/delivery', [AdminDashboardController::class, 'storeDelivery'])->name('admin.inventory.store-delivery');
 
     // ==================== PROJECT MANAGEMENT ====================
     Route::prefix('admin/projects')->name('admin.projects.')->group(function () {
-        Route::get('/', [ProjectController::class, 'index'])->name('index');
+        Route::get('/', [ProjectController::class, 'index'])->name('index'); // Resolves to admin.projects.index
         Route::get('/create', [ProjectController::class, 'create'])->name('create');
         Route::post('/', [ProjectController::class, 'store'])->name('store');
         Route::get('/{project}', [ProjectController::class, 'show'])->name('show');
@@ -77,7 +76,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
 
     // ==================== USER MANAGEMENT ====================
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/', [UserController::class, 'index'])->name('index'); // Resolves to admin.users.index
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
