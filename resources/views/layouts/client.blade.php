@@ -64,20 +64,28 @@
         }
 
         .brand-icon, .sidebar-logo-img {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
-            background: #ffffff;
+            border-radius: 50%;
+            background: transparent;
+            overflow: hidden;
         }
 
         .sidebar-logo-img {
+            border-radius: 50%;
+            padding: 0;
+            background: transparent;
+        }
+
+        .sidebar-logo-img img {
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            border-radius: 12px;
-            background: #ffffff;
+            display: block;
         }
 
         .brand-icon {
@@ -203,6 +211,7 @@
             padding: 1.5rem 2.25rem;
             background: transparent;
             gap: 1rem;
+            min-height: 84px;
         }
 
         .welcome-msg h2 {
@@ -219,15 +228,7 @@
             font-weight: 500;
         }
 
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .topbar-actions-left {
+        .topbar-left {
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -235,10 +236,104 @@
             min-width: 0;
         }
 
+        .topbar-page-header {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.125rem;
+            min-width: 0;
+        }
+
+        .page-header-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #16a34a;
+        }
+
+        .page-header-title {
+            font-size: 1.35rem;
+            margin: 0;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .page-header-copy {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            justify-content: flex-end;
+            width: auto;
+        }
+
+        .topbar-actions-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .date-badge,
+        .topbar-user-block,
+        .notification-bell {
+            min-height: 44px;
+        }
+
         .topbar-action-icons {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            justify-content: flex-end;
+            min-width: 0;
+        }
+
+        .topbar-user-block {
+            padding: 0.5rem 0.9rem;
+            min-width: 220px;
+            max-width: 300px;
+        }
+
+        .topbar-user-block {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #ffffff;
+            min-width: 180px;
+            max-width: 280px;
+        }
+
+        .topbar-user-initial {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #16a34a;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .topbar-user-name div {
+            font-size: 0.75rem;
+            color: #64748b;
+            line-height: 1.2;
+        }
+
+        .topbar-user-name strong {
+            font-size: 0.95rem;
+            display: block;
+            color: var(--text-primary);
+            line-height: 1.2;
         }
 
         .topbar-actions .avatar-circle {
@@ -437,8 +532,9 @@
             .welcome-msg p { font-size: 0.8rem; }
             .date-badge { width: 100%; justify-content: center; }
             .topbar-actions { width: 100%; gap: 0.75rem; justify-content: space-between; }
-            .topbar-actions-left { flex: 1; }
+            .topbar-actions-left { flex: 0 1 auto; }
             .topbar-action-icons { justify-content: flex-end; }
+            .topbar-user-block { min-width: 100%; }
             .notification-popup { width: calc(100vw - 3rem); right: 0.75rem; }
             .content { padding: 0 1rem 1rem 1rem; }
         }
@@ -498,9 +594,17 @@
 
     <div class="main">
         <div class="topbar">
-            <div class="d-flex align-items-center gap-3">
+            <div class="topbar-left">
                 <button id="sidebarToggle"><i class="bi bi-list"></i></button>
-
+                <div class="topbar-page-header">
+                    @hasSection('pageHeaderLabel')
+                        <span class="page-header-label">@yield('pageHeaderLabel')</span>
+                    @endif
+                    <h2 class="page-header-title">@yield('pageHeaderTitle', 'Dashboard')</h2>
+                    @hasSection('pageHeaderCopy')
+                        <p class="page-header-copy">@yield('pageHeaderCopy')</p>
+                    @endif
+                </div>
             </div>
             
             <div class="topbar-actions">
@@ -511,6 +615,13 @@
                     </div>
                 </div>
                 <div class="topbar-action-icons">
+                    <div class="topbar-user-block d-flex align-items-center gap-2">
+                        <div class="topbar-user-initial">{{ strtoupper(substr(Auth::user()->name ?? 'C', 0, 1)) }}</div>
+                        <div class="topbar-user-name">
+                            <div>Welcome back</div>
+                            <strong>{{ Auth::user()->name ? strtok(Auth::user()->name, ' ') : 'Client' }}</strong>
+                        </div>
+                    </div>
                     <div class="notification-bell" id="notificationBell" aria-label="Notifications" role="button" tabindex="0">
                         <i class="bi bi-bell"></i>
                         <div class="notification-badge"></div>

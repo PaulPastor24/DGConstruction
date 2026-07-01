@@ -4,14 +4,6 @@
 
 @section('content')
 
-    <div class="mb-4">
-       
-        <h2 class="fw-extrabold text-dark m-0 mt-1" style="font-size: 1.75rem; font-weight: 800;">Dashboard</h2>
-        <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Real-time project progress overview and milestone tracking for your construction portfolio.</p>
-        
-    </div>
-
-<div class="container-fluid p-0">
     @php
         $primaryProject = $projects->first();
         $primaryProjectName = optional($primaryProject)->project_name ?? 'Project Overview';
@@ -20,6 +12,12 @@
         $nextMilestoneName = optional($nextMilestone)->milestone_name ?? 'Milestone pending';
         $overviewSummary = "Project: {$primaryProjectName}. Progress: {$stats['overall_completion']}%. Current phase: {$currentPhaseName}. Next milestone: {$nextMilestoneName}.";
     @endphp
+
+    @section('pageHeaderLabel', 'Dashboard Overview')
+    @section('pageHeaderTitle', 'Dashboard')
+    @section('pageHeaderCopy', 'Real-time project progress overview and milestone tracking for your construction portfolio.')
+
+<div class="container-fluid p-0">
     
     <div class="hero-card mb-4">
         <div class="row align-items-center g-0">
@@ -27,6 +25,11 @@
                 <span class="badge-project-status">CURRENT PROJECT</span>
                 <h1 class="project-title-text mt-1">{{ $primaryProjectName }}</h1>
                 <p class="project-subtitle-text text-muted mb-2">{{ $primaryProject?->project_location ?? 'Construction site summary' }}</p>
+
+                <div class="hero-ctas">
+                    <a href="{{ route('client.timeline') }}" class="btn btn-outline-secondary">View Timeline</a>
+                    <a href="{{ route('client.reports') }}" class="btn btn-success">Open Documents</a>
+                </div>
 
                 <div class="row mt-2 g-2">
                     <div class="col-6 col-sm-3">
@@ -308,92 +311,163 @@
 <style>
     /* --- HERO CONTAINER ACCENTING --- */
     .hero-card {
+        position: relative;
         background: #ffffff;
-        border-radius: 24px;
+        border-radius: 28px;
         border: 1px solid var(--border-color);
         overflow: hidden;
-        min-height: auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+    }
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -40px;
+        width: 260px;
+        height: 260px;
+        background: rgba(22, 163, 74, 0.12);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
     }
     .hero-card .row {
         min-height: auto;
+        position: relative;
+        z-index: 1;
     }
     .hero-card .col-md-7 {
-        padding-top: 1.25rem;
-        padding-bottom: 1.25rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
     }
     .badge-project-status {
         font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
         color: #16a34a;
         background-color: #f0fdf4;
-        padding: 0.25rem 0.6rem;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        margin-bottom: 0.9rem;
         display: inline-flex;
         align-items: center;
+        text-transform: uppercase;
     }
     .project-title-text {
-        font-size: 1.55rem;
+        font-size: 1.85rem;
         font-weight: 800;
         color: #0f172a;
-        margin-bottom: 0.35rem;
-        line-height: 1.1;
-    }
-    .project-subtitle-text {
-        font-size: 0.9rem;
-    .hero-content { position: relative; z-index: 3; }
-
-    /* Hero CTA buttons */
-    .hero-ctas { margin-top: 1rem; display:flex; gap:0.5rem; flex-wrap:wrap; }
-    .hero-ctas .btn { padding: 0.6rem 1rem; border-radius: 10px; font-weight:700; }
-
-    /* Hero image wrap + overlay (slide look) */
-    .hero-image-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
-    .hero-image-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,6,23,0.55) 0%, rgba(2,6,23,0.12) 40%, rgba(2,6,23,0.0) 100%); pointer-events: none; }
-    .hero-structural-image { width: 130%; height: 100%; object-fit: cover; transform: translateX(10%); display:block; }
-
-    @media (max-width: 991px) {
-        .hero-structural-image { width: 150%; transform: translateX(20%); }
-        .structural-img-container { display: none !important; }
-    }
-        margin-bottom: 0.9rem;
-        max-width: 640px;
-        line-height: 1.5;
+        margin-bottom: 0.5rem;
+        line-height: 1.05;
+        max-width: 680px;
     }
     .project-subtitle-text {
         font-size: 0.95rem;
-        margin: 0;
+        color: #475569;
+        margin-bottom: 1.25rem;
+        max-width: 590px;
+        line-height: 1.65;
     }
-    .meta-label {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        font-weight: 600;
-        margin-bottom: 0.15rem;
+    .hero-content { position: relative; z-index: 2; }
+
+    /* Hero CTA buttons */
+    .hero-ctas {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
     }
-    .meta-value {
-        font-size: 0.88rem;
+    .hero-ctas .btn {
+        padding: 0.75rem 1.15rem;
+        border-radius: 12px;
         font-weight: 700;
-        color: #1e293b;
+        min-width: 160px;
+        transition: transform 180ms ease, box-shadow 180ms ease;
     }
+    .hero-ctas .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    }
+    .hero-ctas .btn.btn-outline-secondary {
+        color: var(--text-primary);
+        border-color: var(--border-color);
+        background: rgba(248, 250, 252, 0.95);
+    }
+    .hero-ctas .btn.btn-success {
+        background-color: #16a34a;
+        border-color: #16a34a;
+    }
+
+    /* Hero image wrap + overlay (slide look) */
     .structural-img-container {
         position: relative;
         overflow: hidden;
-        clip-path: polygon(12% 0, 100% 0, 100% 100%, 0% 100%);
+        clip-path: polygon(40% 0, 100% 0, 100% 100%, 7% 100%);
         height: 100%;
-        padding: 0.5rem;
+        padding: 0;
+        border-radius: 0 30px 30px 0;
+    }
+    .hero-image-wrap {
+        position: relative;
+        width: 100%;
+        min-height: 320px;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 0 30px 30px 0;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .hero-image-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.04) 40%, rgba(15, 23, 42, 0.00) 100%);
+        pointer-events: none;
     }
     .hero-structural-image {
-        width: auto;
-        max-height: 220px;
+        width: 112%;
+        height: 100%;
         object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+        transform: translateX(6%);
+        display: block;
+        border-radius: 0 28px 28px 0;
+        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    .meta-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 0.15rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .meta-value {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    @media (max-width: 991px) {
+        .structural-img-container { display: none !important; }
+        .hero-card .col-md-7 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .hero-ctas { gap: 0.75rem; }
+    }
+
+    @media (max-width: 767px) {
+        .hero-ctas { flex-direction: column; }
+        .hero-ctas .btn { width: 100%; min-width: auto; }
+        .project-title-text { font-size: 1.5rem; }
+        .project-subtitle-text { font-size: 0.92rem; }
+    }
+
+    @media (min-width: 1200px) {
+        .hero-content { padding-right: 1.5rem; }
+        .project-title-text { font-size: 2rem; }
     }
 
     @media (min-width: 1400px) {
-        .hero-structural-image { max-height: 300px; }
+        .hero-structural-image { max-height: 380px; }
     }
 
     /* --- METRIC CARD GRID LOOKS --- */

@@ -3,13 +3,11 @@
 @section('title', 'Project Timeline - Client View')
 
 @section('content')
+@section('pageHeaderLabel', 'MASTER SCHEDULE')
+@section('pageHeaderTitle', 'My Project Timeline')
+@section('pageHeaderCopy', 'Comprehensive delivery timeline and structural benchmarks across your development portfolio.')
+
 <div id="pg-timeline" class="container-fluid p-0">
-    
-    <div class="mb-4">
-        <span class="text-uppercase tracking-wider text-success fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">MASTER SCHEDULE</span>
-        <h2 class="fw-extrabold text-dark m-0 mt-1" style="font-size: 1.75rem; font-weight: 800;">My Project Timeline</h2>
-        <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Comprehensive delivery timeline and structural benchmarks across your development portfolio.</p>
-    </div>
 
     @if(isset($projectsWithStats) && count($projectsWithStats) > 0)
         <div class="timeline-summary mb-4">
