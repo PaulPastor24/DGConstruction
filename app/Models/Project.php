@@ -54,11 +54,11 @@ class Project extends Model
     }
 
     /**
-     * Maps $project->location to project_location
+     * Maps $project->location to the stored project location field.
      */
     public function getLocationAttribute()
     {
-        return $this->project_location;
+        return $this->attributes['project_location'] ?? $this->attributes['location'] ?? null;
     }
 
     /**

@@ -1,0 +1,576 @@
+@extends('layouts.supervisor')
+
+@section('title', 'Project Timeline - Supervisor View')
+
+@section('content')
+<div class="container-fluid p-0">
+    @if(isset($projectsWithStats) && count($projectsWithStats) > 0)
+        <div class="d-flex flex-column gap-4">
+            @foreach($projectsWithStats as $index => $project)
+                @php
+                    $projectId = data_get($project, 'id');
+                    $projectName = data_get($project, 'name', 'Project');
+                    $projectProgress = (float) data_get($project, 'progress', 0);
+                    $projectTargetEnd = data_get($project, 'targetEndDate');
+                    $phases = data_get($project, 'phases', []);
+                    
+                    // Filter or find the currently running phase dynamically for the top hero component
+                    $currentPhase = collect($phases)->first(function($p) {
+                        return in_array(strtolower(data_get($p, 'status')), ['ongoing', 'in_progress', 'current']);
+                    }) ?? collect($phases)->first();
+
+                    $projectLocation = data_get($project, 'location', 'Location pending');
+                    $projectSupervisors = collect(data_get($project, 'supervisors', []))->pluck('name')->filter()->implode(', ');
+                    $projectSupervisors = $projectSupervisors ?: 'Unassigned';
+                    
+                    $currentPhaseName = data_get($currentPhase, 'name', 'No Active Phase');
+                    $currentPhaseProgress = (float) data_get($currentPhase, 'progress', 0);
+                    $currentPhaseStart = data_get($currentPhase, 'start');
+                    $currentPhaseEnd = data_get($currentPhase, 'end');
+                @endphp
+
+                <div class="project-timeline-wrapper" id="project-panel-{{ $projectId }}" style="{{ $index === 0 ? '' : 'display: none;' }}">
+                    
+                    <div class="dashboard-panel mb-2">
+                        <div class="row align-items-center mb-3">
+                            <div class="col">
+                                <span class="panel-eyebrow">Current Active Phase</span>
+                                <h1 class="panel-main-title mt-1">{{ $currentPhaseName }} <span class="text-muted font-weight-normal">(Current)</span></h1>
+                                <div class="panel-subtext">{{ $projectSupervisors }} • {{ $projectLocation }}</div>
+                            </div>
+                            <div class="col-auto d-flex gap-3 align-items-center flex-wrap">
+                                
+                                <div class="project-selector-dropdown-wrapper">
+                                    <select class="form-select project-theme-select" onchange="switchProjectTimeline(this.value)">
+                                        @foreach($projectsWithStats as $dropdownProject)
+                                            <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $projectId ? 'selected' : '' }}>
+                                                🏢 {{ data_get($dropdownProject, 'name', 'Project') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <span class="badge-status-pill in-progress">In Progress</span>
+                                <span class="badge-status-pill completed-count">
+                                    <i class="bi bi-check2-square me-1"></i> 
+                                    {{ collect($phases)->where('status', 'completed')->count() }}/{{ count($phases) }} Completed
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="progress-label-text">Phase Completion</span>
+                                <span class="progress-value-text">{{ number_format($currentPhaseProgress, 0) }}%</span>
+                            </div>
+                            <div class="progress custom-progress-track">
+                                <div class="progress-bar custom-progress-fill" role="progressbar" style="width: {{ $currentPhaseProgress }}%;" aria-valuenow="{{ $currentPhaseProgress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="meta-metric-card">
+                                    <div class="meta-card-label"><i class="bi bi-calendar-plus me-1"></i> Planned Start</div>
+                                    <div class="meta-card-value">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="meta-metric-card">
+                                    <div class="meta-card-label"><i class="bi bi-calendar-minus me-1"></i> Planned End</div>
+                                    <div class="meta-card-value">{{ $currentPhaseEnd ? \Carbon\Carbon::parse($currentPhaseEnd)->format('M d, Y') : 'Pending' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="meta-metric-card">
+                                    <div class="meta-card-label"><i class="bi bi-person-check me-1"></i> Actual Start</div>
+                                    <div class="meta-card-value">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="meta-metric-card">
+                                    <div class="meta-card-label"><i class="bi bi-hourglass-split me-1"></i> Estimated Remaining</div>
+                                    <div class="meta-card-value">0 days</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-center pt-2 border-top">
+                            <div class="col-12 col-md-7">
+                                <div class="schedule-insight-box">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="insight-icon-shell"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                                        <div>
+                                            <div class="insight-title">Schedule Insight: <span class="text-amber-deep fw-bold">Attention Required</span></div>
+                                            <div class="insight-desc">Overdue milestone needs review</div>
+                                        </div>
+                                        <span class="badge-alert-pill delay-bg ms-auto">Delayed</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-5 d-flex gap-2 justify-content-md-end">
+                                <a href="{{ route('supervisor.phases') }}" class="btn btn-timeline-primary"><i class="bi bi-kanban me-2"></i> View Phase Timeline</a>
+                                <a href="{{ route('supervisor.reports') }}" class="btn btn-timeline-outline"><i class="bi bi-file-earmark-text me-2"></i> Submit Daily Report</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                            <div class="kpi-panel-card">
+                                <span class="kpi-label">Overall Progress</span>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <h3 class="kpi-value mb-0">{{ number_format($projectProgress, 1) }}%</h3>
+                                    <div class="radial-progress-dummy" style="--value: {{ $projectProgress }}"></div>
+                                </div>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Project-wide delivery health</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                            <div class="kpi-panel-card">
+                                <span class="kpi-label">Completed Phases</span>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <div class="kpi-icon-success"><i class="bi bi-check-circle-fill"></i></div>
+                                    <h3 class="kpi-value mb-0">{{ collect($phases)->where('status', 'completed')->count() }}</h3>
+                                </div>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Delivered in sequence</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                            <div class="kpi-panel-card">
+                                <span class="kpi-label">Remaining Phases</span>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <div class="kpi-icon-warning"><i class="bi bi-hourglass-top"></i></div>
+                                    <h3 class="kpi-value mb-0">{{ collect($phases)->whereIn('status', ['upcoming', 'planned', 'not_started', 'delayed'])->count() }}</h3>
+                                </div>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Still active or pending</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-6 col-xl-2.4 custom-col-five">
+                            <div class="kpi-panel-card">
+                                <span class="kpi-label">Active Milestones</span>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <div class="kpi-icon-info"><i class="bi bi-flag-fill"></i></div>
+                                    <h3 class="kpi-value mb-0">1</h3>
+                                </div>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Driving today's work</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-2.4 custom-col-five">
+                            <div class="kpi-panel-card">
+                                <span class="kpi-label">Schedule Health</span>
+                                <div class="mt-2">
+                                    <h3 class="kpi-value text-amber-deep mb-0">Delayed</h3>
+                                </div>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Behind planned schedule</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 align-items-stretch">
+                        <div class="col-12 col-lg-6 d-flex">
+                            <div class="dashboard-panel w-100 d-flex flex-column">
+                                <div class="mb-3">
+                                    <h3 class="panel-section-title mb-0">Construction Progress Overview</h3>
+                                </div>
+
+                                <div class="d-flex flex-column flex-grow-1 justify-content-around py-2 dynamic-timeline-stepper">
+                                    @foreach($phases as $phase)
+                                        @php
+                                            $pStatus = strtolower(data_get($phase, 'status', 'upcoming'));
+                                            $pProgress = (float) data_get($phase, 'progress', 0);
+                                            
+                                            $borderClass = match($pStatus) {
+                                                'completed' => 'timeline-phase-completed',
+                                                'ongoing', 'in_progress', 'current' => 'timeline-phase-current',
+                                                default => 'timeline-phase-upcoming'
+                                            };
+
+                                            $statusLabel = match($pStatus) {
+                                                'completed' => '<span class="badge-status-pill compl-bg">Completed</span>',
+                                                'ongoing', 'in_progress', 'current' => '<span class="badge-status-pill active-bg">In Progress</span>',
+                                                default => '<span class="badge-status-pill plan-bg">Planned</span>'
+                                            };
+                                        @endphp
+
+                                        <div class="timeline-phase-card-item {{ $borderClass }}">
+                                            <div class="w-100">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <h4 class="stepper-phase-name mb-1">{{ data_get($phase, 'name') }}</h4>
+                                                        <div class="stepper-phase-dates">
+                                                            <i class="bi bi-calendar3 me-1"></i>
+                                                            {{ data_get($phase, 'start') ? \Carbon\Carbon::parse(data_get($phase, 'start'))->format('M d, Y') : 'TBD' }} - 
+                                                            {{ data_get($phase, 'end') ? \Carbon\Carbon::parse(data_get($phase, 'end'))->format('M d, Y') : 'TBD' }}
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="stepper-percentage fw-bold text-dark">{{ number_format($pProgress, 0) }}%</span>
+                                                        {!! $statusLabel !!}
+                                                    </div>
+                                                </div>
+                                                <div class="progress" style="height: 6px; background-color: #f1f5f9; border-radius: 999px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ $pProgress }}%; background: linear-gradient(90deg, #4DA078, #82DB72);" aria-valuenow="{{ $pProgress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+                            <div class="dashboard-panel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="panel-section-title mb-0">Active Delivery Milestones</h3>
+                                    <a href="#" class="text-primary text-decoration-none fw-bold small">View All</a>
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-12 col-sm-6">
+                                        <div class="milestone-sub-card border-success-left">
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                                <div class="milestone-card-title">{{ $projectName }} - Milestone 1</div>
+                                            </div>
+                                            <div class="milestone-target-text mb-3">Target date • Apr 18, 2026</div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Completion</span>
+                                                <span class="fw-bold text-success small">100%</span>
+                                            </div>
+                                            <div class="progress mt-1" style="height: 5px;"><div class="progress-bar bg-success" style="width: 100%"></div></div>
+                                            <span class="badge-status-pill compl-bg d-inline-block mt-3">Completed</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-sm-6">
+                                        <div class="milestone-sub-card border-primary-left">
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <i class="bi bi-dot text-primary fs-4 lh-1"></i>
+                                                <div class="milestone-card-title">{{ $projectName }} - Milestone 2</div>
+                                            </div>
+                                            <div class="milestone-target-text mb-3">Target date • Apr 25, 2026</div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Completion</span>
+                                                <span class="fw-bold text-dark small">0%</span>
+                                            </div>
+                                            <div class="progress mt-1" style="height: 5px;"><div class="progress-bar bg-light" style="width: 0%"></div></div>
+                                            <span class="badge-status-pill active-bg d-inline-block mt-3">Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 flex-grow-1">
+                                <div class="col-12 col-md-6">
+                                    <div class="dashboard-panel h-100">
+                                        <h3 class="panel-section-title mb-3">Project Schedule</h3>
+                                        
+                                        <div class="schedule-box-segment mb-3">
+                                            <div class="schedule-segment-header">Planned Dates</div>
+                                            <div class="d-flex flex-column gap-2 mt-2">
+                                                <div>
+                                                    <span class="dot-indicator green-bg"></span>
+                                                    <span class="date-label text-muted">Start Date:</span>
+                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="dot-indicator green-bg"></span>
+                                                    <span class="date-label text-muted">End Date:</span>
+                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseEnd ? \Carbon\Carbon::parse($currentPhaseEnd)->format('M d, Y') : 'Pending' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="schedule-box-segment">
+                                            <div class="schedule-segment-header">Actual Dates</div>
+                                            <div class="d-flex flex-column gap-2 mt-2">
+                                                <div>
+                                                    <span class="dot-indicator blue-bg"></span>
+                                                    <span class="date-label text-muted">Actual Start:</span>
+                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="dot-indicator blue-bg"></span>
+                                                    <span class="date-label text-muted">Actual End:</span>
+                                                    <span class="date-val fw-bold text-muted ms-1">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="dashboard-panel h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <h3 class="panel-section-title mb-1">Upcoming Milestone</h3>
+                                            <span class="text-muted small d-block mb-3">Next deadline target tracking</span>
+                                            
+                                            <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <h4 class="fw-bold text-dark small mb-1">{{ $projectName }} - Milestone 2</h4>
+                                                    <span class="text-muted small">In progress • Apr 25, 2026</span>
+                                                </div>
+                                                <i class="bi bi-chevron-right text-muted"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="alert-countdown-banner p-3 rounded-3 mt-auto">
+                                            <div class="d-flex align-items-center gap-2 text-amber-deep fw-bold">
+                                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                                <span>25 days left</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="timeline-empty-state-card text-center py-5 shadow-sm bg-white">
+            <div class="empty-state-icon-canvas mb-3 text-muted">
+                <i class="bi bi-folder2-open display-4"></i>
+            </div>
+            <h3 class="brand-dark-slate h5 mb-2 fw-bold">No Construction Timelines Registered</h3>
+            <p class="text-muted mx-auto px-3" style="max-width: 360px;">There are currently no active construction contract structures assigned under your monitoring profile.</p>
+        </div>
+    @endif
+</div>
+
+<style>
+    /* --- SYSTEM UI STYLES --- */
+    
+    .dashboard-panel {
+        background-color: #ffffff;
+        border: 1px solid rgba(9, 96, 86, 0.12);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(9, 96, 86, 0.02);
+    }
+
+    .project-selector-dropdown-wrapper {
+        min-width: 220px;
+    }
+    
+    .project-theme-select {
+        background-color: #f0f6f4 !important;
+        border: 1px solid rgba(9, 96, 86, 0.15) !important;
+        color: #096056 !important;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.45rem 2rem 0.45rem 0.85rem;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23096056' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-size: 10px 12px !important;
+    }
+
+    .project-theme-select:focus {
+        border-color: #096056 !important;
+        box-shadow: 0 0 0 0.25rem rgba(9, 96, 86, 0.15) !important;
+        background-color: #ffffff !important;
+    }
+
+    .panel-eyebrow {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.06em;
+        display: block;
+    }
+
+    .panel-main-title {
+        color: #096056;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: 1.65rem;
+    }
+
+    .panel-subtext {
+        font-size: 0.88rem;
+        color: #6b7280;
+    }
+
+    /* BADGES AND STATUS PILLS */
+    .badge-status-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 30px;
+        letter-spacing: 0.02em;
+    }
+    .badge-status-pill.in-progress {
+        background-color: #eef8f2;
+        color: #096056;
+    }
+    .badge-status-pill.completed-count {
+        background-color: #f3f4f6;
+        color: #373737;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .badge-status-pill.compl-bg { background-color: #d1fae5; color: #065f46; text-transform: none; font-size: 0.78rem;}
+    .badge-status-pill.active-bg { background-color: #eff6ff; color: #1e40af; text-transform: none; font-size: 0.78rem;}
+    .badge-status-pill.plan-bg { background-color: #f3f4f6; color: #4b5563; text-transform: none; font-size: 0.78rem;}
+
+    /* CUSTOM PROGRESS LINE STYLE PACKS */
+    .progress-label-text { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #373737; letter-spacing: 0.04em; }
+    .progress-value-text { font-size: 1.15rem; font-weight: 800; color: #096056; font-family: 'Syne', sans-serif;}
+    .custom-progress-track { height: 10px; border-radius: 999px; background-color: #ebf2ee; overflow: hidden; }
+    .custom-progress-fill { background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px; }
+
+    /* CORE GRID META METRIC BOX SYSTEM */
+    .meta-metric-card {
+        background: #fdfdfd;
+        border: 1px solid rgba(9, 96, 86, 0.08);
+        border-radius: 12px;
+        padding: 14px;
+    }
+    .meta-card-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.02em; }
+    .meta-card-value { font-size: 0.95rem; font-weight: 700; color: #373737; margin-top: 4px; }
+
+    /* AMBER / WARM ORANGE SCHEDULE INSIGHT BOX */
+    .schedule-insight-box {
+        background-color: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 12px;
+        padding: 12px 16px;
+    }
+    .insight-icon-shell { color: #d97706; font-size: 1.2rem; }
+    .insight-title { font-size: 0.88rem; color: #451a03; font-weight: 500; }
+    .insight-desc { font-size: 0.8rem; color: #78350f; }
+    .text-amber-deep { color: #d97706 !important; }
+    .badge-alert-pill.delay-bg { background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}
+
+    /* BUTTON ACTION SET SCHEMES */
+    .btn-timeline-primary { background-color: #096056; color: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; border: none; transition: all 0.2s;}
+    .btn-timeline-primary:hover { background-color: #064a41; color: #fff; }
+    .btn-timeline-outline { background-color: transparent; color: #096056; border: 1px solid rgba(9, 96, 86, 0.2); border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; transition: all 0.2s;}
+    .btn-timeline-outline:hover { background-color: rgba(9, 96, 86, 0.05); color: #096056; }
+
+    /* HIGH LEVEL STATUS BOARDS PILLS */
+    .custom-col-five { flex: 0 0 100%; max-width: 100%; }
+    @media (min-width: 576px) { .custom-col-five { flex: 0 0 50%; max-width: 50%; } }
+    @media (min-width: 768px) { .custom-col-five { flex: 0 0 33.333%; max-width: 33.333%; } }
+    @media (min-width: 1200px) { .custom-col-five { flex: 0 0 20%; max-width: 20%; } }
+
+    .kpi-panel-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(9, 96, 86, 0.12);
+        border-radius: 14px;
+        padding: 16px;
+        height: 100%;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.01);
+    }
+    .kpi-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 1.45rem; font-weight: 700; color: #096056; font-family: 'Syne', sans-serif; }
+    .kpi-subtext { font-size: 0.78rem; line-height: 1.3; }
+    
+    .kpi-icon-success { color: #10b981; font-size: 1.25rem; }
+    .kpi-icon-warning { color: #f59e0b; font-size: 1.25rem; }
+    .kpi-icon-info { color: #3b82f6; font-size: 1.25rem; }
+
+    .radial-progress-dummy {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: conic-gradient(#4DA078 calc(var(--value) * 1%), #ebf2ee 0);
+        position: relative;
+    }
+    .radial-progress-dummy::after {
+        content: ''; position: absolute; inset: 4px; background: white; border-radius: 50%;
+    }
+
+    /* STEPPER PACKS & VERTICAL RECTANGLE ALIGNMENTS */
+    .panel-section-title { font-size: 1rem; font-weight: 700; color: #373737; font-family: 'Syne', sans-serif; }
+    .dynamic-timeline-stepper { position: relative; width: 100%; }
+    
+    /* Phase Rectangle Cards Stylings */
+    .timeline-phase-card-item {
+        background-color: #fafafa;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .timeline-phase-card-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    
+    /* Phase specific border accents */
+    .timeline-phase-completed { border-left: 5px solid #10b981; }
+    .timeline-phase-current { border-left: 5px solid #096056; background-color: #f8faf9; }
+    .timeline-phase-upcoming { border-left: 5px solid #cbd5e1; }
+
+    .stepper-phase-name { font-size: 0.95rem; font-weight: 700; color: #373737; }
+    .stepper-phase-dates { font-size: 0.8rem; color: #6b7280; font-weight: 500; }
+    .stepper-percentage { font-size: 0.95rem; }
+
+    /* MILESTONE CARDS */
+    .milestone-sub-card {
+        background: #ffffff;
+        border: 1px solid rgba(9, 96, 86, 0.08);
+        border-radius: 12px;
+        padding: 16px;
+        height: 100%;
+    }
+    .border-success-left { border-left: 4px solid #10b981; }
+    .border-primary-left { border-left: 4px solid #3b82f6; }
+    .milestone-card-title { font-size: 0.88rem; font-weight: 700; color: #373737; line-height: 1.3; }
+    .milestone-target-text { font-size: 0.78rem; color: #6b7280; }
+
+    /* SCHEDULE BLOCKS */
+    .schedule-box-segment {
+        background: #fdfdfd;
+        border: 1px solid rgba(9, 96, 86, 0.06);
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+    .schedule-segment-header { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 4px; }
+    .dot-indicator { width: 6px; height: 6px; border-radius: 50%; display: inline-block; vertical-align: middle; }
+    .dot-indicator.green-bg { background-color: #10b981; }
+    .dot-indicator.blue-bg { background-color: #3b82f6; }
+    .date-label { font-size: 0.82rem; }
+    .date-val { font-size: 0.82rem; }
+
+    .upcoming-milestone-panel-strip { background-color: #ffffff; border: 1px solid rgba(0, 0, 0, 0.06) !important; transition: background 0.2s; cursor: pointer;}
+    .upcoming-milestone-panel-strip:hover { background-color: #f9fafb; }
+    
+    /* AMBER BANNERS */
+    .alert-countdown-banner { background-color: #fff7ed; border: 1px dashed #ffedd5; }
+    .alert-countdown-banner span { font-size: 0.88rem; }
+</style>
+
+@push('scripts')
+<script>
+    /**
+     * Toggles layout visibility seamlessly when a new project selection event occurs.
+     */
+    function switchProjectTimeline(selectedProjectId) {
+        // Hide all active view wrappers
+        document.querySelectorAll('.project-timeline-wrapper').forEach(function(wrapper) {
+            wrapper.style.display = 'none';
+        });
+
+        // Display targeted canvas section matching the key ID 
+        const targetElement = document.getElementById('project-panel-' + selectedProjectId);
+        if (targetElement) {
+            targetElement.style.display = 'block';
+            
+            // Sync current index state to matching selectors within alternative branches if initialized
+            const synchronizerSelects = targetElement.querySelectorAll('.project-theme-select');
+            synchronizerSelects.forEach(select => select.value = selectedProjectId);
+        }
+    }
+</script>
+@endpush
+@endsection
