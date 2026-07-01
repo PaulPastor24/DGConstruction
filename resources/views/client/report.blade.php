@@ -4,33 +4,49 @@
 
 @section('content')
 <div class="container-fluid p-0">
-    
-    <div class="mb-4">
-        <span class="text-uppercase tracking-wider text-success fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">WORKSPACE DOCUMENTATION</span>
-        <h2 class="fw-extrabold text-dark m-0 mt-1" style="font-size: 1.75rem; font-weight: 800;">Reports & Transmittals</h2>
-        <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Access formal engineering write-ups, material certifications, and digital site receipts.</p>
-    </div>
+    @php
+        $reportCount = isset($reports) ? $reports->count() : 0;
+        $pendingCount = isset($reports) ? $reports->where('approval_status', 'pending')->count() : 0;
+        $approvedCount = isset($reports) ? $reports->where('approval_status', 'approved')->count() : 0;
+    @endphp
+
+    @include('client.partials.page-header', [
+        'eyebrow' => 'Project Documentation',
+        'title' => 'Reports',
+        'description' => 'Review accomplishment reports, approval status, and the latest phase progress updates for your projects.',
+    ])
 
     <div class="row g-4 mb-4">
         <div class="col-12 col-sm-6 col-md-4">
             <div class="report-summary-widget">
                 <div class="widget-icon bg-success-subtle text-success">
-                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                    <i class="bi bi-file-earmark-text-fill"></i>
                 </div>
                 <div>
-                    <span class="widget-label">Engineering Reports</span>
-                    <h3>{{ isset($reports) ? $reports->count() : '0' }}</h3>
+                    <span class="widget-label">Accomplishment Reports</span>
+                    <h3>{{ $reportCount }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-md-4">
             <div class="report-summary-widget">
                 <div class="widget-icon bg-warning-subtle text-warning">
-                    <i class="bi bi-collection-fill"></i>
+                    <i class="bi bi-hourglass-split"></i>
                 </div>
                 <div>
-                    <span class="widget-label">Transmitted Folders</span>
-                    <h3>{{ isset($reports) ? 'Active' : 'N/A' }}</h3>
+                    <span class="widget-label">Pending Review</span>
+                    <h3>{{ $pendingCount }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="report-summary-widget">
+                <div class="widget-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <div>
+                    <span class="widget-label">Approved Reports</span>
+                    <h3>{{ $approvedCount }}</h3>
                 </div>
             </div>
         </div>
@@ -39,7 +55,7 @@
     <div class="card border-0 report-main-panel mb-4">
         <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
             <h6 class="text-uppercase font-bold tracking-wider m-0" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em;">
-                Available Files
+                Latest Accomplishment Reports
             </h6>
         </div>
         
@@ -49,59 +65,46 @@
                     <table class="table report-custom-table align-middle m-0">
                         <thead>
                             <tr>
-                                <th scope="col">File Name</th>
-                                <th scope="col">Category</th>
+                                <th scope="col">Report Summary</th>
+                                <th scope="col">Project / Phase</th>
                                 <th scope="col">Date Logged</th>
-                                <th scope="col" class="text-end">Actions</th>
+                                <th scope="col">Submitted By</th>
+                                <th scope="col" class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($reports as $report)
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                            @php
-                                                $fileName = $report->file_name ?? $report->title ?? 'Report_Document.pdf';
-                                                $isExcel = Str::contains(strtolower($fileName), ['xls', 'xlsx', 'csv']);
-                                                $isImage = Str::contains(strtolower($fileName), ['jpg', 'jpeg', 'png']);
-                                            @endphp
-                                            
-                                            <div class="file-icon-avatar {{ $isExcel ? 'excel-theme' : ($isImage ? 'image-theme' : 'pdf-theme') }}">
-                                                @if($isExcel)
-                                                    <i class="bi bi-file-earmark-excel-fill"></i>
-                                                @elseif($isImage)
-                                                    <i class="bi bi-file-earmark-image-fill"></i>
-                                                @else
-                                                    <i class="bi bi-file-earmark-pdf-fill"></i>
-                                                @endif
+                                        <div class="d-flex align-items-start gap-3">
+                                            <div class="file-icon-avatar pdf-theme">
+                                                <i class="bi bi-file-earmark-text-fill"></i>
                                             </div>
                                             <div>
-                                                <span class="file-primary-title d-block">{{ $fileName }}</span>
-                                                <span class="file-size-subtext text-muted">{{ $report->file_size ?? '2.4 MB' }}</span>
+                                                <span class="file-primary-title d-block">{{ 
+                                                    Illuminate\Support\Str::limit($report->report_text ?? 'No report summary provided.', 110) }}</span>
+                                                <span class="file-size-subtext text-muted">{{ optional($report->created_at)->format('M d, Y') ?? 'TBD' }}</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="category-data-text">{{ $report->category ?? 'Progress Report' }}</span>
+                                        <div class="project-cell-stack">
+                                            <span class="category-data-text d-block">{{ optional($report->project)->project_name ?? 'Project not linked' }}</span>
+                                            <span class="file-size-subtext text-muted">{{ optional($report->phase)->phase_name ?? 'General Phase' }}</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <span class="date-log-text">
-                                            {{ $report->created_at ? $report->created_at->format('M d, Y') : date('M d, Y') }}
+                                            {{ optional($report->report_date)->format('M d, Y') ?? 'TBD' }}
                                         </span>
                                     </td>
+                                    <td>
+                                        <span class="date-log-text">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</span>
+                                    </td>
                                     <td class="text-end">
-                                        <div class="d-inline-flex gap-2">
-                                            @if(isset($report->file_path))
-                                                <a href="{{ asset('storage/' . $report->file_path) }}" target="_blank" class="btn btn-action-circle" title="Open Document">
-                                                    <i class="bi bi-file-earmark-text-fill"></i>
-                                                </a>
-                                                <a href="{{ asset('storage/' . $report->file_path) }}" download class="btn btn-action-circle" title="Download Document">
-                                                    <i class="bi bi-cloud-arrow-down-fill"></i>
-                                                </a>
-                                            @else
-                                                <button class="btn btn-action-circle" disabled title="No document available"><i class="bi bi-file-earmark-text"></i></button>
-                                            @endif
-                                        </div>
+                                        <a href="{{ route('client.project.show', ['project' => $report->project_id]) }}" class="btn btn-action-circle" title="Export Report">
+                                            <i class="bi bi-download"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -110,8 +113,8 @@
                 </div>
             @else
                 <div class="p-5 text-center text-muted border border-dashed rounded-xl bg-light-subtle">
-                    <div class="mb-2 fs-3"><i class="bi bi-folder-x text-muted"></i></div>
-                    <p class="m-0 font-semibold text-sm">No downloadable files, architectural blueprints, or formal document registries match this workspace profile.</p>
+                    <div class="mb-2 fs-3"><i class="bi bi-file-earmark-x text-muted"></i></div>
+                    <p class="m-0 font-semibold text-sm">No accomplishment reports are available for your current project selection.</p>
                 </div>
             @endif
         </div>
@@ -136,6 +139,11 @@
         display: flex;
         align-items: center;
         gap: 1rem;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+    }
+
+    .report-summary-widget:hover {
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
     }
 
     .widget-icon {
@@ -196,6 +204,12 @@
     .file-size-subtext {
         font-size: 0.76rem;
         font-weight: 500;
+    }
+
+    .project-cell-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .category-data-text {

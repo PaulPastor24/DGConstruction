@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Client Portal D&G Construction Monitor')</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         :root {
@@ -24,15 +25,20 @@
             --text-primary: #0f172a;
             --text-muted: #64748b;
             
-            --brand-green: #16a34a;
+            --brand-green: #2E7D32;
             --brand-mint: #dcfce7;
+            --brand-yellow-green: #A3D977;
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-main);
+            font-family: 'Inter', sans-serif;
+            background-color: #f6f8f6;
             color: var(--text-primary);
             overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         .app {
@@ -64,20 +70,29 @@
         }
 
         .brand-icon, .sidebar-logo-img {
-            width: 42px;
-            height: 42px;
+            width: 56px;
+            height: 56px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
+            border-radius: 50%;
             background: #ffffff;
+            overflow: hidden;
+            padding: 0;
+            box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08);
         }
 
         .sidebar-logo-img {
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 50%;
             background: #ffffff;
+        }
+
+        .sidebar-logo-img img {
+            width: 72%;
+            height: 72%;
+            object-fit: contain;
         }
 
         .brand-icon {
@@ -188,6 +203,33 @@
             background: rgba(239, 68, 68, 0.08);
         }
 
+        .swal-actions-reverse {
+            display: flex !important;
+            flex-direction: row-reverse !important;
+            justify-content: center !important;
+            gap: 0.6rem !important;
+        }
+
+        .swal-confirm-btn,
+        .swal-cancel-btn {
+            min-width: 110px !important;
+            border-radius: 10px !important;
+            padding: 0.7rem 1rem !important;
+            font-weight: 600 !important;
+        }
+
+        .swal-confirm-btn {
+            background-color: #0f5132 !important;
+            border: 1px solid #0f5132 !important;
+            color: #ffffff !important;
+        }
+
+        .swal-cancel-btn {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            color: #374151 !important;
+        }
+
         /* --- MAIN INTERFACE WORKSPACE --- */
         .main {
             flex: 1;
@@ -197,12 +239,7 @@
         }
 
         .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem 2.25rem;
-            background: transparent;
-            gap: 1rem;
+            display: none;
         }
 
         .welcome-msg h2 {
@@ -248,8 +285,8 @@
         }
 
         .notification-bell {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
         }
 
         .date-badge {
@@ -257,23 +294,23 @@
             align-items: center;
             gap: 0.5rem;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-primary);
             background: #ffffff;
-            padding: 0.5rem 1rem;
-            border-radius: 10px;
+            padding: 0.45rem 0.8rem;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
 
         .notification-bell {
             position: relative;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             color: var(--text-primary);
             cursor: pointer;
             background: #ffffff;
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
@@ -365,18 +402,11 @@
         }
 
         .content {
-            padding: 0 2.25rem 2.25rem 2.25rem;
+            padding: 1.35rem 2.25rem 2.25rem 2.25rem;
         }
 
         .topbar {
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .topbar-actions {
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            width: 100%;
+            display: none;
         }
 
         .welcome-msg {
@@ -388,14 +418,174 @@
             right: 1.5rem;
         }
 
-        #sidebarToggle {
-            display: none;
+        .page-header-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            margin: 0 0 1.2rem;
+            padding: 0.2rem 0 0.7rem;
+        }
+
+        .page-header-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .page-header-kicker {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .page-header-title {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.05;
+            margin: 0;
+            color: var(--brand-green);
+        }
+
+        .page-header-subtitle {
+            margin: 0;
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .page-header-tools {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .dashboard-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.15rem 0 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .dashboard-page-heading {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .dashboard-page-eyebrow {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .dashboard-page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.05;
+            margin: 0;
+            color: #0e3b2e;
+        }
+
+        .dashboard-page-description {
+            margin: 0.2rem 0 0;
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #64748b;
+            max-width: 420px;
+        }
+
+        .dashboard-page-tools {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .dashboard-date-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.6rem 0.9rem;
             border: 1px solid #e2e8f0;
             background: #ffffff;
-            padding: 0.5rem;
-            border-radius: 10px;
-            font-size: 1.25rem;
+            border-radius: 14px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #334155;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .dashboard-date-pill i {
+            color: #16a34a;
+        }
+
+        .dashboard-notification-button {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #334155;
+        }
+
+        .dashboard-notification-button:hover {
+            background: #f8fafc;
+        }
+
+        .global-mobile-nav {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            padding: 0 1rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 0 rgba(226, 232, 240, 0.55);
+            position: sticky;
+            top: 0;
+            z-index: 1045;
+        }
+
+        #sidebarToggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            padding: 0;
+            border-radius: 12px;
+            font-size: 1.45rem;
             line-height: 1;
+            color: #334155;
+        }
+
+        #mobileNotificationBell {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            color: #334155;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
 
         .sidebar-overlay {
@@ -410,6 +600,27 @@
             backdrop-filter: blur(2px);
         }
 
+        @media (max-width: 991.98px) {
+            .global-mobile-nav {
+                display: flex;
+            }
+            #sidebarToggle {
+                display: inline-flex;
+            }
+            #mobileNotificationBell {
+                display: inline-flex;
+            }
+            .dashboard-page-tools .dashboard-notification-button {
+                display: none;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .content {
+                padding: 0 1rem 1rem 1rem;
+            }
+        }
+
         @media (max-width: 1024px) {
             .sidebar {
                 position: fixed;
@@ -420,8 +631,15 @@
             }
             .sidebar.show { transform: translateX(0); }
             .sidebar-overlay.show { display: block; }
-            #sidebarToggle { display: flex; }
-            .topbar { padding: 1.25rem 1.5rem; }
+            #sidebarToggle { display: inline-flex; }
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                padding: 0.9rem 1.25rem;
+                margin: 0.5rem 0 0.75rem;
+            }
             .content { padding: 0 1.5rem 1.5rem 1.5rem; }
             .notification-popup { right: 1.5rem; }
         }
@@ -489,7 +707,7 @@
                     </div>
                 </div>
             </div>
-            <a href="#" class="logout-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a href="#" class="logout-link" onclick="event.preventDefault(); Swal.fire({ title: 'Confirm logout', text: 'Are you sure you want to sign out?', icon: 'question', showCancelButton: true, confirmButtonColor: '#0f5132', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, log out', cancelButtonText: 'Cancel', buttonsStyling: false, customClass: { actions: 'swal-actions-reverse', confirmButton: 'swal-confirm-btn', cancelButton: 'swal-cancel-btn' } }).then((result) => { if (result.isConfirmed) { document.getElementById('logout-form').submit(); } });">
                 <i class="bi bi-box-arrow-left"></i> Logout
             </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
@@ -497,50 +715,14 @@
     </aside>
 
     <div class="main">
-        <div class="topbar">
-            <div class="d-flex align-items-center gap-3">
-                <button id="sidebarToggle"><i class="bi bi-list"></i></button>
-
-            </div>
-            
-            <div class="topbar-actions">
-                <div class="topbar-actions-left">
-                    <div class="date-badge">
-                        <i class="bi bi-calendar3 text-success"></i>
-                        <span>{{ now()->format('D, M d, Y') }}</span>
-                    </div>
-                </div>
-                <div class="topbar-action-icons">
-                    <div class="notification-bell" id="notificationBell" aria-label="Notifications" role="button" tabindex="0">
-                        <i class="bi bi-bell"></i>
-                        <div class="notification-badge"></div>
-                    </div>
-                </div>
-                <div class="notification-popup" id="notificationPopup">
-                    <div class="notification-popup-header">
-                        <h6>Notifications</h6>
-                        <span class="text-muted" style="font-size:0.78rem;">{{ $clientNotificationCount ?? 0 }} new</span>
-                    </div>
-                    <div class="notification-popup-list">
-                        @if(!empty($clientNotifications) && count($clientNotifications))
-                            @foreach($clientNotifications as $notification)
-                                <div class="notification-item">
-                                    <div class="notification-item-title">{{ $notification['title'] }}</div>
-                                    <p class="notification-item-text">{{ $notification['message'] }}</p>
-                                    <span class="notification-item-time">{{ $notification['time'] }}</span>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="notification-item">
-                                <div class="notification-item-title">No new notifications</div>
-                                <p class="notification-item-text">We will alert you when a milestone is delayed or a report is uploaded.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
+        <div class="global-mobile-nav" aria-label="Global mobile navigation">
+            <button id="sidebarToggle" type="button" class="global-mobile-toggle" aria-label="Open sidebar navigation">
+                <i class="bi bi-list"></i>
+            </button>
+            <button id="mobileNotificationBell" type="button" class="dashboard-notification-button" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+            </button>
         </div>
-
         <div class="content">
             @yield('content')
         </div>
@@ -550,17 +732,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const toggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('appSidebar');
         const overlay = document.getElementById('sidebarOverlay');
+        const toggles = document.querySelectorAll('#sidebarToggle');
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
+        function closeSidebar() {
+            sidebar?.classList.remove('show');
+            overlay?.classList.remove('show');
         }
 
-        toggle?.addEventListener('click', toggleSidebar);
-        overlay?.addEventListener('click', toggleSidebar);
+        function toggleSidebar() {
+            const isOpen = sidebar?.classList.contains('show');
+            sidebar?.classList.toggle('show', !isOpen);
+            overlay?.classList.toggle('show', !isOpen);
+        }
+
+        toggles.forEach(function (toggle) {
+            toggle?.addEventListener('click', toggleSidebar);
+        });
+        overlay?.addEventListener('click', closeSidebar);
+
+        document.querySelectorAll('.sidebar .nav-item').forEach(function (item) {
+            item.addEventListener('click', closeSidebar);
+        });
 
         document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (element) {
             new bootstrap.Popover(element);
