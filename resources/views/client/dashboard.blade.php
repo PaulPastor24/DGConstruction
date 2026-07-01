@@ -3,386 +3,692 @@
 @section('title', 'Client Portal - Project Progress Dashboard')
 
 @section('content')
-<div class="client-dashboard">
-    <section class="client-shell">
-        <div class="client-header row g-3 align-items-stretch">
-            <div class="col-12 col-xl-8">
-                <div class="client-hero">
-                    <p class="eyebrow">Project Client</p>
-                    <h1>{{ optional($projects->first())->project_name ?? 'Project Monitoring Portal' }}</h1>
-                    <div class="hero-meta">
-                        <span><i class="bi bi-layers"></i> {{ optional($currentPhases->first())->phase_name ?? 'Current phase' }}</span>
-                        <span><i class="bi bi-calendar-range"></i> {{ now()->format('M d, Y') }}</span>
+
+    @php
+        $primaryProject = $projects->first();
+        $primaryProjectName = optional($primaryProject)->project_name ?? 'Project Overview';
+        $nextMilestone = optional($upcomingMilestones)->first();
+        $currentPhaseName = optional($currentPhases->first())->phase_name ?? 'Phase pending';
+        $nextMilestoneName = optional($nextMilestone)->milestone_name ?? 'Milestone pending';
+        $overviewSummary = "Project: {$primaryProjectName}. Progress: {$stats['overall_completion']}%. Current phase: {$currentPhaseName}. Next milestone: {$nextMilestoneName}.";
+    @endphp
+
+    @section('pageHeaderLabel', 'Dashboard Overview')
+    @section('pageHeaderTitle', 'Dashboard')
+    @section('pageHeaderCopy', 'Real-time project progress overview and milestone tracking for your construction portfolio.')
+
+<div class="container-fluid p-0">
+    
+    <div class="hero-card mb-4">
+        <div class="row align-items-center g-0">
+            <div class="col-md-7 p-3 p-lg-4 hero-content">
+                <span class="badge-project-status">CURRENT PROJECT</span>
+                <h1 class="project-title-text mt-1">{{ $primaryProjectName }}</h1>
+                <p class="project-subtitle-text text-muted mb-2">{{ $primaryProject?->project_location ?? 'Construction site summary' }}</p>
+
+                <div class="hero-ctas">
+                    <a href="{{ route('client.timeline') }}" class="btn btn-outline-secondary">View Timeline</a>
+                    <a href="{{ route('client.reports') }}" class="btn btn-success">Open Documents</a>
+                </div>
+
+                <div class="row mt-2 g-2">
+                    <div class="col-6 col-sm-3">
+                        <div class="meta-label"><i class="bi bi-calendar-check me-1"></i> Project Start</div>
+                        <div class="meta-value">{{ $primaryProject?->start_date?->format('M d, Y') ?? 'TBD' }}</div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="meta-label"><i class="bi bi-calendar-x me-1"></i> Est. Completion</div>
+                        <div class="meta-value">{{ $primaryProject?->target_end_date?->format('M d, Y') ?? 'TBD' }}</div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="meta-label"><i class="bi bi-person-workspace me-1"></i> Project Manager</div>
+                        <div class="meta-value">{{ $primaryProject?->engineer?->name ?? 'Unassigned' }}</div>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <div class="meta-label"><i class="bi bi-building-gear me-1"></i> Site Supervisor</div>
+                        <div class="meta-value">{{ $primaryProject?->activeSupervisor?->name ?? 'Not assigned' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-xl-4">
-                <div class="client-highlight">
-                    <span class="small-label">Overall Progress</span>
-                    <h2>{{ $stats['overall_completion'] }}%</h2>
-                    <div class="progress custom-progress">
-                        <div class="progress-bar" style="width: {{ $stats['overall_completion'] }}%"></div>
+            <div class="col-md-5 d-none d-md-flex structural-img-container align-items-center justify-content-center">
+                <div class="hero-image-wrap">
+                    <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80" alt="Structural Progress Frame" class="hero-structural-image">
+                    <div class="hero-image-overlay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-status-card">
+                <div class="metric-icon-box bg-mint-light"><i class="bi bi-graph-up text-success"></i></div>
+                <div>
+                    <div class="metric-title">Overall Progress</div>
+                    <div class="metric-main-val text-success">{{ $stats['overall_completion'] }}%</div>
+                    <div class="metric-sub-text">Project completion</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-status-card">
+                <div class="metric-icon-box bg-mint-light"><i class="bi bi-building-gear text-success"></i></div>
+                <div>
+                    <div class="metric-title">Current Phase</div>
+                    <div class="metric-main-val text-success" style="font-size: 1.25rem; font-weight:700; margin: 0.3rem 0;">
+                        {{ optional($currentPhases->first())->phase_name ?? 'Structural Works' }}
+                    </div>
+                    <div class="metric-sub-text">In progress</div>
+                </div>
+            </div>
+        </div>
+        @php
+            $scheduleHealth = $stats['delayed_milestones_count'] > 0 ? 'At Risk' : 'On Track';
+            $scheduleHealthClass = $stats['delayed_milestones_count'] > 0 ? 'text-warning' : 'text-success';
+            $scheduleHealthNote = $stats['delayed_milestones_count'] > 0 ? 'Delayed milestones detected' : 'No major delays';
+        @endphp
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-status-card">
+                <div class="metric-icon-box bg-mint-light"><i class="bi bi-shield-check {{ $scheduleHealthClass }}"></i></div>
+                <div>
+                    <div class="metric-title">Schedule Health</div>
+                    <div class="metric-main-val {{ $scheduleHealthClass }}" style="font-size: 1.4rem;">{{ $scheduleHealth }}</div>
+                    <div class="metric-sub-text">{{ $scheduleHealthNote }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-status-card">
+                <div class="metric-icon-box bg-gray-light"><i class="bi bi-flag-fill text-muted"></i></div>
+                <div>
+                    <div class="metric-title">Next Milestone</div>
+                    <div class="metric-main-val text-success" style="font-size: 1.05rem; font-weight:700; line-height:1.2; margin:0.25rem 0;">
+                        {{ optional($nextMilestone)->milestone_name ?? 'Next milestone pending' }}
+                    </div>
+                    <div class="metric-sub-text text-dark fw-semibold">{{ optional($nextMilestone)->planned_date?->format('M d, Y') ?? 'TBD' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="dashboard-ui-panel project-progress-overview-panel project-detail-trigger"
+                 data-bs-toggle="popover"
+                 data-bs-trigger="hover focus"
+                 data-bs-placement="top"
+                 data-bs-title="Project Progress Snapshot"
+                 data-bs-content="{{ e($overviewSummary) }}">
+                <div class="ui-panel-head">
+                    <h5 class="ui-panel-title">Project Progress Overview</h5>
+                </div>
+                <div class="ui-panel-body text-center py-4">
+                    <div class="donut-wrapper position-relative mx-auto mb-4">
+                        <svg width="180" height="180" viewBox="0 0 42 42" class="donut-svg">
+                            <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
+                            <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#e2e8f0" stroke-width="3"></circle>
+                            <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#22c55e" stroke-width="3" stroke-dasharray="{{ $stats['overall_completion'] }} {{ 100 - $stats['overall_completion'] }}" stroke-dashoffset="25"></circle>
+                        </svg>
+                        <div class="donut-center-text">
+                            <h3>{{ $stats['overall_completion'] }}%</h3>
+                            <span>Completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="donut-legend-list text-start px-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><span class="legend-dot bg-success"></span> Completed</span>
+                            <strong>{{ $stats['overall_completion'] }}%</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><span class="legend-dot bg-warning"></span> In Progress</span>
+                            <strong>{{ number_format(max(0, min(100, 100 - $stats['overall_completion'])), 1) }}%</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><span class="legend-dot bg-secondary"></span> Not Started</span>
+                            <strong>{{ optional($upcomingMilestones)->count() }}</strong>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4 border-slate">
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <a href="{{ route('client.timeline') }}" class="btn btn-outline-secondary w-100 py-2 font-semibold text-sm rounded-xl"><i class="bi bi-calendar-week me-2"></i>View Full Timeline</a>
+                        <button type="button" class="btn btn-success w-100 py-2 font-semibold text-sm rounded-xl project-detail-trigger" data-bs-toggle="modal" data-bs-target="#projectOverviewModal"><i class="bi bi-info-circle me-2"></i>Show Details</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="stats-grid row g-3 mb-4">
-            <div class="col-6 col-lg-3">
-                <div class="stat-card">
-                    <span class="stat-icon"><i class="bi bi-building"></i></span>
-                    <div>
-                        <div class="stat-value">{{ $stats['total_projects'] }}</div>
-                        <div class="stat-label">Project Status</div>
-                    </div>
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="dashboard-ui-panel">
+                <div class="ui-panel-head d-flex justify-content-between align-items-center">
+                    <h5 class="ui-panel-title">Recent Reports</h5>
+                    <a href="{{ route('client.reports') }}" class="view-all-link">View All</a>
                 </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="stat-card">
-                    <span class="stat-icon"><i class="bi bi-graph-up-arrow"></i></span>
-                    <div>
-                        <div class="stat-value">{{ $stats['overall_completion'] }}%</div>
-                        <div class="stat-label">Overall Progress</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="stat-card">
-                    <span class="stat-icon"><i class="bi bi-arrow-repeat"></i></span>
-                    <div>
-                        <div class="stat-value">{{ $stats['ongoing_projects'] }}</div>
-                        <div class="stat-label">Current Phase</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="stat-card alert-card">
-                    <span class="stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
-                    <div>
-                        <div class="stat-value">{{ $stats['delayed_milestones_count'] }}</div>
-                        <div class="stat-label">Alerts</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-12 col-xl-8">
-                <div class="panel-card">
-                    <div class="panel-head">
-                        <h5><i class="bi bi-graph-up"></i> Project Progress</h5>
-                        <span>{{ $stats['completed_projects'] }} completed</span>
-                    </div>
-                    <div class="panel-body">
-                        @foreach ($projectSummaries->take(4) as $summary)
-                            <div class="project-panel-item">
-                                <div class="project-panel-top">
+                <div class="ui-panel-body p-0">
+                    <div class="report-list-group">
+                        @forelse($recentReports as $report)
+                            <div class="report-item-row">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="file-icon-frame"><i class="bi bi-file-earmark-text"></i></div>
                                     <div>
-                                        <h6>{{ $summary['project']->project_name }}</h6>
-                                        <small>{{ $summary['project']->project_location }}</small>
+                                        <h6>{{ optional($report->phase)->phase_name ?? 'Project Update' }}</h6>
+                                        <p>{{ Str::limit($report->report_text ?? 'Report available', 48) }} &bull; {{ optional($report->report_date)->format('M d, Y') ?? 'Unknown' }}</p>
                                     </div>
-                                    <span>{{ $summary['completion'] }}%</span>
                                 </div>
-                                <div class="progress custom-progress">
-                                    <div class="progress-bar" style="width: {{ $summary['completion'] }}%"></div>
-                                </div>
-                                @if ($summary['current_phase'])
-                                    <div class="phase-badge">
-                                        <i class="bi bi-arrow-right-circle"></i> {{ $summary['current_phase']->phase_name }}
-                                    </div>
-                                @endif
+                                <a href="{{ route('client.reports', ['project_id' => $report->project_id]) }}" class="download-icon-btn"><i class="bi bi-download"></i></a>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="panel-card mt-4">
-                    <div class="panel-head">
-                        <h5><i class="bi bi-signpost-split"></i> Timeline Roadmap</h5>
-                    </div>
-                    <div class="panel-body roadmap-list">
-                        @foreach ($upcomingMilestones->take(5) as $milestone)
-                            <div class="roadmap-item">
-                                <div class="roadmap-icon"><i class="bi bi-calendar2-week"></i></div>
-                                <div>
-                                    <h6>{{ $milestone->milestone_name }}</h6>
-                                    <small>{{ $milestone->phase->phase_name }}</small>
-                                </div>
-                                <span>{{ $milestone->planned_date->format('M d') }}</span>
+                        @empty
+                            <div class="text-center p-4 text-muted">
+                                <div class="mb-2 fs-3"><i class="bi bi-folder-x"></i></div>
+                                <p class="m-0">No recent reports are available for this client profile.</p>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-xl-4">
-                <div class="panel-card alert-panel">
-                    <div class="panel-head">
-                        <h5><i class="bi bi-exclamation-circle"></i> Alerts</h5>
-                    </div>
-                    <div class="panel-body">
-                        @if ($delayedMilestones->isNotEmpty())
-                            @foreach ($delayedMilestones->take(3) as $milestone)
-                                <div class="alert-item">
-                                    <strong>{{ $milestone->milestone_name }}</strong>
-                                    <small>{{ $milestone->phase->project->project_name }}</small>
-                                    <span>Delayed</span>
-                                </div>
-                            @endforeach
-                        @else
-                            <p class="mb-0">No active alerts at this time.</p>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="panel-card mt-4">
-                    <div class="panel-head">
-                        <h5><i class="bi bi-bell"></i> Recent Updates</h5>
-                    </div>
-                    <div class="panel-body update-list">
-                        @foreach ($recentReports->take(4) as $report)
-                            <div class="update-item">
-                                <div>
-                                    <h6>{{ $report->project->project_name }}</h6>
-                                    <small>{{ $report->phase->phase_name }}</small>
-                                </div>
-                                <span>{{ optional($report->created_at)->diffForHumans() }}</span>
-                            </div>
-                        @endforeach
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="dashboard-ui-panel">
+                <div class="ui-panel-head d-flex justify-content-between align-items-center">
+                    <h5 class="ui-panel-title">Recent Activity</h5>
+                    <a href="{{ route('client.reports') }}" class="view-all-link">View All</a>
+                </div>
+                <div class="ui-panel-body">
+                                @php
+                        $activityItems = $recentReports->take(4)->map(function ($report) {
+                            return [
+                                'title' => optional($report->phase)->phase_name ? ('Report: ' . optional($report->phase)->phase_name) : 'Project report submitted',
+                                'subtitle' => Str::limit($report->report_text ?? 'Report details available', 60),
+                                'time' => optional($report->report_date)->format('M d, Y') ?? 'Unknown',
+                                'author' => optional($report->submittedBy)->name ?? 'Project team',
+                                'icon' => 'bi bi-file-earmark-text',
+                                'variant' => 'bg-light-green text-dark'
+                            ];
+                        });
+                    @endphp
+
+                    <div class="activity-timeline-container">
+                        @forelse($activityItems as $item)
+                            <div class="activity-timeline-node">
+                                <div class="node-icon {{ $item['variant'] }}"><i class="{{ $item['icon'] }}"></i></div>
+                                <div class="node-content">
+                                    <div class="d-flex justify-content-between">
+                                        <h6>{{ $item['title'] }}</h6>
+                                        <span class="node-time">{{ $item['time'] }}</span>
+                                    </div>
+                                    <p>{{ $item['subtitle'] }} &bull; {{ $item['author'] }}</p>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center p-4 text-muted">
+                                <div class="mb-2 fs-3"><i class="bi bi-clock-history"></i></div>
+                                <p class="m-0">No recent activities are available yet.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+        <div class="col-12 col-md-6">
+            <div class="action-alert-banner py-3 px-4 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="alert-banner-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div>
+                        <h6 class="m-0 fw-bold">Schedule Insight</h6>
+                        <p class="m-0 text-muted text-sm">Some milestones are approaching their target dates.</p>
+                    </div>
+                </div>
+                <a href="{{ route('client.timeline') }}" class="btn btn-white shadow-sm font-semibold rounded-xl px-3 py-2 text-sm">View Timeline</a>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="action-alert-banner py-3 px-4 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="alert-banner-icon bg-mint-circle"><i class="bi bi-headset"></i></div>
+                    <div>
+                        <h6 class="m-0 fw-bold">Need Assistance?</h6>
+                        <p class="m-0 text-muted text-sm">Contact your Project Engineer for any clarifications.</p>
+                    </div>
+                </div>
+                <a href="mailto:{{ $primaryProject?->engineer?->email ?? 'support@dgconstruction.com' }}" class="btn btn-outline-dark font-semibold rounded-xl px-3 py-2 text-sm">Message Engineer</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="projectOverviewModal" tabindex="-1" aria-labelledby="projectOverviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="projectOverviewModalLabel">{{ optional($primaryProject)->project_name ?? 'Project details' }}</h5>
+                    <p class="text-muted small mb-0">Live project summary pulled from the database</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-muted small text-uppercase">Overall progress</div>
+                            <div class="fw-bold fs-4 text-success">{{ $stats['overall_completion'] }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-muted small text-uppercase">Current phase</div>
+                            <div class="fw-bold">{{ $currentPhaseName }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-muted small text-uppercase">Next milestone</div>
+                            <div class="fw-bold">{{ $nextMilestoneName }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="border rounded-3 p-3">
+                            <div class="text-muted small text-uppercase">Assigned manager</div>
+                            <div class="fw-bold">{{ optional(optional($primaryProject)->engineer)->name ?? 'Unassigned' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <a href="{{ route('client.timeline') }}" class="btn btn-success">Open timeline</a>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-.client-dashboard {
-    padding: 0.25rem 0 1rem;
-}
-
-.client-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.client-hero,
-.client-highlight,
-.stat-card,
-.panel-card {
-    border-radius: 18px;
-}
-
-.client-hero {
-    background: linear-gradient(135deg, #003366 0%, #336699 100%);
-    color: #fff;
-    padding: 1.5rem;
-    box-shadow: 0 12px 28px rgba(0, 51, 102, 0.18);
-}
-
-.client-hero h1 {
-    margin: 0;
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
-    font-weight: 800;
-}
-
-.hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    margin-top: 0.8rem;
-    font-size: 0.92rem;
-    opacity: 0.95;
-}
-
-.client-highlight {
-    background: #fff;
-    border: 1px solid #d7e7f5;
-    padding: 1.25rem;
-    height: 100%;
-}
-
-.client-highlight h2 {
-    margin: 0.35rem 0;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #003366;
-}
-
-.stats-grid .stat-card {
-    background: #fff;
-    border: 1px solid #d7e7f5;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    min-height: 112px;
-}
-
-.stat-icon {
-    width: 52px;
-    height: 52px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    background: #eef7ff;
-    color: #003366;
-    font-size: 1.15rem;
-}
-
-.stat-value {
-    font-size: 1.7rem;
-    font-weight: 800;
-    color: #15304d;
-}
-
-.stat-label {
-    font-size: 0.82rem;
-    color: #5b6b7f;
-}
-
-.alert-card .stat-icon,
-.alert-card .stat-value {
-    color: #b42318;
-}
-
-.alert-card .stat-icon {
-    background: #fff4f1;
-}
-
-.panel-card {
-    background: #fff;
-    border: 1px solid #d7e7f5;
-    box-shadow: 0 10px 22px rgba(0, 51, 102, 0.05);
-}
-
-.panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 1rem 1rem 0.75rem;
-    border-bottom: 1px solid #eef6fb;
-}
-
-.panel-head h5 {
-    margin: 0;
-    font-weight: 700;
-    color: #15304d;
-}
-
-.panel-head span {
-    font-size: 0.9rem;
-    color: #5b6b7f;
-}
-
-.panel-body {
-    padding: 1rem;
-}
-
-.project-panel-item + .project-panel-item {
-    margin-top: 1rem;
-}
-
-.project-panel-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.45rem;
-}
-
-.project-panel-top h6,
-.roadmap-item h6,
-.update-item h6,
-.alert-item strong {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.project-panel-top small,
-.roadmap-item small,
-.update-item small,
-.alert-item small,
-.project-panel-top span,
-.roadmap-item span,
-.update-item span {
-    color: #5b6b7f;
-}
-
-.phase-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.6rem;
-    background: #eef7ff;
-    color: #003366;
-    padding: 0.4rem 0.65rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.custom-progress {
-    height: 10px;
-    background: #eaf3fb;
-}
-
-.custom-progress .progress-bar {
-    background: linear-gradient(90deg, #6699CC 0%, #99CCFF 100%);
-}
-
-.roadmap-list,
-.update-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-}
-
-.roadmap-item,
-.update-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.7rem;
-}
-
-.roadmap-icon {
-    width: 42px;
-    height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    background: #eef7ff;
-    color: #003366;
-}
-
-.alert-panel {
-    background: linear-gradient(180deg, #fff9f6 0%, #fff4f1 100%);
-}
-
-.alert-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.7rem 0;
-    border-bottom: 1px solid #f7e0d7;
-}
-
-.alert-item:last-child { border-bottom: 0; }
-
-@media (max-width: 768px) {
-    .client-hero { padding: 1.1rem; }
-    .stats-grid .stat-card { min-height: 96px; }
-    .roadmap-item,
-    .update-item {
-        flex-direction: column;
-        align-items: flex-start;
+    /* --- HERO CONTAINER ACCENTING --- */
+    .hero-card {
+        position: relative;
+        background: #ffffff;
+        border-radius: 28px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
     }
-}
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -40px;
+        width: 260px;
+        height: 260px;
+        background: rgba(22, 163, 74, 0.12);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .hero-card .row {
+        min-height: auto;
+        position: relative;
+        z-index: 1;
+    }
+    .hero-card .col-md-7 {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .badge-project-status {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #16a34a;
+        background-color: #f0fdf4;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        margin-bottom: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        text-transform: uppercase;
+    }
+    .project-title-text {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        line-height: 1.05;
+        max-width: 680px;
+    }
+    .project-subtitle-text {
+        font-size: 0.95rem;
+        color: #475569;
+        margin-bottom: 1.25rem;
+        max-width: 590px;
+        line-height: 1.65;
+    }
+    .hero-content { position: relative; z-index: 2; }
+
+    /* Hero CTA buttons */
+    .hero-ctas {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .hero-ctas .btn {
+        padding: 0.75rem 1.15rem;
+        border-radius: 12px;
+        font-weight: 700;
+        min-width: 160px;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+    .hero-ctas .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    }
+    .hero-ctas .btn.btn-outline-secondary {
+        color: var(--text-primary);
+        border-color: var(--border-color);
+        background: rgba(248, 250, 252, 0.95);
+    }
+    .hero-ctas .btn.btn-success {
+        background-color: #16a34a;
+        border-color: #16a34a;
+    }
+
+    /* Hero image wrap + overlay (slide look) */
+    .structural-img-container {
+        position: relative;
+        overflow: hidden;
+        clip-path: polygon(40% 0, 100% 0, 100% 100%, 7% 100%);
+        height: 100%;
+        padding: 0;
+        border-radius: 0 30px 30px 0;
+    }
+    .hero-image-wrap {
+        position: relative;
+        width: 100%;
+        min-height: 320px;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 0 30px 30px 0;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .hero-image-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.04) 40%, rgba(15, 23, 42, 0.00) 100%);
+        pointer-events: none;
+    }
+    .hero-structural-image {
+        width: 112%;
+        height: 100%;
+        object-fit: cover;
+        transform: translateX(6%);
+        display: block;
+        border-radius: 0 28px 28px 0;
+        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.12);
+    }
+
+    .meta-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 0.15rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .meta-value {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    @media (max-width: 991px) {
+        .structural-img-container { display: none !important; }
+        .hero-card .col-md-7 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .hero-ctas { gap: 0.75rem; }
+    }
+
+    @media (max-width: 767px) {
+        .hero-ctas { flex-direction: column; }
+        .hero-ctas .btn { width: 100%; min-width: auto; }
+        .project-title-text { font-size: 1.5rem; }
+        .project-subtitle-text { font-size: 0.92rem; }
+    }
+
+    @media (min-width: 1200px) {
+        .hero-content { padding-right: 1.5rem; }
+        .project-title-text { font-size: 2rem; }
+    }
+
+    @media (min-width: 1400px) {
+        .hero-structural-image { max-height: 380px; }
+    }
+
+    /* --- METRIC CARD GRID LOOKS --- */
+    .metric-status-card {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1.25rem;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+    }
+    .metric-icon-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .bg-mint-light { background-color: #f0fdf4; }
+    .bg-gray-light { background-color: #f8fafc; }
+    .metric-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: capitalize;
+    }
+    .metric-main-val {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 0.15rem 0;
+        line-height: 1.1;
+    }
+    .metric-sub-text {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    /* --- REUSABLE UI BOXES --- */
+    .dashboard-ui-panel {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        height: 100%;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.01);
+        display: flex;
+        flex-direction: column;
+    }
+    .ui-panel-head {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        border-bottom: 0;
+    }
+    .ui-panel-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    .ui-panel-body {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        flex-grow: 1;
+    }
+    .view-all-link {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #16a34a;
+        text-decoration: none;
+    }
+
+    /* --- CHART SYSTEM LOOK --- */
+    .donut-wrapper {
+        width: 180px;
+        height: 180px;
+    }
+    .donut-center-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    .donut-center-text h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 0;
+    }
+    .donut-center-text span {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    .legend-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    .text-sm { font-size: 0.85rem; }
+    .font-semibold { font-weight: 600; }
+    .rounded-xl { border-radius: 12px !important; }
+
+    /* --- REPORT LISTS STREAMING --- */
+    .report-list-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .report-item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.2s ease;
+        border-radius: 18px;
+        margin-bottom: 0.75rem;
+        background: #ffffff;
+    }
+    .report-item-row:last-child { border-bottom: 0; margin-bottom: 0; }
+    .report-item-row:hover { background-color: #f8fafc; }
+    .file-icon-frame {
+        width: 40px;
+        height: 40px;
+        background-color: #f1f5f9;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--text-muted);
+    }
+    .report-item-row h6 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 0 0 0.15rem 0;
+    }
+    .report-item-row p {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    .download-icon-btn {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        padding: 0.25rem;
+    }
+    .download-icon-btn:hover { color: var(--text-primary); }
+
+    /* --- TIMELINE NODES LISTS --- */
+    .activity-timeline-container {
+        position: relative;
+        padding-left: 1.5rem;
+        border-left: 2px solid #e2e8f0;
+        margin-left: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    .activity-timeline-node {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    .activity-timeline-node:last-child { margin-bottom: 0; }
+    .node-icon {
+        position: absolute;
+        left: calc(-1.5rem - 13px);
+        top: 0;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+    .bg-light-green { background-color: #f0fdf4; color: #16a34a; border: 2px solid #fff; }
+    .bg-green-solid { background-color: #22c55e; border: 2px solid #fff; }
+    .node-content h6 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 0 0 0.15rem 0;
+    }
+    .node-content p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    .node-time {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    /* --- FOOTER CTA BOXES --- */
+    .action-alert-banner {
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+    }
+    .alert-banner-icon {
+        width: 40px;
+        height: 40px;
+        background-color: #fff7ed;
+        color: #f97316;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .bg-mint-circle {
+        background-color: #f0fdf4;
+        color: #16a34a;
+    }
+    .btn-white {
+        background-color: #fff;
+        border: 1px solid #cbd5e1;
+    }
+    .btn-white:hover {
+        background-color: #f8fafc;
+    }
 </style>
 @endsection

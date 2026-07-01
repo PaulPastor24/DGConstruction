@@ -105,7 +105,9 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 // Only Clients can enter here
 Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
-    Route::get('/client/timeline', [ClientController::class, 'timeline'])->name('client.timeline');
+    Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
+    Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
+    Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
     Route::get('/client/updates', [ClientController::class, 'updates'])->name('client.updates');
 });
 

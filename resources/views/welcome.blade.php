@@ -16,7 +16,7 @@
 <nav class="navbar">
     <div class="navbar-logo" onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;">
         <div class="navbar-logo-icon">
-            <img src="{{ asset('images/image.png') }}" alt="D&G Construction logo">
+            <img src="{{ asset('images/bg.png') }}" alt="D&G Construction logo">
         </div>
     </div>
     <div class="navbar-nav">
