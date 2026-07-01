@@ -1,72 +1,162 @@
-/* ==========================================================================
-   8. MOBILE RESPONSIVENESS SUB-ENGINE
-   ========================================================================== */
-@media (max-width: 991px) {
-    .about-grid {
-        grid-template-columns: 1fr;
-        gap: 3rem;
+@media (max-width: 1200px) {
+    .service-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .project-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 768px) {
-    .navbar {
-        padding: 1rem 4%;
+@media (max-width: 991px) {
+    .site-nav {
+        flex-wrap: wrap;
     }
-    
-    .navbar-nav {
-        gap: 1.25rem;
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        padding: 0.25rem 0 0;
+        justify-content: flex-start;
     }
-    
-    .navbar-nav a {
-        display: none; /* Simplifies mobile presentation */
-    }
-    
-    .navbar-nav a.active {
-        display: inline-block;
+
+    .hero,
+    .about-section,
+    .testimonial-strip,
+    .cta-section,
+    .section-heading-row {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: start;
     }
 
     .hero {
-        padding: 4rem 4% 3.5rem 4%;
+        padding-top: 2.5rem;
     }
 
-    .hero-cta-group {
-        flex-direction: column;
-        gap: 0.75rem;
-        max-w: 320px;
-        margin-left: auto;
-        margin-right: auto;
+    .hero-copy h1 {
+        max-width: 100%;
     }
 
-    .hero-stats {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-        padding: 1.5rem;
+    .hero-frame {
+        min-height: 32rem;
     }
 
-    .stat {
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1rem;
-    }
-
-    .stat:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
+    .service-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .about-metrics {
         grid-template-columns: 1fr;
+    }
+
+    .testimonial-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .testimonial-author {
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-shell {
+        padding-inline: 0.85rem;
+    }
+
+    .site-nav {
+        top: 0.5rem;
+        padding: 0.85rem;
+        border-radius: 18px;
+    }
+
+    .brand img,
+    .footer-brand img {
+        width: 3.4rem;
+        height: 3.4rem;
+    }
+
+    .nav-links {
         gap: 1rem;
     }
 
-    .footer-bottom {
-        flex-direction: column;
-        text-align: center;
+    .hero-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .service-grid,
+    .project-grid,
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-frame {
+        min-height: auto;
+        padding: 0.85rem;
+    }
+
+    .hero-image-wrap {
+        min-height: 24rem;
+    }
+
+    .floating-card {
+        position: static;
+        width: auto;
+        margin-top: 0.85rem;
+    }
+
+    .floating-card-top {
+        margin-top: 0.85rem;
+    }
+
+    .floating-card-bottom {
+        margin-top: 0.75rem;
+    }
+
+    .testimonial-quote {
+        grid-template-columns: 1fr;
+    }
+
+    .quote-mark {
+        font-size: 3rem;
     }
 }
 
 @media (max-width: 480px) {
-    .login-form-section {
-        padding: 2.5rem 1.5rem;
+    .brand strong {
+        font-size: 0.94rem;
+    }
+
+    .brand small {
+        font-size: 0.7rem;
+    }
+
+    .hero-copy h1 {
+        font-size: clamp(3rem, 18vw, 4.2rem);
+    }
+
+    .hero-lead,
+    .about-copy p,
+    .service-card p,
+    .project-body p,
+    .testimonial-quote p,
+    .cta-section p {
+        font-size: 0.95rem;
+    }
+
+    .button,
+    .nav-cta {
+        width: 100%;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+    }
+
+    .section-heading h2,
+    .about-copy h2,
+    .projects-section h2,
+    .cta-section h2 {
+        max-width: 100%;
     }
 }
