@@ -4,32 +4,33 @@
 
 @section('content')
 
+    @include('client.partials.page-header', [
+        'eyebrow' => 'Client Overview',
+        'title' => 'Dashboard',
+        'description' => 'Monitor your construction project in real time.',
+        'extra' => view('client.partials.project-selector', ['allProjects' => $allProjects, 'primaryProject' => $primaryProject, 'primaryProjectName' => $primaryProjectName])
+    ])
+
+<div class="container-fluid p-0">
     @php
-        $primaryProject = $projects->first();
-        $primaryProjectName = optional($primaryProject)->project_name ?? 'Project Overview';
+        $primaryProject = $primaryProject ?? $projects->first();
+        $primaryProjectName = $primaryProjectName ?? optional($primaryProject)->project_name ?? 'No Project Assigned';
+        $primaryLocation = trim((string) ($primaryProject?->project_location ?? $primaryProject?->location ?? $primaryProject?->location_address ?? ''));
         $nextMilestone = optional($upcomingMilestones)->first();
         $currentPhaseName = optional($currentPhases->first())->phase_name ?? 'Phase pending';
         $nextMilestoneName = optional($nextMilestone)->milestone_name ?? 'Milestone pending';
         $overviewSummary = "Project: {$primaryProjectName}. Progress: {$stats['overall_completion']}%. Current phase: {$currentPhaseName}. Next milestone: {$nextMilestoneName}.";
     @endphp
-
-    @section('pageHeaderLabel', 'Dashboard Overview')
-    @section('pageHeaderTitle', 'Dashboard')
-    @section('pageHeaderCopy', 'Real-time project progress overview and milestone tracking for your construction portfolio.')
-
-<div class="container-fluid p-0">
     
     <div class="hero-card mb-4">
         <div class="row align-items-center g-0">
             <div class="col-md-7 p-3 p-lg-4 hero-content">
-                <span class="badge-project-status">CURRENT PROJECT</span>
-                <h1 class="project-title-text mt-1">{{ $primaryProjectName }}</h1>
-                <p class="project-subtitle-text text-muted mb-2">{{ $primaryProject?->project_location ?? 'Construction site summary' }}</p>
-
-                <div class="hero-ctas">
-                    <a href="{{ route('client.timeline') }}" class="btn btn-outline-secondary">View Timeline</a>
-                    <a href="{{ route('client.reports') }}" class="btn btn-success">Open Documents</a>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="badge-project-status">CURRENT PROJECT</span>
+                    <span class="project-status-pill {{ $stats['delayed_milestones_count'] > 0 ? 'status-delayed' : 'status-on-track' }}">{{ $stats['delayed_milestones_count'] > 0 ? 'Delayed' : 'On Track' }}</span>
                 </div>
+                <h1 class="project-title-text mt-1">{{ $primaryProjectName }}</h1>
+                <p class="project-subtitle-text text-muted mb-2">{{ $primaryLocation !== '' ? $primaryLocation : 'Location Pending' }}</p>
 
                 <div class="row mt-2 g-2">
                     <div class="col-6 col-sm-3">
@@ -49,6 +50,20 @@
                         <div class="meta-value">{{ $primaryProject?->activeSupervisor?->name ?? 'Not assigned' }}</div>
                     </div>
                 </div>
+
+                <div class="project-progress-embedded mt-3">
+                    <div class="project-progress-header">
+                        <span class="project-progress-label">Overall Completion</span>
+                        <span class="project-progress-value">{{ $stats['overall_completion'] }}%</span>
+                    </div>
+                    <div class="project-progress-track" aria-label="Project completion progress bar">
+                        <span style="width: {{ $stats['overall_completion'] }}%"></span>
+                    </div>
+                    <div class="project-progress-meta">
+                        <span><i class="bi bi-flag-fill me-1"></i>{{ $currentPhaseName }}</span>
+                        <span><i class="bi bi-calendar2-week me-1"></i>{{ optional($nextMilestone)->planned_date?->format('M d, Y') ?? 'TBD' }}</span>
+                    </div>
+                </div>
             </div>
             <div class="col-md-5 d-none d-md-flex structural-img-container align-items-center justify-content-center">
                 <div class="hero-image-wrap">
@@ -60,16 +75,6 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="metric-status-card">
-                <div class="metric-icon-box bg-mint-light"><i class="bi bi-graph-up text-success"></i></div>
-                <div>
-                    <div class="metric-title">Overall Progress</div>
-                    <div class="metric-main-val text-success">{{ $stats['overall_completion'] }}%</div>
-                    <div class="metric-sub-text">Project completion</div>
-                </div>
-            </div>
-        </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="metric-status-card">
                 <div class="metric-icon-box bg-mint-light"><i class="bi bi-building-gear text-success"></i></div>
@@ -92,14 +97,14 @@
                 <div class="metric-icon-box bg-mint-light"><i class="bi bi-shield-check {{ $scheduleHealthClass }}"></i></div>
                 <div>
                     <div class="metric-title">Schedule Health</div>
-                    <div class="metric-main-val {{ $scheduleHealthClass }}" style="font-size: 1.4rem;">{{ $scheduleHealth }}</div>
+                    <span class="metric-status-pill {{ $scheduleHealth === 'At Risk' ? 'status-delayed' : 'status-on-track' }}">{{ $scheduleHealth }}</span>
                     <div class="metric-sub-text">{{ $scheduleHealthNote }}</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="metric-status-card">
-                <div class="metric-icon-box bg-gray-light"><i class="bi bi-flag-fill text-muted"></i></div>
+                <div class="metric-icon-box bg-gray-light"><i class="bi bi-flag-fill text-success"></i></div>
                 <div>
                     <div class="metric-title">Next Milestone</div>
                     <div class="metric-main-val text-success" style="font-size: 1.05rem; font-weight:700; line-height:1.2; margin:0.25rem 0;">
@@ -109,57 +114,22 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-12 col-xl-4">
-            <div class="dashboard-ui-panel project-progress-overview-panel project-detail-trigger"
-                 data-bs-toggle="popover"
-                 data-bs-trigger="hover focus"
-                 data-bs-placement="top"
-                 data-bs-title="Project Progress Snapshot"
-                 data-bs-content="{{ e($overviewSummary) }}">
-                <div class="ui-panel-head">
-                    <h5 class="ui-panel-title">Project Progress Overview</h5>
-                </div>
-                <div class="ui-panel-body text-center py-4">
-                    <div class="donut-wrapper position-relative mx-auto mb-4">
-                        <svg width="180" height="180" viewBox="0 0 42 42" class="donut-svg">
-                            <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
-                            <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#e2e8f0" stroke-width="3"></circle>
-                            <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#22c55e" stroke-width="3" stroke-dasharray="{{ $stats['overall_completion'] }} {{ 100 - $stats['overall_completion'] }}" stroke-dashoffset="25"></circle>
-                        </svg>
-                        <div class="donut-center-text">
-                            <h3>{{ $stats['overall_completion'] }}%</h3>
-                            <span>Completed</span>
-                        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-status-card">
+                <div class="metric-icon-box bg-gray-light"><i class="bi bi-file-earmark-check text-success"></i></div>
+                <div>
+                    <div class="metric-title">Latest Report Status</div>
+                    <div class="metric-main-val text-success" style="font-size: 1.25rem; font-weight:700; margin: 0.3rem 0;">
+                        {{ $recentReports->first()?->approval_status ?? 'Pending' }}
                     </div>
-                    
-                    <div class="donut-legend-list text-start px-2">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span><span class="legend-dot bg-success"></span> Completed</span>
-                            <strong>{{ $stats['overall_completion'] }}%</strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span><span class="legend-dot bg-warning"></span> In Progress</span>
-                            <strong>{{ number_format(max(0, min(100, 100 - $stats['overall_completion'])), 1) }}%</strong>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span><span class="legend-dot bg-secondary"></span> Not Started</span>
-                            <strong>{{ optional($upcomingMilestones)->count() }}</strong>
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4 border-slate">
-                    <div class="d-flex flex-column flex-sm-row gap-2">
-                        <a href="{{ route('client.timeline') }}" class="btn btn-outline-secondary w-100 py-2 font-semibold text-sm rounded-xl"><i class="bi bi-calendar-week me-2"></i>View Full Timeline</a>
-                        <button type="button" class="btn btn-success w-100 py-2 font-semibold text-sm rounded-xl project-detail-trigger" data-bs-toggle="modal" data-bs-target="#projectOverviewModal"><i class="bi bi-info-circle me-2"></i>Show Details</button>
-                    </div>
+                    <div class="metric-sub-text">{{ $recentReports->count() > 0 ? 'Last uploaded report' : 'No report submitted' }}</div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-12 col-md-6 col-xl-4">
+    <div class="row g-4">
+        <div class="col-12 col-md-7 col-xl-8">
             <div class="dashboard-ui-panel">
                 <div class="ui-panel-head d-flex justify-content-between align-items-center">
                     <h5 class="ui-panel-title">Recent Reports</h5>
@@ -189,7 +159,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-6 col-xl-4">
+        <div class="col-12 col-md-5 col-xl-4">
             <div class="dashboard-ui-panel">
                 <div class="ui-panel-head d-flex justify-content-between align-items-center">
                     <h5 class="ui-panel-title">Recent Activity</h5>
@@ -233,34 +203,37 @@
         </div>
     </div>
 
-    <div class="row g-3 mt-3">
-        <div class="col-12 col-md-6">
-            <div class="action-alert-banner py-3 px-4 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="alert-banner-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                    <div>
-                        <h6 class="m-0 fw-bold">Schedule Insight</h6>
-                        <p class="m-0 text-muted text-sm">Some milestones are approaching their target dates.</p>
-                    </div>
-                </div>
-                <a href="{{ route('client.timeline') }}" class="btn btn-white shadow-sm font-semibold rounded-xl px-3 py-2 text-sm">View Timeline</a>
-            </div>
-        </div>
-        <div class="col-12 col-md-6">
-            <div class="action-alert-banner py-3 px-4 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="alert-banner-icon bg-mint-circle"><i class="bi bi-headset"></i></div>
-                    <div>
-                        <h6 class="m-0 fw-bold">Need Assistance?</h6>
-                        <p class="m-0 text-muted text-sm">Contact your Project Engineer for any clarifications.</p>
-                    </div>
-                </div>
-                <a href="mailto:{{ $primaryProject?->engineer?->email ?? 'support@dgconstruction.com' }}" class="btn btn-outline-dark font-semibold rounded-xl px-3 py-2 text-sm">Message Engineer</a>
-            </div>
-        </div>
-    </div>
+</div>
+
+<a href="mailto:{{ $primaryProject?->engineer?->email ?? 'support@dgconstruction.com' }}" class="support-assistant-widget" aria-label="Get help from the project support team">
+    <span class="support-assistant-icon"><i class="bi bi-headset"></i></span>
+    <span class="support-assistant-label">Need assistance?</span>
+</a>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectorButton = document.getElementById('projectSelectorButton');
+        const selectorMenu = document.getElementById('projectSelectorMenu');
+
+        if (selectorButton && selectorMenu) {
+            selectorButton.addEventListener('click', function (event) {
+                event.stopPropagation();
+                const willOpen = selectorMenu.hidden;
+                selectorMenu.hidden = !willOpen;
+                selectorButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!selectorButton.contains(event.target) && !selectorMenu.contains(event.target)) {
+                    selectorMenu.hidden = true;
+                    selectorButton.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    });
+</script>
 
 <div class="modal fade" id="projectOverviewModal" tabindex="-1" aria-labelledby="projectOverviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -301,7 +274,7 @@
                 </div>
             </div>
             <div class="modal-footer border-0">
-                <a href="{{ route('client.timeline') }}" class="btn btn-success">Open timeline</a>
+                <a href="{{ route('client.timeline') }}" class="project-command-button-primary">View Timeline</a>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
@@ -310,164 +283,356 @@
 
 <style>
     /* --- HERO CONTAINER ACCENTING --- */
-    .hero-card {
+    .dashboard-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.15rem 0 0.8rem;
+        margin-bottom: 0.2rem;
+    }
+    .dashboard-page-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+    .dashboard-page-eyebrow {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .dashboard-page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.05;
+        margin: 0;
+        color: #0e3b2e;
+    }
+    .dashboard-page-description {
+        margin: 0.2rem 0 0;
+        font-size: 0.92rem;
+        font-weight: 500;
+        color: #64748b;
+        max-width: 420px;
+    }
+    .dashboard-page-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+    @media (max-width: 1024px) {
+        .dashboard-page-header {
+            padding: 0.35rem 0 0.75rem;
+            align-items: center;
+        }
+        .dashboard-page-tools {
+            gap: 0.5rem;
+        }
+    }
+    .project-selector-wrap {
         position: relative;
+    }
+    .project-selector-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        min-height: 48px;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #dbe4dd;
         background: #ffffff;
-        border-radius: 28px;
+        border-radius: 16px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #334155;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+        transition: all 0.2s ease;
+    }
+    .project-selector-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+    }
+    .project-selector-button:hover,
+    .project-selector-button:focus {
+        border-color: #2E7D32;
+        box-shadow: 0 10px 20px rgba(46, 125, 50, 0.08);
+        background: #f8fffb;
+    }
+    .project-selector-button[aria-expanded="true"] {
+        border-color: #2E7D32;
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.08);
+    }
+    .project-selector-button[aria-expanded="true"] .project-selector-caret {
+        transform: rotate(180deg);
+    }
+    .project-selector-icon,
+    .project-selector-item-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0fdf4;
+        color: #2E7D32;
+        flex-shrink: 0;
+    }
+    .project-selector-label {
+        max-width: 190px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .project-selector-caret {
+        transition: transform 0.2s ease;
+    }
+    .project-selector-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: min(320px, 90vw);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        box-shadow: 0 22px 48px rgba(15, 23, 42, 0.14);
+        padding: 0.4rem;
+        z-index: 30;
+        opacity: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .project-selector-menu:not([hidden]) {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    .project-selector-item {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.7rem 0.8rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #334155;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .project-selector-item:hover,
+    .project-selector-item.active {
+        background: #edf8ef;
+        color: #0f3d2e;
+    }
+    .project-selector-check {
+        margin-left: auto;
+        font-size: 1.05rem;
+        color: #2E7D32;
+    }
+    .dashboard-date-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.6rem 0.9rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 14px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #334155;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+    .dashboard-date-pill i {
+        color: #16a34a;
+    }
+    .dashboard-notification-button {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #334155;
+    }
+    .dashboard-notification-button:hover {
+        background: #f8fafc;
+    }
+    .hero-card {
+        background: #ffffff;
+        border-radius: 24px;
         border: 1px solid var(--border-color);
         overflow: hidden;
-        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
-    }
-    .hero-card::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        right: -40px;
-        width: 260px;
-        height: 260px;
-        background: rgba(22, 163, 74, 0.12);
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 0;
+        min-height: auto;
+        box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+        margin-bottom: 1.4rem;
     }
     .hero-card .row {
         min-height: auto;
-        position: relative;
-        z-index: 1;
     }
     .hero-card .col-md-7 {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
     }
     .badge-project-status {
         font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         color: #16a34a;
         background-color: #f0fdf4;
-        padding: 0.35rem 0.8rem;
-        border-radius: 999px;
-        margin-bottom: 0.9rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
         display: inline-flex;
         align-items: center;
+    }
+    .project-status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.28rem 0.62rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
     }
+    .project-status-pill.status-on-track {
+        background: #ecfdf3;
+        color: #166534;
+    }
+    .project-status-pill.status-delayed {
+        background: #fffbeb;
+        color: #b45309;
+    }
     .project-title-text {
-        font-size: 1.85rem;
+        font-size: 1.55rem;
         font-weight: 800;
         color: #0f172a;
-        margin-bottom: 0.5rem;
-        line-height: 1.05;
-        max-width: 680px;
+        margin-bottom: 0.35rem;
+        line-height: 1.1;
     }
     .project-subtitle-text {
-        font-size: 0.95rem;
-        color: #475569;
-        margin-bottom: 1.25rem;
-        max-width: 590px;
-        line-height: 1.65;
+        font-size: 0.9rem;
+        margin-bottom: 0.9rem;
+        max-width: 640px;
+        line-height: 1.5;
     }
-    .hero-content { position: relative; z-index: 2; }
+    .project-progress-embedded {
+        background: linear-gradient(180deg, #f8fffb 0%, #f8fafc 100%);
+        border: 1px solid #e2f8ea;
+        border-radius: 18px;
+        padding: 1rem;
+    }
+    .project-progress-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.55rem;
+    }
+    .project-progress-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .project-progress-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .project-progress-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    .project-progress-track span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    }
+    .project-progress-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 0.65rem;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    .project-progress-meta span {
+        display: inline-flex;
+        align-items: center;
+    }
+    .hero-content { position: relative; z-index: 3; }
 
     /* Hero CTA buttons */
-    .hero-ctas {
-        margin-top: 1rem;
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-    .hero-ctas .btn {
-        padding: 0.75rem 1.15rem;
-        border-radius: 12px;
-        font-weight: 700;
-        min-width: 160px;
-        transition: transform 180ms ease, box-shadow 180ms ease;
-    }
-    .hero-ctas .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
-    }
-    .hero-ctas .btn.btn-outline-secondary {
-        color: var(--text-primary);
-        border-color: var(--border-color);
-        background: rgba(248, 250, 252, 0.95);
-    }
-    .hero-ctas .btn.btn-success {
-        background-color: #16a34a;
-        border-color: #16a34a;
-    }
+    .hero-ctas { margin-top: 1rem; display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .hero-ctas .btn { padding: 0.6rem 1rem; border-radius: 10px; font-weight:700; }
 
     /* Hero image wrap + overlay (slide look) */
+    .hero-image-wrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    .hero-image-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,6,23,0.55) 0%, rgba(2,6,23,0.12) 40%, rgba(2,6,23,0.0) 100%); pointer-events: none; }
+    .hero-structural-image { width: 130%; height: 100%; object-fit: cover; transform: translateX(10%); display:block; }
+
+    @media (max-width: 991px) {
+        .hero-structural-image { width: 150%; transform: translateX(20%); }
+        .structural-img-container { display: none !important; }
+    }
+    .meta-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 0.15rem;
+    }
+    .meta-value {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
     .structural-img-container {
         position: relative;
         overflow: hidden;
-        clip-path: polygon(40% 0, 100% 0, 100% 100%, 7% 100%);
         height: 100%;
-        padding: 0;
-        border-radius: 0 30px 30px 0;
+        padding: 0.75rem;
+        isolation: isolate;
+        clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);
     }
     .hero-image-wrap {
         position: relative;
         width: 100%;
-        min-height: 320px;
         height: 100%;
+        min-height: 240px;
+        border-radius: 18px;
         overflow: hidden;
-        border-radius: 0 30px 30px 0;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
-    .hero-image-overlay {
+    .hero-image-wrap::before {
+        content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.04) 40%, rgba(15, 23, 42, 0.00) 100%);
+        background: linear-gradient(135deg, rgba(22, 163, 74, 0.20), transparent 35%, transparent 65%, rgba(15, 23, 42, 0.20));
+        z-index: 1;
         pointer-events: none;
     }
     .hero-structural-image {
-        width: 112%;
+        width: 100%;
         height: 100%;
         object-fit: cover;
-        transform: translateX(6%);
-        display: block;
-        border-radius: 0 28px 28px 0;
-        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.12);
-    }
-
-    .meta-label {
-        font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 700;
-        margin-bottom: 0.15rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .meta-value {
-        font-size: 0.92rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-
-    @media (max-width: 991px) {
-        .structural-img-container { display: none !important; }
-        .hero-card .col-md-7 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-        .hero-ctas { gap: 0.75rem; }
-    }
-
-    @media (max-width: 767px) {
-        .hero-ctas { flex-direction: column; }
-        .hero-ctas .btn { width: 100%; min-width: auto; }
-        .project-title-text { font-size: 1.5rem; }
-        .project-subtitle-text { font-size: 0.92rem; }
-    }
-
-    @media (min-width: 1200px) {
-        .hero-content { padding-right: 1.5rem; }
-        .project-title-text { font-size: 2rem; }
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(2,6,23,0.08);
+        transform: scale(1.02);
     }
 
     @media (min-width: 1400px) {
-        .hero-structural-image { max-height: 380px; }
+        .hero-structural-image { max-height: 300px; }
     }
 
     /* --- METRIC CARD GRID LOOKS --- */
@@ -481,6 +646,11 @@
         gap: 1.25rem;
         height: 100%;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .metric-status-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
     }
     .metric-icon-box {
         width: 44px;
@@ -499,6 +669,24 @@
         font-weight: 700;
         color: var(--text-muted);
         text-transform: capitalize;
+    }
+    .metric-status-pill {
+        display: inline-flex;
+        margin-top: 0.2rem;
+        padding: 0.3rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+    .metric-status-pill.status-on-track {
+        background: #ecfdf3;
+        color: #166534;
+    }
+    .metric-status-pill.status-delayed {
+        background: #fffbeb;
+        color: #b45309;
     }
     .metric-main-val {
         font-size: 1.75rem;
@@ -663,32 +851,70 @@
     }
 
     /* --- FOOTER CTA BOXES --- */
-    .action-alert-banner {
-        background-color: #fff;
-        border: 1px solid var(--border-color);
-        border-radius: 18px;
+    .support-assistant-widget {
+        position: fixed;
+        right: 2rem;
+        bottom: 2rem;
+        z-index: 1040;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.7rem 0.75rem 0.7rem 0.7rem;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        border-radius: 999px;
+        box-shadow: 0 14px 30px rgba(22, 163, 74, 0.28);
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .alert-banner-icon {
-        width: 40px;
-        height: 40px;
-        background-color: #fff7ed;
-        color: #f97316;
-        border-radius: 50%;
-        display: flex;
+    .support-assistant-widget:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 36px rgba(22, 163, 74, 0.32);
+    }
+    .support-assistant-icon {
+        width: 56px;
+        height: 56px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        font-size: 1.6rem;
+        flex-shrink: 0;
     }
-    .bg-mint-circle {
-        background-color: #f0fdf4;
-        color: #16a34a;
+    .support-assistant-label {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+        padding-right: 0.2rem;
     }
-    .btn-white {
-        background-color: #fff;
-        border: 1px solid #cbd5e1;
-    }
-    .btn-white:hover {
-        background-color: #f8fafc;
+
+    @media (max-width: 768px) {
+        .dashboard-page-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+        .dashboard-page-tools {
+            width: 100%;
+            justify-content: space-between;
+        }
+        .dashboard-date-pill {
+            flex: 1;
+            justify-content: center;
+        }
+        .support-assistant-widget {
+            right: 1rem;
+            bottom: 1rem;
+            padding: 0.55rem;
+        }
+        .support-assistant-label {
+            display: none;
+        }
+        .support-assistant-icon {
+            width: 52px;
+            height: 52px;
+        }
     }
 </style>
 @endsection
