@@ -179,8 +179,12 @@ class SupervisorController extends Controller
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
         })
-            ->with(['phases' => function ($query) {
+            ->with(['supervisors' => function ($query) {
+                $query->select('users.user_id', 'users.first_name', 'users.last_name');
+            }, 'phases' => function ($query) {
                 $query->orderBy('phase_order')->orderBy('planned_start_date');
+            }, 'phases.milestones' => function ($query) {
+                $query->orderBy('planned_date');
             }])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -195,6 +199,14 @@ class SupervisorController extends Controller
             return [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
+                'location' => $project->location ?? $project->project_location,
+                'status' => $project->status,
+                'supervisors' => $project->supervisors->map(function ($supervisor) {
+                    return [
+                        'id' => $supervisor->user_id,
+                        'name' => trim(($supervisor->first_name ?? '') . ' ' . ($supervisor->last_name ?? '')) ?: ($supervisor->name ?? 'Unknown Supervisor'),
+                    ];
+                })->values()->all(),
                 'targetEndDate' => optional($project->target_end_date)->toDateString(),
                 'progress' => $progress,
                 'completedPhases' => $completedPhases,
@@ -202,17 +214,29 @@ class SupervisorController extends Controller
                 'upcomingPhases' => $upcomingPhases,
                 'phases' => $phases->map(function ($phase) {
                     return [
-                        'phase_name' => $phase->phase_name,
+                        'id' => $phase->phase_id,
+                        'name' => $phase->phase_name,
                         'phase_order' => $phase->phase_order,
-                        'planned_start_date' => optional($phase->planned_start_date)->toDateString(),
-                        'planned_end_date' => optional($phase->planned_end_date)->toDateString(),
-                        'completion_percentage' => (float) ($phase->completion_percentage ?? 0),
+                        'start' => optional($phase->planned_start_date)->toDateString(),
+                        'end' => optional($phase->planned_end_date)->toDateString(),
+                        'actual_start' => optional($phase->actual_start_date)->toDateString(),
+                        'actual_end' => optional($phase->actual_end_date)->toDateString(),
+                        'progress' => (float) ($phase->completion_percentage ?? 0),
                         'status' => $phase->status,
                         'display_status' => match ($phase->status) {
                             'completed' => 'completed',
                             'in_progress' => 'in-progress',
                             default => 'planning',
                         },
+                        'milestones' => $phase->milestones->map(function ($milestone) {
+                            return [
+                                'id' => $milestone->milestone_id,
+                                'name' => $milestone->milestone_name,
+                                'planned_date' => optional($milestone->planned_date)->toDateString(),
+                                'is_completed' => (bool) $milestone->is_completed,
+                                'is_delayed' => (bool) $milestone->is_delayed,
+                            ];
+                        })->values()->all(),
                     ];
                 })->values()->all(),
             ];

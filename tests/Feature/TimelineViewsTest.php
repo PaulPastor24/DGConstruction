@@ -151,10 +151,15 @@ class TimelineViewsTest extends TestCase
             $this->assertArrayHasKey('inProgressPhases', $project);
             $this->assertArrayHasKey('upcomingPhases', $project);
             
-            // Verify phases have display_status
+            // Verify phases expose the real database-backed fields used by the timeline UI
             $phases = $project['phases'];
             if ($phases && $phases->count() > 0) {
                 foreach ($phases as $phase) {
+                    $this->assertArrayHasKey('name', $phase);
+                    $this->assertArrayHasKey('start', $phase);
+                    $this->assertArrayHasKey('end', $phase);
+                    $this->assertArrayHasKey('progress', $phase);
+                    $this->assertArrayHasKey('milestones', $phase);
                     $this->assertTrue(
                         in_array($phase->display_status, ['completed', 'in-progress', 'planning']),
                         "Phase {$phase->phase_name} has invalid display_status: {$phase->display_status}"
