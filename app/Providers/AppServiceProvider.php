@@ -8,6 +8,7 @@ use App\Models\Report;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\URL; // ◄ Crucial import added for the secure URL handler
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 1. Existing Layout View Composers
         View::composer('layouts.client', function ($view) {
             $user = Auth::user();
             $notifications = collect();
@@ -51,5 +53,10 @@ class AppServiceProvider extends ServiceProvider
                 'clientNotificationCount' => $notificationCount,
             ]);
         });
+
+        // 2. FORCE HTTPS OVER TUNNEL PROXIES (Fixed CSS & Login Blocks on Phone)
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+            URL::forceScheme('https');
+        }
     }
 }

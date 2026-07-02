@@ -15,11 +15,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Default generic fallback dashboard route
 Route::get('/dashboard', function () {
     $user = Auth::user();
 
-    // Dynamically route users to their correct workspace matching web.php gates
     return match ($user->role) {
         'engineer'        => redirect()->route('admin.dashboard'),
         'supervisor'      => redirect()->route('supervisor.dashboard'),
@@ -28,7 +26,6 @@ Route::get('/dashboard', function () {
     };
 })->middleware(['auth'])->name('dashboard');
 
-// Profile management paths (Requires authentication)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -37,34 +34,20 @@ Route::middleware('auth')->group(function () {
 
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
 Route::middleware(['auth', 'role:engineer'])->group(function () {
-
-    // Management Dashboard Base
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-
-    // Sidebar Operational Framework Target Links (Routed to Controller Methods)
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
-    
-    // Phase Management route
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
-    
-    // ACTION WORKSPACE ENDPOINTS: For approving/revising reports inside Phase Management
     Route::post('/admin/reports/{id}/approve', [ProjectController::class, 'approveReport'])->name('admin.reports.approve');
     Route::post('/admin/reports/{id}/revise', [ProjectController::class, 'reviseReport'])->name('admin.reports.revise');
-
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
-    
-    // Inventory Routes
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/store-delivery', [AdminDashboardController::class, 'storeDelivery'])->name('admin.inventory.store-delivery');
-    
-    // Alerts Management Routes
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
 
-    // ==================== PROJECT MANAGEMENT ====================
     Route::prefix('admin/projects')->name('admin.projects.')->group(function () {
-        Route::get('/', [ProjectController::class, 'index'])->name('index'); // Resolves to admin.projects.index
+        Route::get('/', [ProjectController::class, 'index'])->name('index');
         Route::get('/create', [ProjectController::class, 'create'])->name('create');
         Route::post('/', [ProjectController::class, 'store'])->name('store');
         Route::get('/{project}', [ProjectController::class, 'show'])->name('show');
@@ -74,9 +57,8 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::patch('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
     });
 
-    // ==================== USER MANAGEMENT ====================
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
-        Route::get('/', [UserController::class, 'index'])->name('index'); // Resolves to admin.users.index
+        Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
@@ -86,7 +68,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     });
 });
 
-// Only Site Supervisors can enter here
+// ==================== SUPERVISOR GROUP ROUTING LAYER ====================
 Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
@@ -100,9 +82,12 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
     Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
+
+    // ◄ ADDED EXPLICIT FAST BIOMETRIC ENROLLMENT PROCESSING DATA PIPELINE LINK
+    Route::post('/supervisor/workers/register-biometric', [SupervisorController::class, 'registerWorkerBiometric'])
+        ->name('supervisor.workers.register_biometric');
 });
 
-// Only Clients can enter here
 Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
     Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
@@ -113,3 +98,5 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::passkeys();

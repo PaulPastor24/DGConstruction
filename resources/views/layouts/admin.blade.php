@@ -47,6 +47,41 @@
         color: inherit;
         font-size: 24px;
     }
+
+    /* --- SIDEBAR SCROLL FIX LAYOUT RULES --- */
+    .sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }
+
+    .sidebar-logo {
+        flex-shrink: 0 !important; /* Locks logo to prevent compressing */
+    }
+
+    .sidebar-nav {
+        flex: 1 1 auto !important;   /* Let navigation swallow the remaining size */
+        overflow-y: auto !important; /* Enables independent scrolling when content exceeds room */
+        scrollbar-width: thin;        /* Makes custom scrollbars sleek on Firefox */
+    }
+
+    /* Makes standard Webkit/Chrome/Safari scrollbars minimal and elegant */
+    .sidebar-nav::-webkit-scrollbar {
+        width: 5px;
+    }
+    .sidebar-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 99px;
+    }
+
+    .sidebar-footer {
+        margin-top: auto !important; /* Forces footer element to anchor securely at the floor */
+        flex-shrink: 0 !important;
+    }
 </style>
 
 </head>

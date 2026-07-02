@@ -1,0 +1,17 @@
+/* resources/css/supervisor.css */
+.bio-indicator {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+.bio-verified {
+    color: #198754;
+}
+.bio-unverified {
+    color: #6c757d;
+}
+.btn-scan-finger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
