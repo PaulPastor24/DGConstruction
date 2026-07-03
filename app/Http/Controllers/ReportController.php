@@ -312,7 +312,7 @@ class ReportController extends Controller
         if ($modalProject) {
             $projectPhases = ConstructionPhase::query()
                 ->where('project_id', $modalProject->project_id)
-                ->orderBy('phase_order')
+                ->orderBy('phase_order', 'asc')
                 ->get();
         } else {
             $projectPhases = collect();
@@ -321,12 +321,12 @@ class ReportController extends Controller
         if ($selectedProject) {
             $filterPhases = ConstructionPhase::query()
                 ->where('project_id', $selectedProject->project_id)
-                ->orderBy('phase_order')
+                ->orderBy('phase_order', 'asc')
                 ->get();
         } else {
             $filterPhases = ConstructionPhase::whereIn('project_id', $assignedProjectIds, 'and', false)
-                ->orderBy('project_id')
-                ->orderBy('phase_order')
+                ->orderBy('project_id', 'asc')
+                ->orderBy('phase_order', 'asc')
                 ->get();
         }
 
@@ -418,7 +418,7 @@ class ReportController extends Controller
             })->firstOrFail();
 
         $phases = ConstructionPhase::query()->where('project_id', $projectId)
-            ->orderBy('phase_order')
+            ->orderBy('phase_order', 'asc')
             ->get(['phase_id', 'phase_name', 'phase_order', 'status']);
 
         return response()->json(['success' => true, 'phases' => $phases]);

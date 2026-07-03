@@ -55,12 +55,6 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-<<<<<<< HEAD
-        // 2. FORCE HTTPS OVER TUNNEL PROXIES (Fixed CSS & Login Blocks on Phone)
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-            URL::forceScheme('https');
-        }
-=======
         // Share unread supervisor notification count with supervisor layout/topbar
         View::composer('layouts.supervisor', function ($view) {
             $user = Auth::user();
@@ -68,9 +62,10 @@ class AppServiceProvider extends ServiceProvider
             if ($user) {
                 try {
                     if (\Illuminate\Support\Facades\Schema::hasTable('supervisor_notifications')) {
-                        $unread = SupervisorNotification::where('supervisor_id', $user->user_id)
-                            ->where('is_read', false)
-                            ->count();
+                        $unread = SupervisorNotification::query()
+                            ->where('supervisor_id', '=', $user->user_id, 'and')
+                            ->where('is_read', '=', false, 'and')
+                            ->count('*');
                     }
                 } catch (\Throwable $e) {
                     $unread = 0;
@@ -78,6 +73,5 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('supervisorUnreadCount', $unread);
         });
->>>>>>> origin/araymopakak
     }
 }

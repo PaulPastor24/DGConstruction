@@ -206,7 +206,7 @@ class ProjectController extends Controller
         $supervisors = User::query()
             ->where('role', 'supervisor')
             ->where('is_active', true)
-            ->orderBy('first_name')
+            ->orderBy('first_name', 'asc')
             ->get();
 
         // Get current assigned supervisor

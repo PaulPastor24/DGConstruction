@@ -105,7 +105,7 @@ class SupervisorController extends Controller
                     ->where('project_id', $primaryProject->project_id);
 
                 if (Schema::hasColumn('attendance_logs', 'log_date')) {
-                    $attendanceQuery->whereDate('log_date', now()->toDateString());
+                    $attendanceQuery->whereDate('log_date', '=', now()->toDateString(), 'and');
                 }
 
                 $attendanceRecords = $attendanceQuery->with(['deployment.worker', 'recordedBy'])->get();
@@ -319,8 +319,8 @@ class SupervisorController extends Controller
         // Get phases for the primary project with pagination
         $query = ConstructionPhase::query()
             ->where('project_id', $primaryProject->project_id)
-            ->orderBy('phase_order')
-            ->orderBy('planned_start_date');
+            ->orderBy('phase_order', 'asc')
+            ->orderBy('planned_start_date', 'asc');
 
         // Apply search filter if provided
         if ($request->has('search') && $search = $request->input('search')) {
@@ -338,10 +338,10 @@ class SupervisorController extends Controller
         $primaryPhase = ConstructionPhase::query()
             ->where('project_id', $primaryProject->project_id)
             ->where('status', 'in_progress')
-            ->orderBy('phase_order')
+            ->orderBy('phase_order', 'asc')
             ->first() ?? ConstructionPhase::query()
             ->where('project_id', $primaryProject->project_id)
-            ->orderBy('phase_order')
+            ->orderBy('phase_order', 'asc')
             ->first();
 
         // Calculate overall progress
@@ -355,7 +355,7 @@ class SupervisorController extends Controller
         $delayedCount = ConstructionPhase::query()
             ->where('project_id', $primaryProject->project_id)
             ->where('status', 'delayed')
-            ->count();
+            ->count('*');
         $scheduleHealth = $delayedCount > 0 ? 'DELAYED' : 'ON TRACK';
 
         return view('supervisor.phases', compact(
@@ -529,9 +529,9 @@ class SupervisorController extends Controller
 
         $notifications = $query->paginate(12)->withQueryString();
 
-        $totalNotifs = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->count();
-        $unreadCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->count();
-        $readCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', true)->count();
+        $totalNotifs = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->count('*');
+        $unreadCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->count('*');
+        $readCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', true)->count('*');
         $archivedCount = 0;
 
         return view('supervisor.notifications', compact('user', 'notifications', 'totalNotifs', 'unreadCount', 'readCount', 'archivedCount'));
@@ -820,7 +820,7 @@ class SupervisorController extends Controller
 
         // Get phases for the project
         $query = ConstructionPhase::query()->where('project_id', $projectId)
-            ->orderBy('phase_order');
+            ->orderBy('phase_order', 'asc');
 
         if ($request->has('status') && $status = $request->input('status')) {
             $query->where('status', $status);

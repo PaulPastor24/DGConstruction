@@ -102,15 +102,12 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::put('/supervisor/profile', [SupervisorController::class, 'updateProfile'])->name('supervisor.profile.update');
     Route::put('/supervisor/profile/password', [SupervisorController::class, 'updatePassword'])->name('supervisor.profile.password');
     Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
-<<<<<<< HEAD
 
     // ◄ ADDED EXPLICIT FAST BIOMETRIC ENROLLMENT PROCESSING DATA PIPELINE LINK
     Route::post('/supervisor/workers/register-biometric', [SupervisorController::class, 'registerWorkerBiometric'])
         ->name('supervisor.workers.register_biometric');
-=======
     Route::post('/supervisor/notifications/{id}/mark-read', [SupervisorController::class, 'markNotificationRead'])->name('supervisor.notifications.markRead');
     Route::post('/supervisor/notifications/mark-all-read', [SupervisorController::class, 'markAllNotificationsRead'])->name('supervisor.notifications.markAllRead');
->>>>>>> origin/araymopakak
 });
 
 Route::middleware(['auth', 'role:client'])->group(function () {
@@ -123,5 +120,3 @@ Route::middleware(['auth', 'role:client'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-Route::passkeys();
