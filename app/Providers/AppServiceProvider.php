@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\Models\SupervisorNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -50,6 +51,24 @@ class AppServiceProvider extends ServiceProvider
                 'clientNotifications' => $notifications,
                 'clientNotificationCount' => $notificationCount,
             ]);
+        });
+
+        // Share unread supervisor notification count with supervisor layout/topbar
+        View::composer('layouts.supervisor', function ($view) {
+            $user = Auth::user();
+            $unread = 0;
+            if ($user) {
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('supervisor_notifications')) {
+                        $unread = SupervisorNotification::where('supervisor_id', $user->user_id)
+                            ->where('is_read', false)
+                            ->count();
+                    }
+                } catch (\Throwable $e) {
+                    $unread = 0;
+                }
+            }
+            $view->with('supervisorUnreadCount', $unread);
         });
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PhasesExportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
@@ -91,15 +92,36 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
+    
+    // AJAX API endpoints for phases
+    Route::get('/supervisor/api/phases/{id}/details', [SupervisorController::class, 'getPhaseDetails'])->name('supervisor.api.phases.details');
+    Route::post('/supervisor/api/phases/{id}/update-progress', [SupervisorController::class, 'updatePhaseProgress'])->name('supervisor.api.phases.updateProgress');
+    Route::post('/supervisor/api/phases/{id}/update-status', [SupervisorController::class, 'updatePhaseStatus'])->name('supervisor.api.phases.updateStatus');
+    Route::post('/supervisor/api/phases/export-pdf', [SupervisorController::class, 'exportPhasesPdf'])->name('supervisor.api.phases.exportPdf');
+    
+    // Export routes for phases
+    Route::get('/supervisor/phases/export/csv', [PhasesExportController::class, 'exportCsv'])->name('supervisor.phases.export.csv');
+    Route::get('/supervisor/phases/export/pdf', [PhasesExportController::class, 'exportPdf'])->name('supervisor.phases.export.pdf');
+    
     Route::get('/supervisor/attendance', [SupervisorController::class, 'attendance'])->name('supervisor.attendance');
     Route::post('/supervisor/attendance', [SupervisorController::class, 'saveAttendance'])->name('supervisor.attendance.save');
     Route::get('/supervisor/materials', [SupervisorController::class, 'materials'])->name('supervisor.materials');
     Route::post('/supervisor/materials', [SupervisorController::class, 'logDelivery'])->name('supervisor.materials.log');
     Route::get('/supervisor/reports', [ReportController::class, 'supervisorReports'])->name('supervisor.reports');
+    
+    // Reports API endpoints
+    Route::get('/supervisor/api/projects/{project_id}/phases', [ReportController::class, 'getProjectPhases'])->name('supervisor.api.reports.phases');
+    Route::get('/supervisor/api/reports/{id}/details', [ReportController::class, 'getReportDetails'])->name('supervisor.api.reports.details');
+    Route::get('/supervisor/api/reports/{id}/download-pdf', [ReportController::class, 'downloadReportPdf'])->name('supervisor.api.reports.downloadPdf');
+    
     Route::get('/supervisor/reports/{id}', [ReportController::class, 'show'])->name('supervisor.reports.show');
     Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
+    Route::put('/supervisor/profile', [SupervisorController::class, 'updateProfile'])->name('supervisor.profile.update');
+    Route::put('/supervisor/profile/password', [SupervisorController::class, 'updatePassword'])->name('supervisor.profile.password');
     Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
+    Route::post('/supervisor/notifications/{id}/mark-read', [SupervisorController::class, 'markNotificationRead'])->name('supervisor.notifications.markRead');
+    Route::post('/supervisor/notifications/mark-all-read', [SupervisorController::class, 'markAllNotificationsRead'])->name('supervisor.notifications.markAllRead');
 });
 
 // Only Clients can enter here

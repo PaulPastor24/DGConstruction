@@ -8,9 +8,8 @@
         if (empty($value)) {
             return 'Pending';
         }
-
         try {
-            return \Carbon\Carbon::parse($value)->format('M j, Y');
+            return \Carbon\Carbon::parse($value)->format('M d, Y');
         } catch (\Exception $e) {
             return 'Pending';
         }
@@ -18,1205 +17,1401 @@
 
     $statusLabel = function ($status) {
         return match ($status) {
-            'in_progress' => 'In Progress',
-            'completed' => 'Completed',
-            'delayed' => 'Delayed',
-            'not_started' => 'Planned',
-            default => ucfirst(str_replace('_', ' ', (string) $status)),
+            'in_progress' => 'IN PROGRESS',
+            'completed' => 'COMPLETED',
+            'delayed' => 'DELAYED',
+            'not_started' => 'PENDING',
+            default => strtoupper(str_replace('_', ' ', (string) $status)),
         };
     };
 
     $statusClass = function ($status) {
         return match ($status) {
-            'in_progress' => 'phase-badge is-active',
-            'completed' => 'phase-badge is-complete',
-            'delayed' => 'phase-badge is-delayed',
-            default => 'phase-badge',
+            'in_progress' => 'status-badge status-in-progress',
+            'completed' => 'status-badge status-completed',
+            'delayed' => 'status-badge status-delayed',
+            default => 'status-badge status-pending',
         };
     };
 
-    $projectPhases = $primaryProject ? $primaryProject->phases->sortBy('phase_order')->values() : collect();
-    $activePhase = $primaryPhase ?: ($projectPhases->firstWhere('status', 'in_progress') ?? $projectPhases->first());
-    $completedPhases = $projectPhases->where('status', 'completed')->count();
-    $remainingPhases = max(0, $projectPhases->count() - $completedPhases);
-    $overallProgress = $projectPhases->isNotEmpty()
-        ? round((float) $projectPhases->avg('completion_percentage'), 1)
-        : 0;
-    $currentStatus = $activePhase ? $statusLabel($activePhase->status) : 'No active phase';
-    $activeMilestones = $activePhase ? $activePhase->milestones()->orderBy('planned_date')->get() : collect();
-    // Build ordered list of open (not completed) milestones
-    $openMilestones = $activeMilestones->where('is_completed', false)->sortBy('planned_date')->values();
-    // Current milestone prefers the earliest non-delayed open milestone
-    $currentMilestone = $openMilestones->firstWhere('is_delayed', false) ?? $openMilestones->first();
-    // Next milestone is the next item in the ordered open list after the current milestone
-    $nextMilestone = null;
-    if ($currentMilestone) {
-        $index = $openMilestones->search(fn($m) => $m->milestone_id == $currentMilestone->milestone_id);
-        if ($index !== false) {
-            $nextMilestone = $openMilestones->get($index + 1) ?? null;
-        }
-    } else {
-        // If no current milestone (none non-delayed), pick the second open milestone as next if present
-        $nextMilestone = $openMilestones->get(1) ?? null;
-    }
-    $activeMilestoneCount = $activeMilestones->where('is_completed', false)->count();
-    $remainingDaysValue = $activePhase && $activePhase->planned_end_date
-        ? (int) round(now()->diffInDays($activePhase->planned_end_date, false))
-        : null;
-    $remainingDaysLabel = $remainingDaysValue === null
-        ? 'Pending'
-        : ($remainingDaysValue < 0
-            ? 'Overdue by ' . abs($remainingDaysValue) . ' day' . (abs($remainingDaysValue) === 1 ? '' : 's')
-            : $remainingDaysValue . ' day' . ($remainingDaysValue === 1 ? '' : 's'));
-    $currentMilestoneLabel = $currentMilestone?->milestone_name ?? 'No milestone has been assigned by the Engineer yet.';
-    $nextMilestoneLabel = $nextMilestone?->milestone_name ?? 'No milestone has been assigned by the Engineer yet.';
-    $overdueMilestones = $activeMilestones->filter(function ($milestone) {
-        return ! $milestone->is_completed && $milestone->planned_date && $milestone->planned_date->lt(now());
-    })->count();
-    $nextMilestoneDays = $nextMilestone && $nextMilestone->planned_date
-        ? max(0, now()->diffInDays($nextMilestone->planned_date, false))
-        : null;
-    $scheduleHealth = $activePhase && $activePhase->status === 'delayed'
-        ? 'Delayed'
-        : ($overdueMilestones > 0 ? 'Delayed' : 'On Schedule');
-    $scheduleInsight = $activePhase && $activePhase->status === 'delayed'
-        ? 'Delayed by ' . ($remainingDaysValue !== null ? abs($remainingDaysValue) + 1 : '1') . ' day' . (($remainingDaysValue ?? 0) > 0 ? 's' : '')
-        : ($overdueMilestones > 0
-            ? 'Overdue milestone' . ($overdueMilestones > 1 ? 's' : '') . ' need attention'
-            : ($nextMilestoneDays !== null && $nextMilestoneDays <= 7
-                ? 'Next milestone due in ' . $nextMilestoneDays . ' day' . ($nextMilestoneDays === 1 ? '' : 's')
-                : 'No overdue milestones'));
+    $activePhase = $primaryPhase;
+    $scheduleHealth = ($activePhase && $activePhase->status === 'delayed') ? 'DELAYED' : 'ON TRACK';
+    $scheduleHealthClass = $scheduleHealth === 'ON TRACK' ? 'health-on-track' : 'health-delayed';
 @endphp
 
 @section('content')
-<div class="phase-page-shell">
-    @if ($primaryProject && $activePhase)
-        <div class="section-card phase-hero-card">
-            <div class="section-card-body">
-                <div class="phase-hero-header">
-                    <div>
-                        <div class="eyebrow">Current Active Phase</div>
-                        <div class="page-title">{{ $activePhase->phase_name }}</div>
-                        <div class="page-subtitle">{{ $primaryProject->project_name }} • {{ $primaryProject->project_location ?? 'Location pending' }}</div>
-                    </div>
-                    <div class="phase-hero-badges">
-                        <span class="{{ $statusClass($activePhase->status) }}">{{ $currentStatus }}</span>
-                        <span class="phase-info-pill"><i class="bi bi-clipboard2-check"></i> {{ $completedPhases }}/{{ $projectPhases->count() }} completed</span>
-                    </div>
-                </div>
+<div class="phases-container">
+    
+    {{-- Top Metrics Bar --}}
+    <div class="metrics-row">
+        <div class="metric-card project-selector-card">
+            <span class="metric-label">Project</span>
+            <div class="project-dropdown-trigger" id="projectDropdownBtn">
+                <span class="project-name" id="selectedProjectName">{{ $primaryProject?->project_name ?? 'Select Project' }}</span>
+                <i class="bi bi-chevron-down dropdown-arrow"></i>
+            </div>
+            
+            {{-- Dropdown Menu --}}
+            <div class="project-dropdown-menu" id="projectDropdownMenu" style="display: none;">
+                @forelse($assignedProjects as $project)
+                    <a href="#" class="dropdown-item" data-project-id="{{ $project->project_id }}" data-project-name="{{ $project->project_name }}">
+                        {{ $project->project_name }}
+                    </a>
+                @empty
+                    <div class="dropdown-empty">No projects assigned</div>
+                @endforelse
+            </div>
+        </div>
 
-                <div class="phase-hero-progress">
-                    <div class="phase-hero-progress-copy">
-                        <span class="phase-progress-label">Phase Completion</span>
-                        <span class="phase-progress-value">{{ (float) ($activePhase->completion_percentage ?? 0) }}%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ (float) ($activePhase->completion_percentage ?? 0) }}%"></div>
-                    </div>
-                </div>
+        <div class="metric-card progress-metric-card">
+            <span class="metric-label">Overall Progress</span>
+            <div class="metric-value-large" id="overallProgressValue">{{ $overallProgress }}%</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="overallProgressBar" style="width: {{ $overallProgress }}%"></div>
+            </div>
+        </div>
 
-                <div class="phase-hero-grid">
-                    <div class="phase-detail-item">
-                        <div class="phase-detail-label">Planned Start</div>
-                        <div class="phase-detail-value">{{ $formatDate($activePhase->planned_start_date) }}</div>
-                    </div>
-                    <div class="phase-detail-item">
-                        <div class="phase-detail-label">Planned End</div>
-                        <div class="phase-detail-value">{{ $formatDate($activePhase->planned_end_date) }}</div>
-                    </div>
-                    <div class="phase-detail-item">
-                        <div class="phase-detail-label">Actual Start</div>
-                        <div class="phase-detail-value">{{ $formatDate($activePhase->actual_start_date) }}</div>
-                    </div>
-                    <div class="phase-detail-item">
-                        <div class="phase-detail-label">Estimated Remaining</div>
-                        <div class="phase-detail-value">{{ $remainingDaysLabel }}</div>
-                    </div>
-                    <div class="phase-detail-item phase-detail-item-wide">
-                        <div class="phase-detail-label">Current Milestone</div>
-                        <div class="phase-detail-value">{{ $currentMilestoneLabel }}</div>
-                    </div>
-                    <div class="phase-detail-item phase-detail-item-wide">
-                        <div class="phase-detail-label">Next Milestone</div>
-                        <div class="phase-detail-value">{{ $nextMilestoneLabel }}</div>
-                    </div>
+        <div class="metric-card phase-metric-card">
+            <span class="metric-label">Current Phase</span>
+            <div class="current-phase-highlight">
+                <div class="phase-icon-wrapper">
+                    <i class="bi bi-buildings"></i>
                 </div>
-
-                <div class="phase-insight-banner">
-                    <div class="phase-insight-banner-text">
-                        <div class="phase-insight-title">Schedule insight</div>
-                        <div class="phase-insight-copy">{{ $scheduleInsight }}</div>
-                    </div>
-                    <span class="phase-info-pill"><i class="bi bi-lightning-charge"></i> {{ $scheduleHealth }}</span>
-                </div>
-
-                <div class="phase-hero-actions">
-                    <a href="{{ route('supervisor.timeline') }}" class="phase-action-btn phase-action-btn-primary">View Timeline</a>
-                    <a href="{{ route('supervisor.reports') }}" class="phase-action-btn phase-action-btn-secondary">Submit Daily Report</a>
+                <div class="phase-text-group">
+                    <span class="phase-title-text" id="currentPhaseName">{{ $activePhase?->phase_name ?? 'None' }} (Current)</span>
+                    <span class="phase-subtext" id="currentPhaseStatus">{{ $activePhase ? ($activePhase->status === 'in_progress' ? 'In Progress' : ucfirst(str_replace('_', ' ', $activePhase->status))) : 'No phase' }}</span>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-12 col-md-6 col-xl-2">
-                <div class="section-card h-100 phase-summary-card">
-                    <div class="section-card-body">
-                        <div class="phase-summary-label">Overall Progress</div>
-                        <div class="phase-summary-value">{{ $overallProgress }}%</div>
-                        <div class="phase-summary-meta">Project-wide delivery health</div>
-                    </div>
+        <div class="metric-card health-metric-card">
+            <span class="metric-label">Schedule Health</span>
+            <div class="health-status-wrapper {{ $scheduleHealthClass }}" id="scheduleHealthWrapper">
+                <div class="pulse-icon-container">
+                    <svg class="pulse-svg" viewBox="0 0 50 30">
+                        <path class="pulse-path" d="M0,15 L15,15 L20,5 L25,25 L30,12 L33,18 L36,15 L50,15" fill="none" stroke-width="2"/>
+                    </svg>
                 </div>
+                <span class="health-text" id="scheduleHealthText"><i class="bi bi-plus"></i> {{ $scheduleHealth }}</span>
             </div>
-            <div class="col-12 col-md-6 col-xl-2">
-                <div class="section-card h-100 phase-summary-card">
-                    <div class="section-card-body">
-                        <div class="phase-summary-label">Completed Phases</div>
-                        <div class="phase-summary-value">{{ $completedPhases }}</div>
-                        <div class="phase-summary-meta">Delivered in the sequence</div>
-                    </div>
-                </div>
+        </div>
+    </div>
+
+    {{-- Construction Phases Table Section --}}
+    <div class="table-section-container">
+        <div class="table-section-header">
+            <div class="header-left">
+                <h2 class="section-main-title">Construction Phases</h2>
+                <p class="section-subtitle">These phases are based on the construction_phases table.</p>
             </div>
-            <div class="col-12 col-md-6 col-xl-2">
-                <div class="section-card h-100 phase-summary-card">
-                    <div class="section-card-body">
-                        <div class="phase-summary-label">Remaining Phases</div>
-                        <div class="phase-summary-value">{{ $remainingPhases }}</div>
-                        <div class="phase-summary-meta">Still active or pending</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="section-card h-100 phase-summary-card">
-                    <div class="section-card-body">
-                        <div class="phase-summary-label">Active Milestones</div>
-                        <div class="phase-summary-value">{{ $activeMilestoneCount }}</div>
-                        <div class="phase-summary-meta">Open items driving today’s work</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-xl-3">
-                <div class="section-card h-100 phase-summary-card">
-                    <div class="section-card-body">
-                        <div class="phase-summary-label">Schedule Health</div>
-                        <div class="phase-summary-value">{{ $scheduleHealth }}</div>
-                        <div class="phase-summary-meta">Derived from the live phase status</div>
-                    </div>
-                </div>
+            <div class="header-actions">
+                <a href="{{ route('supervisor.timeline') }}?project_id={{ $primaryProject?->project_id ?? '' }}" class="btn-action-outline"><i class="bi bi-calendar3"></i> View Timeline</a>
+                <button class="btn-action-solid" id="exportPdfBtn"><i class="bi bi-download"></i> Export PDF</button>
             </div>
         </div>
 
-        <div class="section-card mt-4">
-            <div class="section-card-body">
-                <div class="phase-section-heading">
-                    <div class="phase-section-title-group">
-                        <div class="phase-section-title">Construction Progress</div>
-                    </div>
-                    <span class="phase-info-pill"><i class="bi bi-eye"></i> Monitoring only</span>
-                </div>
+        {{-- Filters and Search --}}
+        <div class="filters-section">
+            <input type="text" id="searchPhases" class="filter-input" placeholder="Search phases by name...">
+            <select id="statusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="not_started">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="delayed">Delayed</option>
+            </select>
+            <button id="resetFiltersBtn" class="btn-filter-reset"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+        </div>
 
-                <div class="phase-timeline-list">
-                    @foreach ($projectPhases as $phase)
+        <div class="table-responsive">
+            <table class="phases-data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%">PHASE ORDER</th>
+                        <th style="width: 20%">PHASE NAME</th>
+                        <th style="width: 25%">DESCRIPTION</th>
+                        <th style="width: 15%">PROGRESS</th>
+                        <th style="width: 12%">STATUS</th>
+                        <th style="width: 10%">START DATE</th>
+                        <th style="width: 10%">END DATE</th>
+                        <th style="width: 8%; text-align: center;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="phasesTableBody">
+                    @forelse($projectPhases as $phase)
                         @php
-                            $phaseMilestones = $phase->milestones()->orderBy('planned_date')->get();
-                            $phaseCurrentMilestone = $phaseMilestones->where('is_completed', false)->where('is_delayed', false)->sortBy('planned_date')->first();
-                            $phaseNextMilestone = $phaseMilestones->where('is_completed', false)->sortBy('planned_date')->first();
-                            $isActivePhase = $phase->phase_id == optional($activePhase)->phase_id;
-                            $phaseDescription = 'Monitor delivery progress and milestone readiness for ' . strtolower($phase->phase_name) . '.';
-                            $phaseHealthStatus = 'On Schedule';
-                            $phaseHealthTone = 'is-safe';
-                            $phaseHealthCopy = 'No delays detected.';
-                            $phaseHealthIcon = 'bi bi-check2-circle';
-
-                            if ($phase->status === 'completed') {
-                                $phaseHealthStatus = 'Completed';
-                                $phaseHealthTone = 'is-complete';
-                                $phaseHealthCopy = 'This phase has been completed successfully.';
-                                $phaseHealthIcon = 'bi bi-check-circle-fill';
-                            } else {
-                                $plannedEndDate = $phase->planned_end_date ? \Carbon\Carbon::parse($phase->planned_end_date) : null;
-                                $actualEndDate = $phase->actual_end_date ? \Carbon\Carbon::parse($phase->actual_end_date) : null;
-                                $phaseIsDelayed = $phase->status === 'delayed'
-                                    || ($plannedEndDate && $actualEndDate && $actualEndDate->gt($plannedEndDate))
-                                    || ($plannedEndDate && now()->gt($plannedEndDate) && ((float) ($phase->completion_percentage ?? 0)) < 100);
-
-                                if ($phaseIsDelayed) {
-                                    $phaseHealthStatus = 'Delayed';
-                                    $phaseHealthTone = 'is-delayed';
-                                    $phaseHealthCopy = 'Phase has exceeded the planned completion date.';
-                                    $phaseHealthIcon = 'bi bi-exclamation-triangle';
-                                } elseif ($plannedEndDate && now()->diffInDays($plannedEndDate, false) <= 7 && ((float) ($phase->completion_percentage ?? 0)) < 100) {
-                                    $phaseHealthStatus = 'Attention Required';
-                                    $phaseHealthTone = 'is-attention';
-                                    $phaseHealthCopy = 'Current phase is approaching its target completion date.';
-                                    $phaseHealthIcon = 'bi bi-clock-history';
-                                }
-                            }
+                            $isPhaseActive = $phase->phase_id == optional($activePhase)->phase_id;
+                            
+                            $iconClass = match(true) {
+                                str_contains(strtolower($phase->phase_name), 'planning') => 'bi-file-earmark-text',
+                                str_contains(strtolower($phase->phase_name), 'preparation') => 'bi-truck',
+                                str_contains(strtolower($phase->phase_name), 'structural') => 'bi-buildings',
+                                str_contains(strtolower($phase->phase_name), 'masonry') => 'bi-grid-3x3-gap',
+                                str_contains(strtolower($phase->phase_name), 'finishing') => 'bi-paint-bucket',
+                                default => 'bi-check2-circle'
+                            };
                         @endphp
-
-                        <div class="phase-timeline-item {{ $isActivePhase ? 'is-open is-current' : '' }} {{ $phase->status === 'completed' ? 'is-complete' : '' }} {{ $phase->status === 'delayed' ? 'is-upcoming' : '' }}">
-                            <div class="phase-timeline-toggle" role="button" tabindex="0" data-target="phase-panel-{{ $phase->phase_id }}" aria-expanded="{{ $isActivePhase ? 'true' : 'false' }}">
-                                <div class="phase-timeline-main">
-                                    <span class="phase-timeline-marker">{{ $phase->status === 'completed' ? '✓' : ($isActivePhase ? '▶' : '○') }}</span>
-                                    <div class="phase-timeline-copy">
-                                        <div class="phase-timeline-name-row">
-                                            <span class="phase-timeline-name">{{ $phase->phase_name }}</span>
-                                            @if ($isActivePhase)
-                                                <span class="phase-current-badge">Current Phase</span>
-                                            @endif
-                                        </div>
-                                        <span class="phase-timeline-meta">{{ $statusLabel($phase->status) }} • {{ (float) ($phase->completion_percentage ?? 0) }}%</span>
+                        <tr class="{{ $isPhaseActive ? 'row-active-highlight' : '' }}" data-phase-id="{{ $phase->phase_id }}" data-phase-status="{{ $phase->status }}" data-phase-name="{{ strtolower($phase->phase_name) }}">
+                            <td>
+                                <span class="order-badge">{{ $phase->phase_order }}</span>
+                            </td>
+                            <td>
+                                <div class="phase-name-cell">
+                                    <div class="phase-cell-icon">
+                                        <i class="bi {{ $iconClass }}"></i>
                                     </div>
-                                </div>
-                                <div class="phase-timeline-side">
-                                    <span class="phase-timeline-progress-mini" aria-hidden="true">
-                                        <span class="phase-timeline-progress-mini-fill" style="width: {{ (float) ($phase->completion_percentage ?? 0) }}%"></span>
+                                    <span class="phase-name-string {{ $isPhaseActive ? 'text-active-theme' : '' }}">
+                                        {{ $phase->phase_name }} @if($isPhaseActive) <span class="current-inline-tag">(Current)</span> @endif
                                     </span>
-                                    <span class="{{ $statusClass($phase->status) }}">{{ $statusLabel($phase->status) }}</span>
                                 </div>
-                            </div>
-                            <div class="phase-timeline-footer">
-                                <span class="phase-timeline-date">{{ $formatDate($phase->planned_start_date) }} – {{ $formatDate($phase->planned_end_date) }}</span>
-                                <span class="phase-timeline-link">View Details</span>
-                            </div>
-
-                            <div class="phase-timeline-panel" id="phase-panel-{{ $phase->phase_id }}" style="display: {{ $isActivePhase ? 'block' : 'none' }};">
-                                <div class="phase-timeline-progress">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="phase-progress-label">Progress</span>
-                                        <span class="phase-progress-value">{{ (float) ($phase->completion_percentage ?? 0) }}%</span>
-                                    </div>
-                                    <div class="progress-track">
-                                        <div class="progress-fill" style="width: {{ (float) ($phase->completion_percentage ?? 0) }}%"></div>
+                            </td>
+                            <td>
+                                <span class="description-text-cell">
+                                    Monitor delivery progress and milestone readiness for {{ strtolower($phase->phase_name) }}.
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress-cell-wrapper">
+                                    <span class="progress-percent-value">{{ round((float) ($phase->completion_percentage ?? 0), 0) }}%</span>
+                                    <div class="table-progress-track">
+                                        <div class="table-progress-fill" style="width: {{ round((float) ($phase->completion_percentage ?? 0), 0) }}%"></div>
                                     </div>
                                 </div>
-
-                                <div class="phase-details-stack mt-3">
-                                    <div class="phase-detail-card phase-detail-card-main">
-                                        <div class="phase-detail-card-head">
-                                            <div>
-                                                <div class="phase-detail-title">Phase Overview</div>
-                                            </div>
-                                        </div>
-                                        <div class="phase-detail-value">{{ $phaseDescription }}</div>
-                                    </div>
-
-                                    <div class="phase-detail-grid">
-                                        <div class="phase-detail-card">
-                                            <div class="phase-detail-card-head">
-                                                <div>
-                                                    <div class="phase-detail-title">Project Schedule</div>
-                                                </div>
-                                            </div>
-                                            <div class="phase-schedule-timeline">
-                                                <div class="phase-schedule-block">
-                                                    <div class="phase-schedule-label">Planned</div>
-                                                    <div class="phase-schedule-line"><span class="phase-schedule-dot"></span><span>{{ $formatDate($phase->planned_start_date) }}</span></div>
-                                                    <div class="phase-schedule-line is-end"><span class="phase-schedule-dot is-end"></span><span>{{ $formatDate($phase->planned_end_date) }}</span></div>
-                                                </div>
-                                                <div class="phase-schedule-block">
-                                                    <div class="phase-schedule-label">Actual</div>
-                                                    <div class="phase-schedule-line"><span class="phase-schedule-dot"></span><span>{{ $formatDate($phase->actual_start_date) }}</span></div>
-                                                    <div class="phase-schedule-line is-end"><span class="phase-schedule-dot is-end"></span><span>{{ $formatDate($phase->actual_end_date) }}</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="phase-detail-card">
-                                            <div class="phase-detail-card-head">
-                                                <div>
-                                                    <div class="phase-detail-title">Milestone Tracking</div>
-                                                </div>
-                                            </div>
-                                            <div class="phase-milestone-stack">
-                                                @if ($phaseCurrentMilestone)
-                                                    <div class="phase-milestone-item">
-                                                        <div class="phase-milestone-label">Current Milestone</div>
-                                                        <div class="phase-milestone-name">{{ $phaseCurrentMilestone->milestone_name }}</div>
-                                                        <div class="phase-milestone-meta">{{ $phaseCurrentMilestone->is_delayed ? 'Delayed' : 'In progress' }} • {{ $formatDate($phaseCurrentMilestone->planned_date) }}</div>
-                                                    </div>
-                                                @else
-                                                    <div class="phase-empty-card">
-                                                        <div class="phase-empty-icon"><i class="bi bi-flag"></i></div>
-                                                        <div>No milestone has been assigned by the Engineer yet.</div>
-                                                    </div>
-                                                @endif
-
-                                                @if ($phaseNextMilestone)
-                                                    <div class="phase-milestone-item">
-                                                        <div class="phase-milestone-label">Upcoming Milestone</div>
-                                                        <div class="phase-milestone-name">{{ $phaseNextMilestone->milestone_name }}</div>
-                                                        <div class="phase-milestone-meta">Target date • {{ $formatDate($phaseNextMilestone->planned_date) }}</div>
-                                                    </div>
-                                                @else
-                                                    <div class="phase-empty-card">
-                                                        <div class="phase-empty-icon"><i class="bi bi-calendar2-week"></i></div>
-                                                        <div>No upcoming milestone scheduled.</div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="phase-health-card {{ $phaseHealthTone }}">
-                                        <div class="phase-health-head">
-                                            <div class="phase-detail-card-icon"><i class="{{ $phaseHealthIcon }}"></i></div>
-                                            <div>
-                                                <div class="phase-detail-label">Schedule Health</div>
-                                                <div class="phase-health-title">{{ $phaseHealthStatus }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="phase-health-copy">{{ $phaseHealthCopy }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+                            </td>
+                            <td>
+                                <span class="{{ $statusClass($phase->status) }}">{{ $statusLabel($phase->status) }}</span>
+                            </td>
+                            <td class="date-cell-text">{{ $formatDate($phase->planned_start_date) }}</td>
+                            <td class="date-cell-text">{{ $formatDate($phase->planned_end_date) }}</td>
+                            <td style="text-align: center;">
+                                <button class="action-view-row-btn view-phase-details" data-phase-id="{{ $phase->phase_id }}" title="View details" aria-label="View row items">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="empty-table-state">
+                                <i class="bi bi-patch-exclamation"></i> No phases assigned to this project yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-
-        <div class="section-card mt-4">
-            <div class="section-card-body">
-                <div class="phase-section-heading phase-section-heading-inline">
-                    <div class="phase-section-title-group">
-                        <div class="phase-section-title">Active Delivery Milestones</div>
-                    </div>
-                </div>
-
-                @if ($activeMilestones->isNotEmpty())
-                    <div class="milestone-grid">
-                        @foreach ($activeMilestones as $milestone)
-                            @php
-                                $milestoneStatus = $milestone->is_completed ? 'Completed' : ($milestone->is_delayed ? 'Delayed' : 'Active');
-                                $milestoneClasses = $milestone->is_completed ? 'milestone-card is-complete' : ($milestone->is_delayed ? 'milestone-card is-delayed' : 'milestone-card is-active');
-                            @endphp
-
-                            <div class="{{ $milestoneClasses }}">
-                                <div class="milestone-top">
-                                    <span class="milestone-marker">{{ $milestone->is_completed ? '✓' : ($milestone->is_delayed ? '!' : '●') }}</span>
-                                    <span class="phase-badge {{ $milestone->is_completed ? 'is-complete' : ($milestone->is_delayed ? 'is-delayed' : 'is-active') }}">{{ $milestoneStatus }}</span>
-                                </div>
-                                <div class="milestone-name">{{ $milestone->milestone_name }}</div>
-                                <div class="milestone-meta">Target date • {{ $formatDate($milestone->planned_date) }}</div>
-                                <div class="phase-hero-progress mt-3">
-                                    <div class="phase-hero-progress-copy">
-                                        <span class="phase-progress-label">Completion</span>
-                                        <span class="phase-progress-value">{{ $milestone->is_completed ? '100%' : '0%' }}</span>
-                                    </div>
-                                    <div class="progress-track">
-                                        <div class="progress-fill" style="width: {{ $milestone->is_completed ? '100' : '0' }}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+        
+        {{-- Pagination --}}
+        <div class="table-footer-pagination">
+            <span class="pagination-summary-text">
+                Showing {{ $projectPhases->firstItem() ?? 1 }} to {{ $projectPhases->lastItem() ?? $projectPhases->count() }} of {{ $projectPhases->total() }} phases
+            </span>
+            <div class="pagination-controls">
+                @if($projectPhases->onFirstPage())
+                    <button class="pag-btn" disabled><i class="bi bi-chevron-left"></i></button>
                 @else
-                    <div class="dashboard-empty-state">
-                        <div class="dashboard-empty-icon"><i class="bi bi-flag"></i></div>
-                        <div>No milestone has been assigned by the Engineer yet.</div>
-                    </div>
+                    <a href="{{ $projectPhases->previousPageUrl() }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
+                @endif
+                
+                @for($i = 1; $i <= $projectPhases->lastPage(); $i++)
+                    @if($i == $projectPhases->currentPage())
+                        <button class="pag-btn pag-btn-active">{{ $i }}</button>
+                    @else
+                        <a href="{{ $projectPhases->url($i) }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn">{{ $i }}</a>
+                    @endif
+                @endfor
+                
+                @if($projectPhases->hasMorePages())
+                    <a href="{{ $projectPhases->nextPageUrl() }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn"><i class="bi bi-chevron-right"></i></a>
+                @else
+                    <button class="pag-btn" disabled><i class="bi bi-chevron-right"></i></button>
                 @endif
             </div>
         </div>
-    @else
-        <div class="section-card">
-            <div class="section-card-body">
-                <div class="dashboard-empty-state">
-                    <div class="dashboard-empty-icon"><i class="bi bi-clipboard2-check"></i></div>
-                    <div>No construction phase data is available for your assigned projects yet.</div>
-                </div>
+    </div>
+</div>
+
+{{-- Phase Details Modal --}}
+<div id="phaseDetailsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalPhaseTitle">Phase Details</h2>
+            <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="modal-loading">
+                <div class="spinner"></div>
+                <p>Loading phase details...</p>
             </div>
         </div>
-    @endif
+        <div class="modal-footer">
+            <button id="modalCloseActionBtn" class="btn-modal-close">Close</button>
+        </div>
+    </div>
 </div>
 
 <style>
-    .phase-page-shell {
+    :root {
+        --ui-bg-surface: #ffffff;
+        --ui-bg-app: #f8faf9;
+        --ui-border-color: #edf2f0;
+        --ui-text-main: #1a2521;
+        --ui-text-muted: #687973;
+        --ui-theme-green: #0b6054;
+        --ui-theme-green-light: #e8f5f1;
+        
+        --status-comp-bg: #eaf7ed;
+        --status-comp-txt: #1e6133;
+        --status-prog-bg: #eef9f5;
+        --status-prog-txt: #0c695c;
+        --status-pend-bg: #f1f4f3;
+        --status-pend-txt: #5a6561;
+        --status-delay-bg: #fce7e7;
+        --status-delay-txt: #9b2c2c;
+    }
+
+    body {
+        background-color: var(--ui-bg-app);
+        color: var(--ui-text-main);
+    }
+
+    .phases-container {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 0.5rem;
     }
 
-    .phase-hero-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%);
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-radius: 18px;
-        box-shadow: 0 10px 24px rgba(9, 96, 86, 0.05);
-        padding: 1rem;
-    }
-
-    .phase-hero-header,
-    .phase-section-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-        padding-bottom: 0.45rem;
-        margin-bottom: 0.2rem;
-        border-bottom: 1px solid rgba(9, 96, 86, 0.08);
-    }
-
-    .phase-section-heading-inline {
-        padding-bottom: 0.2rem;
-        margin-bottom: 0.7rem;
-    }
-
-    .phase-section-title-group {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-
-    .phase-section-icon {
-        width: 38px;
-        height: 38px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        flex-shrink: 0;
-        margin-top: 0.15rem;
-    }
-
-    .phase-section-title {
-        font-family: 'Syne', sans-serif;
-        font-size: 1.08rem;
-        font-weight: 700;
-        color: var(--supervisor-text);
-        line-height: 1.2;
-        letter-spacing: 0.01em;
-    }
-
-    .phase-hero-badges,
-    .phase-hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-        align-items: center;
-    }
-
-    .phase-info-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.55rem 0.7rem;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-
-    .phase-hero-progress {
-        display: flex;
-        flex-direction: column;
-        gap: 0.55rem;
-        margin-top: 1rem;
-    }
-
-    .phase-hero-progress-copy {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .phase-progress-label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--supervisor-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-    }
-
-    .phase-progress-value {
-        font-family: 'Syne', sans-serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--supervisor-primary);
-    }
-
-    .phase-hero-grid {
+    /* Top Metrics Bar Design */
+    .metrics-row {
         display: grid;
-        gap: 0.75rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin-top: 1rem;
+        grid-template-columns: 1.2fr 1.2fr 1.4fr 1.1fr;
+        gap: 1.25rem;
     }
 
-    .phase-insight-banner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.8rem;
-        margin-top: 1rem;
-        padding: 0.9rem 1rem;
-        border-radius: 14px;
-        background: rgba(9, 96, 86, 0.06);
-        border: 1px solid rgba(9, 96, 86, 0.1);
-    }
-
-    .phase-insight-title {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--supervisor-muted);
-        margin-bottom: 0.2rem;
-    }
-
-    .phase-insight-copy {
-        font-size: 0.94rem;
-        font-weight: 600;
-        color: var(--supervisor-text);
-    }
-
-    .phase-detail-item {
-        background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%);
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-radius: 16px;
-        padding: 0.8rem 0.9rem;
-        min-height: 74px;
-        box-shadow: 0 6px 16px rgba(9, 96, 86, 0.04);
-    }
-
-    .phase-detail-item-wide {
-        grid-column: span 2;
-    }
-
-    .phase-detail-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--supervisor-muted);
-        margin-bottom: 0.3rem;
-    }
-
-    .phase-detail-value {
-        font-size: 0.92rem;
-        font-weight: 600;
-        color: var(--supervisor-text);
-        line-height: 1.4;
-    }
-
-    .phase-summary-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%);
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-left: 4px solid var(--supervisor-accent);
-        border-radius: 18px;
-        box-shadow: 0 10px 24px rgba(9, 96, 86, 0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .phase-summary-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 28px rgba(9, 96, 86, 0.08);
-    }
-
-    .phase-summary-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--supervisor-muted);
-    }
-
-    .phase-summary-value {
-        font-family: 'Syne', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: var(--supervisor-primary);
-        margin-top: 0.15rem;
-        line-height: 1.1;
-    }
-
-    .phase-summary-meta {
-        font-size: 0.86rem;
-        color: var(--supervisor-muted);
-        margin-top: 0.2rem;
-    }
-
-    .phase-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.45rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        white-space: nowrap;
-        box-shadow: inset 0 0 0 1px rgba(9, 96, 86, 0.06);
-    }
-
-    .phase-badge.is-active {
-        background: rgba(9, 96, 86, 0.16);
-        color: var(--supervisor-primary-deep);
-    }
-
-    .phase-badge.is-complete {
-        background: rgba(130, 219, 114, 0.18);
-        color: #2f6b3c;
-    }
-
-    .phase-badge.is-delayed {
-        background: rgba(255, 193, 7, 0.18);
-        color: #9a6100;
-    }
-
-    .phase-timeline-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-        margin-top: 1rem;
-    }
-
-    .phase-timeline-item {
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-radius: 18px;
-        background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%);
-        overflow: hidden;
-        transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        box-shadow: 0 8px 22px rgba(9, 96, 86, 0.04);
-    }
-
-    .phase-timeline-item:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 12px 24px rgba(9, 96, 86, 0.08);
-    }
-
-    .phase-timeline-item.is-open {
-        border-color: rgba(9, 96, 86, 0.16);
-        box-shadow: 0 14px 28px rgba(9, 96, 86, 0.08);
-    }
-
-    .phase-timeline-item.is-current {
-        box-shadow: 0 14px 28px rgba(9, 96, 86, 0.08);
-    }
-
-    .phase-timeline-item.is-complete {
-        opacity: 0.95;
-    }
-
-    .phase-timeline-item.is-upcoming {
-        opacity: 0.9;
-    }
-
-    .phase-timeline-toggle {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-        padding: 1rem 1.05rem;
-        background: transparent;
-        border: none;
-        text-align: left;
-        color: var(--supervisor-text);
-        cursor: pointer;
-    }
-
-    .phase-timeline-marker {
-        width: 32px;
-        height: 32px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        font-weight: 700;
-        flex-shrink: 0;
-        box-shadow: inset 0 0 0 1px rgba(9, 96, 86, 0.06);
-    }
-
-    .phase-timeline-main {
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        flex: 1;
-        min-width: 0;
-    }
-
-    .phase-timeline-copy {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-        min-width: 0;
-    }
-
-    .phase-timeline-name-row {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-    }
-
-    .phase-current-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.28rem 0.55rem;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-
-    .phase-timeline-side {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        flex-shrink: 0;
-    }
-
-    .phase-timeline-progress-mini {
-        width: 96px;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    .phase-timeline-progress-mini-fill {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--supervisor-secondary), var(--supervisor-accent));
-    }
-
-    .phase-timeline-name {
-        font-family: 'Syne', sans-serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--supervisor-primary);
-    }
-
-    .phase-timeline-meta {
-        font-size: 0.85rem;
-        color: var(--supervisor-muted);
-    }
-
-    .phase-timeline-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.8rem;
-        padding: 0 1.05rem 1rem;
-        color: var(--supervisor-muted);
-        font-size: 0.84rem;
-    }
-
-    .phase-timeline-link {
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: var(--supervisor-primary);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-
-    .phase-timeline-panel {
-        padding: 0 1.05rem 1.05rem;
-    }
-
-    .phase-details-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-
-    .phase-detail-card {
-        background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%);
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-radius: 16px;
-        padding: 0.9rem 1rem;
-        box-shadow: 0 6px 16px rgba(9, 96, 86, 0.04);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .phase-detail-card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(9, 96, 86, 0.06);
-    }
-
-    .phase-detail-card-main {
-        background: linear-gradient(135deg, #fcfdfc 0%, #f4f8f6 100%);
-    }
-
-    .phase-detail-card-head {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        margin-bottom: 0.7rem;
-    }
-
-    .phase-detail-card-icon {
-        width: 34px;
-        height: 34px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        flex-shrink: 0;
-    }
-
-    .phase-detail-title {
-        font-size: 0.94rem;
-        font-weight: 700;
-        color: var(--supervisor-text);
-    }
-
-    .phase-detail-grid {
-        display: grid;
-        gap: 0.8rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .phase-schedule-timeline {
-        display: grid;
-        gap: 0.7rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .phase-schedule-block {
-        padding: 0.75rem 0.8rem;
+    .metric-card {
+        background: var(--ui-bg-surface);
+        border: 1px solid var(--ui-border-color);
         border-radius: 12px;
-        background: #fbfdfb;
-        border: 1px solid rgba(9, 96, 86, 0.06);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 110px;
+        position: relative;
     }
 
-    .phase-schedule-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--supervisor-muted);
+    .metric-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--ui-text-muted);
         margin-bottom: 0.5rem;
     }
 
-    .phase-schedule-line {
+    .project-selector-card {
+        position: relative;
+    }
+
+    .project-dropdown-trigger {
         display: flex;
         align-items: center;
-        gap: 0.55rem;
-        font-size: 0.86rem;
-        color: var(--supervisor-text);
-        margin-bottom: 0.3rem;
+        justify-content: space-between;
+        cursor: pointer;
+        padding-top: 0.25rem;
     }
 
-    .phase-schedule-line.is-end {
-        margin-bottom: 0;
+    .project-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--ui-text-main);
     }
 
-    .phase-schedule-dot {
-        width: 10px;
-        height: 10px;
+    .dropdown-arrow {
+        color: var(--ui-text-muted);
+        font-size: 1.1rem;
+        transition: transform 0.2s;
+    }
+
+    .project-dropdown-trigger:hover .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .project-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--ui-bg-surface);
+        border: 1px solid var(--ui-border-color);
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        overflow: hidden;
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--ui-text-main);
+        text-decoration: none;
+        border-bottom: 1px solid var(--ui-border-color);
+        transition: background 0.2s;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+        background: var(--ui-theme-green-light);
+        color: var(--ui-theme-green);
+        font-weight: 600;
+    }
+
+    .dropdown-empty {
+        padding: 1rem;
+        text-align: center;
+        color: var(--ui-text-muted);
+    }
+
+    .metric-value-large {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ui-text-main);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 8px;
+        background: #eef2f0;
         border-radius: 999px;
-        background: var(--supervisor-secondary);
-        box-shadow: 0 0 0 4px rgba(77, 160, 120, 0.12);
-        flex-shrink: 0;
+        overflow: hidden;
     }
 
-    .phase-schedule-dot.is-end {
-        background: var(--supervisor-primary);
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--ui-theme-green);
+        border-radius: 999px;
+        transition: width 0.3s ease;
     }
 
-    .phase-milestone-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
-
-    .phase-milestone-item,
-    .phase-empty-card {
-        padding: 0.75rem 0.8rem;
-        border-radius: 12px;
-        background: #fbfdfb;
-        border: 1px solid rgba(9, 96, 86, 0.06);
-    }
-
-    .phase-milestone-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--supervisor-muted);
-        margin-bottom: 0.25rem;
-    }
-
-    .phase-milestone-name {
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: var(--supervisor-text);
-        margin-bottom: 0.25rem;
-    }
-
-    .phase-milestone-meta {
-        font-size: 0.82rem;
-        color: var(--supervisor-muted);
-    }
-
-    .phase-empty-card {
+    .current-phase-highlight {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        color: var(--supervisor-muted);
+        gap: 0.75rem;
     }
 
-    .phase-empty-icon {
-        width: 30px;
-        height: 30px;
-        display: inline-flex;
+    .phase-icon-wrapper {
+        width: 42px;
+        height: 42px;
+        background: var(--ui-theme-green-light);
+        color: var(--ui-theme-green);
+        border-radius: 50%;
+        display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 999px;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        flex-shrink: 0;
+        font-size: 1.2rem;
     }
 
-    .phase-health-card {
-        padding: 0.9rem 1rem;
-        border-radius: 14px;
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        background: #fbfdfb;
+    .phase-text-group {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
     }
 
-    .phase-health-card.is-safe {
-        background: rgba(130, 219, 114, 0.12);
-        border-color: rgba(130, 219, 114, 0.24);
+    .phase-title-text {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--ui-theme-green);
     }
 
-    .phase-health-card.is-attention {
-        background: rgba(255, 193, 7, 0.12);
-        border-color: rgba(255, 193, 7, 0.24);
+    .phase-subtext {
+        font-size: 0.8rem;
+        color: var(--ui-text-muted);
     }
 
-    .phase-health-card.is-delayed {
-        background: rgba(220, 53, 69, 0.1);
-        border-color: rgba(220, 53, 69, 0.2);
-    }
-
-    .phase-health-card.is-complete {
-        background: rgba(9, 96, 86, 0.08);
-        border-color: rgba(9, 96, 86, 0.14);
-    }
-
-    .phase-health-head {
+    .health-status-wrapper {
         display: flex;
         align-items: center;
-        gap: 0.7rem;
+        justify-content: space-between;
+        padding-top: 0.2rem;
     }
 
-    .phase-health-title {
-        font-size: 0.98rem;
+    .health-text {
+        font-size: 0.85rem;
         font-weight: 700;
-        color: var(--supervisor-text);
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
     }
 
-    .phase-health-copy {
-        font-size: 0.9rem;
-        color: var(--supervisor-text);
-        line-height: 1.45;
+    .health-on-track .health-text {
+        background: var(--status-comp-bg);
+        color: var(--status-comp-txt);
     }
 
-    .milestone-grid {
-        display: grid;
-        gap: 0.9rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin-top: 1rem;
+    .health-delayed .health-text {
+        background: var(--status-delay-bg);
+        color: var(--status-delay-txt);
     }
 
-    .milestone-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f6fcf8 100%);
-        border: 1px solid rgba(9, 96, 86, 0.08);
-        border-radius: 18px;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.65rem;
-        box-shadow: 0 8px 20px rgba(9, 96, 86, 0.04);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .pulse-icon-container {
+        width: 45px;
+        height: 25px;
     }
 
-    .milestone-card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 12px 24px rgba(9, 96, 86, 0.08);
+    .pulse-path {
+        stroke: #22c55e;
+        fill: none;
+        stroke-dasharray: 100;
+        animation: pulseMock 4s linear infinite;
     }
 
-    .milestone-card.is-active {
-        border-color: rgba(9, 96, 86, 0.2);
-        box-shadow: 0 10px 24px rgba(9, 96, 86, 0.06);
+    @keyframes pulseMock {
+        0% { stroke-dashoffset: 200; }
+        100% { stroke-dashoffset: 0; }
     }
 
-    .milestone-top {
+    /* Core Data Table View Section */
+    .table-section-container {
+        background: var(--ui-bg-surface);
+        border: 1px solid var(--ui-border-color);
+        border-radius: 12px;
+        padding: 1.5rem 0 0 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .table-section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 0.6rem;
+        padding: 0 1.5rem 1.25rem 1.5rem;
     }
 
-    .milestone-marker {
+    .section-main-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ui-text-main);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .section-subtitle {
+        font-size: 0.85rem;
+        color: var(--ui-text-muted);
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1rem;
+        border: 1px solid #dcdfdc;
+        background: transparent;
+        color: #38423f;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .btn-action-outline:hover {
+        background: #f4f6f5;
+        color: #38423f;
+    }
+
+    .btn-action-solid {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1rem;
+        border: none;
+        background: var(--ui-theme-green);
+        color: #ffffff;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-action-solid:hover {
+        background: #08493f;
+    }
+
+    /* Filters Section */
+    .filters-section {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--ui-border-color);
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-input {
+        flex: 1;
+        min-width: 200px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--ui-border-color);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--ui-text-main);
+    }
+
+    .filter-input::placeholder {
+        color: var(--ui-text-muted);
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--ui-theme-green);
+        box-shadow: 0 0 0 2px rgba(11, 96, 84, 0.1);
+    }
+
+    .filter-select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--ui-border-color);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--ui-text-main);
+        background: var(--ui-bg-surface);
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--ui-theme-green);
+    }
+
+    .btn-filter-reset {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--ui-border-color);
+        background: transparent;
+        color: var(--ui-text-muted);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-filter-reset:hover {
+        border-color: var(--ui-theme-green);
+        color: var(--ui-theme-green);
+        background: var(--ui-theme-green-light);
+    }
+
+    /* Table Architecture */
+    .phases-data-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .phases-data-table th {
+        background: #fbfcfa;
+        border-top: 1px solid var(--ui-border-color);
+        border-bottom: 1px solid var(--ui-border-color);
+        padding: 0.85rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--ui-text-muted);
+        letter-spacing: 0.03em;
+    }
+
+    .phases-data-table td {
+        padding: 1.1rem 1.25rem;
+        border-bottom: 1px solid var(--ui-border-color);
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .row-active-highlight {
+        background-color: #fafdfc;
+    }
+
+    .order-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f1f4f2;
+        color: #4a5451;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .row-active-highlight .order-badge {
+        background: var(--ui-theme-green-light);
+        color: var(--ui-theme-green);
+    }
+
+    .phase-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .phase-cell-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f4f7f5;
+        color: var(--ui-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+    }
+
+    .row-active-highlight .phase-cell-icon {
+        background: var(--ui-theme-green-light);
+        color: var(--ui-theme-green);
+    }
+
+    .phase-name-string {
+        font-weight: 600;
+        color: var(--ui-text-main);
+    }
+
+    .text-active-theme {
+        color: var(--ui-theme-green);
+        font-weight: 700;
+    }
+
+    .current-inline-tag {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-left: 0.25rem;
+    }
+
+    .description-text-cell {
+        color: var(--ui-text-muted);
+        font-size: 0.85rem;
+        line-height: 1.4;
+        display: block;
+    }
+
+    .progress-cell-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        max-width: 140px;
+    }
+
+    .progress-percent-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--ui-text-main);
+    }
+
+    .table-progress-track {
+        width: 100%;
+        height: 6px;
+        background: #edf0ee;
+        border-radius: 4px;
+    }
+
+    .table-progress-fill {
+        height: 100%;
+        background: var(--ui-theme-green);
+        border-radius: 4px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .status-completed {
+        background: var(--status-comp-bg);
+        color: var(--status-comp-txt);
+    }
+
+    .status-in-progress {
+        background: var(--status-prog-bg);
+        color: var(--status-prog-txt);
+    }
+
+    .status-pending {
+        background: var(--status-pend-bg);
+        color: var(--status-pend-txt);
+    }
+
+    .status-delayed {
+        background: var(--status-delay-bg);
+        color: var(--status-delay-txt);
+    }
+
+    .date-cell-text {
+        color: var(--ui-text-main);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .action-view-row-btn {
+        background: transparent;
+        border: none;
+        color: #92a19c;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        transition: color 0.2s;
+    }
+
+    .action-view-row-btn:hover {
+        color: var(--ui-theme-green);
+    }
+
+    /* Pagination */
+    .table-footer-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--ui-border-color);
+    }
+
+    .pagination-summary-text {
+        font-size: 0.85rem;
+        color: var(--ui-text-muted);
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.35rem;
+    }
+
+    .pag-btn {
         width: 32px;
         height: 32px;
-        border-radius: 999px;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        font-weight: 700;
-    }
-
-    .milestone-name {
-        font-family: 'Syne', sans-serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--supervisor-text);
-    }
-
-    .milestone-meta {
+        border: 1px solid var(--ui-border-color);
+        background: #ffffff;
+        border-radius: 6px;
+        color: var(--ui-text-main);
         font-size: 0.85rem;
-        color: var(--supervisor-muted);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
     }
 
-    .phase-action-btn {
-        display: inline-flex;
+    .pag-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .pag-btn-active {
+        background: var(--ui-theme-green);
+        color: #ffffff;
+        border-color: var(--ui-theme-green);
+        font-weight: 600;
+    }
+
+    .empty-table-state {
+        text-align: center;
+        color: var(--ui-text-muted);
+        padding: 3rem !important;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.8rem 1.15rem;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background: var(--ui-bg-surface);
         border-radius: 12px;
-        font-size: 0.9rem;
-        font-weight: 700;
-        text-decoration: none;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
     }
 
-    .phase-action-btn:hover {
-        transform: translateY(-1px);
-    }
-
-    .phase-action-btn-primary {
-        background: var(--supervisor-primary);
-        color: #fff;
-        box-shadow: 0 8px 18px rgba(9, 96, 86, 0.16);
-    }
-
-    .phase-action-btn-primary:hover {
-        background: var(--supervisor-primary-deep);
-        color: #fff;
-        box-shadow: 0 10px 20px rgba(9, 96, 86, 0.18);
-    }
-
-    .phase-action-btn-secondary {
-        background: transparent;
-        border: 1px solid rgba(9, 96, 86, 0.2);
-        color: var(--supervisor-primary);
-    }
-
-    .phase-action-btn-secondary:hover {
-        background: rgba(9, 96, 86, 0.08);
-        color: var(--supervisor-primary);
-        box-shadow: 0 8px 16px rgba(9, 96, 86, 0.08);
-    }
-
-    @media (max-width: 1024px) {
-        .phase-hero-grid,
-        .milestone-grid {
-            grid-template-columns: 1fr;
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
         }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 
-        .phase-detail-item-wide {
-            grid-column: span 1;
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--ui-border-color);
+    }
+
+    .modal-header h2 {
+        font-size: 1.25rem;
+        color: var(--ui-text-main);
+        margin: 0;
+    }
+
+    .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--ui-text-muted);
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .modal-close-btn:hover {
+        color: var(--ui-text-main);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .spinner {
+        border: 3px solid var(--ui-border-color);
+        border-top: 3px solid var(--ui-theme-green);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .phase-details {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: var(--ui-bg-app);
+        border-radius: 8px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--ui-text-muted);
+    }
+
+    .detail-value {
+        color: var(--ui-text-main);
+        font-weight: 500;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid var(--ui-border-color);
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-modal-close {
+        padding: 0.5rem 1rem;
+        background: var(--ui-border-color);
+        border: none;
+        border-radius: 8px;
+        color: var(--ui-text-main);
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-modal-close:hover {
+        background: var(--ui-theme-green);
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1100px) {
+        .metrics-row {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
     @media (max-width: 768px) {
-        .phase-hero-header,
-        .phase-section-heading {
-            flex-direction: column;
+        .metrics-row {
+            grid-template-columns: 1fr;
         }
-
-        .phase-hero-actions {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .phase-insight-banner {
+        .table-section-header {
             flex-direction: column;
             align-items: flex-start;
+            gap: 1rem;
         }
-
-        .phase-timeline-toggle {
+        .filters-section {
             flex-direction: column;
-            align-items: flex-start;
         }
-
-        .phase-timeline-side {
+        .filter-input,
+        .filter-select {
             width: 100%;
-            justify-content: space-between;
-        }
-
-        .phase-timeline-footer {
-            flex-direction: column;
-            align-items: flex-start;
         }
     }
 </style>
 
+{{-- Include SweetAlert2 --}}
+@if (!View::exists('layouts.includes.sweetalert2'))
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+@endif
+
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const toggles = document.querySelectorAll('.phase-timeline-toggle');
+document.addEventListener('DOMContentLoaded', function() {
+    // Project Dropdown
+    const projectDropdownBtn = document.getElementById('projectDropdownBtn');
+    const projectDropdownMenu = document.getElementById('projectDropdownMenu');
+    const selectedProjectName = document.getElementById('selectedProjectName');
+    const projectItems = document.querySelectorAll('.dropdown-item');
 
-        function openPanel(toggle) {
-            const targetId = toggle.getAttribute('data-target');
-            const targetPanel = document.getElementById(targetId);
+    projectDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        projectDropdownMenu.style.display = projectDropdownMenu.style.display === 'none' ? 'block' : 'none';
+    });
 
-            if (!targetPanel) {
-                return;
-            }
-
-            document.querySelectorAll('.phase-timeline-panel').forEach(function (panel) {
-                panel.style.display = 'none';
+    projectItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const projectId = item.dataset.projectId;
+            const projectName = item.dataset.projectName;
+            
+            // Show loading
+            Swal.fire({
+                title: 'Switching Project',
+                html: 'Loading project data...',
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                allowOutsideClick: false,
+                allowEscapeKey: false
             });
 
-            document.querySelectorAll('.phase-timeline-item').forEach(function (item) {
-                item.classList.remove('is-open');
-            });
+            // Redirect with project_id
+            window.location.href = `{{ route('supervisor.phases') }}?project_id=${projectId}`;
+        });
+    });
 
-            targetPanel.style.display = 'block';
-            toggle.closest('.phase-timeline-item').classList.add('is-open');
-            toggle.setAttribute('aria-expanded', 'true');
+    // Close dropdown on outside click
+    document.addEventListener('click', () => {
+        projectDropdownMenu.style.display = 'none';
+    });
+
+    // View Details Modal
+    const viewDetailsButtons = document.querySelectorAll('.view-phase-details');
+    const phaseDetailsModal = document.getElementById('phaseDetailsModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalCloseActionBtn = document.getElementById('modalCloseActionBtn');
+    const modalBody = document.getElementById('modalBody');
+
+    viewDetailsButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const phaseId = btn.dataset.phaseId;
+            
+            // Show modal with loading state
+            phaseDetailsModal.style.display = 'flex';
+            modalBody.innerHTML = `
+                <div class="modal-loading">
+                    <div class="spinner"></div>
+                    <p>Loading phase details...</p>
+                </div>
+            `;
+
+            // Fetch phase details
+            fetch(`{{ route('supervisor.api.phases.details', ':id') }}`.replace(':id', phaseId))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const phase = data.phase;
+                        document.getElementById('modalPhaseTitle').textContent = phase.name;
+                        
+                        // Build modal body with management controls when allowed
+                        const canManage = data.can_manage === true;
+
+                        modalBody.innerHTML = `
+                            <div class="phase-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Phase Order:</span>
+                                    <span class="detail-value">#${phase.order}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Status:</span>
+                                    <span class="detail-value">${phase.status.toUpperCase().replace('_', ' ')}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Progress:</span>
+                                    <span class="detail-value">${Math.round(phase.completion_percentage)}%</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Project:</span>
+                                    <span class="detail-value">${phase.project_name}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Planned Start:</span>
+                                    <span class="detail-value">${phase.planned_start_date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Planned End:</span>
+                                    <span class="detail-value">${phase.planned_end_date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Actual Start:</span>
+                                    <span class="detail-value">${phase.actual_start_date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Actual End:</span>
+                                    <span class="detail-value">${phase.actual_end_date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Milestones:</span>
+                                    <span class="detail-value">${phase.completed_milestones}/${phase.milestones_count} completed</span>
+                                </div>
+                                ${canManage ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Update Progress (%):</span>
+                                    <span class="detail-value">
+                                        <input type="number" id="modalProgressInput" min="0" max="100" value="${Math.round(phase.completion_percentage)}" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6ece9;"> 
+                                        <button id="saveProgressBtn" class="btn-action-solid" style="margin-left:8px;">Save</button>
+                                    </span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Change Status:</span>
+                                    <span class="detail-value">
+                                        <select id="modalStatusSelect" style="padding:6px;border-radius:6px;border:1px solid #e6ece9;">
+                                            <option value="not_started" ${phase.status === 'not_started' ? 'selected' : ''}>Pending</option>
+                                            <option value="in_progress" ${phase.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                            <option value="completed" ${phase.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                        </select>
+                                        <button id="changeStatusBtn" class="btn-action-outline" style="margin-left:8px;">Change</button>
+                                    </span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        `;
+
+                        // Wire up management actions if allowed
+                        if (canManage) {
+                            const saveProgressBtn = document.getElementById('saveProgressBtn');
+                            const progressInput = document.getElementById('modalProgressInput');
+                            const changeStatusBtn = document.getElementById('changeStatusBtn');
+                            const statusSelect = document.getElementById('modalStatusSelect');
+
+                            saveProgressBtn.addEventListener('click', function() {
+                                const val = parseFloat(progressInput.value);
+                                if (isNaN(val) || val < 0 || val > 100) {
+                                    Swal.fire({ title: 'Invalid value', text: 'Progress must be between 0 and 100', icon: 'warning' });
+                                    return;
+                                }
+
+                                Swal.fire({
+                                    title: 'Saving progress',
+                                    didOpen: () => Swal.showLoading(),
+                                    allowOutsideClick: false
+                                });
+
+                                fetch(`{{ url('/supervisor/api/phases') }}/${phase.id}/update-progress`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                        'Accept': 'application/json',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ completion_percentage: val })
+                                }).then(r => r.json()).then(resp => {
+                                        if (resp.success) {
+                                        Swal.fire({ title: 'Saved', text: 'Progress updated successfully', icon: 'success', confirmButtonColor: '#0b6054' });
+                                        // Update UI elements
+                                        const newPct = resp.phase.completion_percentage;
+                                        document.querySelectorAll(`[data-phase-id='${phase.id}'] .progress-percent-value`).forEach(el => el.textContent = Math.round(newPct) + '%');
+                                        document.querySelectorAll(`[data-phase-id='${phase.id}'] .table-progress-fill`).forEach(el => el.style.width = Math.round(newPct) + '%');
+                                        if (resp.overallProgress !== undefined) {
+                                            document.getElementById('overallProgressValue').textContent = resp.overallProgress + '%';
+                                            document.getElementById('overallProgressBar').style.width = resp.overallProgress + '%';
+                                        }
+                                        // Update notification badge
+                                        const nb = document.getElementById('notif-badge');
+                                        if (nb) {
+                                            const val = parseInt(nb.textContent || '0', 10) || 0;
+                                            nb.textContent = val + 1;
+                                        } else {
+                                            const link = document.querySelector('.topbar-icon');
+                                            if (link) {
+                                                const span = document.createElement('span');
+                                                span.id = 'notif-badge';
+                                                span.className = 'position-absolute';
+                                                span.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#198754; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
+                                                span.textContent = '1';
+                                                link.appendChild(span);
+                                            }
+                                        }
+                                    } else {
+                                        Swal.fire({ title: 'Error', text: resp.message || 'Failed to save progress', icon: 'error' });
+                                    }
+                                }).catch(() => {
+                                    Swal.fire({ title: 'Error', text: 'Request failed', icon: 'error' });
+                                });
+                            });
+
+                            changeStatusBtn.addEventListener('click', function() {
+                                const selected = statusSelect.value;
+                                // Confirmation
+                                Swal.fire({
+                                    title: 'Change phase status? ',
+                                    text: 'This action will update the phase status.',
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Yes, change',
+                                    confirmButtonColor: '#0b6054'
+                                }).then(result => {
+                                    if (!result.isConfirmed) return;
+                                    Swal.fire({ title: 'Updating status', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+                                    fetch(`{{ url('/supervisor/api/phases') }}/${phase.id}/update-status`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                            'Accept': 'application/json',
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ status: selected })
+                                    }).then(r => r.json()).then(resp => {
+                                        if (resp.success) {
+                                            Swal.fire({ title: 'Updated', text: 'Phase status updated.', icon: 'success', confirmButtonColor: '#0b6054' });
+                                            // Update row badge and current phase UI
+                                            document.querySelectorAll(`[data-phase-id='${phase.id}'] .status-badge`).forEach(el => el.textContent = selected === 'in_progress' ? 'IN PROGRESS' : (selected === 'not_started' ? 'PENDING' : 'COMPLETED'));
+                                            // Update overall progress
+                                            if (resp.overallProgress !== undefined) {
+                                                document.getElementById('overallProgressValue').textContent = resp.overallProgress + '%';
+                                                document.getElementById('overallProgressBar').style.width = resp.overallProgress + '%';
+                                            }
+                                            // Update notification badge
+                                            const nb2 = document.getElementById('notif-badge');
+                                            if (nb2) {
+                                                const val2 = parseInt(nb2.textContent || '0', 10) || 0;
+                                                nb2.textContent = val2 + 1;
+                                            } else {
+                                                const link2 = document.querySelector('.topbar-icon');
+                                                if (link2) {
+                                                    const span2 = document.createElement('span');
+                                                    span2.id = 'notif-badge';
+                                                    span2.className = 'position-absolute';
+                                                    span2.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#198754; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
+                                                    span2.textContent = '1';
+                                                    link2.appendChild(span2);
+                                                }
+                                            }
+                                            // Update current phase status text
+                                            if (document.getElementById('currentPhaseName') && document.querySelector(`[data-phase-id='${phase.id}']`).classList.contains('row-active-highlight')) {
+                                                document.getElementById('currentPhaseStatus').textContent = selected === 'in_progress' ? 'In Progress' : (selected === 'not_started' ? 'Pending' : 'Completed');
+                                            }
+                                        } else {
+                                            Swal.fire({ title: 'Error', text: resp.message || 'Failed to update status', icon: 'error' });
+                                        }
+                                    }).catch(() => {
+                                        Swal.fire({ title: 'Error', text: 'Request failed', icon: 'error' });
+                                    });
+                                });
+                            });
+                        }
+                    } else {
+                        modalBody.innerHTML = '<p style="color: red;">Error loading phase details</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = '<p style="color: red;">Error loading phase details</p>';
+                });
+        });
+    });
+
+    modalCloseBtn.addEventListener('click', () => {
+        phaseDetailsModal.style.display = 'none';
+    });
+
+    modalCloseActionBtn.addEventListener('click', () => {
+        phaseDetailsModal.style.display = 'none';
+    });
+
+    phaseDetailsModal.addEventListener('click', (e) => {
+        if (e.target === phaseDetailsModal) {
+            phaseDetailsModal.style.display = 'none';
         }
+    });
 
-        toggles.forEach(function (toggle) {
-            toggle.addEventListener('click', function () {
-                openPanel(this);
-            });
+    // Export PDF
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    exportPdfBtn.addEventListener('click', () => {
+        Swal.fire({
+            title: 'Exporting PDF',
+            html: 'Generating construction phases report...',
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
 
-            toggle.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    openPanel(this);
+        const projectId = new URLSearchParams(window.location.search).get('project_id') || 
+                         document.querySelector('[data-project-id]')?.dataset.projectId;
+
+        fetch('{{ route("supervisor.api.phases.exportPdf") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                project_id: projectId
+            })
+        })
+        .then(response => {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                return response.json().then(data => ({ type: 'json', data }));
+            }
+            return response.blob().then(blob => ({
+                type: 'blob',
+                blob,
+                contentDisposition: response.headers.get('content-disposition') || ''
+            }));
+        })
+        .then(result => {
+            if (result.type === 'json') {
+                const data = result.data;
+                if (data.success) {
+                    if (data.html) {
+                        const blob = new Blob([data.html], { type: 'text/html' });
+                        const url = window.URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                    }
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Construction phases report exported successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#0b6054'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Failed to export phases report',
+                        icon: 'error',
+                        confirmButtonColor: '#0b6054'
+                    });
                 }
+            } else if (result.type === 'blob') {
+                const disposition = result.contentDisposition || '';
+                const fileNameMatch = disposition.match(/filename=\"?([^\";]+)\"?/);
+                const fileName = fileNameMatch ? fileNameMatch[1] : 'phases_report_' + new Date().toISOString().slice(0, 10) + '.html';
+                const blobUrl = window.URL.createObjectURL(result.blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = blobUrl;
+                downloadLink.download = fileName;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                downloadLink.remove();
+                window.URL.revokeObjectURL(blobUrl);
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Construction phases report downloaded successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#0b6054'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'An error occurred while exporting PDF',
+                icon: 'error',
+                confirmButtonColor: '#0b6054'
             });
         });
     });
+
+    // Search and Filter
+    const searchPhases = document.getElementById('searchPhases');
+    const statusFilter = document.getElementById('statusFilter');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    const phasesTableBody = document.getElementById('phasesTableBody');
+
+    function applyFilters() {
+        const searchTerm = searchPhases.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        const rows = phasesTableBody.querySelectorAll('tr[data-phase-id]');
+
+        rows.forEach(row => {
+            const phaseName = row.dataset.phaseName || '';
+            const phaseStatus = row.dataset.phaseStatus || '';
+            
+            const matchesSearch = phaseName.includes(searchTerm);
+            const matchesStatus = !statusValue || phaseStatus === statusValue;
+            
+            row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+    }
+
+    searchPhases.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+
+    resetFiltersBtn.addEventListener('click', () => {
+        searchPhases.value = '';
+        statusFilter.value = '';
+        applyFilters();
+    });
+});
 </script>
+
 @endsection
