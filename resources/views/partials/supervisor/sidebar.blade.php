@@ -1,9 +1,11 @@
 <aside class="sidebar" id="supervisorSidebar">
     <div class="sidebar-logo">
         <div class="logo-badge">
-            <div class="logo-icon">DG</div>
+            <div class="logo-icon">
+                <img src="{{ asset('images/D&G.png') }}" alt="D&G Logo">
+            </div>
             <div>
-                <div class="logo-text">D&G Monitor</div>
+                <div class="logo-text">D&G Construction</div>
                 <div class="logo-sub">Field Operations</div>
             </div>
         </div>
@@ -28,20 +30,6 @@
         </a>
         <a class="nav-item {{ request()->routeIs('supervisor.reports') ? 'active' : '' }}" href="{{ route('supervisor.reports') }}">
             <i class="bi bi-file-earmark-text"></i><span>Reports</span>
-        </a>
-        <a class="nav-item {{ request()->routeIs('supervisor.notifications') ? 'active' : '' }}" href="{{ route('supervisor.notifications') }}">
-            <i class="bi bi-bell"></i><span>Notifications</span>
-        </a>
-
-        <div class="nav-section-label">Account</div>
-        <a class="nav-item {{ request()->routeIs('supervisor.profile') ? 'active' : '' }}" href="{{ route('supervisor.profile') }}">
-            <i class="bi bi-person-circle"></i><span>Profile</span>
-        </a>
-        <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" style="display:none;">
-            @csrf
-        </form>
-        <a class="nav-item" href="#" onclick="event.preventDefault(); if(confirm('Are you sure you want to sign out?')) document.getElementById('logout-form-sidebar').submit();">
-            <i class="bi bi-box-arrow-right"></i><span>Logout</span>
         </a>
     </nav>
 

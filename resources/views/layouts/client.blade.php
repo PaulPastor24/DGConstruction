@@ -12,27 +12,25 @@
 
     <style>
         :root {
-            /* Exact Luxury Premium Corporate Forest Green Palettes from Mockup */
-            --sidebar-bg: #032b1d; 
-            --sidebar-active: #155e43; 
+            --sidebar-bg: #2a4028;
+            --sidebar-active: #365233;
             --sidebar-text: #ffffff;
-            --sidebar-text-muted: #a3b899;
-            
-            /* Background Canvas Set to Matte Light Sage Mint-Cream Gray tint instead of standard bright blue */
-            --bg-main: #f4f7f6; 
+            --sidebar-text-muted: #cbd5d2;
+
+            --bg-main: #fcfdfc;
             --surface-card: #ffffff;
-            --border-color: #e2e8f0;
-            --text-primary: #0f172a;
-            --text-muted: #64748b;
-            
-            --brand-green: #2E7D32;
-            --brand-mint: #dcfce7;
-            --brand-yellow-green: #A3D977;
+            --border-color: #e2ebe4;
+            --text-primary: #1e241e;
+            --text-muted: #626e61;
+
+            --brand-green: #2a4028;
+            --brand-mint: #f4f7f1;
+            --brand-yellow-green: #8fae85;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f6f8f6;
+            background-color: var(--bg-main);
             color: var(--text-primary);
             overflow-x: hidden;
         }
@@ -49,7 +47,7 @@
         /* --- SIDEBAR CONTAINER CONTROL --- */
         .sidebar {
             width: 260px;
-            background-color: var(--sidebar-bg);
+            background: linear-gradient(145deg, var(--sidebar-bg) 0%, var(--sidebar-active) 100%);
             color: var(--sidebar-text);
             position: sticky;
             top: 0;
@@ -60,6 +58,7 @@
             z-index: 1050;
             flex-shrink: 0;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .sidebar-brand {
@@ -77,7 +76,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background: #ffffff;
+            background: var(--surface-card);
             overflow: hidden;
             padding: 0;
             box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08);
@@ -86,18 +85,18 @@
         .sidebar-logo-img {
             object-fit: contain;
             border-radius: 50%;
-            background: #ffffff;
+            background: var(--surface-card);
         }
 
         .sidebar-logo-img img {
-            width: 72%;
-            height: 72%;
-            object-fit: contain;
+            width: 90%;
+            height: 90%;
+            object-fit: cover;
         }
 
         .brand-icon {
             font-size: 1.4rem;
-            color: #84cc16;
+            color: var(--brand-yellow-green);
             line-height: 1;
         }
 
@@ -142,24 +141,24 @@
 
         .nav-item:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .nav-item.active {
-            background-color: var(--sidebar-active);
+            background-color: rgba(255, 255, 255, 0.18);
             color: #ffffff;
         }
 
         .sidebar-footer {
             padding: 1.25rem 0.75rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .user-pill {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.08);
             padding: 0.75rem 1rem;
             border-radius: 12px;
             text-decoration: none;
@@ -176,7 +175,7 @@
         .avatar-circle {
             width: 34px;
             height: 34px;
-            background-color: #155e43;
+            background-color: var(--sidebar-active);
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 50%;
             display: flex;
@@ -200,7 +199,7 @@
         }
         .logout-link:hover { 
             color: #ffffff; 
-            background: rgba(239, 68, 68, 0.08);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .swal-actions-reverse {
@@ -219,15 +218,15 @@
         }
 
         .swal-confirm-btn {
-            background-color: #0f5132 !important;
-            border: 1px solid #0f5132 !important;
+            background-color: var(--brand-green) !important;
+            border: 1px solid var(--brand-green) !important;
             color: #ffffff !important;
         }
 
         .swal-cancel-btn {
-            background-color: #ffffff !important;
-            border: 1px solid #d1d5db !important;
-            color: #374151 !important;
+            background-color: var(--surface-card) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
         }
 
         /* --- MAIN INTERFACE WORKSPACE --- */
@@ -296,10 +295,10 @@
             font-weight: 600;
             font-size: 0.8rem;
             color: var(--text-primary);
-            background: #ffffff;
+            background: var(--surface-card);
             padding: 0.45rem 0.8rem;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
         }
 
         .notification-bell {
@@ -307,11 +306,11 @@
             font-size: 1.05rem;
             color: var(--text-primary);
             cursor: pointer;
-            background: #ffffff;
+            background: var(--surface-card);
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -321,7 +320,7 @@
             position: absolute;
             top: 8px;
             right: 9px;
-            background: #f59e0b;
+            background: var(--brand-yellow-green);
             width: 8px;
             height: 8px;
             border-radius: 50%;
@@ -333,8 +332,8 @@
             top: 56px;
             right: 0;
             width: 320px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
             border-radius: 18px;
             box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
             z-index: 1055;
@@ -348,7 +347,7 @@
 
         .notification-popup-header {
             padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid rgba(42, 64, 40, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -369,7 +368,7 @@
 
         .notification-item {
             padding: 0.95rem 1.25rem;
-            border-bottom: 1px solid #f8fafc;
+            border-bottom: 1px solid rgba(42, 64, 40, 0.06);
             transition: background 0.15s ease;
         }
 
@@ -378,7 +377,7 @@
         }
 
         .notification-item:hover {
-            background: #f8fafc;
+            background: var(--brand-mint);
         }
 
         .notification-item-title {
@@ -390,7 +389,7 @@
 
         .notification-item-text {
             font-size: 0.82rem;
-            color: #64748b;
+            color: var(--text-muted);
             margin: 0;
         }
 
@@ -398,7 +397,7 @@
             display: block;
             margin-top: 0.55rem;
             font-size: 0.75rem;
-            color: #94a3b8;
+            color: rgba(98, 110, 97, 0.8);
         }
 
         .content {
@@ -439,7 +438,7 @@
             font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .page-header-title {
@@ -454,7 +453,7 @@
             margin: 0;
             font-size: 0.92rem;
             font-weight: 500;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .page-header-tools {
@@ -484,7 +483,7 @@
             font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .dashboard-page-title {
@@ -492,14 +491,14 @@
             font-weight: 800;
             line-height: 1.05;
             margin: 0;
-            color: #0e3b2e;
+            color: var(--brand-green);
         }
 
         .dashboard-page-description {
             margin: 0.2rem 0 0;
             font-size: 0.92rem;
             font-weight: 500;
-            color: #64748b;
+            color: var(--text-muted);
             max-width: 420px;
         }
 
@@ -515,34 +514,34 @@
             align-items: center;
             gap: 0.55rem;
             padding: 0.6rem 0.9rem;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             border-radius: 14px;
             font-size: 0.84rem;
             font-weight: 600;
-            color: #334155;
+            color: var(--text-primary);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
 
         .dashboard-date-pill i {
-            color: #16a34a;
+            color: var(--brand-green);
         }
 
         .dashboard-notification-button {
             width: 46px;
             height: 46px;
             border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: #334155;
+            color: var(--text-primary);
         }
 
         .dashboard-notification-button:hover {
-            background: #f8fafc;
+            background: var(--brand-mint);
         }
 
         .global-mobile-nav {
@@ -551,8 +550,8 @@
             justify-content: space-between;
             height: 56px;
             padding: 0 1rem;
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--surface-card);
+            border-bottom: 1px solid var(--border-color);
             box-shadow: 0 1px 0 rgba(226, 232, 240, 0.55);
             position: sticky;
             top: 0;
@@ -571,7 +570,7 @@
             border-radius: 12px;
             font-size: 1.45rem;
             line-height: 1;
-            color: #334155;
+            color: var(--text-primary);
         }
 
         #mobileNotificationBell {
@@ -580,11 +579,11 @@
             justify-content: center;
             width: 44px;
             height: 44px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             border-radius: 12px;
             font-size: 1.2rem;
-            color: #334155;
+            color: var(--text-primary);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
 
@@ -671,7 +670,7 @@
         <div>
             <div class="sidebar-brand">
                 <div class="sidebar-logo-img">
-                    <img src="{{ asset('images/image.png') }}" alt="D&G Construction logo" style="width: 100%; height: 100%; object-fit: contain;">
+                    <img src="{{ asset('images/D&G.png') }}" alt="D&G Construction logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div class="brand-text">
                     <h5>D&G Construction</h5>

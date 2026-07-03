@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\URL; // ◄ Crucial import added for the secure URL handler
 use Illuminate\Support\ServiceProvider;
+use App\Models\SupervisorNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -54,9 +55,29 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
+<<<<<<< HEAD
         // 2. FORCE HTTPS OVER TUNNEL PROXIES (Fixed CSS & Login Blocks on Phone)
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
+=======
+        // Share unread supervisor notification count with supervisor layout/topbar
+        View::composer('layouts.supervisor', function ($view) {
+            $user = Auth::user();
+            $unread = 0;
+            if ($user) {
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('supervisor_notifications')) {
+                        $unread = SupervisorNotification::where('supervisor_id', $user->user_id)
+                            ->where('is_read', false)
+                            ->count();
+                    }
+                } catch (\Throwable $e) {
+                    $unread = 0;
+                }
+            }
+            $view->with('supervisorUnreadCount', $unread);
+        });
+>>>>>>> origin/araymopakak
     }
 }

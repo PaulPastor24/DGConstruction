@@ -8,18 +8,29 @@
     <section class="page-card">
         <div class="page-hero">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3">
-                <div>
-                    <div class="eyebrow">Good Morning, {{ $user->name ?? 'Supervisor' }}</div>
-                    <h1 class="page-title mb-2">Today&apos;s Site Priorities</h1>
-                    <p class="page-subtitle mb-0">Operational summary for your assigned construction project.</p>
-                </div>
-                <div class="d-flex align-items-center gap-2 text-muted fw-semibold">
-                    <span class="badge rounded-pill badge-soft">
-                        <i class="bi bi-calendar3 me-2"></i>{{ now()->format('M d, Y') }}
-                    </span>
-                </div>
-            </div>
-
+                        <div>
+                            <div class="eyebrow">Good Morning, {{ $user->name ?? 'Supervisor' }}</div>
+                            <h1 class="page-title mb-2">Today&apos;s Site Priorities</h1>
+                            <p class="page-subtitle mb-0">Operational summary for your assigned construction project.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <form id="projectSelectorForm" method="GET" action="{{ route('supervisor.dashboard') }}" class="d-flex align-items-center gap-2 mb-0">
+                                <label for="dashboardProjectId" class="visually-hidden">Project</label>
+                                <select id="dashboardProjectId" name="project_id" class="form-select form-select-sm" onchange="this.form.submit()" {{ $assignedProjects->isEmpty() ? 'disabled' : '' }}>
+                                    @if($assignedProjects->isEmpty())
+                                        <option value="" selected>No assigned projects</option>
+                                    @else
+                                        @foreach($assignedProjects as $project)
+                                            <option value="{{ $project->project_id }}" {{ optional($primaryProject)->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </form>
+                            <span class="badge rounded-pill badge-soft text-muted fw-semibold">
+                                <i class="bi bi-calendar3 me-2"></i>{{ now()->format('M d, Y') }}
+                            </span>
+                        </div>
+                    </div>
             <div class="row g-3 mt-1">
                 <div class="col-12 col-xl-3">
                     <div class="stat-card">
@@ -60,14 +71,14 @@
                 </div>
             </div>
 
-            <div class="d-flex flex-wrap gap-2 mt-2">
+            <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
                 <a href="{{ route('supervisor.attendance') }}" class="btn btn-primary-soft px-4 py-2">
                     <i class="bi bi-person-check me-2"></i>Record Attendance
                 </a>
-                <a href="{{ route('supervisor.reports') }}" class="btn btn-outline-soft px-4 py-2">
+                <a href="{{ route('supervisor.reports', ['project_id' => optional($primaryProject)->project_id]) }}" class="btn btn-outline-soft px-4 py-2">
                     <i class="bi bi-file-earmark-text me-2"></i>Submit Report
                 </a>
-                <a href="{{ route('supervisor.timeline') }}" class="btn btn-outline-soft px-4 py-2">
+                <a href="{{ route('supervisor.timeline', ['project_id' => optional($primaryProject)->project_id]) }}" class="btn btn-outline-soft px-4 py-2">
                     <i class="bi bi-calendar3 me-2"></i>Project Timeline
                 </a>
             </div>
@@ -78,8 +89,8 @@
         $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject->phases->first())->phase_name ?? 'Mobilization';
         $projectTargetDate = optional($primaryProject->target_end_date);
         $daysRemaining = $projectTargetDate ? max(0, $projectTargetDate->diffInDays(now(), false)) : null;
-        $projectClient = $primaryProject->client?->company_name ?? optional($primaryProject->client?->user)->name ?? 'Not available';
-        $projectLocation = $primaryProject->project_location ?? 'Not available';
+        $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not available';
+        $projectLocation = $primaryProject?->project_location ?? 'Not available';
         $activeWorkforce = $primaryProject ? max(0, $primaryProject->workers()->count()) : 0;
         $phaseProgress = $primaryPhase ? (float) ($primaryPhase->completion_percentage ?? 0) : (float) ($projectProgress ?? 0);
         $phaseStatus = $primaryPhase?->status ?? 'not_started';
