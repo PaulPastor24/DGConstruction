@@ -99,6 +99,23 @@ class ReportController extends Controller
             if ($request->filled('completion_percentage')) {
                 $completionPercentage = min(100, max(0, (float)$request->completion_percentage));
                 $report->phase->update(['completion_percentage' => $completionPercentage]);
+
+                // Notify client about the phase progress change
+                try {
+                    $clientId = optional($report->project)->client_id;
+                    if ($clientId) {
+                        NotificationService::notifyClient($clientId, [
+                            'type' => 'phase',
+                            'title' => 'Project Progress Updated',
+                            'message' => "{$report->phase->phase_name} progress updated to {$completionPercentage}%.",
+                            'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                            'related_id' => $report->phase->phase_id,
+                            'related_type' => 'phase',
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
+                }
             }
 
             $this->logAction(
@@ -117,6 +134,23 @@ class ReportController extends Controller
                     'related_id' => $report->report_id,
                     'related_type' => 'report',
                 ]);
+            }
+
+            // Notify client about approval
+            try {
+                $clientId = optional($report->project)->client_id;
+                if ($clientId) {
+                    NotificationService::notifyClient($clientId, [
+                        'type' => 'report',
+                        'title' => 'Report Approved',
+                        'message' => "A report for project '{$report->project->project_name}' was approved.",
+                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                        'related_id' => $report->report_id,
+                        'related_type' => 'report',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on report approval: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -171,6 +205,23 @@ class ReportController extends Controller
                     'related_id' => $report->report_id,
                     'related_type' => 'report',
                 ]);
+            }
+
+            // Notify client about rejection
+            try {
+                $clientId = optional($report->project)->client_id;
+                if ($clientId) {
+                    NotificationService::notifyClient($clientId, [
+                        'type' => 'report',
+                        'title' => 'Report Returned',
+                        'message' => "A report for project '{$report->project->project_name}' was returned with feedback.",
+                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                        'related_id' => $report->report_id,
+                        'related_type' => 'report',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on report rejection: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -251,6 +302,23 @@ class ReportController extends Controller
                 'related_id' => $report->report_id,
                 'related_type' => 'report',
             ]);
+
+            // Notify the client associated with the project
+            try {
+                $clientId = optional($project)->client_id;
+                if ($clientId) {
+                    NotificationService::notifyClient($clientId, [
+                        'type' => 'report',
+                        'title' => 'New Project Report',
+                        'message' => "A new accomplishment report has been submitted for project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $project->project_id],
+                        'related_id' => $report->report_id,
+                        'related_type' => 'report',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on report submission: ' . $e->getMessage());
+            }
 
             DB::commit();
             if ($request->wantsJson() || $request->ajax()) {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ClientNotification;
 use App\Models\SupervisorNotification;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,29 @@ class NotificationService
             return SupervisorNotification::create($payload);
         } catch (\Throwable $e) {
             Log::error('Failed to create supervisor notification: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public static function notifyClient(int $clientId, array $data): ?ClientNotification
+    {
+        try {
+            $payload = [
+                'client_id' => $clientId,
+                'type' => $data['type'] ?? 'system',
+                'title' => $data['title'] ?? 'Notification',
+                'message' => $data['message'] ?? null,
+                'data' => $data['data'] ?? null,
+                'related_id' => $data['related_id'] ?? null,
+                'related_type' => $data['related_type'] ?? null,
+                'is_read' => $data['is_read'] ?? false,
+            ];
+
+            $notification = ClientNotification::create($payload);
+            Log::info('Client notification created', ['client_id' => $clientId, 'notification_id' => $notification->id, 'title' => $notification->title]);
+            return $notification;
+        } catch (\Throwable $e) {
+            Log::error('Failed to create client notification: ' . $e->getMessage());
             return null;
         }
     }

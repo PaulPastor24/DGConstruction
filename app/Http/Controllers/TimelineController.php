@@ -51,25 +51,34 @@ class TimelineController extends Controller
     /**
      * Client Timeline - View only their assigned projects
      */
-    public function clientTimeline()
+    public function clientTimeline(Request $request)
     {
         $user = Auth::user();
         $client = $user->client;
 
         if (!$client) {
-            return view('client.timeline', ['projectsWithStats' => collect()]);
+            return view('client.timeline', ['projectsWithStats' => collect(), 'allProjects' => collect(), 'selectedProjectId' => null]);
         }
 
-        $projects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+        $allProjects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
             ->where('client_id', $client->client_id)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $selectedProjectId = $request->query('project_id');
+        $selectedProject = null;
+
+        if ($selectedProjectId) {
+            $selectedProject = $allProjects->firstWhere('project_id', $selectedProjectId);
+        }
+
+        $projects = $selectedProject ? collect([$selectedProject]) : $allProjects;
 
         $projectsWithStats = $projects->map(function ($project) {
             return $this->enrichProjectData($project);
         });
 
-        return view('client.timeline', compact('projectsWithStats'));
+        return view('client.timeline', compact('projectsWithStats', 'allProjects', 'selectedProjectId'));
     }
 
     /**

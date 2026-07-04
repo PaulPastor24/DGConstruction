@@ -22,8 +22,13 @@
             <i class="bi bi-calendar3"></i>
             <span>{{ $date }}</span>
         </div>
-        <button type="button" class="dashboard-notification-button" aria-label="Notifications">
-            <i class="bi bi-bell"></i>
-        </button>
+        <div style="position: relative;">
+            <button type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                @if(($clientUnreadCount ?? 0) > 0)
+                    <span class="notification-badge" style="position:absolute;top:8px;right:8px;width:12px;height:12px;background:#22c55e;border:2px solid #ffffff;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,0.25);animation:ping-dot 1.4s ease-out infinite;"></span>
+                @endif
+            </button>
+        </div>
     </div>
 </div>

@@ -721,6 +721,18 @@ class SupervisorController extends Controller
                 'related_type' => 'phase',
             ]);
 
+            // Notify the client attached to the project
+            if ($phase->project && $phase->project->client_id) {
+                \App\Services\NotificationService::notifyClient($phase->project->client_id, [
+                    'type' => 'phase',
+                    'title' => 'Project Progress Updated',
+                    'message' => "{$phase->phase_name} progress was updated to {$phase->completion_percentage}%.",
+                    'data' => ['module' => 'client.reports', 'phase_id' => $phase->phase_id, 'project_id' => $phase->project_id],
+                    'related_id' => $phase->phase_id,
+                    'related_type' => 'phase',
+                ]);
+            }
+
             return response()->json(['success' => true, 'phase' => ['completion_percentage' => $phase->completion_percentage], 'overallProgress' => $overallProgress]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'Failed to update progress'], 500);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\NotificationService;
 use App\Models\ConstructionPhase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -161,6 +162,22 @@ class PhaseController extends Controller
 
             if ($oldCompletion !== $phase->completion_percentage) {
                 $this->logAction('Phase Completion Updated', "Phase '{$phase->phase_name}' completion changed from {$oldCompletion}% to {$phase->completion_percentage}%");
+
+                // Notify client about phase progress update
+                try {
+                    if ($project && $project->client_id) {
+                        NotificationService::notifyClient($project->client_id, [
+                            'type' => 'phase',
+                            'title' => 'Project Progress Updated',
+                            'message' => "{$phase->phase_name} progress changed to {$phase->completion_percentage}%.",
+                            'data' => ['module' => 'client.reports', 'phase_id' => $phase->phase_id, 'project_id' => $project->project_id],
+                            'related_id' => $phase->phase_id,
+                            'related_type' => 'phase',
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify client on phase completion update: ' . $e->getMessage());
+                }
             }
 
             DB::commit();

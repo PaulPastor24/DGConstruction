@@ -166,29 +166,18 @@
                     <a href="{{ route('client.reports') }}" class="view-all-link">View All</a>
                 </div>
                 <div class="ui-panel-body">
-                                @php
-                        $activityItems = $recentReports->take(4)->map(function ($report) {
-                            return [
-                                'title' => optional($report->phase)->phase_name ? ('Report: ' . optional($report->phase)->phase_name) : 'Project report submitted',
-                                'subtitle' => Str::limit($report->report_text ?? 'Report details available', 60),
-                                'time' => optional($report->report_date)->format('M d, Y') ?? 'Unknown',
-                                'author' => optional($report->submittedBy)->name ?? 'Project team',
-                                'icon' => 'bi bi-file-earmark-text',
-                                'variant' => 'bg-light-green text-dark'
-                            ];
-                        });
-                    @endphp
-
                     <div class="activity-timeline-container">
                         @forelse($activityItems as $item)
                             <div class="activity-timeline-node">
-                                <div class="node-icon {{ $item['variant'] }}"><i class="{{ $item['icon'] }}"></i></div>
+                                <div class="node-icon {{ $item['variant'] }}">
+                                    <i class="{{ $item['icon'] }}"></i>
+                                </div>
                                 <div class="node-content">
-                                    <div class="d-flex justify-content-between">
-                                        <h6>{{ $item['title'] }}</h6>
-                                        <span class="node-time">{{ $item['time'] }}</span>
+                                    <div class="d-flex justify-content-between align-items-baseline gap-2">
+                                        <h6 class="activity-node-title mb-1">{{ $item['title'] }}</h6>
+                                        <span class="node-time flex-shrink-0">{{ $item['time'] }}</span>
                                     </div>
-                                    <p>{{ $item['subtitle'] }} &bull; {{ $item['author'] }}</p>
+                                    <p class="activity-node-desc mb-0">{{ $item['subtitle'] }} &bull; <span class="text-dark fw-medium">{{ $item['author'] }}</span></p>
                                 </div>
                             </div>
                         @empty
@@ -448,6 +437,7 @@
         color: #16a34a;
     }
     .dashboard-notification-button {
+        position: relative;
         width: 46px;
         height: 46px;
         border-radius: 14px;
@@ -461,6 +451,37 @@
     }
     .dashboard-notification-button:hover {
         background: #f8fafc;
+    }
+    .dashboard-notification-button.notification-bell-animate {
+        animation: bell-ring 1.2s ease-in-out infinite;
+        transform-origin: center top;
+    }
+    @keyframes bell-ring {
+        0%, 100% { transform: rotate(0deg); }
+        10% { transform: rotate(12deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(8deg); }
+        40% { transform: rotate(-6deg); }
+        50% { transform: rotate(4deg); }
+        60% { transform: rotate(-2deg); }
+        70% { transform: rotate(2deg); }
+        80%, 90% { transform: rotate(0deg); }
+    }
+    .notification-badge {
+        position: absolute;
+        top: 8px;
+        right: 9px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+        animation: ping-dot 1.4s ease-out infinite;
+    }
+    @keyframes ping-dot {
+        0% { transform: scale(0.9); opacity: 1; }
+        80% { transform: scale(1.65); opacity: 0; }
+        100% { transform: scale(1.8); opacity: 0; }
     }
     .hero-card {
         background: #ffffff;
@@ -808,23 +829,36 @@
     }
     .download-icon-btn:hover { color: var(--text-primary); }
 
-    /* --- TIMELINE NODES LISTS --- */
+    /* --- TIMELINE NODES LISTS (UNIFIED & CLEANED UP) --- */
     .activity-timeline-container {
         position: relative;
-        padding-left: 1.5rem;
-        border-left: 2px solid #e2e8f0;
+        padding-left: 2rem;
         margin-left: 0.75rem;
-        margin-top: 0.5rem;
+        margin-top: 0.75rem;
+    }
+    /* Creates the unified tracking background line */
+    .activity-timeline-container::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        bottom: 8px;
+        left: 11px; /* Centers the path behind the 24px wide circle indicator */
+        width: 2px;
+        background-color: #e2e8f0;
+        border-radius: 2px;
     }
     .activity-timeline-node {
         position: relative;
-        margin-bottom: 1.5rem;
+        padding-bottom: 1.75rem;
     }
-    .activity-timeline-node:last-child { margin-bottom: 0; }
+    .activity-timeline-node:last-child { 
+        padding-bottom: 0; 
+    }
+    /* Fixed overlapping layouts by positioning the node metrics smoothly */
     .node-icon {
         position: absolute;
-        left: calc(-1.5rem - 13px);
-        top: 0;
+        left: -2rem;
+        top: 2px;
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -832,22 +866,38 @@
         align-items: center;
         justify-content: center;
         font-size: 0.75rem;
+        z-index: 2;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 3px #ffffff; /* Blocks out line under the icon path */
     }
-    .bg-light-green { background-color: #f0fdf4; color: #16a34a; border: 2px solid #fff; }
-    .bg-green-solid { background-color: #22c55e; border: 2px solid #fff; }
-    .node-content h6 {
-        font-size: 0.88rem;
+    
+    /* Activity node state modifiers */
+    .node-icon.bg-light-green { background-color: #f0fdf4; color: #16a34a; border: 1px solid #16a34a; }
+    .node-icon.bg-green-solid { background-color: #22c55e; color: #ffffff; border: 1px solid #22c55e; }
+    
+    /* Elegant variations case handlers if variables use custom colors */
+    .node-icon:not(.bg-light-green):not(.bg-green-solid) {
+        background-color: #f8fafc;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+    }
+
+    .node-content {
+        padding-left: 0.5rem;
+    }
+    .activity-node-title {
+        font-size: 0.9rem;
         font-weight: 700;
-        margin: 0 0 0.15rem 0;
+        color: #1e293b;
     }
-    .node-content p {
+    .activity-node-desc {
         font-size: 0.8rem;
-        color: var(--text-muted);
-        margin: 0;
+        color: #64748b;
     }
     .node-time {
-        font-size: 0.78rem;
-        color: var(--text-muted);
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 500;
     }
 
     /* --- FOOTER CTA BOXES --- */

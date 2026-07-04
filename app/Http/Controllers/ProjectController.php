@@ -116,6 +116,22 @@ class ProjectController extends Controller
                 }
             }
 
+            // Notify client that a project was created for them
+            try {
+                if ($project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Project Created',
+                        'message' => "A new project '{$project->project_name}' has been created for you.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on project creation: ' . $e->getMessage());
+            }
+
             // AUTOMATION LINK: Seed default physical construction timelines into 'phases' table
             $defaultPhases = [
                 ['phase_name' => 'Phase 1: Mobilization & Site Clearance', 'weight' => 10],
@@ -263,6 +279,10 @@ class ProjectController extends Controller
                 $actualEndDate = now()->toDateString();
             }
 
+            // Keep old values for notification decisions
+            $oldStatus = $project->status;
+            $oldClientId = $project->client_id;
+
             // Compare each field to detect actual changes
             $hasChanges = false;
 
@@ -380,6 +400,35 @@ class ProjectController extends Controller
             }
 
             DB::commit();
+
+            // Notify client on important changes
+            try {
+                // If project status changed
+                if ($oldStatus !== $status && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Project Status Updated',
+                        'message' => "Project '{$project->project_name}' status changed to {$project->status}.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id, 'status' => $project->status],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+
+                // If client assignment changed notify the new client
+                if ($oldClientId !== $project->client_id && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Assigned To Project',
+                        'message' => "You have been assigned to project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on project update: ' . $e->getMessage());
+            }
 
             return redirect()
                 ->route('admin.projects.index')

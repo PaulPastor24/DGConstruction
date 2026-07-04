@@ -10,6 +10,26 @@
         'description' => 'Monitor milestone timelines and project phase evolution across your active sites.',
     ])
 
+    @if(isset($allProjects) && $allProjects->isNotEmpty())
+        <div class="timeline-filter-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <h5 class="mb-0 text-muted">Filter timeline by project</h5>
+                <p class="mb-0 small text-muted">Select a contract to view its milestone progress.</p>
+            </div>
+            <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+                <label for="project_id" class="visually-hidden">Project</label>
+                <select id="project_id" name="project_id" class="form-select form-select-sm" style="min-width: 240px;" onchange="this.form.submit()">
+                    <option value=""{{ empty($selectedProjectId) ? ' selected' : '' }}>All Projects</option>
+                    @foreach($allProjects as $projectOption)
+                        <option value="{{ data_get($projectOption, 'project_id') }}"{{ (string) data_get($projectOption, 'project_id') === (string) ($selectedProjectId ?? '') ? ' selected' : '' }}>
+                            {{ data_get($projectOption, 'project_name') }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    @endif
+
     @if(isset($projectsWithStats) && count($projectsWithStats) > 0)
         <div class="timeline-summary-panel-row mb-4">
             <div class="summary-metric-card">

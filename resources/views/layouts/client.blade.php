@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Client Portal D&G Construction Monitor')</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -186,20 +187,22 @@
             color: #ffffff;
         }
 
-        .logout-link {
-            display: flex;
+        .logout-icon-link {
+            display: inline-flex;
             align-items: center;
-            gap: 0.85rem;
-            padding: 0.6rem 1.15rem;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
             color: var(--sidebar-text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.88rem;
-            border-radius: 10px;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
         }
-        .logout-link:hover { 
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.12);
+        .logout-icon-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
         }
 
         .swal-actions-reverse {
@@ -215,6 +218,41 @@
             border-radius: 10px !important;
             padding: 0.7rem 1rem !important;
             font-weight: 600 !important;
+        }
+
+        .notification-bell-animate {
+            animation: bell-ring 1.2s ease-in-out infinite;
+            transform-origin: center top;
+        }
+
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(12deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(8deg); }
+            40% { transform: rotate(-6deg); }
+            50% { transform: rotate(4deg); }
+            60% { transform: rotate(-2deg); }
+            70% { transform: rotate(2deg); }
+            80%, 90% { transform: rotate(0deg); }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+            animation: ping-dot 1.4s ease-out infinite;
+        }
+
+        @keyframes ping-dot {
+            0% { transform: scale(0.9); opacity: 1; }
+            80% { transform: scale(1.65); opacity: 0; }
+            100% { transform: scale(1.8); opacity: 0; }
         }
 
         .swal-confirm-btn {
@@ -319,22 +357,44 @@
         .notification-badge {
             position: absolute;
             top: 8px;
-            right: 9px;
-            background: var(--brand-yellow-green);
-            width: 8px;
-            height: 8px;
+            right: 8px;
+            width: 14px;
+            height: 14px;
+            background: #22c55e !important;
             border-radius: 50%;
-            box-shadow: 0 0 0 2px #ffffff;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+            animation: ping-dot 1.4s ease-out infinite;
+            pointer-events: none;
+        }
+
+        .dashboard-notification-button.notification-bell-animate::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.12);
+            animation: badge-ring 1.6s ease-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes badge-ring {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            60% { transform: scale(1.35); opacity: 0.1; }
+            100% { transform: scale(1.6); opacity: 0; }
         }
 
         .notification-popup {
-            position: absolute;
-            top: 56px;
-            right: 0;
-            width: 320px;
+            position: fixed;
+            top: 5rem;
+            right: 1.5rem;
+            width: 340px;
+            max-width: calc(100vw - 2rem);
             background: var(--surface-card);
             border: 1px solid var(--border-color);
-            border-radius: 18px;
+            border-radius: 20px;
             box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
             z-index: 1055;
             overflow: hidden;
@@ -346,28 +406,29 @@
         }
 
         .notification-popup-header {
-            padding: 1rem 1.25rem;
+            padding: 1rem 1.15rem;
             border-bottom: 1px solid rgba(42, 64, 40, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, rgba(42, 64, 40, 0.03), rgba(143, 174, 133, 0.08));
         }
 
         .notification-popup-header h6 {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--text-primary);
         }
 
         .notification-popup-list {
-            max-height: 320px;
+            max-height: 360px;
             overflow-y: auto;
         }
 
         .notification-item {
-            padding: 0.95rem 1.25rem;
+            padding: 0.95rem 1.15rem;
             border-bottom: 1px solid rgba(42, 64, 40, 0.06);
             transition: background 0.15s ease;
         }
@@ -391,6 +452,7 @@
             font-size: 0.82rem;
             color: var(--text-muted);
             margin: 0;
+            line-height: 1.4;
         }
 
         .notification-item-time {
@@ -398,6 +460,19 @@
             margin-top: 0.55rem;
             font-size: 0.75rem;
             color: rgba(98, 110, 97, 0.8);
+        }
+
+        .notification-item.unread {
+            background: linear-gradient(90deg, rgba(143, 174, 133, 0.12), rgba(255,255,255,0));
+        }
+
+        .notification-item .notif-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--brand-green);
+            display: inline-block;
+            flex-shrink: 0;
         }
 
         .content {
@@ -528,6 +603,7 @@
         }
 
         .dashboard-notification-button {
+            position: relative;
             width: 46px;
             height: 46px;
             border-radius: 14px;
@@ -705,10 +781,10 @@
                         <div style="font-size: 0.72rem; color: var(--sidebar-text-muted);">External Client</div>
                     </div>
                 </div>
+                <a href="#" class="logout-icon-link" aria-label="Logout" onclick="event.preventDefault(); Swal.fire({ title: 'Confirm logout', text: 'Are you sure you want to sign out?', icon: 'question', showCancelButton: true, confirmButtonColor: '#0f5132', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, log out', cancelButtonText: 'Cancel', buttonsStyling: false, customClass: { actions: 'swal-actions-reverse', confirmButton: 'swal-confirm-btn', cancelButton: 'swal-cancel-btn' } }).then((result) => { if (result.isConfirmed) { document.getElementById('logout-form').submit(); } });">
+                    <i class="bi bi-box-arrow-left"></i>
+                </a>
             </div>
-            <a href="#" class="logout-link" onclick="event.preventDefault(); Swal.fire({ title: 'Confirm logout', text: 'Are you sure you want to sign out?', icon: 'question', showCancelButton: true, confirmButtonColor: '#0f5132', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, log out', cancelButtonText: 'Cancel', buttonsStyling: false, customClass: { actions: 'swal-actions-reverse', confirmButton: 'swal-confirm-btn', cancelButton: 'swal-cancel-btn' } }).then((result) => { if (result.isConfirmed) { document.getElementById('logout-form').submit(); } });">
-                <i class="bi bi-box-arrow-left"></i> Logout
-            </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
         </div>
     </aside>
@@ -718,13 +794,58 @@
             <button id="sidebarToggle" type="button" class="global-mobile-toggle" aria-label="Open sidebar navigation">
                 <i class="bi bi-list"></i>
             </button>
-            <button id="mobileNotificationBell" type="button" class="dashboard-notification-button" aria-label="Notifications">
+            <button id="mobileNotificationBell" type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
+                @if(($clientUnreadCount ?? 0) > 0)
+                    <span class="notification-badge" style="position:absolute;top:8px;right:8px;width:12px;height:12px;background:#22c55e;border:2px solid #ffffff;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,0.25);animation:ping-dot 1.4s ease-out infinite;"></span>
+                @endif
             </button>
         </div>
         <div class="content">
             @yield('content')
         </div>
+    </div>
+</div>
+
+<div id="notificationPopup" class="notification-popup" role="dialog" aria-label="Client notifications">
+    <div class="notification-popup-header">
+        <div>
+            <h6>Notifications</h6>
+            <div class="text-muted" style="font-size: 0.78rem;">{{ $clientUnreadCount ?? 0 }} unread</div>
+        </div>
+        <a href="{{ route('client.notifications') }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.75rem; border-radius: 999px;">View all</a>
+    </div>
+    <div class="notification-popup-list">
+        @forelse($clientNotifications->take(3) as $notification)
+            @php
+                $isUnread = !($notification->is_read ?? ($notification['is_read'] ?? false));
+                $rawType = strtolower($notification['type'] ?? ($notification->type ?? 'system'));
+                $icon = match ($rawType) {
+                    'report' => 'bi-file-earmark-text',
+                    'phase' => 'bi-bar-chart-steps',
+                    'milestone', 'timeline' => 'bi-calendar3',
+                    'announcement' => 'bi-megaphone',
+                    default => 'bi-bell',
+                };
+                $module = $notification['module'] ?? ($notification->data['module'] ?? ($notification['route'] ?? ($notification->data['route'] ?? 'client.dashboard')));
+                $params = $notification['params'] ?? ($notification->data['params'] ?? []);
+                $href = route($module, $params);
+                $link = route('client.notifications.markReadRedirect', ['id' => $notification->id ?? $notification['id'] ?? 0]) . '?redirect=' . urlencode($href);
+            @endphp
+            <a href="{{ $link }}" class="notification-item d-flex align-items-start gap-2 text-decoration-none {{ $isUnread ? 'unread' : '' }}" data-notif-id="{{ $notification->id ?? $notification['id'] ?? '' }}" style="color: inherit;">
+                <span class="notif-dot mt-2"></span>
+                <div class="flex-grow-1">
+                    <div class="notification-item-title">{{ $notification['title'] ?? ($notification->title ?? 'Notification') }}</div>
+                    <p class="notification-item-text">{{ $notification['message'] ?? ($notification->message ?? 'You have a new update.') }}</p>
+                    <span class="notification-item-time">{{ $notification['time'] ?? ($notification['created_at'] ? $notification['created_at']->diffForHumans() : ($notification->created_at ? $notification->created_at->diffForHumans() : 'Just now')) }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="text-center py-4 px-3 text-muted" style="font-size: 0.9rem;">
+                <i class="bi bi-bell-slash display-6 d-block mb-2"></i>
+                No new notifications yet.
+            </div>
+        @endforelse
     </div>
 </div>
 
@@ -763,25 +884,69 @@
             new bootstrap.Tooltip(element);
         });
 
-        const bell = document.getElementById('notificationBell');
         const popup = document.getElementById('notificationPopup');
+        const bells = document.querySelectorAll('.notification-toggle-btn');
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        const notificationMarkReadUrlTemplate = "{{ route('client.notifications.markRead', ['id' => '__ID__']) }}";
 
         function toggleNotifications() {
             popup?.classList.toggle('show');
         }
 
-        bell?.addEventListener('click', toggleNotifications);
-        bell?.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
+        bells.forEach(function (bell) {
+            bell?.addEventListener('click', function (event) {
+                event.stopPropagation();
                 toggleNotifications();
-            }
+            });
+            bell?.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleNotifications();
+                }
+            });
         });
 
         document.addEventListener('click', function(event) {
-            if (!bell?.contains(event.target) && !popup?.contains(event.target)) {
+            const clickedBell = Array.from(bells).some(function (bell) {
+                return bell?.contains(event.target);
+            });
+            if (!clickedBell && !popup?.contains(event.target)) {
                 popup?.classList.remove('show');
             }
+        });
+
+        popup?.addEventListener('click', function (event) {
+            const item = event.target.closest('.notification-item');
+            if (!item) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+
+            const id = item.getAttribute('data-notif-id');
+            const href = item.getAttribute('href');
+            if (!id || !href) {
+                return;
+            }
+
+            const markReadUrl = notificationMarkReadUrlTemplate.replace('__ID__', encodeURIComponent(id));
+            fetch(markReadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({})
+            }).then(function (response) {
+                if (!response.ok) {
+                    console.error('Notification mark-read failed:', response.statusText);
+                }
+            }).catch(function (error) {
+                console.error('Notification mark-read error:', error);
+            }).finally(function () {
+                window.location = href;
+            });
         });
     });
 </script>

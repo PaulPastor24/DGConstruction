@@ -116,7 +116,12 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/projects/{project}', [ClientController::class, 'projectDetails'])->name('client.project.show');
     Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
     Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
+    Route::get('/client/reports/{id}/download-pdf', [ClientController::class, 'downloadReportPdf'])->name('client.reports.downloadPdf');
     Route::get('/client/updates', [ClientController::class, 'updates'])->name('client.updates');
+    Route::get('/client/notifications', [ClientController::class, 'notifications'])->name('client.notifications');
+    Route::post('/client/notifications/{id}/mark-read', [ClientController::class, 'markNotificationRead'])->name('client.notifications.markRead');
+    Route::get('/client/notifications/{id}/mark-read-redirect', [ClientController::class, 'markNotificationReadAndRedirect'])->name('client.notifications.markReadRedirect');
+    Route::post('/client/notifications/mark-all-read', [ClientController::class, 'markAllNotificationsRead'])->name('client.notifications.markAllRead');
 });
 
 require __DIR__.'/auth.php';
