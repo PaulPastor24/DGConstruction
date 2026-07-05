@@ -43,9 +43,9 @@
             </div>
         </div>
         
-        <div class="col-12 col-md-4 col-xl-6 ms-auto">
+        <div class="col-12 col-md-6 col-xl-6 ms-auto">
             <div class="project-filter-toolbar">
-                <form id="projectFilterForm" class="project-filter-form">
+                <form id="projectFilterForm" class="project-filter-form" action="{{ route('client.myprojects') }}" method="GET">
                     <div class="position-relative project-search-field">
                         <i class="bi bi-search position-absolute text-muted" style="left: 1rem; top: 50%; transform: translateY(-50%);"></i>
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control filter-search-input" placeholder="Search projects..." id="projectSearchInput">
@@ -85,55 +85,35 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mt-5 flex-wrap gap-2 result-reporting-footer-bar">
-        <span class="text-muted text-sm" id="resultsSummary" style="font-size: 0.88rem; font-weight: 500;">Showing {{ $projects->count() }} of {{ $projects->total() }} active records</span>
+        <span class="text-muted text-sm" id="resultsSummary" style="font-size: 0.88rem; font-weight: 500;">Showing {{ $projects->firstItem() ?? 0 }} to {{ $projects->lastItem() ?? 0 }} of {{ $projects->total() }} active records</span>
     </div>
 
-    <div class="d-flex justify-content-center mt-4">
-        {{ $projects->links() }}
+    <div class="d-flex justify-content-center mt-4" id="projectPagination">
+        {{ $projects->links('pagination::bootstrap-5') }}
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('projectFilterForm');
-            const gallery = document.getElementById('projectsGallery');
-            const summary = document.getElementById('resultsSummary');
+            const searchInput = document.getElementById('projectSearchInput');
 
-            if (!form || !gallery || !summary) {
+            if (!form) {
                 return;
             }
 
-            let timer;
+            let debounceTimer;
+            const submitFilters = () => form.submit();
 
-            function applyFilters() {
-                const params = new URLSearchParams(new FormData(form));
-                const url = '{{ route('client.myprojects') }}?' + params.toString();
+            form.querySelectorAll('select').forEach(function (field) {
+                field.addEventListener('change', submitFilters);
+            });
 
-                summary.textContent = 'Refreshing project feed...';
-
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    gallery.innerHTML = data.html;
-                    summary.textContent = 'Showing ' + data.count + ' of ' + data.total + ' active records';
-                })
-                .catch(() => {
-                    summary.textContent = 'Showing ' + '{{ $projects->count() }}' + ' of ' + '{{ $projects->total() }}' + ' active records';
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(submitFilters, 350);
                 });
             }
-
-            form.querySelectorAll('input, select').forEach(function (field) {
-                field.addEventListener('input', function () {
-                    clearTimeout(timer);
-                    timer = setTimeout(applyFilters, 350);
-                });
-
-                field.addEventListener('change', applyFilters);
-            });
         });
     </script>
 
@@ -176,19 +156,55 @@
         box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
         width: 100%;
     }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 1rem;
+        padding-left: 0;
+        list-style: none;
+    }
+    .pagination .page-item .page-link {
+        color: var(--brand-green);
+        border-color: var(--brand-green);
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 0.85rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--brand-green);
+        border-color: var(--brand-green);
+        color: #ffffff;
+    }
+    .pagination .page-item .page-link:hover {
+        background-color: rgba(42, 64, 40, 0.1);
+        color: var(--brand-green);
+    }
+    .pagination .page-item.disabled .page-link {
+        color: #94a3b8;
+        background-color: transparent;
+        border-color: #d1d5db;
+        cursor: not-allowed;
+    }
     .project-filter-form {
         display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap; /* Strict layout rule configuration mandate: prevents dropping completely */
+        flex-wrap: nowrap;
         gap: 12px;
         align-items: center;
         width: 100%;
     }
     .project-search-field {
-        flex: 1 1 auto; /* Allows elastic width adjustments natively */
-        min-width: 160px;
+        flex: 0 1 320px;
+        min-width: 240px;
+        max-width: 360px;
+        width: 100%;
     }
     .filter-search-input {
+        width: 100%;
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -204,13 +220,16 @@
     }
     .project-select-fields-wrapper-group {
         display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap; /* Keeps elements absolute positioned horizontally */
+        flex-wrap: nowrap;
         gap: 8px;
-        flex-shrink: 0;
+        align-items: center;
+        justify-content: flex-start;
+        flex: 1 1 auto;
+        min-width: 0;
     }
     .project-filter-select {
-        width: 135px; /* Elegant smaller dimension widths to secure content layout safe spaces */
+        width: 150px;
+        min-width: 120px;
         height: 44px;
         border-radius: 12px;
         border: 1px solid #e2e8f0;
@@ -218,7 +237,21 @@
         color: #475569;
         font-size: 0.85rem;
         font-weight: 600;
-        padding: 0 2rem 0 0.75rem;
+        padding: 0 0.9rem;
+    }
+    .project-filter-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    @media (max-width: 992px) {
+        .project-search-field,
+        .project-filter-select {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+        .project-select-fields-wrapper-group {
+            justify-content: stretch;
+        }
     }
     .project-filter-select:focus {
         border-color: #10b981;

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\ClientNotification;
 use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\Report;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\URL; // ◄ Crucial import added for the secure URL handler
 use Illuminate\Support\ServiceProvider;
+use App\Models\SupervisorNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,32 +33,54 @@ class AppServiceProvider extends ServiceProvider
             $user = Auth::user();
             $notifications = collect();
             $notificationCount = 0;
+            $unreadCount = 0;
 
             if ($user && $user->client) {
-                $notifications = collect([
-                    [
-                        'title' => 'New milestone scheduled',
-                        'message' => 'A new milestone has been added to your active project timeline.',
-                        'time' => Carbon::now()->subHours(2)->diffForHumans(),
-                    ],
-                    [
-                        'title' => 'Report uploaded',
-                        'message' => 'Engineering report has been submitted for review.',
-                        'time' => Carbon::now()->subDay()->diffForHumans(),
-                    ],
-                ]);
-                $notificationCount = $notifications->count();
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('client_notifications')) {
+                        $notifications = ClientNotification::query()
+                            ->where('client_id', $user->client->client_id)
+                            ->latest('created_at')
+                            ->limit(3)
+                            ->get();
+
+                        $notificationCount = $notifications->count();
+                        $unreadCount = ClientNotification::query()
+                            ->where('client_id', $user->client->client_id)
+                            ->where('is_read', false)
+                            ->count('*');
+                    }
+                } catch (\Throwable $e) {
+                    $notifications = collect();
+                    $notificationCount = 0;
+                    $unreadCount = 0;
+                }
             }
 
             $view->with([
                 'clientNotifications' => $notifications,
                 'clientNotificationCount' => $notificationCount,
+                'clientUnreadCount' => $unreadCount,
             ]);
         });
 
-        // 2. FORCE HTTPS OVER TUNNEL PROXIES (Fixed CSS & Login Blocks on Phone)
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-            URL::forceScheme('https');
-        }
+        // Share unread supervisor notification count with supervisor layout/topbar
+        View::composer('layouts.supervisor', function ($view) {
+            $user = Auth::user();
+            $unread = 0;
+            if ($user) {
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('supervisor_notifications')) {
+                        $unread = SupervisorNotification::query()
+                            ->where('supervisor_id', $user->user_id)
+                            ->where('is_read', false)
+                            ->count('*');
+                    }
+                } catch (\Throwable $e) {
+                    $unread = 0;
+                }
+            }
+            $view->with('supervisorUnreadCount', $unread);
+        });
     }
 }

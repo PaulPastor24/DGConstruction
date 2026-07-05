@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Client Portal D&G Construction Monitor')</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -12,27 +13,25 @@
 
     <style>
         :root {
-            /* Exact Luxury Premium Corporate Forest Green Palettes from Mockup */
-            --sidebar-bg: #032b1d; 
-            --sidebar-active: #155e43; 
+            --sidebar-bg: #2a4028;
+            --sidebar-active: #365233;
             --sidebar-text: #ffffff;
-            --sidebar-text-muted: #a3b899;
-            
-            /* Background Canvas Set to Matte Light Sage Mint-Cream Gray tint instead of standard bright blue */
-            --bg-main: #f4f7f6; 
+            --sidebar-text-muted: #cbd5d2;
+
+            --bg-main: #fcfdfc;
             --surface-card: #ffffff;
-            --border-color: #e2e8f0;
-            --text-primary: #0f172a;
-            --text-muted: #64748b;
-            
-            --brand-green: #2E7D32;
-            --brand-mint: #dcfce7;
-            --brand-yellow-green: #A3D977;
+            --border-color: #e2ebe4;
+            --text-primary: #1e241e;
+            --text-muted: #626e61;
+
+            --brand-green: #2a4028;
+            --brand-mint: #f4f7f1;
+            --brand-yellow-green: #8fae85;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f6f8f6;
+            background-color: var(--bg-main);
             color: var(--text-primary);
             overflow-x: hidden;
         }
@@ -49,7 +48,7 @@
         /* --- SIDEBAR CONTAINER CONTROL --- */
         .sidebar {
             width: 260px;
-            background-color: var(--sidebar-bg);
+            background: linear-gradient(145deg, var(--sidebar-bg) 0%, var(--sidebar-active) 100%);
             color: var(--sidebar-text);
             position: sticky;
             top: 0;
@@ -60,6 +59,7 @@
             z-index: 1050;
             flex-shrink: 0;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .sidebar-brand {
@@ -77,7 +77,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background: #ffffff;
+            background: var(--surface-card);
             overflow: hidden;
             padding: 0;
             box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08);
@@ -86,18 +86,18 @@
         .sidebar-logo-img {
             object-fit: contain;
             border-radius: 50%;
-            background: #ffffff;
+            background: var(--surface-card);
         }
 
         .sidebar-logo-img img {
-            width: 72%;
-            height: 72%;
-            object-fit: contain;
+            width: 90%;
+            height: 90%;
+            object-fit: cover;
         }
 
         .brand-icon {
             font-size: 1.4rem;
-            color: #84cc16;
+            color: var(--brand-yellow-green);
             line-height: 1;
         }
 
@@ -142,24 +142,24 @@
 
         .nav-item:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .nav-item.active {
-            background-color: var(--sidebar-active);
+            background-color: rgba(255, 255, 255, 0.18);
             color: #ffffff;
         }
 
         .sidebar-footer {
             padding: 1.25rem 0.75rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .user-pill {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.08);
             padding: 0.75rem 1rem;
             border-radius: 12px;
             text-decoration: none;
@@ -176,7 +176,7 @@
         .avatar-circle {
             width: 34px;
             height: 34px;
-            background-color: #155e43;
+            background-color: var(--sidebar-active);
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 50%;
             display: flex;
@@ -187,20 +187,22 @@
             color: #ffffff;
         }
 
-        .logout-link {
-            display: flex;
+        .logout-icon-link {
+            display: inline-flex;
             align-items: center;
-            gap: 0.85rem;
-            padding: 0.6rem 1.15rem;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
             color: var(--sidebar-text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.88rem;
-            border-radius: 10px;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
         }
-        .logout-link:hover { 
-            color: #ffffff; 
-            background: rgba(239, 68, 68, 0.08);
+        .logout-icon-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
         }
 
         .swal-actions-reverse {
@@ -218,16 +220,51 @@
             font-weight: 600 !important;
         }
 
+        .notification-bell-animate {
+            animation: bell-ring 1.2s ease-in-out infinite;
+            transform-origin: center top;
+        }
+
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(12deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(8deg); }
+            40% { transform: rotate(-6deg); }
+            50% { transform: rotate(4deg); }
+            60% { transform: rotate(-2deg); }
+            70% { transform: rotate(2deg); }
+            80%, 90% { transform: rotate(0deg); }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+            animation: ping-dot 1.4s ease-out infinite;
+        }
+
+        @keyframes ping-dot {
+            0% { transform: scale(0.9); opacity: 1; }
+            80% { transform: scale(1.65); opacity: 0; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
         .swal-confirm-btn {
-            background-color: #0f5132 !important;
-            border: 1px solid #0f5132 !important;
+            background-color: var(--brand-green) !important;
+            border: 1px solid var(--brand-green) !important;
             color: #ffffff !important;
         }
 
         .swal-cancel-btn {
-            background-color: #ffffff !important;
-            border: 1px solid #d1d5db !important;
-            color: #374151 !important;
+            background-color: var(--surface-card) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
         }
 
         /* --- MAIN INTERFACE WORKSPACE --- */
@@ -296,10 +333,10 @@
             font-weight: 600;
             font-size: 0.8rem;
             color: var(--text-primary);
-            background: #ffffff;
+            background: var(--surface-card);
             padding: 0.45rem 0.8rem;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
         }
 
         .notification-bell {
@@ -307,11 +344,11 @@
             font-size: 1.05rem;
             color: var(--text-primary);
             cursor: pointer;
-            background: #ffffff;
+            background: var(--surface-card);
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -320,22 +357,44 @@
         .notification-badge {
             position: absolute;
             top: 8px;
-            right: 9px;
-            background: #f59e0b;
-            width: 8px;
-            height: 8px;
+            right: 8px;
+            width: 14px;
+            height: 14px;
+            background: #22c55e !important;
             border-radius: 50%;
-            box-shadow: 0 0 0 2px #ffffff;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+            animation: ping-dot 1.4s ease-out infinite;
+            pointer-events: none;
+        }
+
+        .dashboard-notification-button.notification-bell-animate::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.12);
+            animation: badge-ring 1.6s ease-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes badge-ring {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            60% { transform: scale(1.35); opacity: 0.1; }
+            100% { transform: scale(1.6); opacity: 0; }
         }
 
         .notification-popup {
-            position: absolute;
-            top: 56px;
-            right: 0;
-            width: 320px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
+            position: fixed;
+            top: 5rem;
+            right: 1.5rem;
+            width: 340px;
+            max-width: calc(100vw - 2rem);
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
             z-index: 1055;
             overflow: hidden;
@@ -347,29 +406,30 @@
         }
 
         .notification-popup-header {
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 1rem 1.15rem;
+            border-bottom: 1px solid rgba(42, 64, 40, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, rgba(42, 64, 40, 0.03), rgba(143, 174, 133, 0.08));
         }
 
         .notification-popup-header h6 {
             margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--text-primary);
         }
 
         .notification-popup-list {
-            max-height: 320px;
+            max-height: 360px;
             overflow-y: auto;
         }
 
         .notification-item {
-            padding: 0.95rem 1.25rem;
-            border-bottom: 1px solid #f8fafc;
+            padding: 0.95rem 1.15rem;
+            border-bottom: 1px solid rgba(42, 64, 40, 0.06);
             transition: background 0.15s ease;
         }
 
@@ -378,7 +438,7 @@
         }
 
         .notification-item:hover {
-            background: #f8fafc;
+            background: var(--brand-mint);
         }
 
         .notification-item-title {
@@ -390,15 +450,29 @@
 
         .notification-item-text {
             font-size: 0.82rem;
-            color: #64748b;
+            color: var(--text-muted);
             margin: 0;
+            line-height: 1.4;
         }
 
         .notification-item-time {
             display: block;
             margin-top: 0.55rem;
             font-size: 0.75rem;
-            color: #94a3b8;
+            color: rgba(98, 110, 97, 0.8);
+        }
+
+        .notification-item.unread {
+            background: linear-gradient(90deg, rgba(143, 174, 133, 0.12), rgba(255,255,255,0));
+        }
+
+        .notification-item .notif-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--brand-green);
+            display: inline-block;
+            flex-shrink: 0;
         }
 
         .content {
@@ -439,7 +513,7 @@
             font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .page-header-title {
@@ -454,7 +528,7 @@
             margin: 0;
             font-size: 0.92rem;
             font-weight: 500;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .page-header-tools {
@@ -484,7 +558,7 @@
             font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: #64748b;
+            color: var(--text-muted);
         }
 
         .dashboard-page-title {
@@ -492,14 +566,14 @@
             font-weight: 800;
             line-height: 1.05;
             margin: 0;
-            color: #0e3b2e;
+            color: var(--brand-green);
         }
 
         .dashboard-page-description {
             margin: 0.2rem 0 0;
             font-size: 0.92rem;
             font-weight: 500;
-            color: #64748b;
+            color: var(--text-muted);
             max-width: 420px;
         }
 
@@ -515,34 +589,35 @@
             align-items: center;
             gap: 0.55rem;
             padding: 0.6rem 0.9rem;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             border-radius: 14px;
             font-size: 0.84rem;
             font-weight: 600;
-            color: #334155;
+            color: var(--text-primary);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
 
         .dashboard-date-pill i {
-            color: #16a34a;
+            color: var(--brand-green);
         }
 
         .dashboard-notification-button {
+            position: relative;
             width: 46px;
             height: 46px;
             border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: #334155;
+            color: var(--text-primary);
         }
 
         .dashboard-notification-button:hover {
-            background: #f8fafc;
+            background: var(--brand-mint);
         }
 
         .global-mobile-nav {
@@ -551,8 +626,8 @@
             justify-content: space-between;
             height: 56px;
             padding: 0 1rem;
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--surface-card);
+            border-bottom: 1px solid var(--border-color);
             box-shadow: 0 1px 0 rgba(226, 232, 240, 0.55);
             position: sticky;
             top: 0;
@@ -571,7 +646,7 @@
             border-radius: 12px;
             font-size: 1.45rem;
             line-height: 1;
-            color: #334155;
+            color: var(--text-primary);
         }
 
         #mobileNotificationBell {
@@ -580,11 +655,11 @@
             justify-content: center;
             width: 44px;
             height: 44px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid var(--border-color);
+            background: var(--surface-card);
             border-radius: 12px;
             font-size: 1.2rem;
-            color: #334155;
+            color: var(--text-primary);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
         }
 
@@ -671,7 +746,7 @@
         <div>
             <div class="sidebar-brand">
                 <div class="sidebar-logo-img">
-                    <img src="{{ asset('images/image.png') }}" alt="D&G Construction logo" style="width: 100%; height: 100%; object-fit: contain;">
+                    <img src="{{ asset('images/D&G.png') }}" alt="D&G Construction logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div class="brand-text">
                     <h5>D&G Construction</h5>
@@ -706,10 +781,10 @@
                         <div style="font-size: 0.72rem; color: var(--sidebar-text-muted);">External Client</div>
                     </div>
                 </div>
+                <a href="#" class="logout-icon-link" aria-label="Logout" onclick="event.preventDefault(); Swal.fire({ title: 'Confirm logout', text: 'Are you sure you want to sign out?', icon: 'question', showCancelButton: true, confirmButtonColor: '#0f5132', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, log out', cancelButtonText: 'Cancel', buttonsStyling: false, customClass: { actions: 'swal-actions-reverse', confirmButton: 'swal-confirm-btn', cancelButton: 'swal-cancel-btn' } }).then((result) => { if (result.isConfirmed) { document.getElementById('logout-form').submit(); } });">
+                    <i class="bi bi-box-arrow-left"></i>
+                </a>
             </div>
-            <a href="#" class="logout-link" onclick="event.preventDefault(); Swal.fire({ title: 'Confirm logout', text: 'Are you sure you want to sign out?', icon: 'question', showCancelButton: true, confirmButtonColor: '#0f5132', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, log out', cancelButtonText: 'Cancel', buttonsStyling: false, customClass: { actions: 'swal-actions-reverse', confirmButton: 'swal-confirm-btn', cancelButton: 'swal-cancel-btn' } }).then((result) => { if (result.isConfirmed) { document.getElementById('logout-form').submit(); } });">
-                <i class="bi bi-box-arrow-left"></i> Logout
-            </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">@csrf</form>
         </div>
     </aside>
@@ -719,13 +794,58 @@
             <button id="sidebarToggle" type="button" class="global-mobile-toggle" aria-label="Open sidebar navigation">
                 <i class="bi bi-list"></i>
             </button>
-            <button id="mobileNotificationBell" type="button" class="dashboard-notification-button" aria-label="Notifications">
+            <button id="mobileNotificationBell" type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
+                @if(($clientUnreadCount ?? 0) > 0)
+                    <span class="notification-badge" style="position:absolute;top:8px;right:8px;width:12px;height:12px;background:#22c55e;border:2px solid #ffffff;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,0.25);animation:ping-dot 1.4s ease-out infinite;"></span>
+                @endif
             </button>
         </div>
         <div class="content">
             @yield('content')
         </div>
+    </div>
+</div>
+
+<div id="notificationPopup" class="notification-popup" role="dialog" aria-label="Client notifications">
+    <div class="notification-popup-header">
+        <div>
+            <h6>Notifications</h6>
+            <div class="text-muted" style="font-size: 0.78rem;">{{ $clientUnreadCount ?? 0 }} unread</div>
+        </div>
+        <a href="{{ route('client.notifications') }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.75rem; border-radius: 999px;">View all</a>
+    </div>
+    <div class="notification-popup-list">
+        @forelse($clientNotifications->take(3) as $notification)
+            @php
+                $isUnread = !($notification->is_read ?? ($notification['is_read'] ?? false));
+                $rawType = strtolower($notification['type'] ?? ($notification->type ?? 'system'));
+                $icon = match ($rawType) {
+                    'report' => 'bi-file-earmark-text',
+                    'phase' => 'bi-bar-chart-steps',
+                    'milestone', 'timeline' => 'bi-calendar3',
+                    'announcement' => 'bi-megaphone',
+                    default => 'bi-bell',
+                };
+                $module = $notification['module'] ?? ($notification->data['module'] ?? ($notification['route'] ?? ($notification->data['route'] ?? 'client.dashboard')));
+                $params = $notification['params'] ?? ($notification->data['params'] ?? []);
+                $href = route($module, $params);
+                $link = route('client.notifications.markReadRedirect', ['id' => $notification->id ?? $notification['id'] ?? 0]) . '?redirect=' . urlencode($href);
+            @endphp
+            <a href="{{ $link }}" class="notification-item d-flex align-items-start gap-2 text-decoration-none {{ $isUnread ? 'unread' : '' }}" data-notif-id="{{ $notification->id ?? $notification['id'] ?? '' }}" style="color: inherit;">
+                <span class="notif-dot mt-2"></span>
+                <div class="flex-grow-1">
+                    <div class="notification-item-title">{{ $notification['title'] ?? ($notification->title ?? 'Notification') }}</div>
+                    <p class="notification-item-text">{{ $notification['message'] ?? ($notification->message ?? 'You have a new update.') }}</p>
+                    <span class="notification-item-time">{{ $notification['time'] ?? ($notification['created_at'] ? $notification['created_at']->diffForHumans() : ($notification->created_at ? $notification->created_at->diffForHumans() : 'Just now')) }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="text-center py-4 px-3 text-muted" style="font-size: 0.9rem;">
+                <i class="bi bi-bell-slash display-6 d-block mb-2"></i>
+                No new notifications yet.
+            </div>
+        @endforelse
     </div>
 </div>
 
@@ -764,25 +884,69 @@
             new bootstrap.Tooltip(element);
         });
 
-        const bell = document.getElementById('notificationBell');
         const popup = document.getElementById('notificationPopup');
+        const bells = document.querySelectorAll('.notification-toggle-btn');
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        const notificationMarkReadUrlTemplate = "{{ route('client.notifications.markRead', ['id' => '__ID__']) }}";
 
         function toggleNotifications() {
             popup?.classList.toggle('show');
         }
 
-        bell?.addEventListener('click', toggleNotifications);
-        bell?.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
+        bells.forEach(function (bell) {
+            bell?.addEventListener('click', function (event) {
+                event.stopPropagation();
                 toggleNotifications();
-            }
+            });
+            bell?.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleNotifications();
+                }
+            });
         });
 
         document.addEventListener('click', function(event) {
-            if (!bell?.contains(event.target) && !popup?.contains(event.target)) {
+            const clickedBell = Array.from(bells).some(function (bell) {
+                return bell?.contains(event.target);
+            });
+            if (!clickedBell && !popup?.contains(event.target)) {
                 popup?.classList.remove('show');
             }
+        });
+
+        popup?.addEventListener('click', function (event) {
+            const item = event.target.closest('.notification-item');
+            if (!item) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+
+            const id = item.getAttribute('data-notif-id');
+            const href = item.getAttribute('href');
+            if (!id || !href) {
+                return;
+            }
+
+            const markReadUrl = notificationMarkReadUrlTemplate.replace('__ID__', encodeURIComponent(id));
+            fetch(markReadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({})
+            }).then(function (response) {
+                if (!response.ok) {
+                    console.error('Notification mark-read failed:', response.statusText);
+                }
+            }).catch(function (error) {
+                console.error('Notification mark-read error:', error);
+            }).finally(function () {
+                window.location = href;
+            });
         });
     });
 </script>

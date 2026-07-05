@@ -86,6 +86,21 @@ class MilestoneController extends Controller
                 'is_delayed' => false,
             ]);
 
+            // Notify client about new milestone
+            try {
+                if ($project && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'milestone',
+                        'title' => 'New Milestone Added',
+                        'message' => "A new milestone '{$milestone->milestone_name}' was added to project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.milestones', 'milestone_id' => $milestone->milestone_id, 'project_id' => $project->project_id],
+                        'related_id' => $milestone->milestone_id,
+                        'related_type' => 'milestone',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on milestone creation: ' . $e->getMessage());
+            }
             $this->logAction(
                 'Milestone Created',
                 "Milestone '{$milestone->milestone_name}' created in phase '{$phase->phase_name}' of project '{$project->project_name}'"
@@ -153,6 +168,7 @@ class MilestoneController extends Controller
         try {
             DB::beginTransaction();
 
+
             $oldStatus = $milestone->is_completed;
             $oldDelayed = $milestone->is_delayed;
 
@@ -172,6 +188,22 @@ class MilestoneController extends Controller
                     'Milestone Updated',
                     "Milestone '{$milestone->milestone_name}' " . implode(', ', $changes)
                 );
+                
+                try {
+                    $project = $milestone->project ?? Project::query()->find($milestone->project_id);
+                    if ($project && $project->client_id) {
+                        \App\Services\NotificationService::notifyClient($project->client_id, [
+                            'type' => 'milestone',
+                            'title' => 'Milestone Updated',
+                            'message' => "Milestone '{$milestone->milestone_name}' was updated: " . implode(', ', $changes),
+                            'data' => ['module' => 'client.milestones', 'milestone_id' => $milestone->milestone_id, 'project_id' => $project->project_id],
+                            'related_id' => $milestone->milestone_id,
+                            'related_type' => 'milestone',
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify client on milestone update: ' . $e->getMessage());
+                }
             }
 
             DB::commit();
@@ -212,6 +244,22 @@ class MilestoneController extends Controller
                 "Milestone '{$milestone->milestone_name}' marked as completed"
             );
 
+            // Notify client about milestone completion
+            try {
+                if ($project && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'milestone',
+                        'title' => 'Milestone Completed',
+                        'message' => "Milestone '{$milestone->milestone_name}' has been completed for project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.milestones', 'milestone_id' => $milestone->milestone_id, 'project_id' => $project->project_id],
+                        'related_id' => $milestone->milestone_id,
+                        'related_type' => 'milestone',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on milestone completion: ' . $e->getMessage());
+            }
+
             DB::commit();
 
             return response()->json(['success' => true, 'message' => 'Milestone marked as completed']);
@@ -243,6 +291,22 @@ class MilestoneController extends Controller
                 'Milestone Delayed',
                 "Milestone '{$milestone->milestone_name}' marked as delayed"
             );
+
+            // Notify client about milestone delay
+            try {
+                if ($project && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'milestone',
+                        'title' => 'Milestone Delayed',
+                        'message' => "Milestone '{$milestone->milestone_name}' has been marked delayed for project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.milestones', 'milestone_id' => $milestone->milestone_id, 'project_id' => $project->project_id],
+                        'related_id' => $milestone->milestone_id,
+                        'related_type' => 'milestone',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on milestone delay: ' . $e->getMessage());
+            }
 
             DB::commit();
 

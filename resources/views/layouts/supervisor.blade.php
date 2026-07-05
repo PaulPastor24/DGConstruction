@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Supervisor Dashboard D&G Construction Monitor')</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -11,17 +12,17 @@
 
     <style>
         :root {
-            --supervisor-primary: #096056;
-            --supervisor-primary-deep: #064a41;
-            --supervisor-secondary: #4DA078;
-            --supervisor-accent: #82DB72;
-            --supervisor-highlight: #82DB72;
-            --supervisor-bg: #F5F5F5;
-            --supervisor-surface: #FFFFFF;
-            --supervisor-border: rgba(9, 96, 86, 0.12);
-            --supervisor-muted: #6b7280;
-            --supervisor-text: #373737;
-            --supervisor-soft: #eef8f2;
+            --supervisor-primary: #2a4028;
+            --supervisor-primary-deep: #365233;
+            --supervisor-secondary: #5c7a5f;
+            --supervisor-accent: #8fae85;
+            --supervisor-highlight: #8fae85;
+            --supervisor-bg: #fcfdfc;
+            --supervisor-surface: #ffffff;
+            --supervisor-border: rgba(42, 64, 40, 0.12);
+            --supervisor-muted: #626e61;
+            --supervisor-text: #1e241e;
+            --supervisor-soft: #f4f7f1;
         }
 
         * { box-sizing: border-box; }
@@ -59,7 +60,7 @@
             top: 0;
             height: 100vh;
             overflow-y: auto;
-            box-shadow: 18px 0 40px rgba(9, 96, 86, 0.18);
+            box-shadow: 18px 0 40px rgba(42, 64, 40, 0.18);
             border-right: 1px solid rgba(255, 255, 255, 0.08);
             padding: 1.1rem 0.95rem 1.15rem;
             display: flex;
@@ -72,14 +73,22 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .logo-badge { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.35rem; }
+        .logo-badge { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.35rem; }
         .logo-icon {
-            width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px;
-            background: linear-gradient(135deg, var(--supervisor-accent), #b8efb0); color: var(--supervisor-primary-deep); font-weight: 800;
-            box-shadow: 0 10px 24px rgba(130, 219, 114, 0.24);
+            width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 10px 24px rgba(42, 64, 40, 0.14);
+            overflow: hidden;
+            flex-shrink: 0;
         }
-        .logo-text { font-family: 'Syne', sans-serif; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; }
-        .logo-sub { font-size: 0.78rem; color: rgba(255,255,255,0.78); padding-left: 3.25rem; }
+        .logo-icon img {
+            width: 110%;
+            height: 110%;
+            object-fit: cover;
+            transform: scale(1.1);
+        }
+        .logo-text { font-family: 'Syne', sans-serif; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; color: #ffffff; }
+        .logo-sub { font-size: 0.78rem; color: rgba(255,255,255,0.85); padding-left: 0; margin-top: 0.1rem; }
 
         .sidebar-nav { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.2rem 0 0; }
         .nav-section-label { padding: 0.8rem 0.85rem 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.7); }
@@ -106,8 +115,21 @@
         .menu-button { display: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--supervisor-border); background: #fff; color: var(--supervisor-primary); align-items: center; justify-content: center; }
         .topbar-breadcrumb { font-size: 0.95rem; font-weight: 700; color: var(--supervisor-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .topbar-right { display: flex; align-items: center; gap: 0.65rem; }
-        .topbar-icon { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--supervisor-primary); border-radius: 999px; transition: all 0.2s ease; }
-        .topbar-icon:hover { background: rgba(9,96,86,0.08); }
+        .topbar-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 1px solid rgba(42,64,40,0.16); color: var(--supervisor-primary); border-radius: 999px; transition: all 0.2s ease, transform 0.2s ease; box-shadow: 0 8px 16px rgba(42,64,40,0.08); }
+        .topbar-icon:hover { background: rgba(42,64,40,0.08); transform: translateY(-1px); }
+        .topbar-icon.enhanced-icon { width: 48px; height: 48px; background: #fff; border-color: rgba(42,64,40,0.18); }
+        .profile-dropdown-wrapper { position: relative; }
+        .profile-dropdown-menu { display: none; position: absolute; right: 0; top: calc(100% + 0.5rem); min-width: 220px; background: #fff; border: 1px solid rgba(42,64,40,0.16); border-radius: 18px; box-shadow: 0 18px 40px rgba(42,64,40,0.14); padding: 0.75rem; z-index: 50; }
+        .profile-dropdown-menu.show { display: block; }
+        .profile-card { display: flex; align-items: center; gap: 0.85rem; padding: 0.9rem; border-radius: 16px; background: rgba(42,64,40,0.08); }
+        .profile-avatar { width: 44px; height: 44px; border-radius: 999px; background: var(--supervisor-primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; }
+        .profile-info .profile-name { font-size: 0.95rem; font-weight: 700; color: var(--supervisor-primary); }
+        .profile-info .profile-role { font-size: 0.78rem; color: var(--supervisor-muted); }
+        .profile-divider { height: 1px; background: rgba(42,64,40,0.12); margin: 0.75rem 0; }
+        .profile-menu-item { width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0.7rem; border-radius: 14px; color: var(--supervisor-text); background: transparent; border: none; text-align: left; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; }
+        .profile-menu-item:hover { background: rgba(42,64,40,0.08); color: var(--supervisor-primary); }
+        .profile-menu-item i { font-size: 1rem; color: var(--supervisor-primary); }
+        .profile-menu-item.profile-logout { width: 100%; }
         .topbar-date { font-size: 0.85rem; color: var(--supervisor-muted); min-width: 150px; text-align: right; }
 
         .content-shell {
@@ -119,7 +141,7 @@
             background: linear-gradient(180deg, #fafafa 0%, var(--supervisor-bg) 100%);
         }
         .page-frame { display: flex; flex-direction: column; gap: 1rem; max-width: 1500px; margin: 0 auto; }
-        .page-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 18px; box-shadow: 0 8px 22px rgba(9,96,86,0.05); }
+        .page-card { background: var(--supervisor-surface); border: 1px solid var(--supervisor-border); border-radius: 18px; box-shadow: 0 8px 22px rgba(42,64,40,0.05); }
         .page-card-body { padding: 1rem; }
         .page-hero { padding: 1.1rem 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
         .eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; color: var(--supervisor-muted); text-transform: uppercase; }
@@ -230,6 +252,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -274,6 +298,52 @@
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 }
+            });
+        }
+
+        const profileToggle = document.getElementById('profileDropdownToggle');
+        const profileMenu = document.getElementById('profileDropdownMenu');
+
+        if (profileToggle && profileMenu) {
+            profileToggle.addEventListener('click', function(event) {
+                event.stopPropagation();
+                profileMenu.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!profileMenu.contains(event.target) && event.target !== profileToggle) {
+                    profileMenu.classList.remove('show');
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    profileMenu.classList.remove('show');
+                }
+            });
+        }
+
+        const logoutButtonTopbar = document.getElementById('logoutButtonTopbar');
+        const logoutFormTopbar = document.getElementById('logout-form-topbar');
+
+        if (logoutButtonTopbar && logoutFormTopbar) {
+            logoutButtonTopbar.addEventListener('click', function(event) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Sign out?',
+                    text: 'Are you sure you want to log out?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#096056',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, log out',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        logoutFormTopbar.submit();
+                    }
+                });
             });
         }
     });

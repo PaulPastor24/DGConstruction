@@ -29,7 +29,7 @@
                     $currentPhaseEnd = data_get($currentPhase, 'end');
                 @endphp
 
-                <div class="project-timeline-wrapper" id="project-panel-{{ $projectId }}" style="{{ $index === 0 ? '' : 'display: none;' }}">
+                <div class="project-timeline-wrapper" id="project-panel-{{ $projectId }}" style="{{ $selectedProjectId == $projectId ? '' : 'display: none;' }}">
                     
                     <div class="dashboard-panel mb-2">
                         <div class="row align-items-center mb-3">
@@ -41,9 +41,9 @@
                             <div class="col-auto d-flex gap-3 align-items-center flex-wrap">
                                 
                                 <div class="project-selector-dropdown-wrapper">
-                                    <select class="form-select project-theme-select" onchange="switchProjectTimeline(this.value)">
+                                    <select class="form-select project-theme-select" onchange="window.location.href='{{ route('supervisor.timeline') }}?project_id=' + this.value">
                                         @foreach($projectsWithStats as $dropdownProject)
-                                            <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $projectId ? 'selected' : '' }}>
+                                            <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $selectedProjectId ? 'selected' : '' }}>
                                                 🏢 {{ data_get($dropdownProject, 'name', 'Project') }}
                                             </option>
                                         @endforeach
@@ -146,12 +146,18 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Still active or pending</span>
                             </div>
                         </div>
+                        @php
+                            $activeMilestoneCount = collect(data_get($project, 'activeMilestones', []))->count();
+                            $delayedMilestoneCount = collect(data_get($project, 'activeMilestones', []))->where('is_delayed', true)->count();
+                            $scheduleHealthLabel = $delayedMilestoneCount > 0 ? 'Delayed' : 'On Track';
+                            $scheduleHealthClass = $delayedMilestoneCount > 0 ? 'text-amber-deep' : 'text-success';
+                        @endphp
                         <div class="col-6 col-md-6 col-xl-2.4 custom-col-five">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Active Milestones</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
                                     <div class="kpi-icon-info"><i class="bi bi-flag-fill"></i></div>
-                                    <h3 class="kpi-value mb-0">1</h3>
+                                    <h3 class="kpi-value mb-0">{{ $activeMilestoneCount }}</h3>
                                 </div>
                                 <span class="kpi-subtext text-muted mt-2 d-block">Driving today's work</span>
                             </div>
@@ -160,9 +166,9 @@
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Schedule Health</span>
                                 <div class="mt-2">
-                                    <h3 class="kpi-value text-amber-deep mb-0">Delayed</h3>
+                                    <h3 class="kpi-value {{ $scheduleHealthClass }} mb-0">{{ $scheduleHealthLabel }}</h3>
                                 </div>
-                                <span class="kpi-subtext text-muted mt-2 d-block">Behind planned schedule</span>
+                                <span class="kpi-subtext text-muted mt-2 d-block">Based on phase milestones</span>
                             </div>
                         </div>
                     </div>
@@ -222,43 +228,55 @@
                         <div class="col-12 col-lg-6 d-flex flex-column gap-4">
                             <div class="dashboard-panel">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h3 class="panel-section-title mb-0">Active Delivery Milestones</h3>
-                                    <a href="#" class="text-primary text-decoration-none fw-bold small">View All</a>
+                                    <h3 class="panel-section-title mb-0">Active Milestones</h3>
+
                                 </div>
                                 
-                                <div class="row g-3">
-                                    <div class="col-12 col-sm-6">
-                                        <div class="milestone-sub-card border-success-left">
-                                            <div class="d-flex align-items-center gap-2 mb-2">
-                                                <i class="bi bi-check-circle-fill text-success"></i>
-                                                <div class="milestone-card-title">{{ $projectName }} - Milestone 1</div>
+                                @php
+                                $activeMilestones = collect(data_get($project, 'activeMilestones', []))
+                                    ->sortBy('planned_date')
+                                    ->take(2);
+                            @endphp
+                            <div class="row g-3">
+                                @if($activeMilestones->isEmpty())
+                                    <div class="col-12">
+                                        <div class="dashboard-empty-state p-4 rounded-3 border border-dashed text-center">
+                                            <div class="mb-2 text-muted">
+                                                <i class="bi bi-info-circle"></i>
                                             </div>
-                                            <div class="milestone-target-text mb-3">Target date • Apr 18, 2026</div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="text-muted small">Completion</span>
-                                                <span class="fw-bold text-success small">100%</span>
-                                            </div>
-                                            <div class="progress mt-1" style="height: 5px;"><div class="progress-bar bg-success" style="width: 100%"></div></div>
-                                            <span class="badge-status-pill compl-bg d-inline-block mt-3">Completed</span>
+                                            <div class="fw-semibold">No upcoming milestones available.</div>
+                                            <div class="small text-muted">Milestones will appear here once they are scheduled for this project.</div>
                                         </div>
                                     </div>
-
-                                    <div class="col-12 col-sm-6">
-                                        <div class="milestone-sub-card border-primary-left">
-                                            <div class="d-flex align-items-center gap-2 mb-2">
-                                                <i class="bi bi-dot text-primary fs-4 lh-1"></i>
-                                                <div class="milestone-card-title">{{ $projectName }} - Milestone 2</div>
+                                @else
+                                    @foreach($activeMilestones as $milestone)
+                                        @php
+                                            $plannedDate = data_get($milestone, 'planned_date');
+                                            $daysRemaining = $plannedDate ? \Carbon\Carbon::parse($plannedDate)->diffInDays(now(), false) : null;
+                                            $statusText = data_get($milestone, 'is_delayed') ? 'Delayed' : (data_get($milestone, 'is_completed') ? 'Completed' : 'Upcoming');
+                                            $statusClass = data_get($milestone, 'is_delayed') ? 'border-warning-left' : 'border-primary-left';
+                                            $progressValue = data_get($milestone, 'progress', 0) ?: 0;
+                                        @endphp
+                                        <div class="col-12 col-sm-6">
+                                            <div class="milestone-sub-card {{ $statusClass }}">
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <i class="bi bi-flag-fill text-success"></i>
+                                                    <div class="milestone-card-title">{{ data_get($milestone, 'name') }}</div>
+                                                </div>
+                                                <div class="milestone-target-text mb-3">{{ data_get($milestone, 'phase_name') }} • {{ $plannedDate ? \Carbon\Carbon::parse($plannedDate)->format('M d, Y') : 'TBD' }}</div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="text-muted small">Days Remaining</span>
+                                                    <span class="fw-bold text-dark small">{{ $daysRemaining !== null ? max(0, $daysRemaining) : 'TBD' }}</span>
+                                                </div>
+                                                <div class="progress mt-1" style="height: 5px; background-color: #f1f5f9; border-radius: 999px;">
+                                                    <div class="progress-bar bg-success" style="width: {{ $progressValue }}%;" aria-valuenow="{{ $progressValue }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <span class="badge-status-pill active-bg d-inline-block mt-3">{{ $statusText }}</span>
                                             </div>
-                                            <div class="milestone-target-text mb-3">Target date • Apr 25, 2026</div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="text-muted small">Completion</span>
-                                                <span class="fw-bold text-dark small">0%</span>
-                                            </div>
-                                            <div class="progress mt-1" style="height: 5px;"><div class="progress-bar bg-light" style="width: 0%"></div></div>
-                                            <span class="badge-status-pill active-bg d-inline-block mt-3">Active</span>
                                         </div>
-                                    </div>
-                                </div>
+                                    @endforeach
+                                @endif
+                            </div>
                             </div>
 
                             <div class="row g-3 flex-grow-1">

@@ -21,6 +21,7 @@ class Report extends Model
         'report_text',
         'site_images',
         'approval_status',
+        'ai_status',
         'approval_remarks',
         'reviewed_at',
         'approved_at',

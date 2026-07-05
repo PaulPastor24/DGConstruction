@@ -1,8 +1,8 @@
 /* Custom Typography Configurations */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f8f9fa;
-    color: #212529;
+    background-color: #fcfdfc;
+    color: #1e241e;
 }
 
 /* Hardened Syne Display Typography Headers */
@@ -13,7 +13,7 @@ body {
 
 /* Sidebar Structural Navigation Element Blocks */
 .sidebar {
-    background-color: #eefaf4;
+    background-color: #2a4028;
     min-height: 100vh;
     width: 260px;
     position: fixed;
@@ -21,7 +21,7 @@ body {
     left: 0;
     z-index: 100;
     padding: 24px;
-    border-right: 1px solid #e2ebd9;
+    border-right: 1px solid #cbd5d2;
 }
 
 .main-content {
@@ -34,7 +34,7 @@ body {
     display: flex;
     align-items: center;
     padding: 10px 16px;
-    color: #495057;
+    color: #cbd5d2;
     text-decoration: none;
     font-weight: 500;
     font-size: 14px;
@@ -44,13 +44,13 @@ body {
 }
 
 .nav-link-custom:hover {
-    background-color: rgba(25, 135, 84, 0.05);
-    color: #198754;
+    background-color: rgba(143, 174, 133, 0.15);
+    color: #ffffff;
 }
 
 .nav-link-custom.active {
-    background-color: #d1f2e1;
-    color: #198754;
+    background-color: #365233;
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -59,7 +59,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #6c757d;
+    color: #626e61;
     margin-top: 24px;
     margin-bottom: 12px;
     padding-left: 16px;

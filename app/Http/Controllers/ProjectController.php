@@ -100,6 +100,36 @@ class ProjectController extends Controller
                     'assigned_date' => now(),
                     'is_active' => true,
                 ]);
+
+                // Notify the assigned supervisor
+                try {
+                    \App\Services\NotificationService::notifySupervisor($request->supervisor_id, [
+                        'type' => 'project',
+                        'title' => 'Project Assignment',
+                        'message' => "You have been assigned to Project '{$project->project_name}'",
+                        'data' => ['module' => 'supervisor.projects', 'project_id' => $project->project_id],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                } catch (\Throwable $e) {
+                    // ignore notification failures
+                }
+            }
+
+            // Notify client that a project was created for them
+            try {
+                if ($project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Project Created',
+                        'message' => "A new project '{$project->project_name}' has been created for you.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on project creation: ' . $e->getMessage());
             }
 
             // AUTOMATION LINK: Seed default physical construction timelines into 'phases' table
@@ -111,15 +141,30 @@ class ProjectController extends Controller
             ];
 
             foreach ($defaultPhases as $index => $phase) {
-                $project->phases()->create([
+                $createdPhase = $project->phases()->create([
                     'phase_name'            => $phase['phase_name'],
-                    // Standardized statuses matching the enum choices in your migration exactly[cite: 6]
                     'status'                => $index === 0 ? 'in_progress' : 'not_started', 
                     'completion_percentage' => 0,
                     'planned_start_date'    => $project->start_date,      
                     'planned_end_date'      => $project->target_end_date, 
                     'phase_order'           => $index + 1,
                 ]);
+
+                // Notify assigned supervisors about new phase
+                $project->supervisors()->wherePivot('is_active', true)->get()->each(function ($sup) use ($createdPhase) {
+                    try {
+                        \App\Services\NotificationService::notifySupervisor($sup->user_id, [
+                            'type' => 'phase',
+                            'title' => 'New Construction Phase',
+                            'message' => "A new construction phase '{$createdPhase->phase_name}' has been added to your project.",
+                            'data' => ['module' => 'supervisor.phases', 'phase_id' => $createdPhase->phase_id],
+                            'related_id' => $createdPhase->phase_id,
+                            'related_type' => 'phase',
+                        ]);
+                    } catch (\Throwable $e) {
+                        // ignore errors
+                    }
+                });
             }
 
             DB::commit();
@@ -177,7 +222,7 @@ class ProjectController extends Controller
         $supervisors = User::query()
             ->where('role', 'supervisor')
             ->where('is_active', true)
-            ->orderBy('first_name')
+            ->orderBy('first_name', 'asc')
             ->get();
 
         // Get current assigned supervisor
@@ -233,6 +278,10 @@ class ProjectController extends Controller
             if ($status === 'completed' && empty($actualEndDate)) {
                 $actualEndDate = now()->toDateString();
             }
+
+            // Keep old values for notification decisions
+            $oldStatus = $project->status;
+            $oldClientId = $project->client_id;
 
             // Compare each field to detect actual changes
             $hasChanges = false;
@@ -351,6 +400,35 @@ class ProjectController extends Controller
             }
 
             DB::commit();
+
+            // Notify client on important changes
+            try {
+                // If project status changed
+                if ($oldStatus !== $status && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Project Status Updated',
+                        'message' => "Project '{$project->project_name}' status changed to {$project->status}.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id, 'status' => $project->status],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+
+                // If client assignment changed notify the new client
+                if ($oldClientId !== $project->client_id && $project->client_id) {
+                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                        'type' => 'project',
+                        'title' => 'Assigned To Project',
+                        'message' => "You have been assigned to project '{$project->project_name}'.",
+                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'related_id' => $project->project_id,
+                        'related_type' => 'project',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify client on project update: ' . $e->getMessage());
+            }
 
             return redirect()
                 ->route('admin.projects.index')
