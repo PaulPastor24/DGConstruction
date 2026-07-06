@@ -85,5 +85,14 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('supervisorUnreadCount', $unread);
         });
+
+        // 2. Force HTTPS scheme if running via an ngrok tunnel proxy
+        if (str_contains(request()->fullUrl(), 'ngrok-free.dev')) {
+            URL::forceScheme('https');
+            
+            // This forces Spatie's package to trust your ngrok link
+            config(['passkeys.relying_party.id' => request()->getHost()]);
+            config(['passkeys.relying_party.name' => 'D&G Construction Inc.']);
+        }
     }
 }

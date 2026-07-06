@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BiometricController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -108,6 +109,10 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
         ->name('supervisor.workers.register_biometric');
     Route::post('/supervisor/notifications/{id}/mark-read', [SupervisorController::class, 'markNotificationRead'])->name('supervisor.notifications.markRead');
     Route::post('/supervisor/notifications/mark-all-read', [SupervisorController::class, 'markAllNotificationsRead'])->name('supervisor.notifications.markAllRead');
+    // --- BIOMETRIC FINGERPRINT API ROUTES ---
+    Route::post('/passkeys/register/options', [BiometricController::class, 'registerOptions'])->name('passkeys.register.options');
+    Route::post('/passkeys/login/options', [BiometricController::class, 'loginOptions'])->name('passkeys.login.options');
+    Route::post('/passkeys/login', [BiometricController::class, 'login'])->name('passkeys.login');
 });
 
 Route::middleware(['auth', 'role:client'])->group(function () {
