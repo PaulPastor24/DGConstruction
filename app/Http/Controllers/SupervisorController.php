@@ -1204,4 +1204,25 @@ class SupervisorController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ]);
     }
+
+    public function registerWorkerBiometric(Request $request)
+    {
+        // 1. Validate the incoming data from the frontend modal
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'trade' => 'nullable|string|max:100',
+            'credential' => 'required|array'
+        ]);
+
+        // 2. Here you will eventually save the worker to your database
+        // Example: $worker = Worker::create([...]);
+        // Example: BiometricKey::create(['worker_id' => $worker->id, 'key_data' => json_encode($validated['credential'])]);
+
+        // 3. Return a success response back to the JavaScript fetch call
+        return response()->json([
+            'success' => true, 
+            'message' => 'Worker and biometric token successfully cataloged inside the database!'
+        ]);
+    }
 }

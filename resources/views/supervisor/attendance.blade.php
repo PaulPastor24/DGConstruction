@@ -155,6 +155,8 @@
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/@simplewebauthn/browser@13.3.0/dist/bundle/index.umd.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- DEVICE FINGERPRINT SCAN FOR WORKER VERIFICATION ---
@@ -175,7 +177,8 @@
                     });
                     const options = await response.json();
 
-                    const credential = await window.startAuthentication(options);
+                    // 2. Updated to use the explicitly loaded CDN library for authentication
+                    const credential = await window.SimpleWebAuthnBrowser.startAuthentication(options);
 
                     const submitResponse = await fetch('/passkeys/login', {
                         method: 'POST',
@@ -194,7 +197,7 @@
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('Hardware sensor connection timed out.');
+                    alert(`Verification Error: ${err.message} | ${err.name}`);
                 }
             });
         });
@@ -226,14 +229,17 @@
                 options.user.name = `${firstName} ${lastName}`;
                 options.user.displayName = `${firstName} ${lastName}`;
 
-                capturedPasskeyCredential = await window.startRegistration(options);
+                // 3. Updated to use the explicitly loaded CDN library for registration
+                capturedPasskeyCredential = await window.SimpleWebAuthnBrowser.startRegistration(options);
                 
                 fingerprintLabel.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-patch-check-fill"></i> Token Captured Successfully!</span>';
                 saveWorkerBtn.disabled = false;
             } catch (error) {
                 console.error(error);
                 fingerprintLabel.innerHTML = '<span class="text-danger">Registration execution halted.</span>';
-                alert('Biometric reading cancelled.');
+                
+                // Exposes the real device error
+                alert('Device Error: ' + error.message + ' | ' + error.name);
             }
         });
 
