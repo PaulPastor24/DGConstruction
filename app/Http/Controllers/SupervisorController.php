@@ -479,7 +479,12 @@ class SupervisorController extends Controller
             return back()->withErrors(['current_password' => 'The current password is incorrect.']);
         }
 
-        $user->password = Hash::make($request->input('password'));
+        $newPassword = $request->input('password');
+        if (Hash::check($newPassword, $user->password)) {
+            return back()->withErrors(['password' => 'The new password must be different from your current password.']);
+        }
+
+        $user->password = Hash::make($newPassword);
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
@@ -647,8 +652,10 @@ class SupervisorController extends Controller
                 ->values();
 
             if ($materialIds->isNotEmpty()) {
+                $materialIdList = $materialIds->filter(fn ($id) => is_numeric($id))->map(fn ($id) => (int) $id)->values()->all();
+
                 $materialRows = Material::query()
-                    ->whereIn('id', $materialIds)
+                    ->whereIn('id', $materialIdList, 'and', false)
                     ->get()
                     ->keyBy('id');
 
@@ -719,7 +726,11 @@ class SupervisorController extends Controller
             'critical_materials' => $inventoryCollection->filter(fn ($item) => in_array($item->status_key, ['critical', 'out_of_stock'], true))->count(),
         ];
 
-        $recentUsages = collect();
+        $recentUsages = new LengthAwarePaginator([], 0, 10, 1, [
+            'path' => $request->url(),
+            'query' => array_merge($request->query(), ['recent_page' => 1]),
+        ]);
+
         if ($selectedProject) {
             $recentUsageQuery = MaterialUsage::query()
                 ->where('project_id', $selectedProject->project_id)
@@ -729,11 +740,18 @@ class SupervisorController extends Controller
                 $recentUsageQuery->where('phase_id', $selectedPhase->phase_id);
             }
 
-            $recentUsages = $recentUsageQuery
-                ->orderBy('usage_date', 'desc')
-                ->orderBy('created_at', 'desc')
-                ->limit(6)
-                ->get();
+            $recentPage = max(1, (int) $request->query('recent_page', 1));
+            $recentUsageBaseQuery = $recentUsageQuery->clone()->orderBy('usage_date', 'desc')->orderBy('created_at', 'desc');
+            $recentUsages = new LengthAwarePaginator(
+                $recentUsageBaseQuery->forPage($recentPage, 10)->get(),
+                (clone $recentUsageQuery)->count(),
+                10,
+                $recentPage,
+                [
+                    'path' => $request->url(),
+                    'query' => array_merge($request->query(), ['recent_page' => $recentPage]),
+                ]
+            );
         }
 
         $alerts = $inventoryCollection
@@ -1021,7 +1039,20 @@ class SupervisorController extends Controller
         }
 
         try {
-            $phase->completion_percentage = round((float)$validated['completion_percentage'], 2);
+            $newCompletion = round((float)$validated['completion_percentage'], 2);
+            $oldCompletion = round((float)($phase->completion_percentage ?? 0), 2);
+
+            if ($newCompletion === $oldCompletion) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No progress change detected.',
+                    'unchanged' => true,
+                    'phase' => ['completion_percentage' => $oldCompletion],
+                    'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
+                ], 422);
+            }
+
+            $phase->completion_percentage = $newCompletion;
             $phase->save();
 
             // Recalculate project overall progress
@@ -1096,6 +1127,16 @@ class SupervisorController extends Controller
 
         try {
             $previousStatus = $phase->status;
+            if ($phase->status === $validated['status']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No status change detected.',
+                    'unchanged' => true,
+                    'phase' => ['status' => $phase->status, 'completion_percentage' => $phase->completion_percentage],
+                    'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
+                ], 422);
+            }
+
             $phase->status = $validated['status'];
 
             if ($validated['status'] === 'in_progress' && empty($phase->actual_start_date)) {

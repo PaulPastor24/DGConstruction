@@ -6,10 +6,10 @@
 @push('styles')
     <style>
         :root {
-            --cms-green-dark: #096056;
-            --cms-green-light: #f4f8f6;
-            --cms-green-muted: rgba(9, 96, 86, 0.08);
-            --cms-text-muted: #6c757d;
+            --cms-green-dark: #2a4028;
+            --cms-green-light: #e8efe0;
+            --cms-green-muted: rgba(42, 64, 40, 0.12);
+            --cms-text-muted: #64748B;
         }
 
         .report-filter-card, .metric-card, .main-report-card {
@@ -53,12 +53,28 @@
 
         .status-pill {
             padding: 0.35rem 0.75rem;
-            border-radius: 6px;
+            border-radius: 999px;
             font-size: 0.75rem;
             font-weight: 700;
             letter-spacing: 0.03em;
             text-transform: uppercase;
             display: inline-block;
+        }
+        .status-pill-approved {
+            background: #DCFCE7;
+            color: #15803D;
+        }
+        .status-pill-pending {
+            background: #F1F5F9;
+            color: #64748B;
+        }
+        .status-pill-warning {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+        .status-pill-error {
+            background: #FEE2E2;
+            color: #DC2626;
         }
 
         /* Report Details Modal Layout */
@@ -79,8 +95,8 @@
         }
 
         .report-detail-sidebar {
-            background: #f4fbf8;
-            border-color: rgba(9, 96, 86, 0.12);
+            background: #F8FAFC;
+            border-color: rgba(22, 101, 52, 0.12);
         }
 
         .report-detail-sidebar .img-thumbnail-grid {
@@ -93,8 +109,8 @@
         .report-detail-sidebar .more-images-badge {
             width: auto;
             min-width: 108px;
-            background: #e9f7f2;
-            color: #096056;
+            background: #F1F5F9;
+            color: #166534;
         }
 
         .drawer-section-title {
@@ -173,8 +189,8 @@
             font-size: 0.9rem;
         }
         .timeline-step.active .timeline-icon {
-            border-color: #096056;
-            background: #096056;
+            border-color: #166534;
+            background: #166534;
             color: #fff;
         }
         .timeline-step.current .timeline-icon {
@@ -539,7 +555,11 @@
                     @foreach($reports as $report)
                         @php
                             $status = $report->approval_status ?? 'pending';
-                            $pillClass = $status === 'approved' ? 'bg-success-subtle text-success' : ($status === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
+                            $pillClass = match ($status) {
+                                'approved' => 'status-pill status-pill-approved',
+                                'rejected' => 'status-pill status-pill-error',
+                                default => 'status-pill status-pill-pending',
+                            };
                         @endphp
                         <tr>
                             <td>
@@ -579,13 +599,26 @@
                             </td>
                         </tr>
 
+                        @php
+                            $siteImages = is_array($report->site_images) ? $report->site_images : [];
+                            $siteImageUrls = collect($siteImages)
+                                ->map(function ($path) {
+                                    if (!$path) {
+                                        return null;
+                                    }
+                                    return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                                })
+                                ->filter()
+                                ->values();
+                            $timelineStatus = $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : 'current');
+                        @endphp
                         <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark);">
                                         <div>
                                             <h5 class="modal-title fw-bold" id="reportDetailsModalLabel-{{ $report->report_id }}" style="color: var(--cms-green-dark);">Report Details</h5>
-                                            <div class="text-muted small">A polished summary of the selected accomplishment report.</div>
+                                            <div class="text-muted small">A complete summary of the selected accomplishment report.</div>
                                         </div>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
@@ -593,7 +626,7 @@
                                         <div class="row gx-4 gy-4">
                                             <div class="col-12 col-xl-7">
                                                 <div class="report-detail-card p-4">
-                                                    <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #fff; border-left: 4px solid var(--cms-green-dark);">
+                                                    <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #fff;">
                                                         <div>
                                                             <div class="small text-uppercase text-muted" style="font-weight: 600;">Report ID</div>
                                                             <div class="fw-bold text-dark" style="font-size: 1.1rem;">RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</div>
@@ -605,37 +638,47 @@
                                                     </div>
 
                                                     <div class="row g-3 mb-4 small">
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb; border-left: 3px solid var(--cms-green-dark);">
+                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Project</div>
                                                             <div class="text-dark">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb; border-left: 3px solid var(--cms-green-dark);">
+                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Construction Phase</div>
                                                             <div class="text-dark">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb; border-left: 3px solid var(--cms-green-dark);">
+                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Report Date</div>
                                                             <div class="text-dark">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb; border-left: 3px solid var(--cms-green-dark);">
+                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Submitted By</div>
                                                             <div class="text-dark">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
                                                         </div>
                                                     </div>
 
-                                                    <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb; border-left: 4px solid var(--cms-green-dark);">
+                                                    <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
                                                         <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
                                                         <p class="mb-0 text-dark small">{{ $report->report_text ?? 'No description logs reported.' }}</p>
                                                     </div>
 
-                                                    <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3" style="background: #f9fafb; border-left: 4px solid var(--cms-green-dark);">
-                                                        <div class="avatar-img text-white d-flex align-items-center justify-content-center fw-bold small" style="background-color: var(--cms-green-dark);">
-                                                            {{ strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)) }}
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-12 col-md-6">
+                                                            <div class="p-3 rounded-3" style="background: #f9fafb;">
+                                                                <div class="fw-semibold text-muted mb-1">Reviewed By</div>
+                                                                <div class="text-dark">{{ optional($report->reviewedBy)->name ?? 'Pending review' }}</div>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="fw-bold text-dark">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
-                                                            <div class="text-muted small">Project Supervisor</div>
+                                                        <div class="col-12 col-md-6">
+                                                            <div class="p-3 rounded-3" style="background: #f9fafb;">
+                                                                <div class="fw-semibold text-muted mb-1">Approved By</div>
+                                                                <div class="text-dark">{{ optional($report->approvedBy)->name ?? 'Pending approval' }}</div>
+                                                            </div>
                                                         </div>
+                                                    </div>
+
+                                                    <div class="p-3 rounded-3" style="background: #f9fafb;">
+                                                        <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
+                                                        <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -644,16 +687,22 @@
                                                 <div class="report-detail-sidebar p-4">
                                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                                         <div class="fw-bold" style="color: var(--cms-green-dark);">Site Images</div>
-                                                        <div class="small text-muted">Preview only</div>
+                                                        <div class="small text-muted">{{ $siteImageUrls->count() }} uploaded</div>
                                                     </div>
-                                                    <div class="d-flex flex-wrap gap-2 mb-4">
-                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #9ca3af;"><i class="bi bi-image fs-4"></i></div>
-                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #9ca3af;"><i class="bi bi-image fs-4"></i></div>
-                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #9ca3af;"><i class="bi bi-image fs-4"></i></div>
-                                                        <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+2 more</div>
-                                                    </div>
-
-
+                                                    @if($siteImageUrls->isEmpty())
+                                                        <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
+                                                    @else
+                                                        <div class="d-flex flex-wrap gap-2 mb-4">
+                                                            @foreach($siteImageUrls->take(4) as $imageUrl)
+                                                                <a href="{{ $imageUrl }}" target="_blank" rel="noopener" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                                    <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
+                                                                </a>
+                                                            @endforeach
+                                                            @if($siteImageUrls->count() > 4)
+                                                                <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ $siteImageUrls->count() - 4 }} more</div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
 
                                                     <div class="fw-bold mb-3" style="color: var(--cms-green-dark);">Approval Timeline</div>
                                                     <div class="timeline-container small px-1">
@@ -672,11 +721,11 @@
                                                     </div>
                                                 </div>
 
-                                                    <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid var(--cms-green-muted); padding-top: 2rem;">
-                                                        <button class="btn btn-cms-primary download-report-btn" data-report-id="{{ $report->report_id }}">
-                                                            <i class="bi bi-download me-2"></i> Download PDF
-                                                        </button>
-                                                    </div>
+                                                <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid var(--cms-green-muted);">
+                                                    <button class="btn btn-cms-primary download-report-btn" data-report-id="{{ $report->report_id }}">
+                                                        <i class="bi bi-download me-2"></i> Download PDF
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -689,11 +738,19 @@
         </table>
     </div>
 
-    <div class="p-3 bg-light d-flex justify-content-between align-items-center border-top">
+    <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 border-top">
         <div class="small text-muted">
             Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports
         </div>
-        <div>{{ $reports->links() }}</div>
+        <div>
+            @if($reports->hasPages())
+                {{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']))->links('pagination::bootstrap-5') }}
+            @else
+                <nav aria-label="Report pagination" class="pagination">
+                    <span class="page-item active"><span class="page-link">1</span></span>
+                </nav>
+            @endif
+        </div>
     </div>
 </section>
 
@@ -978,7 +1035,7 @@
                         title: 'Project Required',
                         text: 'You must select an assigned project before submitting a report.',
                         icon: 'warning',
-                        confirmButtonColor: '#096056',
+                        confirmButtonColor: '#166534',
                         customClass: { confirmButton: 'btn-cms-primary' },
                         buttonsStyling: false,
                     });
@@ -990,7 +1047,7 @@
                         title: 'Phase Required',
                         text: 'Please select a construction phase for this project before submitting.',
                         icon: 'warning',
-                        confirmButtonColor: '#096056',
+                        confirmButtonColor: '#166534',
                         customClass: { confirmButton: 'btn-cms-primary' },
                         buttonsStyling: false,
                     });
@@ -1004,7 +1061,7 @@
                     showCancelButton: true,
                     confirmButtonText: 'Yes, submit',
                     cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#096056',
+                    confirmButtonColor: '#166534',
                     cancelButtonColor: '#6c757d',
                     customClass: {
                         confirmButton: 'btn-cms-primary',
@@ -1052,7 +1109,7 @@
                                 title: 'Report Submitted',
                                 text: 'Your accomplishment report was submitted successfully.',
                                 icon: 'success',
-                                confirmButtonColor: '#096056',
+                                confirmButtonColor: '#166534',
                             }).then(() => {
                                 window.location.reload();
                             });

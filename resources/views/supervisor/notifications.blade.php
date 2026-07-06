@@ -6,9 +6,9 @@
 @push('styles')
     <style>
         :root {
-            --cms-green-dark: #096056;
-            --cms-green-light: #f4f8f6;
-            --cms-green-muted: rgba(9, 96, 86, 0.08);
+            --cms-green-dark: #2a4028;
+            --cms-green-light: #e8efe0;
+            --cms-green-muted: rgba(42, 64, 40, 0.12);
             --cms-text-muted: #6c757d;
         }
 
@@ -87,7 +87,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #198754;
+            background-color: #2a4028;
             display: inline-block;
             opacity: 0;
             transition: opacity 0.2s;
@@ -355,7 +355,7 @@
                             showCancelButton: true,
                             confirmButtonText: 'Yes, Mark All',
                             cancelButtonText: 'Cancel',
-                            confirmButtonColor: '#0b6054'
+                            confirmButtonColor: '#166534'
                         }).then(res => {
                             if (res.isConfirmed) {
                                 fetch('{{ route('supervisor.notifications.markAllRead') }}', {
@@ -367,13 +367,13 @@
                                     body: JSON.stringify({})
                                 }).then(r => r.json()).then(json => {
                                     if (json.success) {
-                                        Swal.fire({ title: 'All notifications have been marked as read.', icon: 'success', confirmButtonColor: '#0b6054' })
+                                        Swal.fire({ title: 'All notifications have been marked as read.', icon: 'success', confirmButtonColor: '#166534' })
                                         .then(() => location.reload());
                                     } else {
-                                        Swal.fire({ title: 'Error', text: json.message || 'Failed to mark all as read', icon: 'error', confirmButtonColor: '#0b6054' });
+                                        Swal.fire({ title: 'Error', text: json.message || 'Failed to mark all as read', icon: 'error', confirmButtonColor: '#166534' });
                                     }
                                 }).catch(err => {
-                                    Swal.fire({ title: 'Error', text: 'Request failed', icon: 'error', confirmButtonColor: '#0b6054' });
+                                    Swal.fire({ title: 'Error', text: 'Request failed', icon: 'error', confirmButtonColor: '#166534' });
                                 });
                             }
                         });

@@ -13,7 +13,7 @@
         <a class="topbar-icon position-relative enhanced-icon" href="{{ route('supervisor.notifications') }}" aria-label="Notifications" title="Notifications">
             <i class="bi bi-bell"></i>
             @if(isset($supervisorUnreadCount) && $supervisorUnreadCount > 0)
-                <span id="notif-badge" class="position-absolute" style="top:6px; right:6px; width:14px; height:14px; background:#198754; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;">{{ $supervisorUnreadCount }}</span>
+                <span id="notif-badge" class="position-absolute d-inline-flex align-items-center justify-content-center" style="top:3px; right:3px; min-width:1.15rem; height:1.15rem; padding:0 0.2rem; background:#2a4028; border-radius:999px; border:2px solid #fff; font-size:0.68rem; line-height:1; text-align:center; color:#fff;">{{ $supervisorUnreadCount }}</span>
             @endif
         </a>
 

@@ -7,8 +7,8 @@
     --text-muted: #626e61;
     --border-light: #e2ebd3;
     --border-gray: #e6eae5;
-    --font-serif: 'Cormorant Garamond', serif;
-    --font-sans: 'Manrope', sans-serif;
+    --font-brand: 'Syne', sans-serif;
+    --font-ui: 'Plus Jakarta Sans', sans-serif;
     --max-width: 1240px;
     --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -24,7 +24,7 @@ html {
 }
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-ui);
     background-color: var(--bg-main);
     color: var(--text-dark);
     -webkit-font-smoothing: antialiased;
@@ -58,9 +58,10 @@ body {
 }
 
 .brand-text {
+    font-family: var(--font-brand);
     font-weight: 700;
     font-size: 0.95rem;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--text-dark);
 }
 
@@ -70,7 +71,8 @@ body {
 }
 
 .nav-links a {
-    font-size: 0.9rem;
+    font-family: var(--font-ui);
+    font-size: 0.92rem;
     font-weight: 500;
     color: var(--text-muted);
     text-decoration: none;
@@ -86,7 +88,8 @@ body {
     color: var(--bg-white);
     padding: 0.75rem 1.25rem;
     border-radius: 6px;
-    font-size: 0.88rem;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
     display: flex;
@@ -109,16 +112,18 @@ body {
 }
 
 .hero-copy h1 {
-    font-family: var(--font-serif);
-    font-size: clamp(3.5rem, 6vw, 5rem);
-    font-weight: 500;
+    font-family: var(--font-brand);
+    font-size: clamp(2.8rem, 4.4vw, 3.6rem);
+    font-weight: 700;
     line-height: 1.05;
     color: var(--text-dark);
     margin-bottom: 1.5rem;
 }
 
 .hero-lead {
-    font-size: 1.05rem;
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 400;
     line-height: 1.6;
     color: var(--text-muted);
     margin-bottom: 2.5rem;
@@ -136,6 +141,7 @@ body {
     gap: 0.5rem;
     padding: 0.85rem 1.75rem;
     border-radius: 6px;
+    font-family: var(--font-ui);
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
@@ -214,12 +220,13 @@ body {
 }
 
 .service-card h3 {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
-    font-family: var(--font-sans);
+    font-family: var(--font-brand);
 }
 
 .service-card p {
+    font-family: var(--font-ui);
     font-size: 0.82rem;
     line-height: 1.5;
     color: #cbd6c5;
@@ -235,14 +242,15 @@ body {
 }
 
 .about-copy h2 {
-    font-family: var(--font-serif);
-    font-size: clamp(2.2rem, 4vw, 3rem);
-    font-weight: 500;
+    font-family: var(--font-brand);
+    font-size: clamp(1.9rem, 3vw, 2.4rem);
+    font-weight: 600;
     line-height: 1.1;
     margin-bottom: 1.5rem;
 }
 
 .about-copy p {
+    font-family: var(--font-ui);
     font-size: 0.95rem;
     line-height: 1.6;
     color: var(--text-muted);
@@ -269,13 +277,14 @@ body {
 }
 
 .metric-card strong {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    font-weight: 600;
+    font-family: var(--font-brand);
+    font-size: 1.9rem;
+    font-weight: 700;
     color: var(--text-dark);
 }
 
 .metric-card span {
+    font-family: var(--font-ui);
     font-size: 0.88rem;
     color: var(--text-muted);
 }
@@ -295,9 +304,9 @@ body {
 }
 
 .section-heading-row h2 {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    font-weight: 500;
+    font-family: var(--font-brand);
+    font-size: 1.9rem;
+    font-weight: 600;
 }
 
 .carousel-controls {
@@ -375,12 +384,14 @@ body {
 }
 
 .project-body h3 {
+    font-family: var(--font-brand);
     font-size: 1.05rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .project-body p {
+    font-family: var(--font-ui);
     font-size: 0.82rem;
     color: var(--text-muted);
 }
@@ -423,8 +434,8 @@ body {
 }
 
 .quote-icon {
-    font-family: var(--font-serif);
-    font-size: 4rem;
+    font-family: var(--font-brand);
+    font-size: 3.5rem;
     line-height: 0.1;
     display: block;
     color: #a3b899;
@@ -432,8 +443,9 @@ body {
 }
 
 .quote-text {
-    font-family: var(--font-serif);
-    font-size: 1.6rem;
+    font-family: var(--font-brand);
+    font-size: 1.3rem;
+    font-weight: 600;
     line-height: 1.4;
     font-style: italic;
     margin-bottom: 2rem;
@@ -457,11 +469,13 @@ body {
 
 .author-meta strong {
     display: block;
+    font-family: var(--font-ui);
     font-size: 0.95rem;
     font-weight: 600;
 }
 
 .author-meta span {
+    font-family: var(--font-ui);
     font-size: 0.8rem;
     color: #cbd6c5;
 }
@@ -504,13 +518,14 @@ body {
 }
 
 .cta-section h2 {
-    font-family: var(--font-serif);
-    font-size: 2.4rem;
-    font-weight: 500;
+    font-family: var(--font-brand);
+    font-size: 2rem;
+    font-weight: 600;
     margin-bottom: 1rem;
 }
 
 .cta-section p {
+    font-family: var(--font-ui);
     font-size: 0.95rem;
     color: var(--text-muted);
     line-height: 1.5;
@@ -551,6 +566,7 @@ body {
 }
 
 .footer-logo-row strong {
+    font-family: var(--font-brand);
     font-size: 0.85rem;
     letter-spacing: 0.05em;
 }
@@ -563,6 +579,7 @@ body {
 }
 
 .footer-links-column h4 {
+    font-family: var(--font-brand);
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 1.25rem;

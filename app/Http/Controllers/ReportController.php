@@ -346,7 +346,7 @@ class ReportController extends Controller
         })->orderBy('project_name')->get();
 
         if ($assignedProjects->isEmpty()) {
-            $emptyReports = new LengthAwarePaginator([], 0, 15);
+            $emptyReports = new LengthAwarePaginator([], 0, 10);
             return view('supervisor.reports.index-new', compact('assignedProjects'))
                 ->with('reports', $emptyReports)
                 ->with('stats', ['total' => 0, 'pending' => 0, 'approved' => 0, 'approved_percent' => 0, 'rejected' => 0, 'rejected_percent' => 0, 'pending_percent' => 0])
@@ -355,27 +355,18 @@ class ReportController extends Controller
                 ->with('filterPhases', collect());
         }
 
-        // Determine selected project. Default is all assigned projects.
+        // Determine selected project. Default to all assigned projects unless the user explicitly picks one.
         $assignedProjectIds = $assignedProjects->pluck('project_id')->toArray();
         $selectedProject = null;
 
         if ($request->query->has('project_id')) {
-            if ($request->query('project_id') !== '') {
-                $selectedProject = $assignedProjects->firstWhere('project_id', $request->query('project_id'));
-            } else {
-                $selectedProject = null;
+            $projectId = $request->query('project_id');
+            if ($projectId !== '' && $projectId !== null) {
+                $selectedProject = $assignedProjects->firstWhere('project_id', (int) $projectId);
             }
         }
 
-        if (!$request->query->has('project_id') || $request->query('project_id') === null) {
-            $selectedProject = $assignedProjects->firstWhere('project_id', session('supervisor_selected_project_id')) ?? $assignedProjects->first();
-        }
-
         $modalProject = $selectedProject ?? $assignedProjects->first();
-
-        if ($selectedProject) {
-            session(['supervisor_selected_project_id' => $selectedProject->project_id]);
-        }
 
         if ($modalProject) {
             $projectPhases = ConstructionPhase::query()
@@ -442,7 +433,7 @@ class ReportController extends Controller
         // Get paginated reports
         $reports = $query->orderBy('report_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(15)
+            ->paginate(10)
             ->appends($request->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']));
 
         // Calculate statistics for selected project
