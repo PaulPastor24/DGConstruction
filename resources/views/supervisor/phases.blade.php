@@ -111,9 +111,9 @@
         </div>
 
         {{-- Filters and Search --}}
-        <div class="filters-section">
-            <input type="text" id="searchPhases" class="filter-input" placeholder="Search phases by name...">
-            <select id="statusFilter" class="filter-select">
+        <div class="filters-section" style="max-width: 420px; gap: 10px;">
+            <input type="text" id="searchPhases" class="filter-input" placeholder="Search phases by name..." style="max-width: 220px;">
+            <select id="statusFilter" class="filter-select" style="max-width: 160px;">
                 <option value="">All Status</option>
                 <option value="not_started">Pending</option>
                 <option value="in_progress">In Progress</option>

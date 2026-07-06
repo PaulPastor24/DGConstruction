@@ -195,7 +195,7 @@
                     <div class="mt-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="small fw-bold text-muted text-uppercase">Overall Project Progress</span>
-                            <span class="fw-semibold text-primary">{{ $projectProgress }}%</span>
+                            <span class="fw-semibold text-success">{{ $projectProgress }}%</span>
                         </div>
                         <div class="progress-track">
                             <div class="progress-fill" style="width: {{ $projectProgress }}%"></div>

@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
+use App\Models\Material;
+use App\Models\MaterialUsage;
 use App\Models\Milestone;
 use App\Models\Project;
+use App\Models\ProjectMaterial;
 use App\Models\Report;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class SupervisorController extends Controller
 {
@@ -561,54 +567,193 @@ class SupervisorController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function materials()
+    public function materials(Request $request)
     {
         $user = Auth::user();
 
-        $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
-            $q->where('supervisor_id', $user->user_id);
-        })->pluck('project_id')->all();
+        $assignedProjects = Project::query()
+            ->whereHas('supervisors', function ($q) use ($user) {
+                $q->where('supervisor_id', $user->user_id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get(['project_id', 'project_name', 'location', 'status']);
 
-        $metrics = [
-            'active_deliveries' => 0,
-            'low_stock_alerts' => 0,
-            'total_value' => 0,
-        ];
+        $selectedProject = null;
+        $selectedProjectId = $request->query('project_id');
 
-        $materials_list = Schema::hasTable('materials') ? \App\Models\Material::orderBy('name', 'asc')->get() : collect();
-
-        $inventory = collect();
-
-        if (Schema::hasTable('material_deliveries')) {
-            $query = \App\Models\MaterialDelivery::query();
-            if (!empty($assignedProjects)) {
-                $query->whereIn('project_id', $assignedProjects, 'and', false);
-            }
-
-            $deliveries = $query->with('material', 'project')->orderBy('delivered_at', 'desc')->get();
-
-            $metrics['active_deliveries'] = $deliveries->count();
-            if (Schema::hasColumn('material_deliveries', 'total_price')) {
-                $metrics['total_value'] = $deliveries->sum('total_price');
-            }
-
-            $inventory = $deliveries->groupBy('material_id')->map(function ($group, $materialId) {
-                $material = $group->first()->material ?? null;
-                $delivered = $group->sum('quantity');
-                return (object)[
-                    'id' => $materialId,
-                    'name' => $material ? ($material->name ?? 'Material') : 'Material',
-                    'delivered' => $delivered,
-                    'used' => 0,
-                    'unit' => $group->first()->unit ?? ($material->unit ?? null),
-                    'last_delivered' => optional($group->first())->delivered_at,
-                    'status_text' => $delivered > 0 ? 'In stock' : 'Out of stock',
-                    'status_color' => $delivered > 0 ? 'success' : 'danger',
-                ];
-            })->values();
+        if ($selectedProjectId) {
+            $selectedProject = $assignedProjects->firstWhere('project_id', (int) $selectedProjectId);
         }
 
-        return view('supervisor.material', compact('metrics', 'inventory', 'materials_list'));
+        if (!$selectedProject && $assignedProjects->isNotEmpty()) {
+            $selectedProject = $assignedProjects->first();
+        }
+
+        if ($selectedProject) {
+            session(['supervisor_selected_project_id' => $selectedProject->project_id]);
+        }
+
+        $search = trim((string) $request->query('search', ''));
+        $selectedStatus = trim((string) $request->query('status', ''));
+        $selectedPhaseId = trim((string) $request->query('phase_id', ''));
+
+        $materialsQuery = Schema::hasTable('materials') ? Material::query() : null;
+        if ($materialsQuery) {
+            if ($search !== '') {
+                $materialsQuery->where('name', 'like', '%' . $search . '%');
+            }
+
+            $materials_list = $materialsQuery->orderBy('name', 'asc')->get();
+        } else {
+            $materials_list = collect();
+        }
+
+        $inventoryCollection = collect();
+        $projectPhases = collect();
+        $selectedPhase = null;
+
+        if ($selectedProject) {
+            $projectPhases = ConstructionPhase::query()
+                ->where('project_id', $selectedProject->project_id)
+                ->orderBy('phase_order', 'asc')
+                ->get(['phase_id', 'phase_name', 'phase_order', 'status']);
+
+            if ($selectedPhaseId !== '') {
+                $selectedPhase = $projectPhases->firstWhere('phase_id', (int) $selectedPhaseId);
+            }
+
+            $projectMaterialRows = ProjectMaterial::query()
+                ->where('project_id', $selectedProject->project_id)
+                ->get()
+                ->keyBy('material_id');
+
+            $usageQuery = MaterialUsage::query()
+                ->where('project_id', $selectedProject->project_id);
+
+            if ($selectedPhase) {
+                $usageQuery->where('phase_id', $selectedPhase->phase_id);
+            }
+
+            $usageRows = $usageQuery
+                ->selectRaw('material_id, SUM(quantity_used) as total_used')
+                ->groupBy('material_id')
+                ->get()
+                ->keyBy('material_id');
+
+            $materialIds = $projectMaterialRows->keys()
+                ->merge($usageRows->keys())
+                ->filter(fn ($id) => $id !== null)
+                ->unique()
+                ->values();
+
+            if ($materialIds->isNotEmpty()) {
+                $materialRows = Material::query()
+                    ->whereIn('id', $materialIds)
+                    ->get()
+                    ->keyBy('id');
+
+                $inventoryCollection = $materialIds->map(function ($materialId) use ($materialRows, $projectMaterialRows, $usageRows, $selectedProject) {
+                    $material = $materialRows->get($materialId);
+                    if (!$material) {
+                        return null;
+                    }
+
+                    $row = $projectMaterialRows->get($materialId);
+                    $planned = (float) ($row->planned_quantity ?? 0);
+                    $usedFromProject = (float) ($row->used_quantity ?? 0);
+                    $usedFromUsageTable = (float) ($usageRows->get($materialId)->total_used ?? 0);
+                    $used = max($usedFromProject, $usedFromUsageTable);
+
+                    if ($planned <= 0 && $used <= 0) {
+                        return null;
+                    }
+
+                    $remaining = $planned - $used;
+                    $status = $this->resolveMaterialStatus($remaining, $planned);
+
+                    return (object) [
+                        'id' => $material->id,
+                        'name' => $material->name ?? 'Material',
+                        'category' => $this->getMaterialCategory($material),
+                        'unit' => $row->unit ?? $material->unit ?? 'unit',
+                        'planned' => $planned,
+                        'used' => $used,
+                        'remaining' => $remaining,
+                        'status_key' => $status['key'],
+                        'status_text' => $status['text'],
+                        'status_color' => $status['color'],
+                    ];
+                })->filter()->values();
+            }
+
+            if ($search !== '') {
+                $inventoryCollection = $inventoryCollection->filter(function ($item) use ($search) {
+                    return stripos($item->name, $search) !== false;
+                })->values();
+            }
+
+            if ($selectedStatus !== '') {
+                $inventoryCollection = $inventoryCollection->filter(function ($item) use ($selectedStatus) {
+                    return $item->status_key === $selectedStatus;
+                })->values();
+            }
+        }
+
+        $perPage = 10;
+        $page = max(1, (int) $request->query('page', 1));
+        $inventory = new LengthAwarePaginator(
+            $inventoryCollection->forPage($page, $perPage),
+            $inventoryCollection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        $metrics = [
+            'total_materials' => $inventoryCollection->count(),
+            'materials_used' => $inventoryCollection->filter(fn ($item) => (float) $item->used > 0)->count(),
+            'low_stock_alerts' => $inventoryCollection->filter(fn ($item) => $item->status_key === 'low_stock')->count(),
+            'critical_materials' => $inventoryCollection->filter(fn ($item) => in_array($item->status_key, ['critical', 'out_of_stock'], true))->count(),
+        ];
+
+        $recentUsages = collect();
+        if ($selectedProject) {
+            $recentUsageQuery = MaterialUsage::query()
+                ->where('project_id', $selectedProject->project_id)
+                ->with(['material', 'phase', 'recorder']);
+
+            if ($selectedPhase) {
+                $recentUsageQuery->where('phase_id', $selectedPhase->phase_id);
+            }
+
+            $recentUsages = $recentUsageQuery
+                ->orderBy('usage_date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->limit(6)
+                ->get();
+        }
+
+        $alerts = $inventoryCollection
+            ->filter(fn ($item) => in_array($item->status_key, ['low_stock', 'critical', 'out_of_stock'], true))
+            ->sortBy(fn ($item) => $item->remaining)
+            ->values();
+
+        return view('supervisor.material', compact(
+            'metrics',
+            'inventory',
+            'materials_list',
+            'assignedProjects',
+            'selectedProject',
+            'projectPhases',
+            'recentUsages',
+            'alerts',
+            'search',
+            'selectedStatus',
+            'selectedPhase'
+        ));
     }
 
     public function saveAttendance(Request $request)
@@ -618,7 +763,186 @@ class SupervisorController extends Controller
 
     public function logDelivery(Request $request)
     {
-        return back()->with('success', 'Delivery logged successfully.');
+        $user = Auth::user();
+
+        try {
+            $formType = $request->input('form_type');
+
+            if ($formType === 'delivery') {
+                return back()->withInput()->with('error', 'Material delivery logging is no longer available.');
+            }
+
+            $usageFlow = $formType === 'usage'
+                || $request->filled('quantity_used')
+                || $request->filled('usage_date')
+                || $request->filled('remarks')
+                || $request->hasFile('site_photo');
+
+            if ($usageFlow) {
+                $validated = $request->validate([
+                    'project_id' => ['required', 'integer', 'exists:projects,project_id'],
+                    'phase_id' => ['required', 'integer', 'exists:construction_phases,phase_id'],
+                    'material_id' => ['required', 'integer', 'exists:materials,id'],
+                    'quantity_used' => ['required', 'numeric', 'min:0.01'],
+                    'usage_date' => ['required', 'date'],
+                    'remarks' => ['nullable', 'string', 'max:1000'],
+                    'site_photo' => ['nullable', 'file', 'image', 'max:5120'],
+                ]);
+
+                $project = Project::query()
+                    ->where('project_id', $validated['project_id'])
+                    ->whereHas('supervisors', function ($q) use ($user) {
+                        $q->where('supervisor_id', $user->user_id);
+                    })
+                    ->first();
+
+                if (!$project) {
+                    return back()->withInput()->with('error', 'You are not authorized to record usage for this project.');
+                }
+
+                $phase = ConstructionPhase::query()
+                    ->where('phase_id', $validated['phase_id'])
+                    ->where('project_id', $project->project_id)
+                    ->first();
+
+                if (!$phase) {
+                    return back()->withInput()->with('error', 'The selected phase does not belong to this project.');
+                }
+
+                $material = Material::query()->where('id', $validated['material_id'])->first();
+                if (!$material) {
+                    return back()->withInput()->with('error', 'The selected material could not be found.');
+                }
+
+                $inventoryRow = ProjectMaterial::query()
+                    ->where('project_id', $project->project_id)
+                    ->where('material_id', $material->id)
+                    ->first();
+
+                if (!$inventoryRow) {
+                    $inventoryRow = ProjectMaterial::create([
+                        'project_id' => $project->project_id,
+                        'material_id' => $material->id,
+                        'planned_quantity' => 0,
+                        'used_quantity' => 0,
+                        'unit' => $material->unit ?? null,
+                    ]);
+                }
+
+                $plannedQuantity = (float) $inventoryRow->planned_quantity;
+                $usedQuantity = (float) $inventoryRow->used_quantity;
+                $remaining = $plannedQuantity - $usedQuantity;
+
+                if ($plannedQuantity > 0 && $validated['quantity_used'] > $remaining) {
+                    return back()->withInput()->with('error', 'The quantity exceeds the remaining stock for this material.');
+                }
+
+                $photoPath = null;
+                if ($request->hasFile('site_photo')) {
+                    $photoPath = $request->file('site_photo')->store('material-usage-photos', 'public');
+                }
+
+                $inventoryRow->used_quantity = (float) $inventoryRow->used_quantity + (float) $validated['quantity_used'];
+                $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
+                $inventoryRow->save();
+
+                MaterialUsage::create([
+                    'project_id' => $project->project_id,
+                    'phase_id' => $phase->phase_id,
+                    'material_id' => $material->id,
+                    'quantity_used' => (float) $validated['quantity_used'],
+                    'unit' => $inventoryRow->unit,
+                    'usage_date' => $validated['usage_date'],
+                    'remarks' => $validated['remarks'] ?? null,
+                    'recorded_by' => $user->user_id,
+                    'site_photo_path' => $photoPath,
+                ]);
+
+                return redirect()->route('supervisor.materials', ['project_id' => $project->project_id])->with('success', 'Material usage recorded successfully.');
+            }
+
+            $validated = $request->validate([
+                'material_id' => ['required', 'integer', 'exists:materials,id'],
+                'quantity' => ['required', 'numeric', 'min:0.01'],
+                'unit' => ['required', 'string', 'max:50'],
+                'supplier_name' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $projectId = $request->input('project_id') ?: session('supervisor_selected_project_id');
+            if (!$projectId) {
+                return back()->withInput()->with('error', 'Please select a project before logging materials.');
+            }
+
+            $project = Project::query()
+                ->where('project_id', $projectId)
+                ->whereHas('supervisors', function ($q) use ($user) {
+                    $q->where('supervisor_id', $user->user_id);
+                })
+                ->first();
+
+            if (!$project) {
+                return back()->withInput()->with('error', 'You are not authorized to log materials for this project.');
+            }
+
+            $inventoryRow = ProjectMaterial::query()
+                ->where('project_id', $project->project_id)
+                ->where('material_id', $validated['material_id'])
+                ->first();
+
+            if (!$inventoryRow) {
+                $inventoryRow = ProjectMaterial::create([
+                    'project_id' => $project->project_id,
+                    'material_id' => $validated['material_id'],
+                    'planned_quantity' => 0,
+                    'used_quantity' => 0,
+                    'unit' => $validated['unit'],
+                ]);
+            }
+
+            $inventoryRow->planned_quantity = (float) $inventoryRow->planned_quantity + (float) $validated['quantity'];
+            $inventoryRow->unit = $validated['unit'];
+            $inventoryRow->save();
+
+            return redirect()->route('supervisor.materials', ['project_id' => $project->project_id])->with('success', 'Material delivery logged successfully.');
+        } catch (ValidationException $e) {
+            return back()->withInput()->withErrors($e->errors())->with('error', 'Please correct the highlighted fields and try again.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Unexpected server error while saving material data.');
+        }
+    }
+
+    private function resolveMaterialStatus(float $remaining, float $planned): array
+    {
+        if ($planned <= 0) {
+            return ['key' => 'out_of_stock', 'text' => 'Out of Stock', 'color' => 'danger'];
+        }
+
+        if ($remaining <= 0) {
+            return ['key' => 'out_of_stock', 'text' => 'Out of Stock', 'color' => 'danger'];
+        }
+
+        $ratio = $remaining / $planned;
+
+        if ($ratio <= 0.1) {
+            return ['key' => 'critical', 'text' => 'Critical', 'color' => 'dark'];
+        }
+
+        if ($ratio <= 0.25) {
+            return ['key' => 'low_stock', 'text' => 'Low Stock', 'color' => 'warning'];
+        }
+
+        return ['key' => 'available', 'text' => 'Available', 'color' => 'success'];
+    }
+
+    private function getMaterialCategory($material): string
+    {
+        if (Schema::hasColumn('materials', 'category')) {
+            return $material->category ?? 'Construction Materials';
+        }
+
+        return 'Construction Materials';
     }
 
     /**

@@ -41,10 +41,13 @@
                             <div class="col-auto d-flex gap-3 align-items-center flex-wrap">
                                 
                                 <div class="project-selector-dropdown-wrapper">
+                                    <div class="project-selector-icon" aria-hidden="true">
+                                        <i class="bi bi-building"></i>
+                                    </div>
                                     <select class="form-select project-theme-select" onchange="window.location.href='{{ route('supervisor.timeline') }}?project_id=' + this.value">
                                         @foreach($projectsWithStats as $dropdownProject)
                                             <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $selectedProjectId ? 'selected' : '' }}>
-                                                🏢 {{ data_get($dropdownProject, 'name', 'Project') }}
+                                                {{ data_get($dropdownProject, 'name', 'Project') }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -373,6 +376,17 @@
 
     .project-selector-dropdown-wrapper {
         min-width: 220px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .project-selector-icon {
+        position: absolute;
+        left: 10px;
+        color: #096056;
+        pointer-events: none;
+        z-index: 2;
     }
     
     .project-theme-select {
@@ -381,7 +395,7 @@
         color: #096056 !important;
         font-weight: 600;
         font-size: 0.85rem;
-        padding: 0.45rem 2rem 0.45rem 0.85rem;
+        padding: 0.45rem 2rem 0.45rem 2.2rem;
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
@@ -435,7 +449,7 @@
         border: 1px solid rgba(0, 0, 0, 0.05);
     }
     .badge-status-pill.compl-bg { background-color: #d1fae5; color: #065f46; text-transform: none; font-size: 0.78rem;}
-    .badge-status-pill.active-bg { background-color: #eff6ff; color: #1e40af; text-transform: none; font-size: 0.78rem;}
+    .badge-status-pill.active-bg { background-color: #eef8f2; color: #096056; text-transform: none; font-size: 0.78rem;}
     .badge-status-pill.plan-bg { background-color: #f3f4f6; color: #4b5563; text-transform: none; font-size: 0.78rem;}
 
     /* CUSTOM PROGRESS LINE STYLE PACKS */
@@ -493,7 +507,7 @@
     
     .kpi-icon-success { color: #10b981; font-size: 1.25rem; }
     .kpi-icon-warning { color: #f59e0b; font-size: 1.25rem; }
-    .kpi-icon-info { color: #3b82f6; font-size: 1.25rem; }
+    .kpi-icon-info { color: #166534; font-size: 1.25rem; }
 
     .radial-progress-dummy {
         width: 34px; height: 34px; border-radius: 50%;
@@ -542,7 +556,7 @@
         height: 100%;
     }
     .border-success-left { border-left: 4px solid #10b981; }
-    .border-primary-left { border-left: 4px solid #3b82f6; }
+    .border-primary-left { border-left: 4px solid #166534; }
     .milestone-card-title { font-size: 0.88rem; font-weight: 700; color: #373737; line-height: 1.3; }
     .milestone-target-text { font-size: 0.78rem; color: #6b7280; }
 
@@ -556,7 +570,7 @@
     .schedule-segment-header { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 4px; }
     .dot-indicator { width: 6px; height: 6px; border-radius: 50%; display: inline-block; vertical-align: middle; }
     .dot-indicator.green-bg { background-color: #10b981; }
-    .dot-indicator.blue-bg { background-color: #3b82f6; }
+    .dot-indicator.blue-bg { background-color: #166534; }
     .date-label { font-size: 0.82rem; }
     .date-val { font-size: 0.82rem; }
 
