@@ -184,8 +184,8 @@
                             <td class="date-cell-text">{{ $formatDate($phase->planned_start_date) }}</td>
                             <td class="date-cell-text">{{ $formatDate($phase->planned_end_date) }}</td>
                             <td style="text-align: center;">
-                                <button class="action-view-row-btn view-phase-details" data-phase-id="{{ $phase->phase_id }}" title="View details" aria-label="View row items">
-                                    <i class="bi bi-eye"></i>
+                                <button class="action-view-row-btn view-phase-details" data-phase-id="{{ $phase->phase_id }}" title="Edit phase" aria-label="Edit phase">
+                                    <i class="bi bi-pencil-square"></i>
                                 </button>
                             </td>
                         </tr>
@@ -251,22 +251,22 @@
 
 <style>
     :root {
-        --ui-bg-surface: #ffffff;
-        --ui-bg-app: #f8faf9;
-        --ui-border-color: #edf2f0;
-        --ui-text-main: #1a2521;
-        --ui-text-muted: #687973;
-        --ui-theme-green: #0b6054;
-        --ui-theme-green-light: #e8f5f1;
+        --ui-bg-surface: #FFFFFF;
+        --ui-bg-app: #F8FAFC;
+        --ui-border-color: #E2E8F0;
+        --ui-text-main: #1E293B;
+        --ui-text-muted: #64748B;
+        --ui-theme-green: #2a4028;
+        --ui-theme-green-light: #e8efe0;
         
-        --status-comp-bg: #eaf7ed;
-        --status-comp-txt: #1e6133;
-        --status-prog-bg: #eef9f5;
-        --status-prog-txt: #0c695c;
-        --status-pend-bg: #f1f4f3;
-        --status-pend-txt: #5a6561;
-        --status-delay-bg: #fce7e7;
-        --status-delay-txt: #9b2c2c;
+        --status-comp-bg: #e8efe0;
+        --status-comp-txt: #365233;
+        --status-prog-bg: #DBEAFE;
+        --status-prog-txt: #2563EB;
+        --status-pend-bg: #F1F5F9;
+        --status-pend-txt: #64748B;
+        --status-delay-bg: #FEE2E2;
+        --status-delay-txt: #DC2626;
     }
 
     body {
@@ -1171,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     body: JSON.stringify({ completion_percentage: val })
                                 }).then(r => r.json()).then(resp => {
                                         if (resp.success) {
-                                        Swal.fire({ title: 'Saved', text: 'Progress updated successfully', icon: 'success', confirmButtonColor: '#0b6054' });
+                                        Swal.fire({ title: 'Saved', text: 'Progress updated successfully', icon: 'success', confirmButtonColor: '#166534' });
                                         // Update UI elements
                                         const newPct = resp.phase.completion_percentage;
                                         document.querySelectorAll(`[data-phase-id='${phase.id}'] .progress-percent-value`).forEach(el => el.textContent = Math.round(newPct) + '%');
@@ -1191,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 const span = document.createElement('span');
                                                 span.id = 'notif-badge';
                                                 span.className = 'position-absolute';
-                                                span.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#198754; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
+                                                span.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#166534; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
                                                 span.textContent = '1';
                                                 link.appendChild(span);
                                             }
@@ -1213,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     icon: 'question',
                                     showCancelButton: true,
                                     confirmButtonText: 'Yes, change',
-                                    confirmButtonColor: '#0b6054'
+                                    confirmButtonColor: '#166534'
                                 }).then(result => {
                                     if (!result.isConfirmed) return;
                                     Swal.fire({ title: 'Updating status', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
@@ -1228,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         body: JSON.stringify({ status: selected })
                                     }).then(r => r.json()).then(resp => {
                                         if (resp.success) {
-                                            Swal.fire({ title: 'Updated', text: 'Phase status updated.', icon: 'success', confirmButtonColor: '#0b6054' });
+                                            Swal.fire({ title: 'Updated', text: 'Phase status updated.', icon: 'success', confirmButtonColor: '#166534' });
                                             // Update row badge and current phase UI
                                             document.querySelectorAll(`[data-phase-id='${phase.id}'] .status-badge`).forEach(el => el.textContent = selected === 'in_progress' ? 'IN PROGRESS' : (selected === 'not_started' ? 'PENDING' : 'COMPLETED'));
                                             // Update overall progress
@@ -1247,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     const span2 = document.createElement('span');
                                                     span2.id = 'notif-badge';
                                                     span2.className = 'position-absolute';
-                                                    span2.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#198754; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
+                                                    span2.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#166534; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
                                                     span2.textContent = '1';
                                                     link2.appendChild(span2);
                                                 }
@@ -1340,14 +1340,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         title: 'Success!',
                         text: 'Construction phases report exported successfully.',
                         icon: 'success',
-                        confirmButtonColor: '#0b6054'
+                        confirmButtonColor: '#166534'
                     });
                 } else {
                     Swal.fire({
                         title: 'Error',
                         text: data.message || 'Failed to export phases report',
                         icon: 'error',
-                        confirmButtonColor: '#0b6054'
+                        confirmButtonColor: '#166534'
                     });
                 }
             } else if (result.type === 'blob') {
@@ -1366,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: 'Success!',
                     text: 'Construction phases report downloaded successfully.',
                     icon: 'success',
-                    confirmButtonColor: '#0b6054'
+                    confirmButtonColor: '#166534'
                 });
             }
         })
@@ -1376,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Error',
                 text: 'An error occurred while exporting PDF',
                 icon: 'error',
-                confirmButtonColor: '#0b6054'
+                confirmButtonColor: '#166534'
             });
         });
     });

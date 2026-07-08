@@ -17,9 +17,9 @@
             extend: {
                 colors: {
                     brand: {
-                        dark: '#166534',    /* Primary Dark Green */
-                        green: '#16a34a',   /* Secondary Green */
-                        accent: '#10b981',  /* Emerald Accent */
+                        dark: '#2a4028',
+                        green: '#365233',
+                        accent: '#4b6b46',
                     }
                 },
                 fontFamily: {
@@ -32,7 +32,7 @@
                     'input': '10px',
                 },
                 boxShadow: {
-                    'saas': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03)',
+                    'saas': '0 8px 24px rgba(15, 23, 42, 0.06)',
                 }
             }
         }
@@ -242,7 +242,7 @@
                                         </td>
                                         <td class="py-4 px-4 align-middle text-center">
                                             <div class="flex justify-center">
-                                                <button @click="selectedMaterialId='{{ $item->id }}'; selectedUnit='{{ $item->unit }}'; openUsageModal = true" class="w-full max-w-[150px] inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-white bg-[#166534] border border-[#166534] rounded-btn hover:bg-[#14532d] transition shadow-sm whitespace-nowrap">
+                                                <button @click="selectedMaterialId='{{ $item->id }}'; selectedUnit='{{ $item->unit }}'; openUsageModal = true" class="w-full max-w-[150px] inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-white bg-[#2a4028] border border-[#2a4028] rounded-btn hover:bg-[#365233] transition shadow-sm whitespace-nowrap">
                                                     <i class="bi bi-plus-circle"></i> Record Usage
                                                 </button>
                                             </div>
@@ -310,7 +310,7 @@
                                 </div>
 
                                 <div class="flex items-center gap-2 pt-1">
-                                    <button @click="selectedMaterialId='{{ $item->id }}'; selectedUnit='{{ $item->unit }}'; openUsageModal = true" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-[#166534] rounded-btn shadow-saas hover:bg-[#14532d] transition">
+                                    <button @click="selectedMaterialId='{{ $item->id }}'; selectedUnit='{{ $item->unit }}'; openUsageModal = true" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-[#2a4028] rounded-btn shadow-saas hover:bg-[#365233] transition">
                                         <i class="bi bi-plus-circle"></i> Record Usage
                                     </button>
                                 </div>
@@ -328,7 +328,13 @@
                         @endif
                     </span>
                     <div class="flex items-center gap-1">
-                        {{ $inventory->appends(request()->query())->links('pagination::tailwind') }}
+                        @if($inventory->hasPages())
+                            {{ $inventory->appends(request()->query())->links('pagination::bootstrap-5') }}
+                        @else
+                            <nav aria-label="Material pagination" class="pagination">
+                                <span class="page-item active"><span class="page-link">1</span></span>
+                            </nav>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -360,6 +366,23 @@
                         <div class="text-xs pt-3 text-gray-500">No recent material usage records available.</div>
                     @endforelse
                 </div>
+                @if($recentUsages instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    <div class="mt-4 border-t border-gray-100 pt-3">
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span>Showing {{ $recentUsages->firstItem() }} to {{ $recentUsages->lastItem() }} of {{ $recentUsages->total() }}</span>
+                            <div>
+                                @if($recentUsages->hasPages())
+                                    @php($recentUsages->setPageName('recent_page'))
+                                    {{ $recentUsages->appends(request()->except(['page']))->links('pagination::bootstrap-5') }}
+                                @else
+                                    <nav aria-label="Recent usage pagination" class="pagination">
+                                        <span class="page-item active"><span class="page-link">1</span></span>
+                                    </nav>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -519,7 +542,7 @@
             title: type === 'success' ? 'Success' : 'Please check',
             text: message,
             showConfirmButton: true,
-            confirmButtonColor: '#0b6054',
+            confirmButtonColor: '#166534',
             timer: type === 'success' ? 3000 : 4000,
             timerProgressBar: true
         });

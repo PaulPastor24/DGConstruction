@@ -60,12 +60,29 @@ class MilestoneController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = validator($request->all(), [
             'project_id' => 'required|exists:projects,project_id',
             'phase_id' => 'required|exists:construction_phases,phase_id',
             'milestone_name' => 'required|string|max:200',
-            'planned_date' => 'required|date|after:today',
+            'planned_date' => 'required|date',
+            'actual_date' => 'nullable|date',
+            'is_completed' => 'nullable|boolean',
+            'is_delayed' => 'nullable|boolean',
         ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()->toArray(),
+                ], 422);
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
 
         $project = Project::findOrFail($validated['project_id']);
         $this->authorizeProject($project);
@@ -82,8 +99,9 @@ class MilestoneController extends Controller
                 'phase_id' => $validated['phase_id'],
                 'milestone_name' => $validated['milestone_name'],
                 'planned_date' => $validated['planned_date'],
-                'is_completed' => false,
-                'is_delayed' => false,
+                'actual_date' => $validated['actual_date'] ?? null,
+                'is_completed' => (bool) ($validated['is_completed'] ?? false),
+                'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
 
             // Notify client about new milestone
@@ -108,12 +126,24 @@ class MilestoneController extends Controller
 
             DB::commit();
 
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Milestone created successfully']);
+            }
+
             return redirect()
                 ->route('admin.milestones.index', [$project->project_id, $phase->phase_id])
                 ->with('success', 'Milestone created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Milestone creation failed: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create milestone: ' . $e->getMessage(),
+                ], 500);
+            }
+
             return back()->withErrors('Failed to create milestone')->withInput();
         }
     }
@@ -154,10 +184,13 @@ class MilestoneController extends Controller
 
         $milestone = Milestone::query()
             ->where('milestone_id', $milestoneId)
-            ->where('phase_id', $phaseId)
+            ->whereHas('phase', function ($query) use ($projectId) {
+                $query->where('project_id', $projectId);
+            })
             ->firstOrFail();
 
-        $validated = $request->validate([
+        $validator = validator($request->all(), [
+            'phase_id' => 'nullable|exists:construction_phases,phase_id',
             'milestone_name' => 'required|string|max:200',
             'planned_date' => 'required|date',
             'actual_date' => 'nullable|date',
@@ -165,14 +198,36 @@ class MilestoneController extends Controller
             'is_delayed' => 'boolean',
         ]);
 
+        if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()->toArray(),
+                ], 422);
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
+
         try {
             DB::beginTransaction();
 
 
             $oldStatus = $milestone->is_completed;
             $oldDelayed = $milestone->is_delayed;
+            $oldPhaseId = $milestone->phase_id;
 
-            $milestone->update($validated);
+            $milestone->update([
+                'phase_id' => $validated['phase_id'] ?? $oldPhaseId,
+                'milestone_name' => $validated['milestone_name'],
+                'planned_date' => $validated['planned_date'],
+                'actual_date' => $validated['actual_date'] ?? null,
+                'is_completed' => (bool) ($validated['is_completed'] ?? false),
+                'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
+            ]);
 
             // Log status changes
             $changes = [];
@@ -208,12 +263,24 @@ class MilestoneController extends Controller
 
             DB::commit();
 
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Milestone updated successfully']);
+            }
+
             return redirect()
                 ->route('admin.milestones.index', [$projectId, $phaseId])
                 ->with('success', 'Milestone updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Milestone update failed: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update milestone: ' . $e->getMessage(),
+                ], 500);
+            }
+
             return back()->withErrors('Failed to update milestone')->withInput();
         }
     }

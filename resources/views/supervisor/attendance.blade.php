@@ -194,8 +194,7 @@
                 });
                 const options = await response.json();
 
-                // 2. Wake up OS/Device matching prompt dialog
-                const credential = await window.SimpleWebAuthnBrowser.startAuthentication(options);
+                    const credential = await window.startAuthentication(options);
 
                 // 3. Post payload assertion to server architecture
                 const submitResponse = await fetch('/passkeys/login', {
@@ -204,35 +203,18 @@
                     body: JSON.stringify(credential)
                 });
 
-                const result = await submitResponse.json();
-
-                if (submitResponse.ok && result.worker) {
-                    const worker = result.worker; // Expects backend to return { worker: { id, full_name, trade } }
-                    
-                    globalScanStatus.className = "alert alert-success border text-success small py-2 mb-0";
-                    globalScanStatus.innerHTML = `<i class="bi bi-check-circle-fill"></i> Successfully recognized: <strong>${worker.full_name}</strong>`;
-                    
-                    appendWorkerToLog(worker);
-                } else {
-                    globalScanStatus.className = "alert alert-danger border text-danger small py-2 mb-0";
-                    globalScanStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Credentials unmatched. Unknown personnel token.';
-                }
-            } catch (err) {
-                console.error(err);
-                globalScanStatus.className = "alert alert-danger border text-danger small py-2 mb-0";
-                globalScanStatus.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> Error: ${err.message || 'Verification execution failed.'}`;
-            }
-        });
-
-        // --- DYNAMICALLY CONSTRUCT ATTENDANCE LOG VIEW ---
-        function appendWorkerToLog(worker) {
-            // Avoid duplicate tracking logs in current active session UI frame
-            if (scannedWorkerIds.has(worker.id)) {
-                // Flash highlight existing row tracking element
-                const existingRow = document.getElementById(`row-worker-${worker.id}`);
-                if (existingRow) {
-                    existingRow.style.backgroundColor = '#fff3cd';
-                    setTimeout(() => existingRow.style.backgroundColor = 'transparent', 1500);
+                    if (submitResponse.ok) {
+                        statusContainer.innerHTML = '<i class="bi bi-check-circle-fill"></i> Verified Match';
+                        statusContainer.className = 'bio-indicator bio-verified';
+                        hiddenInput.value = "1";
+                        if (presentRadio) presentRadio.checked = true;
+                        alert(`Biometrics Authenticated: ${workerName} checked in successfully!`);
+                    } else {
+                        alert('Authentication failure: Token credentials unmatched for this field worker.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Hardware sensor connection timed out.');
                 }
                 return;
             }
@@ -298,14 +280,14 @@
                 options.user.name = `${firstName} ${lastName}`;
                 options.user.displayName = `${firstName} ${lastName}`;
 
-                capturedPasskeyCredential = await window.SimpleWebAuthnBrowser.startRegistration(options);
+                capturedPasskeyCredential = await window.startRegistration(options);
                 
                 fingerprintLabel.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-patch-check-fill"></i> Token Captured Successfully!</span>';
                 saveWorkerBtn.disabled = false;
             } catch (error) {
                 console.error(error);
                 fingerprintLabel.innerHTML = '<span class="text-danger">Registration execution halted.</span>';
-                alert('Device Error: ' + error.message);
+                alert('Biometric reading cancelled.');
             }
         });
 

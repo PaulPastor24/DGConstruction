@@ -293,11 +293,12 @@
         color: #64748b;
     }
     .dashboard-page-title {
-        font-size: 2rem;
-        font-weight: 800;
-        line-height: 1.05;
+        font-family: 'Syne', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        line-height: 1.15;
         margin: 0;
-        color: #0e3b2e;
+        color: #2a4028;
     }
     .dashboard-page-description {
         margin: 0.2rem 0 0;
@@ -315,10 +316,22 @@
     @media (max-width: 1024px) {
         .dashboard-page-header {
             padding: 0.35rem 0 0.75rem;
-            align-items: center;
+            align-items: flex-start;
+            flex-direction: column;
         }
         .dashboard-page-tools {
             gap: 0.5rem;
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+    }
+    @media (max-width: 576px) {
+        .dashboard-page-title {
+            font-size: 1.45rem;
+        }
+        .dashboard-page-description {
+            font-size: 0.85rem;
         }
     }
     .project-selector-wrap {
@@ -453,8 +466,25 @@
         background: #f8fafc;
     }
     .dashboard-notification-button.notification-bell-animate {
-        animation: bell-ring 1.2s ease-in-out infinite;
+        animation: bell-ring 1.2s ease-in-out infinite, pulse-soft 1.45s ease-out infinite;
         transform-origin: center top;
+        color: #22c55e;
+        background: #f0fdf4;
+        border-color: #22c55e;
+        position: relative;
+    }
+    .dashboard-notification-button.notification-bell-animate::before {
+        content: '';
+        position: absolute;
+        inset: -3px;
+        border-radius: 999px;
+        border: 2px solid rgba(34, 197, 94, 0.28);
+        animation: ring-pulse 1.45s ease-out infinite;
+        pointer-events: none;
+    }
+    .dashboard-notification-button.notification-bell-animate .bi-bell {
+        color: #22c55e;
+        z-index: 1;
     }
     @keyframes bell-ring {
         0%, 100% { transform: rotate(0deg); }
@@ -469,19 +499,38 @@
     }
     .notification-badge {
         position: absolute;
-        top: 8px;
-        right: 9px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
+        top: 4px;
+        right: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 0.25rem;
+        border: 2px solid #ffffff;
+        border-radius: 999px;
         background: #22c55e;
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+        color: #ffffff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1;
+        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
         animation: ping-dot 1.4s ease-out infinite;
     }
     @keyframes ping-dot {
         0% { transform: scale(0.9); opacity: 1; }
         80% { transform: scale(1.65); opacity: 0; }
         100% { transform: scale(1.8); opacity: 0; }
+    }
+    @keyframes pulse-soft {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.24); }
+        70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    @keyframes ring-pulse {
+        0% { transform: scale(0.92); opacity: 0.9; }
+        70% { transform: scale(1.12); opacity: 0; }
+        100% { transform: scale(1.16); opacity: 0; }
     }
     .hero-card {
         background: #ffffff;

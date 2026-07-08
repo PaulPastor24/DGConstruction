@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Client Portal D&G Construction Monitor')</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -27,18 +27,34 @@
             --brand-green: #2a4028;
             --brand-mint: #f4f7f1;
             --brand-yellow-green: #8fae85;
+            --font-brand: 'Syne', sans-serif;
+            --font-ui: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-ui);
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.5;
             background-color: var(--bg-main);
             color: var(--text-primary);
             overflow-x: hidden;
         }
 
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+        .app {
+            min-height: 100vh;
         }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-brand);
+            font-weight: 700;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        h1 { font-size: 1.8rem; }
+        h2 { font-size: 1.45rem; }
+        h3 { font-size: 1.2rem; }
 
         .app {
             display: flex;
@@ -102,19 +118,21 @@
         }
 
         .brand-text h5 {
-            font-size: 0.95rem;
-            font-weight: 800;
+            font-family: var(--font-brand);
+            font-size: 0.9rem;
+            font-weight: 700;
             margin: 0;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.03em;
             text-transform: uppercase;
             color: #ffffff;
         }
 
         .brand-text span {
-            font-size: 0.72rem;
+            font-family: var(--font-ui);
+            font-size: 0.76rem;
             color: var(--sidebar-text-muted);
             display: block;
-            font-weight: 500;
+            font-weight: 400;
         }
 
         .sidebar-nav {
@@ -126,11 +144,11 @@
             display: flex;
             align-items: center;
             gap: 0.85rem;
-            padding: 0.8rem 1.15rem;
+            padding: 0.75rem 1rem;
             color: var(--sidebar-text-muted);
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.88rem;
+            font-weight: 500;
+            font-size: 0.92rem;
             border-radius: 12px;
             margin-bottom: 0.35rem;
             transition: all 0.2s ease;
@@ -221,8 +239,27 @@
         }
 
         .notification-bell-animate {
-            animation: bell-ring 1.2s ease-in-out infinite;
+            animation: bell-ring 1.2s ease-in-out infinite, pulse-soft 1.45s ease-out infinite;
             transform-origin: center top;
+            color: #22c55e;
+            background: #f0fdf4;
+            border-color: #22c55e;
+            position: relative;
+        }
+
+        .notification-bell-animate::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 999px;
+            border: 2px solid rgba(34, 197, 94, 0.28);
+            animation: ring-pulse 1.45s ease-out infinite;
+            pointer-events: none;
+        }
+
+        .notification-bell-animate .bi-bell {
+            color: #22c55e;
+            z-index: 1;
         }
 
         @keyframes bell-ring {
@@ -235,6 +272,18 @@
             60% { transform: rotate(-2deg); }
             70% { transform: rotate(2deg); }
             80%, 90% { transform: rotate(0deg); }
+        }
+
+        @keyframes pulse-soft {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.24); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        @keyframes ring-pulse {
+            0% { transform: scale(0.92); opacity: 0.9; }
+            70% { transform: scale(1.12); opacity: 0; }
+            100% { transform: scale(1.16); opacity: 0; }
         }
 
         .notification-badge {
@@ -280,8 +329,8 @@
         }
 
         .welcome-msg h2 {
-            font-size: 1.35rem;
-            font-weight: 800;
+            font-size: 1.25rem;
+            font-weight: 700;
             margin: 0 0 0.15rem 0;
             color: var(--text-primary);
         }
@@ -290,7 +339,7 @@
             color: var(--text-muted);
             margin: 0;
             font-size: 0.85rem;
-            font-weight: 500;
+            font-weight: 400;
         }
 
         .topbar-actions {
@@ -356,12 +405,21 @@
 
         .notification-badge {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 14px;
-            height: 14px;
+            top: 4px;
+            right: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 0.25rem;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
             background: #22c55e !important;
-            border-radius: 50%;
+            color: #ffffff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            line-height: 1;
             box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
             animation: ping-dot 1.4s ease-out infinite;
             pointer-events: none;
@@ -517,17 +575,17 @@
         }
 
         .page-header-title {
-            font-size: 2rem;
-            font-weight: 800;
-            line-height: 1.05;
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.15;
             margin: 0;
             color: var(--brand-green);
         }
 
         .page-header-subtitle {
             margin: 0;
-            font-size: 0.92rem;
-            font-weight: 500;
+            font-size: 0.9rem;
+            font-weight: 400;
             color: var(--text-muted);
         }
 
@@ -562,17 +620,17 @@
         }
 
         .dashboard-page-title {
-            font-size: 2rem;
-            font-weight: 800;
-            line-height: 1.05;
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.15;
             margin: 0;
             color: var(--brand-green);
         }
 
         .dashboard-page-description {
             margin: 0.2rem 0 0;
-            font-size: 0.92rem;
-            font-weight: 500;
+            font-size: 0.9rem;
+            font-weight: 400;
             color: var(--text-muted);
             max-width: 420px;
         }
@@ -679,6 +737,21 @@
             .global-mobile-nav {
                 display: flex;
             }
+            .content {
+                padding: 1rem 1.1rem 1.25rem 1.1rem;
+            }
+            .page-header-compact,
+            .dashboard-page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .page-header-tools,
+            .dashboard-page-tools {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.6rem;
+            }
             #sidebarToggle {
                 display: inline-flex;
             }
@@ -693,6 +766,22 @@
         @media (max-width: 767.98px) {
             .content {
                 padding: 0 1rem 1rem 1rem;
+            }
+            .page-header-title,
+            .dashboard-page-title {
+                font-size: 1.45rem;
+            }
+            .page-header-subtitle,
+            .dashboard-page-description {
+                font-size: 0.85rem;
+            }
+            .topbar-actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .topbar-action-icons {
+                width: 100%;
+                justify-content: flex-end;
             }
         }
 
@@ -797,7 +886,7 @@
             <button id="mobileNotificationBell" type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
                 @if(($clientUnreadCount ?? 0) > 0)
-                    <span class="notification-badge" style="position:absolute;top:8px;right:8px;width:12px;height:12px;background:#22c55e;border:2px solid #ffffff;border-radius:50%;box-shadow:0 0 0 4px rgba(34,197,94,0.25);animation:ping-dot 1.4s ease-out infinite;"></span>
+                    <span class="notification-badge" aria-label="{{ $clientUnreadCount ?? 0 }} unread notifications">{{ $clientUnreadCount ?? 0 }}</span>
                 @endif
             </button>
         </div>

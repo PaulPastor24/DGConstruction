@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // 1. Existing Layout View Composers
-        View::composer('layouts.client', function ($view) {
+        View::composer(['layouts.client', 'client.*', 'client.partials.*'], function ($view) {
             $user = Auth::user();
             $notifications = collect();
             $notificationCount = 0;
@@ -57,10 +57,13 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
+            $hasNotifications = ($unreadCount > 0) || $notifications->isNotEmpty();
+
             $view->with([
                 'clientNotifications' => $notifications,
                 'clientNotificationCount' => $notificationCount,
                 'clientUnreadCount' => $unreadCount,
+                'clientHasNotifications' => $hasNotifications,
             ]);
         });
 

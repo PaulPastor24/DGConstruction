@@ -368,10 +368,10 @@
     
     .dashboard-panel {
         background-color: #ffffff;
-        border: 1px solid rgba(9, 96, 86, 0.12);
+        border: 1px solid rgba(22, 101, 52, 0.12);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 20px rgba(9, 96, 86, 0.02);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     }
 
     .project-selector-dropdown-wrapper {
@@ -384,28 +384,28 @@
     .project-selector-icon {
         position: absolute;
         left: 10px;
-        color: #096056;
+        color: #166534;
         pointer-events: none;
         z-index: 2;
     }
     
     .project-theme-select {
-        background-color: #f0f6f4 !important;
-        border: 1px solid rgba(9, 96, 86, 0.15) !important;
-        color: #096056 !important;
+        background-color: #F1F5F9 !important;
+        border: 1px solid rgba(22, 101, 52, 0.15) !important;
+        color: #166534 !important;
         font-weight: 600;
         font-size: 0.85rem;
         padding: 0.45rem 2rem 0.45rem 2.2rem;
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23096056' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
         background-size: 10px 12px !important;
     }
 
     .project-theme-select:focus {
-        border-color: #096056 !important;
-        box-shadow: 0 0 0 0.25rem rgba(9, 96, 86, 0.15) !important;
+        border-color: #166534 !important;
+        box-shadow: 0 0 0 0.25rem rgba(22, 101, 52, 0.15) !important;
         background-color: #ffffff !important;
     }
 
@@ -419,7 +419,7 @@
     }
 
     .panel-main-title {
-        color: #096056;
+        color: #2a4028;
         font-family: 'Syne', sans-serif;
         font-weight: 700;
         font-size: 1.65rem;
@@ -440,8 +440,8 @@
         letter-spacing: 0.02em;
     }
     .badge-status-pill.in-progress {
-        background-color: #eef8f2;
-        color: #096056;
+        background-color: #e8efe0;
+        color: #365233;
     }
     .badge-status-pill.completed-count {
         background-color: #f3f4f6;
@@ -449,14 +449,14 @@
         border: 1px solid rgba(0, 0, 0, 0.05);
     }
     .badge-status-pill.compl-bg { background-color: #d1fae5; color: #065f46; text-transform: none; font-size: 0.78rem;}
-    .badge-status-pill.active-bg { background-color: #eef8f2; color: #096056; text-transform: none; font-size: 0.78rem;}
+    .badge-status-pill.active-bg { background-color: #DCFCE7; color: #15803D; text-transform: none; font-size: 0.78rem;}
     .badge-status-pill.plan-bg { background-color: #f3f4f6; color: #4b5563; text-transform: none; font-size: 0.78rem;}
 
     /* CUSTOM PROGRESS LINE STYLE PACKS */
     .progress-label-text { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #373737; letter-spacing: 0.04em; }
-    .progress-value-text { font-size: 1.15rem; font-weight: 800; color: #096056; font-family: 'Syne', sans-serif;}
-    .custom-progress-track { height: 10px; border-radius: 999px; background-color: #ebf2ee; overflow: hidden; }
-    .custom-progress-fill { background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px; }
+    .progress-value-text { font-size: 1.15rem; font-weight: 800; color: #2a4028; font-family: 'Syne', sans-serif;}
+    .custom-progress-track { height: 10px; border-radius: 999px; background-color: #E2E8F0; overflow: hidden; }
+    .custom-progress-fill { background: linear-gradient(90deg, #365233, #8ea886); border-radius: 999px; }
 
     /* CORE GRID META METRIC BOX SYSTEM */
     .meta-metric-card {
@@ -482,10 +482,10 @@
     .badge-alert-pill.delay-bg { background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}
 
     /* BUTTON ACTION SET SCHEMES */
-    .btn-timeline-primary { background-color: #096056; color: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; border: none; transition: all 0.2s;}
-    .btn-timeline-primary:hover { background-color: #064a41; color: #fff; }
-    .btn-timeline-outline { background-color: transparent; color: #096056; border: 1px solid rgba(9, 96, 86, 0.2); border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; transition: all 0.2s;}
-    .btn-timeline-outline:hover { background-color: rgba(9, 96, 86, 0.05); color: #096056; }
+    .btn-timeline-primary { background-color: #2a4028; color: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; border: none; transition: all 0.2s;}
+    .btn-timeline-primary:hover { background-color: #365233; color: #fff; }
+    .btn-timeline-outline { background-color: transparent; color: #2a4028; border: 1px solid rgba(42, 64, 40, 0.2); border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; transition: all 0.2s;}
+    .btn-timeline-outline:hover { background-color: rgba(42, 64, 40, 0.05); color: #2a4028; }
 
     /* HIGH LEVEL STATUS BOARDS PILLS */
     .custom-col-five { flex: 0 0 100%; max-width: 100%; }
@@ -502,10 +502,10 @@
         box-shadow: 0 2px 12px rgba(0,0,0,0.01);
     }
     .kpi-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.04em; }
-    .kpi-value { font-size: 1.45rem; font-weight: 700; color: #096056; font-family: 'Syne', sans-serif; }
+    .kpi-value { font-size: 1.45rem; font-weight: 700; color: #166534; font-family: 'Syne', sans-serif; }
     .kpi-subtext { font-size: 0.78rem; line-height: 1.3; }
     
-    .kpi-icon-success { color: #10b981; font-size: 1.25rem; }
+    .kpi-icon-success { color: #16A34A; font-size: 1.25rem; }
     .kpi-icon-warning { color: #f59e0b; font-size: 1.25rem; }
     .kpi-icon-info { color: #166534; font-size: 1.25rem; }
 
@@ -539,8 +539,8 @@
     }
     
     /* Phase specific border accents */
-    .timeline-phase-completed { border-left: 5px solid #10b981; }
-    .timeline-phase-current { border-left: 5px solid #096056; background-color: #f8faf9; }
+    .timeline-phase-completed { border-left: 5px solid #16A34A; }
+    .timeline-phase-current { border-left: 5px solid #166534; background-color: #f8faf9; }
     .timeline-phase-upcoming { border-left: 5px solid #cbd5e1; }
 
     .stepper-phase-name { font-size: 0.95rem; font-weight: 700; color: #373737; }
@@ -555,7 +555,7 @@
         padding: 16px;
         height: 100%;
     }
-    .border-success-left { border-left: 4px solid #10b981; }
+    .border-success-left { border-left: 4px solid #16A34A; }
     .border-primary-left { border-left: 4px solid #166534; }
     .milestone-card-title { font-size: 0.88rem; font-weight: 700; color: #373737; line-height: 1.3; }
     .milestone-target-text { font-size: 0.78rem; color: #6b7280; }
@@ -569,7 +569,7 @@
     }
     .schedule-segment-header { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 4px; }
     .dot-indicator { width: 6px; height: 6px; border-radius: 50%; display: inline-block; vertical-align: middle; }
-    .dot-indicator.green-bg { background-color: #10b981; }
+    .dot-indicator.green-bg { background-color: #16A34A; }
     .dot-indicator.blue-bg { background-color: #166534; }
     .date-label { font-size: 0.82rem; }
     .date-val { font-size: 0.82rem; }

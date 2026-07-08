@@ -6,8 +6,8 @@
     --text-dark: #1e241e;
     --text-muted: #626e61;
     --border-gray: #e6eae5;
-    --font-serif: 'Cormorant Garamond', serif;
-    --font-sans: 'Manrope', sans-serif;
+    --font-brand: 'Syne', sans-serif;
+    --font-ui: 'Plus Jakarta Sans', sans-serif;
     --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -22,7 +22,7 @@ html {
 }
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-ui);
     background-color: var(--bg-main);
     color: var(--text-dark);
     min-height: 100vh;
@@ -124,7 +124,7 @@ body {
 }
 
 .hero-brand-title {
-    font-family: var(--font-serif);
+    font-family: var(--font-brand);
     font-size: 2.8rem; /* Scaled up from 2.2rem to match the large logo size */
     font-weight: 500;
     color: var(--bg-white);
@@ -133,7 +133,7 @@ body {
 }
 
 .login-hero h1 {
-    font-family: var(--font-serif);
+    font-family: var(--font-brand);
     font-size: clamp(3rem, 5vw, 4.2rem);
     font-weight: 500;
     line-height: 1.1;
@@ -191,7 +191,7 @@ body {
 }
 
 .login-header h2 {
-    font-family: var(--font-serif);
+    font-family: var(--font-brand);
     font-size: 2.5rem;
     font-weight: 500;
     color: var(--text-dark);
@@ -267,7 +267,7 @@ body {
     border: 1px solid var(--border-gray);
     background-color: var(--bg-white);
     border-radius: 6px;
-    font-family: var(--font-sans);
+    font-family: var(--font-ui);
     font-size: 0.95rem;
     color: var(--text-dark);
     outline: none;

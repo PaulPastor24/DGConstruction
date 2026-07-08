@@ -10,6 +10,7 @@ use App\Http\Controllers\PhasesExportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BiometricController;
 
@@ -38,6 +39,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
+    Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
     Route::post('/admin/reports/{id}/approve', [ProjectController::class, 'approveReport'])->name('admin.reports.approve');
@@ -68,6 +70,17 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggleStatus');
     });
+
+    Route::post('/admin/milestones', [MilestoneController::class, 'store'])->name('admin.milestones.store');
+    Route::get('/admin/projects/{project}/phases/{phase}/milestones', [MilestoneController::class, 'index'])->name('admin.milestones.index');
+    Route::get('/admin/projects/{project}/phases/{phase}/milestones/create', [MilestoneController::class, 'create'])->name('admin.milestones.create');
+    Route::get('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/edit', [MilestoneController::class, 'edit'])->name('admin.milestones.edit');
+    Route::put('/admin/projects/{project}/phases/{phase}/milestones/{milestone}', [MilestoneController::class, 'update'])->name('admin.milestones.update');
+    Route::delete('/admin/projects/{project}/phases/{phase}/milestones/{milestone}', [MilestoneController::class, 'destroy'])->name('admin.milestones.destroy');
+    Route::post('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/complete', [MilestoneController::class, 'complete'])->name('admin.milestones.complete');
+    Route::post('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/delay', [MilestoneController::class, 'markDelayed'])->name('admin.milestones.delay');
+    Route::patch('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/complete', [MilestoneController::class, 'complete'])->name('admin.milestones.complete');
+    Route::patch('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/mark-delayed', [MilestoneController::class, 'markDelayed'])->name('admin.milestones.mark-delayed');
 });
 
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
@@ -120,6 +133,7 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
     Route::get('/client/projects/{project}', [ClientController::class, 'projectDetails'])->name('client.project.show');
     Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
+    Route::get('/client/milestones', [TimelineController::class, 'clientTimeline'])->name('client.milestones');
     Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
     Route::get('/client/reports/{id}/download-pdf', [ClientController::class, 'downloadReportPdf'])->name('client.reports.downloadPdf');
     Route::get('/client/updates', [ClientController::class, 'updates'])->name('client.updates');

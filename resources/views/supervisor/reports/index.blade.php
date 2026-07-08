@@ -6,17 +6,17 @@
 @push('styles')
     <style>
         :root {
-            --cms-green-dark: #096056;
-            --cms-green-light: #f4f8f6;
-            --cms-green-muted: rgba(9, 96, 86, 0.08);
-            --cms-text-muted: #6c757d;
+            --cms-green-dark: #2a4028;
+            --cms-green-light: #e8efe0;
+            --cms-green-muted: rgba(42, 64, 40, 0.12);
+            --cms-text-muted: #64748B;
         }
 
         .report-filter-card, .metric-card, .main-report-card {
             border-radius: 12px;
             border: 1px solid var(--cms-green-muted);
             background: #fff;
-            box-shadow: 0 4px 12px rgba(9, 96, 86, 0.03);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         .metric-icon-wrapper {
@@ -135,8 +135,8 @@
             font-size: 0.8rem;
         }
         .timeline-step.active .timeline-icon {
-            border-color: #198754;
-            background: #198754;
+            border-color: #166534;
+            background: #166534;
             color: #fff;
         }
         .timeline-step.current .timeline-icon {
@@ -164,8 +164,8 @@
         }
 
         .modal-custom-input:focus {
-            border-color: #0b6054 !important;
-            box-shadow: 0 0 0 3px rgba(11, 96, 84, 0.15) !important;
+            border-color: #166534 !important;
+            box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.15) !important;
             outline: none;
         }
 
@@ -184,8 +184,8 @@
         }
 
         .upload-drop-zone:hover {
-            background-color: #f4f8f6;
-            border-color: #0b6054 !important;
+            background-color: #F1F5F9;
+            border-color: #166534 !important;
         }
 
         .modal-footer-btn-cancel {
@@ -207,25 +207,25 @@
             font-weight: 500;
             padding: 0.5rem 1.25rem;
             border-radius: 6px;
-            background-color: #0b6054;
+            background-color: #166534;
             border: none;
             color: #fff;
             transition: all 0.2s;
         }
         .modal-footer-btn-submit:hover {
-            background-color: #08483f;
+            background-color: #14532D;
         }
 
         .preview-file-chip {
-            background: #f4f8f6;
-            border: 1px solid rgba(11, 96, 84, 0.15);
+            background: #F1F5F9;
+            border: 1px solid rgba(22, 101, 52, 0.15);
             font-size: 0.8rem;
             padding: 0.35rem 0.65rem;
             border-radius: 6px;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            color: #0b6054;
+            color: #166534;
         }
     </style>
 @endpush
@@ -509,7 +509,7 @@
             
             <div class="modal-header border-0 px-4 pt-4 pb-2" style="background: #fff;">
                 <div>
-                    <h5 class="modal-title fw-bold" id="createReportModalLabel" style="color: #0b6054; font-size: 1.35rem; letter-spacing: -0.02em;">
+                    <h5 class="modal-title fw-bold" id="createReportModalLabel" style="color: #2a4028; font-size: 1.35rem; letter-spacing: -0.02em;">
                         Create Accomplishment Report
                     </h5>
                     <p class="text-muted small mb-0">Fill out the field parameters below to submit a new progress report.</p>
@@ -715,7 +715,7 @@
                             title: 'Export Complete',
                             text: 'Your report is downloading now.',
                             icon: 'success',
-                            confirmButtonColor: '#0b6054'
+                            confirmButtonColor: '#166534'
                         });
                     })
                     .catch(error => {
@@ -724,7 +724,7 @@
                             title: 'Export Failed',
                             text: error.message || 'Unable to export the report at this time.',
                             icon: 'error',
-                            confirmButtonColor: '#0b6054'
+                            confirmButtonColor: '#166534'
                         });
                     });
             });
