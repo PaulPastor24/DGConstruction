@@ -6,10 +6,33 @@
 @push('styles')
     @vite(['resources/css/supervisor.css'])
     <style>
-        /* Forces the modal window to layer flawlessly over an independent CSS backdrop tint */
         #registerWorkerModal {
             z-index: 1060 !important;
             background: rgba(0, 0, 0, 0.55) !important;
+        }
+        .scan-pulse-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 16px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .scan-pulse-container:hover {
+            border-color: #0d6efd;
+            background-color: #f1f7ff;
+        }
+        .fingerprint-trigger-btn {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .fingerprint-trigger-btn:active {
+            transform: scale(0.95);
         }
     </style>
 @endpush
@@ -22,7 +45,7 @@
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
                 <div>
                     <h4 class="fw-bold mb-1">Daily Workforce Attendance</h4>
-                    <p class="text-muted mb-0 small">Log, verify via fingerprint hardware, and update field personnel attendance shifts.</p>
+                    <p class="text-muted mb-0 small">Scan a worker's fingerprint to automatically identify them and log their attendance.</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
                     <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
@@ -36,82 +59,72 @@
         </div>
     </div>
 
-    <!-- Attendance Form Sheet -->
-    <form action="{{ route('supervisor.attendance.save') }}" method="POST" id="attendanceMainForm">
-        @csrf
-        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0" id="supervisorAttendanceTable">
-                        <thead>
-                            <tr class="text-muted border-bottom">
-                                <th class="pb-3 border-0" style="width: 35%;">Personnel Name</th>
-                                <th class="pb-3 border-0" style="width: 20%;">Trade / Designation</th>
-                                <th class="pb-3 border-0 text-center" style="width: 20%;">Biometric Link</th>
-                                <th class="pb-3 border-0 text-center" style="width: 25%;">Status Log</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if(isset($workers) && $workers->count() > 0)
-                                @foreach($workers as $worker)
-                                    @php
-                                        $id = $worker->worker_id ?? $worker->id;
-                                        $fullName = $worker->full_name ?? ($worker->first_name . ' ' . $worker->last_name) ?? 'Worker';
-                                    @endphp
-                                    <tr class="border-bottom" data-worker-id="{{ $id }}">
-                                        <td class="py-3">
-                                            <div class="fw-semibold text-dark">{{ $fullName }}</div>
-                                        </td>
-                                        <td class="py-3 text-muted">{{ $worker->trade ?? 'General' }}</td>
-                                        <td class="py-3 text-center">
-                                            <!-- Field Fingerprint Scanner Triggers -->
-                                            <button type="button" class="btn btn-outline-dark btn-sm btn-scan-finger px-2 py-1" data-id="{{ $id }}" data-name="{{ $fullName }}">
-                                                <i class="bi bi-fingerprint"></i> Scan Verify
-                                            </button>
-                                            <div class="bio-indicator bio-unverified" id="bio-status-{{ $id }}">
-                                                <i class="bi bi-dash-circle"></i> Untrusted
-                                            </div>
-                                            <!-- Hidden input payload to pass matching results back to controller stack -->
-                                            <input type="hidden" name="biometric_verified[{{ $id }}]" id="bio-input-{{ $id }}" value="0">
-                                        </td>
-                                        <td class="py-3">
-                                            <div class="d-flex justify-content-center flex-wrap gap-2">
-                                                <input type="radio" class="btn-check status-present" name="attendance[{{ $id }}]" id="present-{{ $id }}" value="present" checked>
-                                                <label class="btn btn-outline-success btn-sm px-3 rounded-pill fw-medium" for="present-{{ $id }}">Present</label>
-
-                                                <input type="radio" class="btn-check" name="attendance[{{ $id }}]" id="late-{{ $id }}" value="late">
-                                                <label class="btn btn-outline-warning btn-sm px-3 rounded-pill fw-medium" for="late-{{ $id }}">Late</label>
-
-                                                <input type="radio" class="btn-check" name="attendance[{{ $id }}]" id="absent-{{ $id }}" value="absent">
-                                                <label class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-medium" for="absent-{{ $id }}">Absent</label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @else
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted fst-italic">
-                                        No personnel assigned to this active work site.
-                                    </td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-
-                @if(isset($workers) && $workers->count() > 0)
-                    <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" class="btn btn-success px-4 py-2 fw-semibold">
-                            Save Attendance Logs
+    <div class="row g-4">
+        <!-- Center Scanning Interface Platform -->
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                    <h5 class="fw-bold text-dark mb-3">Biometric Identification</h5>
+                    
+                    <div class="scan-pulse-container p-5 mb-3">
+                        <button type="button" id="btnGlobalScan" class="btn btn-primary fingerprint-trigger-btn mb-3">
+                            <i class="bi bi-fingerprint"></i>
                         </button>
+                        <p class="fw-semibold text-dark mb-1">Ready to Identify</p>
+                        <span class="text-muted small">Click the fingerprint button to initialize physical reader stream.</span>
                     </div>
-                @endif
+
+                    <div id="globalScanStatus" class="alert alert-light border text-muted small py-2 mb-0">
+                        <i class="bi bi-info-circle-fill text-primary"></i> Awaiting hardware input node...
+                    </div>
+                </div>
             </div>
         </div>
-    </form>
+
+        <!-- Real-time Attendance Session Log -->
+        <div class="col-12 col-lg-8">
+            <form action="{{ route('supervisor.attendance.save') }}" method="POST" id="attendanceMainForm">
+                @csrf
+                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-dark mb-0">Scanned Personnel Log</h5>
+                            <span class="badge bg-secondary rounded-pill" id="scannedCount">0 Active Logs</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" id="supervisorAttendanceTable">
+                                <thead>
+                                    <tr class="text-muted border-bottom">
+                                        <th class="pb-3 border-0" style="width: 40%;">Personnel Name</th>
+                                        <th class="pb-3 border-0" style="width: 25%;">Trade / Designation</th>
+                                        <th class="pb-3 border-0 text-center" style="width: 35%;">Status Log</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceLogTableBody">
+                                    <tr id="emptyRowPlaceholder">
+                                        <td colspan="3" class="text-center py-5 text-muted fst-italic">
+                                            <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
+                                            No personnel checked in yet during this session.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 d-none" id="formSubmitContainer">
+                            <button type="submit" class="btn btn-success px-4 py-2 fw-semibold">
+                                Save Attendance Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<!-- FIELD WORKER REGISTRATION MODAL FRAME (Moved completely outside layout containers) -->
+<!-- FIELD WORKER REGISTRATION MODAL FRAME -->
 <div class="modal fade" id="registerWorkerModal" data-bs-backdrop="false" tabindex="-1" aria-labelledby="registerWorkerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg border-0" style="border-radius: 14px;">
@@ -159,48 +172,104 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --- DEVICE FINGERPRINT SCAN FOR WORKER VERIFICATION ---
-        const scanButtons = document.querySelectorAll('.btn-scan-finger');
+        const btnGlobalScan = document.getElementById('btnGlobalScan');
+        const globalScanStatus = document.getElementById('globalScanStatus');
+        const attendanceLogTableBody = document.getElementById('attendanceLogTableBody');
+        const emptyRowPlaceholder = document.getElementById('emptyRowPlaceholder');
+        const formSubmitContainer = document.getElementById('formSubmitContainer');
+        const scannedCountBadge = document.getElementById('scannedCount');
+        
+        let scannedWorkerIds = new Set();
 
-        scanButtons.forEach(button => {
-            button.addEventListener('click', async function () {
-                const workerId = this.getAttribute('data-id');
-                const workerName = this.getAttribute('data-name');
-                const statusContainer = document.getElementById(`bio-status-${workerId}`);
-                const hiddenInput = document.getElementById(`bio-input-${workerId}`);
-                const presentRadio = document.getElementById(`present-${workerId}`);
+        // --- GLOBAL HARDWARE SCAN AND LOOKUP ENGINES ---
+        btnGlobalScan?.addEventListener('click', async function () {
+            globalScanStatus.className = "alert alert-warning border text-dark small py-2 mb-0";
+            globalScanStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Polling hardware credential layer...';
 
-                try {
-                    const response = await fetch('/passkeys/login/options', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                    });
-                    const options = await response.json();
+            try {
+                // 1. Ask controller layer for WebAuthn authentication requirements
+                const response = await fetch('/passkeys/login/options', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                });
+                const options = await response.json();
 
-                    // 2. Updated to use the explicitly loaded CDN library for authentication
-                    const credential = await window.SimpleWebAuthnBrowser.startAuthentication(options);
+                // 2. Wake up OS/Device matching prompt dialog
+                const credential = await window.SimpleWebAuthnBrowser.startAuthentication(options);
 
-                    const submitResponse = await fetch('/passkeys/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: JSON.stringify(credential)
-                    });
+                // 3. Post payload assertion to server architecture
+                const submitResponse = await fetch('/passkeys/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify(credential)
+                });
 
-                    if (submitResponse.ok) {
-                        statusContainer.innerHTML = '<i class="bi bi-check-circle-fill"></i> Verified Match';
-                        statusContainer.className = 'bio-indicator bio-verified';
-                        hiddenInput.value = "1";
-                        if (presentRadio) presentRadio.checked = true;
-                        alert(`Biometrics Authenticated: ${workerName} checked in successfully!`);
-                    } else {
-                        alert('Authentication failure: Token credentials unmatched for this field worker.');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert(`Verification Error: ${err.message} | ${err.name}`);
+                const result = await submitResponse.json();
+
+                if (submitResponse.ok && result.worker) {
+                    const worker = result.worker; // Expects backend to return { worker: { id, full_name, trade } }
+                    
+                    globalScanStatus.className = "alert alert-success border text-success small py-2 mb-0";
+                    globalScanStatus.innerHTML = `<i class="bi bi-check-circle-fill"></i> Successfully recognized: <strong>${worker.full_name}</strong>`;
+                    
+                    appendWorkerToLog(worker);
+                } else {
+                    globalScanStatus.className = "alert alert-danger border text-danger small py-2 mb-0";
+                    globalScanStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Credentials unmatched. Unknown personnel token.';
                 }
-            });
+            } catch (err) {
+                console.error(err);
+                globalScanStatus.className = "alert alert-danger border text-danger small py-2 mb-0";
+                globalScanStatus.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> Error: ${err.message || 'Verification execution failed.'}`;
+            }
         });
+
+        // --- DYNAMICALLY CONSTRUCT ATTENDANCE LOG VIEW ---
+        function appendWorkerToLog(worker) {
+            // Avoid duplicate tracking logs in current active session UI frame
+            if (scannedWorkerIds.has(worker.id)) {
+                // Flash highlight existing row tracking element
+                const existingRow = document.getElementById(`row-worker-${worker.id}`);
+                if (existingRow) {
+                    existingRow.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => existingRow.style.backgroundColor = 'transparent', 1500);
+                }
+                return;
+            }
+
+            // Purge default backdrop empty view state block
+            if (emptyRowPlaceholder) {
+                emptyRowPlaceholder.remove();
+            }
+
+            scannedWorkerIds.add(worker.id);
+            scannedCountBadge.innerText = `${scannedWorkerIds.size} Active Logs`;
+            formSubmitContainer.classList.remove('d-none');
+
+            const tableRowHtml = `
+                <tr class="border-bottom" id="row-worker-${worker.id}" style="transition: background-color 0.5s ease;">
+                    <td class="py-3">
+                        <div class="fw-semibold text-dark">${worker.full_name}</div>
+                        <input type="hidden" name="biometric_verified[${worker.id}]" value="1">
+                    </td>
+                    <td class="py-3 text-muted">${worker.trade || 'General'}</td>
+                    <td class="py-3">
+                        <div class="d-flex justify-content-center flex-wrap gap-2">
+                            <input type="radio" class="btn-check" name="attendance[${worker.id}]" id="present-${worker.id}" value="present" checked>
+                            <label class="btn btn-outline-success btn-sm px-3 rounded-pill fw-medium" for="present-${worker.id}">Present</label>
+
+                            <input type="radio" class="btn-check" name="attendance[${worker.id}]" id="late-${worker.id}" value="late">
+                            <label class="btn btn-outline-warning btn-sm px-3 rounded-pill fw-medium" for="late-${worker.id}">Late</label>
+
+                            <input type="radio" class="btn-check" name="attendance[${worker.id}]" id="absent-${worker.id}" value="absent">
+                            <label class="btn btn-outline-danger btn-sm px-3 rounded-pill fw-medium" for="absent-${worker.id}">Absent</label>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            attendanceLogTableBody.insertAdjacentHTML('beforeend', tableRowHtml);
+        }
 
         // --- NEW FIELD WORKER ENROLLMENT REGISTRATION SUBSYSTEM ---
         const initFingerprintBtn = document.getElementById('btnRegisterWorkerFingerprint');
@@ -229,7 +298,6 @@
                 options.user.name = `${firstName} ${lastName}`;
                 options.user.displayName = `${firstName} ${lastName}`;
 
-                // 3. Updated to use the explicitly loaded CDN library for registration
                 capturedPasskeyCredential = await window.SimpleWebAuthnBrowser.startRegistration(options);
                 
                 fingerprintLabel.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-patch-check-fill"></i> Token Captured Successfully!</span>';
@@ -237,9 +305,7 @@
             } catch (error) {
                 console.error(error);
                 fingerprintLabel.innerHTML = '<span class="text-danger">Registration execution halted.</span>';
-                
-                // Exposes the real device error
-                alert('Device Error: ' + error.message + ' | ' + error.name);
+                alert('Device Error: ' + error.message);
             }
         });
 
