@@ -36,8 +36,10 @@ font: inherit;
 .app {
 display: flex;
 width: 100%;
+height: 100vh;
 min-height: 100vh;
 min-height: 100dvh;
+overflow: hidden;
 }
 
 /* ==========================================================================
@@ -468,11 +470,9 @@ display: flex;
 min-width: 0;
 flex: 1;
 flex-direction: column;
-
-
 margin-left: 280px;
-
-
+height: 100vh;
+overflow: hidden;
 }
 
 .topbar {
@@ -529,11 +529,9 @@ font-size: 24px;
 .content {
 min-width: 0;
 flex: 1;
-
-
+min-height: 0;
 padding: 32px;
-
-
+overflow: hidden;
 }
 
 /* ==========================================================================

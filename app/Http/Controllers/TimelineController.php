@@ -82,11 +82,26 @@ class TimelineController extends Controller
     }
 
     /**
+     * Return refreshed project timeline data for the admin UI.
+     */
+    public function timelineData(Request $request, Project $project)
+    {
+        $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+            ->where('project_id', $project->project_id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'project' => $this->enrichProjectData($project),
+        ]);
+    }
+
+    /**
      * Enrich project data with calculated stats
      */
     private function enrichProjectData($project)
     {
-        $phases = $project->phases()->orderBy('phase_order', 'asc')->get();
+        $phases = $project->phases()->with(['milestones'])->withCount('milestones')->orderBy('phase_order', 'asc')->get();
         
         $overallProgress = 0;
         if ($phases->isNotEmpty()) {
@@ -102,7 +117,7 @@ class TimelineController extends Controller
         $inProgressPhases = $phases->where('status', 'in_progress')->count();
         $upcomingPhases = $phases->whereIn('status', ['not_started', 'delayed'])->count();
 
-        // Enrich each phase with display status
+        // Enrich each phase with display status and database-backed fields for the timeline UI
         $phases = $phases->map(function ($phase) {
             $phase->display_status = match($phase->status) {
                 'completed' => 'completed',
@@ -110,8 +125,35 @@ class TimelineController extends Controller
                 'not_started', 'delayed' => 'planning',
                 default => 'planning'
             };
+            $phase->name = $phase->phase_name;
+            $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
+            $phase->start = $phase->planned_start_date?->toDateString();
+            $phase->end = $phase->planned_end_date?->toDateString();
+            $phase->progress = (float) ($phase->completion_percentage ?? 0);
+            $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
+            $phase->milestone_count = (int) ($phase->milestones_count ?? 0);
+
             return $phase;
         });
+
+        $milestones = $phases->flatMap(function ($phase) {
+            return $phase->milestones->map(function ($milestone) use ($phase) {
+                return [
+                    'milestone_id' => $milestone->milestone_id,
+                    'phase_id' => $milestone->phase_id,
+                    'milestone_name' => $milestone->milestone_name,
+                    'planned_date' => $milestone->planned_date?->toDateString(),
+                    'actual_date' => $milestone->actual_date?->toDateString(),
+                    'planned_start_date' => $phase->planned_start_date?->toDateString(),
+                    'planned_end_date' => $phase->planned_end_date?->toDateString(),
+                    'is_completed' => (bool) $milestone->is_completed,
+                    'is_delayed' => (bool) $milestone->is_delayed,
+                    'status' => $milestone->is_completed ? 'completed' : ($milestone->is_delayed ? 'delayed' : 'upcoming'),
+                    'phase_name' => $phase->phase_name,
+                    'phase_code' => $phase->phase_code,
+                ];
+            });
+        })->values();
 
         return [
             'id' => $project->project_id,
@@ -127,11 +169,28 @@ class TimelineController extends Controller
             'engineer' => $project->engineer,
             'supervisors' => $project->supervisors,
             'phases' => $phases,
+            'milestones' => $milestones,
             'currentPhase' => $currentPhase,
             'completedPhases' => $completedPhases,
             'inProgressPhases' => $inProgressPhases,
             'upcomingPhases' => $upcomingPhases,
             'totalPhases' => $phases->count(),
         ];
+    }
+
+    private function calculateDurationDays($startDate, $endDate)
+    {
+        if (!$startDate || !$endDate) {
+            return 0;
+        }
+
+        try {
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+
+            return max(1, $start->diffInDays($end) + 1);
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 }
