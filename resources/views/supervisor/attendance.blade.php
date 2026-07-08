@@ -6,109 +6,163 @@
 @push('styles')
     @vite(['resources/css/supervisor.css'])
     <style>
-    /* Ensure modal sits on top of the sticky topbar/sidebar */
-    .modal {
-        z-index: 1070 !important;
-    }
+        /* Ensure modal sits on top of the sticky topbar/sidebar */
+        .modal {
+            z-index: 1070 !important;
+        }
 
-    .modal-backdrop {
-        z-index: 1060 !important;
-    }
+        .modal-backdrop {
+            z-index: 1060 !important;
+        }
 
-    .modal.fade {
-        display: none !important;
-    }
+        .modal.fade {
+            display: none !important;
+        }
 
-    .modal.fade.show {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.6);
-    }
+        .modal.fade.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+        }
 
-    /* Desktop / web modal size */
-    .workers-modal-dialog {
-        width: min(820px, calc(100vw - 40px)) !important;
-        max-width: 820px !important;
-        margin: auto !important;
-    }
-
-    #viewWorkersModal .modal-content {
-        border-radius: 14px;
-        overflow: hidden;
-    }
-
-    #viewWorkersModal .modal-body {
-        max-height: 62vh;
-        overflow-y: auto;
-    }
-
-    #viewWorkersModal table {
-        font-size: 0.95rem;
-    }
-
-    #viewWorkersModal th,
-    #viewWorkersModal td {
-        padding: 0.85rem 1rem;
-    }
-
-    /* Tablet */
-    @media (max-width: 768px) {
+        /* Desktop / web modal size */
         .workers-modal-dialog {
-            width: calc(100vw - 24px) !important;
-            max-width: calc(100vw - 24px) !important;
-            margin: 80px auto 1rem !important;
+            width: min(820px, calc(100vw - 40px)) !important;
+            max-width: 820px !important;
+            margin: auto !important;
+        }
+
+        #viewWorkersModal .modal-content {
+            border-radius: 14px;
+            overflow: hidden;
         }
 
         #viewWorkersModal .modal-body {
-            max-height: 55vh !important;
+            max-height: 62vh;
+            overflow-y: auto;
         }
 
-        .modal-content {
-            border-radius: 18px !important;
+        #viewWorkersModal table {
+            font-size: 0.95rem;
         }
-    }
-    .fingerprint-trigger-btn {
-                width: 100px;   /* Slightly smaller than desktop but still large */
-                height: 100px;
-                font-size: 2.8rem;
-            }
-            .scan-pulse-container {
-                padding: 2rem !important; /* Reduces padding to give button more room */
-            }
-    /* Phone */
-    @media (max-width: 576px) {
+
+        #viewWorkersModal th,
+        #viewWorkersModal td {
+            padding: 0.85rem 1rem;
+        }
+
+        .scan-pulse-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 16px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .scan-pulse-container:hover {
+            border-color: #0d6efd;
+            background-color: #f1f7ff;
+        }
+
         .fingerprint-trigger-btn {
-                width: 100px;   /* Slightly smaller than desktop but still large */
-                height: 100px;
-                font-size: 2.8rem;
+            width: 112px !important;
+            height: 112px !important;
+            min-width: 112px !important;
+            min-height: 112px !important;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 3.2rem !important;
+            line-height: 1 !important;
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .fingerprint-trigger-btn i {
+            font-size: 3.2rem !important;
+            line-height: 1 !important;
+        }
+
+        .fingerprint-trigger-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            .workers-modal-dialog {
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+                margin: 80px auto 1rem !important;
             }
+
+            #viewWorkersModal .modal-body {
+                max-height: 55vh !important;
+            }
+
+            .modal-content {
+                border-radius: 18px !important;
+            }
+
+            .fingerprint-trigger-btn {
+                width: 96px !important;
+                height: 96px !important;
+                min-width: 96px !important;
+                min-height: 96px !important;
+                font-size: 2.8rem !important;
+            }
+
+            .fingerprint-trigger-btn i {
+                font-size: 2.8rem !important;
+            }
+
             .scan-pulse-container {
-                padding: 2rem !important; /* Reduces padding to give button more room */
+                padding: 2rem !important;
             }
-        .workers-modal-dialog {
-            width: calc(100vw - 18px) !important;
-            max-width: calc(100vw - 18px) !important;
         }
 
-        #viewWorkersModal .modal-title {
-            font-size: 1rem;
-        }
+        /* Phone */
+        @media (max-width: 576px) {
+            .workers-modal-dialog {
+                width: calc(100vw - 18px) !important;
+                max-width: calc(100vw - 18px) !important;
+            }
 
-        #viewWorkersModal thead th,
-        #allWorkersTableBody td {
-            font-size: 0.82rem;
-            padding: 0.55rem !important;
-        }
+            #viewWorkersModal .modal-title {
+                font-size: 1rem;
+            }
 
-        #viewWorkersModal .modal-footer {
-            padding: 0.5rem 0.75rem;
-        }
+            #viewWorkersModal thead th,
+            #allWorkersTableBody td {
+                font-size: 0.82rem;
+                padding: 0.55rem !important;
+            }
 
-        #viewWorkersModal .btn {
-            padding: 0.25rem 0.6rem;
+            #viewWorkersModal .modal-footer {
+                padding: 0.5rem 0.75rem;
+            }
+
+            #viewWorkersModal .btn {
+                padding: 0.25rem 0.6rem;
+            }
+
+            .fingerprint-trigger-btn {
+                width: 90px !important;
+                height: 90px !important;
+                min-width: 90px !important;
+                min-height: 90px !important;
+                font-size: 2.6rem !important;
+            }
+
+            .fingerprint-trigger-btn i {
+                font-size: 2.6rem !important;
+            }
+
+            .scan-pulse-container {
+                padding: 2rem !important;
+            }
         }
-    }
     </style>
 @endpush
 
@@ -122,14 +176,18 @@
                     <h4 class="fw-bold mb-1">Daily Workforce Attendance</h4>
                     <p class="text-muted mb-0 small">Scan a worker's fingerprint to automatically identify them and log their attendance.</p>
                 </div>
+
                 <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button type="button" class="btn btn-outline-secondary fw-semibold btn-sm px-3 py-2" 
+                    <button type="button" class="btn btn-outline-secondary fw-semibold btn-sm px-3 py-2"
                             data-bs-toggle="modal" data-bs-target="#viewWorkersModal">
                         <i class="bi bi-people-fill"></i> View Enrolled Workers
                     </button>
-                    <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
+
+                    <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2"
+                            data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
                         <i class="bi bi-person-plus-fill"></i> Register New Worker
                     </button>
+
                     <div style="max-width: 180px;">
                         <input type="date" name="attendance_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                     </div>
@@ -144,11 +202,12 @@
             <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
                 <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
                     <h5 class="fw-bold text-dark mb-3">Biometric Identification</h5>
-                    
+
                     <div class="scan-pulse-container p-5 mb-3">
                         <button type="button" id="btnGlobalScan" class="btn btn-primary fingerprint-trigger-btn mb-3">
                             <i class="bi bi-fingerprint"></i>
                         </button>
+
                         <p class="fw-semibold text-dark mb-1">Ready to Identify</p>
                         <span class="text-muted small">Click the fingerprint button to initialize physical reader stream.</span>
                     </div>
@@ -164,6 +223,7 @@
         <div class="col-12 col-lg-8">
             <form action="{{ route('supervisor.attendance.save') }}" method="POST" id="attendanceMainForm">
                 @csrf
+
                 <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -175,14 +235,19 @@
                             <table class="table align-middle mb-0" id="supervisorAttendanceTable">
                                 <thead>
                                     <tr class="text-muted border-bottom">
-                                        <th class="pb-3 border-0" style="width: 40%;">Personnel Name</th>
-                                        <th class="pb-3 border-0" style="width: 25%;">Trade / Designation</th>
-                                        <th class="pb-3 border-0 text-center" style="width: 35%;">Status Log</th>
+                                        <th class="pb-3 border-0">Personnel Name</th>
+                                        <th class="pb-3 border-0">Trade / Designation</th>
+                                        <th class="pb-3 border-0 text-center">Time In</th>
+                                        <th class="pb-3 border-0 text-center">Break Out</th>
+                                        <th class="pb-3 border-0 text-center">Break In</th>
+                                        <th class="pb-3 border-0 text-center">Time Out</th>
+                                        <th class="pb-3 border-0 text-center">Status Log</th>
                                     </tr>
                                 </thead>
+
                                 <tbody id="attendanceLogTableBody">
                                     <tr id="emptyRowPlaceholder">
-                                        <td colspan="3" class="text-center py-5 text-muted fst-italic">
+                                        <td colspan="7" class="text-center py-5 text-muted fst-italic">
                                             <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
                                             No personnel checked in yet during this session.
                                         </td>
@@ -208,38 +273,53 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="registerWorkerModalLabel"><i class="bi bi-person-badge text-primary"></i> Fast Worker Enrollment</h5>
+                <h5 class="modal-title fw-bold" id="registerWorkerModalLabel">
+                    <i class="bi bi-person-badge text-primary"></i> Fast Worker Enrollment
+                </h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body py-3">
                 <form id="fastWorkerForm">
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted">First Name</label>
                         <input type="text" id="regFirstName" class="form-control" required placeholder="e.g. Juan">
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted">Last Name</label>
                         <input type="text" id="regLastName" class="form-control" required placeholder="e.g. Dela Cruz">
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted">Trade Specialty</label>
                         <input type="text" id="regTrade" class="form-control" placeholder="e.g. Carpenter, Mason, Welder">
                     </div>
-                    
+
                     <div class="card bg-light border-0 mb-2">
                         <div class="card-body text-center py-3">
-                            <label class="d-block small fw-bold text-dark mb-2"><i class="bi bi-fingerprint"></i> Device Passkey Association Layer</label>
+                            <label class="d-block small fw-bold text-dark mb-2">
+                                <i class="bi bi-fingerprint"></i> Device Passkey Association Layer
+                            </label>
+
                             <button type="button" class="btn btn-dark btn-sm fw-semibold" id="btnRegisterWorkerFingerprint">
                                 <i class="bi bi-shield-plus"></i> Initialize Fingerprint Capture
                             </button>
-                            <span class="d-block text-muted small mt-1" id="registerFingerprintLabel">Biometrics not captured yet.</span>
+
+                            <span class="d-block text-muted small mt-1" id="registerFingerprintLabel">
+                                Biometrics not captured yet.
+                            </span>
                         </div>
                     </div>
                 </form>
             </div>
+
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light fw-medium btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary fw-semibold btn-sm" id="btnSaveWorkerRecord" disabled>Save Worker Record</button>
+                <button type="button" class="btn btn-primary fw-semibold btn-sm" id="btnSaveWorkerRecord" disabled>
+                    Save Worker Record
+                </button>
             </div>
         </div>
     </div>
@@ -264,6 +344,7 @@
                                 <th>Enrolled</th>
                             </tr>
                         </thead>
+
                         <tbody id="allWorkersTableBody"></tbody>
                     </table>
                 </div>
@@ -287,235 +368,657 @@
 
 @push('scripts')
 <script src="https://unpkg.com/@simplewebauthn/browser@13.3.0/dist/bundle/index.umd.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const csrfToken = '{{ csrf_token() }}';
+
         const btnGlobalScan = document.getElementById('btnGlobalScan');
         const globalScanStatus = document.getElementById('globalScanStatus');
         const attendanceLogTableBody = document.getElementById('attendanceLogTableBody');
-        const emptyRowPlaceholder = document.getElementById('emptyRowPlaceholder');
         const formSubmitContainer = document.getElementById('formSubmitContainer');
         const scannedCountBadge = document.getElementById('scannedCount');
         const viewWorkersModal = document.getElementById('viewWorkersModal');
-        
-        // Load workers immediately when the View Enrolled Workers modal opens.
-        viewWorkersModal?.addEventListener('show.bs.modal', function() {
-            // Force reset to page 1 every time the modal is opened.
-            loadWorkers(1);
-        });
-        
-        let scannedWorkerIds = new Set();
-
-        // --- GLOBAL HARDWARE SCAN AND LOOKUP ENGINE ---
-        btnGlobalScan?.addEventListener('click', async function () {
-            globalScanStatus.className = "alert alert-warning border text-dark small py-2 mb-0";
-            globalScanStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Polling hardware credential layer...';
-
-            try {
-                // 1. Fetch authentication options from your WebAuthnController
-                const response = await fetch('/passkeys/login/options', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                    }
-                });
-
-                const options = await response.json();
-
-                // 2. Trigger the browser's biometric/security key prompt
-                const credential = await SimpleWebAuthnBrowser.startAuthentication(options);
-
-                // 3. Post the credential assertion to the server for verification
-                const submitResponse = await fetch('/passkeys/login', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'Accept': 'application/json', 
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                    },
-                    body: JSON.stringify(credential)
-                });
-
-                const result = await submitResponse.json();
-
-                if (submitResponse.ok && result.worker) {
-                    globalScanStatus.className = "alert alert-success border text-success small py-2 mb-0";
-                    globalScanStatus.innerHTML = `<i class="bi bi-check-circle-fill"></i> Verified: <strong>${result.worker.first_name} ${result.worker.last_name}</strong>`;
-                    
-                    appendWorkerToLog(result.worker);
-                } else {
-                    throw new Error('Authentication failed: Worker not recognized.');
-                }
-            } catch (err) {
-                console.error(err);
-                globalScanStatus.className = "alert alert-danger border text-danger small py-2 mb-0";
-                globalScanStatus.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${err.message}`;
-            }
-        });
-
-        // --- DYNAMICALLY CONSTRUCT ATTENDANCE LOG VIEW ---
-        function appendWorkerToLog(worker) {
-            if (scannedWorkerIds.has(worker.worker_id)) {
-                const existingRow = document.getElementById(`row-worker-${worker.worker_id}`);
-
-                if (existingRow) {
-                    existingRow.style.backgroundColor = '#fff3cd';
-
-                    setTimeout(() => {
-                        existingRow.style.backgroundColor = 'transparent';
-                    }, 1500);
-                }
-
-                return;
-            }
-
-            if (emptyRowPlaceholder) {
-                emptyRowPlaceholder.remove();
-            }
-
-            scannedWorkerIds.add(worker.worker_id);
-            scannedCountBadge.innerText = `${scannedWorkerIds.size} Active Logs`;
-            formSubmitContainer.classList.remove('d-none');
-
-            const tableRowHtml = `
-                <tr class="border-bottom" id="row-worker-${worker.worker_id}">
-                    <td class="py-3">
-                        <div class="fw-semibold text-dark">${worker.first_name} ${worker.last_name}</div>
-                        <input type="hidden" name="biometric_verified[${worker.worker_id}]" value="1">
-                    </td>
-                    <td class="py-3 text-muted">${worker.trade || 'General'}</td>
-                    <td class="py-3">
-                        <div class="d-flex justify-content-center flex-wrap gap-2">
-                            <input type="radio" class="btn-check" name="attendance[${worker.worker_id}]" id="present-${worker.worker_id}" value="present" checked>
-                            <label class="btn btn-outline-success btn-sm px-3 rounded-pill" for="present-${worker.worker_id}">Present</label>
-
-                            <input type="radio" class="btn-check" name="attendance[${worker.worker_id}]" id="late-${worker.worker_id}" value="late">
-                            <label class="btn btn-outline-warning btn-sm px-3 rounded-pill" for="late-${worker.worker_id}">Late</label>
-                        </div>
-                    </td>
-                </tr>
-            `;
-
-            attendanceLogTableBody.insertAdjacentHTML('beforeend', tableRowHtml);
-        }
-
-        // --- NEW WORKER REGISTRATION LOGIC ---
-        let capturedPasskeyCredential = null;
 
         const btnRegisterFingerprint = document.getElementById('btnRegisterWorkerFingerprint');
         const btnSaveWorker = document.getElementById('btnSaveWorkerRecord');
         const regStatusLabel = document.getElementById('registerFingerprintLabel');
 
-        btnRegisterFingerprint?.addEventListener('click', async () => {
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const attendanceDateInput = document.querySelector('input[name="attendance_date"]');
+
+        let capturedPasskeyCredential = null;
+        let currentPage = 1;
+        let scannedWorkerIds = new Set();
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function normalizeWorker(rawWorker, fallback = {}) {
+            const worker = rawWorker || {};
+
+            return {
+                worker_id: worker.worker_id || worker.id || fallback.worker_id || fallback.id || null,
+                first_name: worker.first_name || fallback.first_name || '',
+                last_name: worker.last_name || fallback.last_name || '',
+                trade: worker.trade || fallback.trade || 'General',
+                created_at: worker.created_at || fallback.created_at || new Date().toISOString()
+            };
+        }
+
+        function formatTime(timeValue) {
+            if (!timeValue) {
+                return '-';
+            }
+
+            const [hour, minute] = String(timeValue).split(':');
+
+            let h = parseInt(hour, 10);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+
+            h = h % 12;
+            h = h ? h : 12;
+
+            return `${h}:${minute} ${ampm}`;
+        }
+
+        function selectedDateValue() {
+            return attendanceDateInput?.value || new Date().toISOString().slice(0, 10);
+        }
+
+        function isFivePmOrLaterForSelectedDate() {
+            const selected = selectedDateValue();
+            const today = new Date().toISOString().slice(0, 10);
+
+            if (selected < today) {
+                return true;
+            }
+
+            if (selected > today) {
+                return false;
+            }
+
+            const now = new Date();
+
+            return now.getHours() >= 17;
+        }
+
+        function renderEmptyAttendanceRow() {
+            attendanceLogTableBody.innerHTML = `
+                <tr id="emptyRowPlaceholder">
+                    <td colspan="7" class="text-center py-5 text-muted fst-italic">
+                        <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
+                        No personnel checked in yet during this session.
+                    </td>
+                </tr>
+            `;
+        }
+
+        function updateActiveLogCount() {
+            const activeRows = attendanceLogTableBody.querySelectorAll('tr[data-active-log="1"]').length;
+
+            scannedCountBadge.innerText = `${activeRows} Active Logs`;
+
+            if (activeRows > 0) {
+                formSubmitContainer.classList.remove('d-none');
+            } else {
+                formSubmitContainer.classList.add('d-none');
+            }
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'present') {
+                return '<span class="badge bg-success rounded-pill">Present</span>';
+            }
+
+            if (status === 'late') {
+                return '<span class="badge bg-warning text-dark rounded-pill">Late</span>';
+            }
+
+            if (status === 'absent') {
+                return '<span class="badge bg-danger rounded-pill">Absent</span>';
+            }
+
+            return '<span class="badge bg-secondary rounded-pill">Not Logged</span>';
+        }
+
+        function getActionButtons(record) {
+            if (!record || record.status === 'absent' || record.status === 'not_logged') {
+                return '';
+            }
+
+            let buttons = '';
+
+            if (record.time_in && !record.break_out) {
+                buttons += `
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary attendance-action-btn"
+                            data-worker-id="${escapeHtml(record.worker_id)}"
+                            data-action="break_out">
+                        Break Out
+                    </button>
+                `;
+            }
+
+            if (record.break_out && !record.break_in) {
+                buttons += `
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning attendance-action-btn"
+                            data-worker-id="${escapeHtml(record.worker_id)}"
+                            data-action="break_in">
+                        Break In
+                    </button>
+                `;
+            }
+
+            if (record.time_in && !record.time_out) {
+                if (isFivePmOrLaterForSelectedDate()) {
+                    buttons += `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-dark attendance-action-btn"
+                                data-worker-id="${escapeHtml(record.worker_id)}"
+                                data-action="time_out">
+                            Time Out
+                        </button>
+                    `;
+                } else {
+                    buttons += `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                disabled>
+                            Time Out 5PM
+                        </button>
+                    `;
+                }
+            }
+
+            return buttons;
+        }
+
+        function appendAttendanceRecordToLog(record) {
+            const emptyRowPlaceholder = document.getElementById('emptyRowPlaceholder');
+
+            if (emptyRowPlaceholder) {
+                emptyRowPlaceholder.remove();
+            }
+
+            const workerKey = String(record.worker_id);
+            const existingRow = document.getElementById(`row-worker-${workerKey}`);
+
+            if (existingRow) {
+                existingRow.remove();
+            }
+
+            scannedWorkerIds.add(workerKey);
+
+            const fullName = `${escapeHtml(record.first_name)} ${escapeHtml(record.last_name)}`.trim();
+            const trade = escapeHtml(record.trade || 'General');
+
+            const rowHtml = `
+                <tr class="border-bottom" id="row-worker-${workerKey}" data-active-log="1">
+                    <td class="py-3">
+                        <div class="fw-semibold text-dark">${fullName}</div>
+                        <input type="hidden" name="biometric_verified[${workerKey}]" value="1">
+                    </td>
+
+                    <td class="py-3 text-muted">${trade}</td>
+
+                    <td class="py-3 text-center">${formatTime(record.time_in)}</td>
+                    <td class="py-3 text-center">${formatTime(record.break_out)}</td>
+                    <td class="py-3 text-center">${formatTime(record.break_in)}</td>
+                    <td class="py-3 text-center">${formatTime(record.time_out)}</td>
+
+                    <td class="py-3 text-center">
+                        <div class="d-flex flex-column align-items-center gap-2">
+                            ${getStatusBadge(record.status)}
+
+                            <div class="d-flex justify-content-center flex-wrap gap-1">
+                                ${getActionButtons(record)}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            attendanceLogTableBody.insertAdjacentHTML('beforeend', rowHtml);
+
+            const activeCount = document.querySelectorAll('#attendanceLogTableBody tr[data-active-log="1"]').length;
+            scannedCountBadge.innerText = `${activeCount} Active Logs`;
+
+            if (activeCount > 0) {
+                formSubmitContainer.classList.remove('d-none');
+            } else {
+                formSubmitContainer.classList.add('d-none');
+            }
+        }
+
+        async function loadTodayAttendance() {
+            renderEmptyAttendanceRow();
+
+            scannedWorkerIds.clear();
+            updateActiveLogCount();
+
             try {
-                // 1. Get registration options from server
+                const response = await fetch(`/supervisor/attendance/today?date=${selectedDateValue()}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to load attendance.');
+                }
+
+                if (result.data && result.data.length > 0) {
+                    result.data.forEach(record => {
+                        appendAttendanceRecordToLog(record);
+                    });
+                }
+
+                if (!attendanceLogTableBody.querySelector('tr')) {
+                    renderEmptyAttendanceRow();
+                }
+
+                updateActiveLogCount();
+            } catch (error) {
+                console.error(error);
+
+                attendanceLogTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-danger text-center py-5">
+                            ${escapeHtml(error.message || 'Error loading attendance.')}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function saveScannedWorkerAttendance(worker) {
+            const response = await fetch('/supervisor/attendance/log-worker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    worker_id: worker.worker_id,
+                    log_date: selectedDateValue(),
+                    action: 'time_in'
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to save attendance.');
+            }
+
+            appendAttendanceRecordToLog(result.attendance);
+        }
+
+        async function updateAttendanceAction(workerId, action) {
+            const response = await fetch('/supervisor/attendance/log-worker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    worker_id: workerId,
+                    log_date: selectedDateValue(),
+                    action: action
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                alert(result.message || 'Failed to update attendance.');
+                return;
+            }
+
+            appendAttendanceRecordToLog(result.attendance);
+        }
+
+        async function loadWorkers(page = 1) {
+            const tableBody = document.getElementById('allWorkersTableBody');
+            const pageInfo = document.getElementById('pageInfo');
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center py-4">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Loading workers...
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const res = await fetch(`/supervisor/workers/list?page=${page}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Unable to load workers.');
+                }
+
+                const workers = Array.isArray(data)
+                    ? data
+                    : (data.data || data.workers || []);
+
+                if (!workers.length) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                No enrolled workers found.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tableBody.innerHTML = workers.map(item => {
+                        const worker = normalizeWorker(item);
+
+                        const fullName = `${escapeHtml(worker.first_name)} ${escapeHtml(worker.last_name)}`.trim();
+                        const trade = escapeHtml(worker.trade || 'General');
+                        const enrolledDate = worker.created_at
+                            ? new Date(worker.created_at).toLocaleDateString()
+                            : '-';
+
+                        return `
+                            <tr>
+                                <td class="ps-4">${fullName}</td>
+                                <td>${trade}</td>
+                                <td>${enrolledDate}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                currentPage = data.current_page || page;
+                pageInfo.innerText = `Page ${currentPage}`;
+
+                prevPageBtn.disabled = currentPage <= 1;
+                nextPageBtn.disabled = currentPage >= (data.last_page || currentPage);
+            } catch (error) {
+                console.error(error);
+
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-danger text-center py-4">
+                            ${escapeHtml(error.message || 'Error loading worker data.')}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        viewWorkersModal?.addEventListener('show.bs.modal', function () {
+            loadWorkers(1);
+        });
+
+        prevPageBtn?.addEventListener('click', function () {
+            if (currentPage > 1) {
+                loadWorkers(currentPage - 1);
+            }
+        });
+
+        nextPageBtn?.addEventListener('click', function () {
+            loadWorkers(currentPage + 1);
+        });
+
+        attendanceLogTableBody?.addEventListener('click', function (event) {
+            const button = event.target.closest('.attendance-action-btn');
+
+            if (!button) {
+                return;
+            }
+
+            updateAttendanceAction(button.dataset.workerId, button.dataset.action);
+        });
+
+        attendanceDateInput?.addEventListener('change', function () {
+            loadTodayAttendance();
+        });
+
+        btnGlobalScan?.addEventListener('click', async function () {
+            globalScanStatus.className = 'alert alert-warning border text-dark small py-2 mb-0';
+            globalScanStatus.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Polling hardware credential layer...
+            `;
+
+            try {
+                const response = await fetch('/passkeys/login/options', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+
+                const options = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(options.message || 'Failed to get login options.');
+                }
+
+                const credential = await SimpleWebAuthnBrowser.startAuthentication(options);
+
+                const submitResponse = await fetch('/passkeys/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(credential)
+                });
+
+                const result = await submitResponse.json().catch(() => ({}));
+
+                if (submitResponse.ok && result.worker) {
+                    const worker = normalizeWorker(result.worker);
+
+                    globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
+                    globalScanStatus.innerHTML = `
+                        <i class="bi bi-check-circle-fill"></i>
+                        Verified:
+                        <strong>${escapeHtml(worker.first_name)} ${escapeHtml(worker.last_name)}</strong>
+                    `;
+
+                    await saveScannedWorkerAttendance(worker);
+                } else {
+                    throw new Error(result.message || 'Authentication failed: Worker not recognized.');
+                }
+            } catch (err) {
+                console.error(err);
+
+                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${escapeHtml(err.message)}
+                `;
+            }
+        });
+
+        btnRegisterFingerprint?.addEventListener('click', async function () {
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+
+            if (!firstName || !lastName) {
+                alert('Please enter the worker first name and last name before capturing fingerprint.');
+                return;
+            }
+
+            btnRegisterFingerprint.disabled = true;
+            btnRegisterFingerprint.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Capturing...
+            `;
+
+            regStatusLabel.innerText = 'Starting biometric registration...';
+            regStatusLabel.className = 'd-block text-muted small mt-1';
+
+            try {
                 const response = await fetch('/passkeys/register/options', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
                     },
-                    body: JSON.stringify({ 
-                        first_name: document.getElementById('regFirstName').value,
-                        last_name: document.getElementById('regLastName').value 
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName
                     })
                 });
 
-                const options = await response.json();
+                const options = await response.json().catch(() => ({}));
 
-                // 2. Trigger browser passkey registration
+                if (!response.ok) {
+                    throw new Error(options.message || 'Failed to get registration options.');
+                }
+
                 capturedPasskeyCredential = await SimpleWebAuthnBrowser.startRegistration(options);
 
-                // 3. Update UI
-                regStatusLabel.innerText = "Biometric token captured successfully!";
-                regStatusLabel.className = "d-block text-success small mt-1";
+                regStatusLabel.innerText = 'Biometric token captured successfully!';
+                regStatusLabel.className = 'd-block text-success small mt-1';
+
                 btnSaveWorker.disabled = false;
             } catch (err) {
                 console.error(err);
-                regStatusLabel.innerText = "Registration failed. Please try again.";
+
+                capturedPasskeyCredential = null;
+
+                regStatusLabel.innerText = err.message || 'Registration failed. Please try again.';
+                regStatusLabel.className = 'd-block text-danger small mt-1';
+
+                btnSaveWorker.disabled = true;
+            } finally {
+                btnRegisterFingerprint.disabled = false;
+                btnRegisterFingerprint.innerHTML = `
+                    <i class="bi bi-shield-plus"></i>
+                    Initialize Fingerprint Capture
+                `;
             }
         });
 
-        btnSaveWorker?.addEventListener('click', async () => {
-            const workerData = {
-                first_name: document.getElementById('regFirstName').value,
-                last_name: document.getElementById('regLastName').value,
-                trade: document.getElementById('regTrade').value,
-                credential: capturedPasskeyCredential
-            };
+        btnSaveWorker?.addEventListener('click', async function () {
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const trade = document.getElementById('regTrade').value.trim() || 'General';
 
-            const response = await fetch('/supervisor/workers/register-biometric', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                },
-                body: JSON.stringify(workerData)
-            });
-
-            if (response.ok) {
-                alert('Worker successfully registered!');
-                window.location.reload();
-            } else {
-                alert('Failed to save worker.');
+            if (!firstName || !lastName) {
+                alert('Please enter the worker first name and last name.');
+                return;
             }
-        });
-    });
 
-    let currentPage = 1;
+            if (!capturedPasskeyCredential) {
+                alert('Please capture the worker fingerprint/passkey first.');
+                return;
+            }
 
-    async function loadWorkers(page = 1) {
-        const tableBody = document.getElementById('allWorkersTableBody');
-        const pageInfo = document.getElementById('pageInfo');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
+            btnSaveWorker.disabled = true;
+            btnSaveWorker.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Saving...
+            `;
 
-        tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Loading...</td></tr>';
+            try {
+                const response = await fetch('/supervisor/workers/register-biometric', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        trade: trade,
+                        credential: capturedPasskeyCredential
+                    })
+                });
 
-        try {
-            const res = await fetch(`/supervisor/workers/list?page=${page}`, {
-                headers: { 
-                    'Accept': 'application/json' 
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to save worker.');
                 }
-            });
 
-            if (!res.ok) {
-                throw new Error('Unable to load workers.');
+                const savedWorker = normalizeWorker(result.worker || result.data || result, {
+                    first_name: firstName,
+                    last_name: lastName,
+                    trade: trade
+                });
+
+                if (!savedWorker.worker_id) {
+                    throw new Error('Worker was saved, but the server did not return worker_id.');
+                }
+
+                await saveScannedWorkerAttendance(savedWorker);
+                await loadWorkers(1);
+
+                const registerModalElement = document.getElementById('registerWorkerModal');
+
+                if (window.bootstrap && registerModalElement) {
+                    const registerModal = bootstrap.Modal.getInstance(registerModalElement)
+                        || bootstrap.Modal.getOrCreateInstance(registerModalElement);
+
+                    registerModal.hide();
+                }
+
+                document.getElementById('fastWorkerForm')?.reset();
+
+                capturedPasskeyCredential = null;
+
+                regStatusLabel.innerText = 'Biometrics not captured yet.';
+                regStatusLabel.className = 'd-block text-muted small mt-1';
+
+                btnSaveWorker.disabled = true;
+                btnSaveWorker.innerHTML = 'Save Worker Record';
+
+                globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    New worker added and timed in:
+                    <strong>${escapeHtml(savedWorker.first_name)} ${escapeHtml(savedWorker.last_name)}</strong>
+                `;
+            } catch (error) {
+                console.error(error);
+
+                alert(error.message || 'Failed to save worker.');
+
+                btnSaveWorker.disabled = false;
+                btnSaveWorker.innerHTML = 'Save Worker Record';
             }
-
-            const data = await res.json();
-            const workers = data.data || [];
-
-            if (!workers.length) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">No enrolled workers found.</td></tr>';
-            } else {
-                tableBody.innerHTML = workers.map(w => `
-                    <tr>
-                        <td class="ps-4">${w.first_name} ${w.last_name}</td>
-                        <td>${w.trade || 'General'}</td>
-                        <td>${w.created_at ? new Date(w.created_at).toLocaleDateString() : '-'}</td>
-                    </tr>
-                `).join('');
-            }
-
-            currentPage = data.current_page || page;
-            pageInfo.innerText = `Page ${currentPage}`;
-            prevPageBtn.disabled = currentPage <= 1;
-            nextPageBtn.disabled = currentPage >= (data.last_page || currentPage);
-        } catch (error) {
-            console.error(error);
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-danger text-center py-4">Error loading data.</td></tr>';
-        }
-    }
-
-    // Event Listeners for Pagination
-    document.getElementById('prevPage')?.addEventListener('click', () => loadWorkers(currentPage - 1));
-    document.getElementById('nextPage')?.addEventListener('click', () => loadWorkers(currentPage + 1));
-
-    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         });
+
+        document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.modal-backdrop').forEach(function (el) {
+                    el.remove();
+                });
+            });
+        });
+
+        loadTodayAttendance();
     });
 </script>
 @endpush
