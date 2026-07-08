@@ -23,6 +23,10 @@ use Illuminate\Validation\ValidationException;
 class SupervisorController extends Controller
 {
     // ... Keeping all of your existing index(), timeline(), phases(), attendance(), profile(), notifications(), materials() blocks completely untouched ...
+    public function getWorkersList(Request $request) {
+        // paginate(10) returns exactly the structure the JS above expects
+        return \App\Models\Worker::paginate(10); 
+    }
 
     public function index(Request $request)
     {

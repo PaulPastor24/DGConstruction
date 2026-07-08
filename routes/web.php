@@ -126,6 +126,8 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/passkeys/register/options', [BiometricController::class, 'registerOptions'])->name('passkeys.register.options');
     Route::post('/passkeys/login/options', [BiometricController::class, 'loginOptions'])->name('passkeys.login.options');
     Route::post('/passkeys/login', [BiometricController::class, 'login'])->name('passkeys.login');
+
+    Route::get('/supervisor/workers/list', [SupervisorController::class, 'getWorkersList']);
 });
 
 Route::middleware(['auth', 'role:client'])->group(function () {
