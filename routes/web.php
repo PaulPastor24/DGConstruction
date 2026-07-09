@@ -41,9 +41,13 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
+    Route::get('/admin/reports/data', [AdminDashboardController::class, 'reportsData'])->name('admin.reports.data');
+    Route::get('/admin/reports/{id}/details', [AdminDashboardController::class, 'reportDetails'])->name('admin.reports.details');
+    Route::get('/admin/reports/{id}/download-pdf', [AdminDashboardController::class, 'downloadReportPdf'])->name('admin.reports.downloadPdf');
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
-    Route::post('/admin/reports/{id}/approve', [ProjectController::class, 'approveReport'])->name('admin.reports.approve');
-    Route::post('/admin/reports/{id}/revise', [ProjectController::class, 'reviseReport'])->name('admin.reports.revise');
+    Route::post('/admin/reports/{id}/evaluate', [ReportController::class, 'evaluate'])->name('admin.reports.evaluate');
+    Route::post('/admin/reports/{id}/approve', [ReportController::class, 'approve'])->name('admin.reports.approve');
+    Route::post('/admin/reports/{id}/revise', [ReportController::class, 'revise'])->name('admin.reports.revise');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/store-delivery', [AdminDashboardController::class, 'storeDelivery'])->name('admin.inventory.store-delivery');

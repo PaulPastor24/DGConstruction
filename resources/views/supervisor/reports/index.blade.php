@@ -403,7 +403,7 @@
                                 <div class="row g-3 small mb-2">
                                     <div class="col-6">
                                         <div class="text-muted font-monospace">Report ID</div>
-                                        <div class="fw-bold">RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</div>
+                                        <div class="fw-bold">{{ $report->report_id }}</div>
                                     </div>
                                     <div class="col-6">
                                         <div class="text-muted">Approval Status</div>

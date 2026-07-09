@@ -62,8 +62,8 @@ class TimelineControllerTest extends TestCase
             $table->id('milestone_id');
             $table->unsignedBigInteger('phase_id');
             $table->string('milestone_name');
-            $table->date('planned_date')->nullable();
-            $table->date('actual_date')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->boolean('is_delayed')->default(false);
             $table->timestamps();
@@ -100,8 +100,8 @@ class TimelineControllerTest extends TestCase
         Milestone::create([
             'phase_id' => $phase->phase_id,
             'milestone_name' => 'Excavation Complete',
-            'planned_date' => '2026-07-10',
-            'actual_date' => null,
+            'start_date' => '2026-07-10',
+            'end_date' => null,
             'is_completed' => false,
             'is_delayed' => false,
         ]);

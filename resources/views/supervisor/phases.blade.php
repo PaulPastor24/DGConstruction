@@ -120,7 +120,6 @@
                 <option value="completed">Completed</option>
                 <option value="delayed">Delayed</option>
             </select>
-            <button id="resetFiltersBtn" class="btn-filter-reset"><i class="bi bi-arrow-clockwise"></i> Reset</button>
         </div>
 
         <div class="table-responsive">
@@ -1384,7 +1383,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search and Filter
     const searchPhases = document.getElementById('searchPhases');
     const statusFilter = document.getElementById('statusFilter');
-    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
     const phasesTableBody = document.getElementById('phasesTableBody');
 
     function applyFilters() {
@@ -1405,12 +1403,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchPhases.addEventListener('input', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
-
-    resetFiltersBtn.addEventListener('click', () => {
-        searchPhases.value = '';
-        statusFilter.value = '';
-        applyFilters();
-    });
 });
 </script>
 

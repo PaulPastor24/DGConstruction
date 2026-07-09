@@ -142,8 +142,10 @@ class TimelineController extends Controller
                     'milestone_id' => $milestone->milestone_id,
                     'phase_id' => $milestone->phase_id,
                     'milestone_name' => $milestone->milestone_name,
-                    'planned_date' => $milestone->planned_date?->toDateString(),
-                    'actual_date' => $milestone->actual_date?->toDateString(),
+                    'start_date' => $milestone->start_date?->toDateString(),
+                    // Prefer the canonical `end_date`, but fall back to legacy fields if present
+                    'end_date' => $milestone->end_date?->toDateString()
+                        ?: (data_get($milestone, 'actual_date') ? Carbon::parse(data_get($milestone, 'actual_date'))->toDateString() : (data_get($milestone, 'actual_end_date') ? Carbon::parse(data_get($milestone, 'actual_end_date'))->toDateString() : null)),
                     'planned_start_date' => $phase->planned_start_date?->toDateString(),
                     'planned_end_date' => $phase->planned_end_date?->toDateString(),
                     'is_completed' => (bool) $milestone->is_completed,

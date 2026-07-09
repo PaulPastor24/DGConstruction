@@ -147,8 +147,8 @@ class DevelopmentDataSeeder extends Seeder
                 DB::table('timeline_milestones')->insert([
                     'phase_id' => $phase->phase_id,
                     'milestone_name' => $phase->phase_name . ' - Milestone ' . $m,
-                    'planned_date' => $planned->toDateString(),
-                    'actual_date' => $isCompleted ? $planned->toDateString() : null,
+                    'start_date' => $planned->toDateString(),
+                    'end_date' => $isCompleted ? $planned->toDateString() : null,
                     'is_completed' => $isCompleted ? 1 : 0,
                     'is_delayed' => 0,
                     'created_at' => now(),

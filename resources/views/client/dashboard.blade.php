@@ -61,7 +61,7 @@
                     </div>
                     <div class="project-progress-meta">
                         <span><i class="bi bi-flag-fill me-1"></i>{{ $currentPhaseName }}</span>
-                        <span><i class="bi bi-calendar2-week me-1"></i>{{ optional($nextMilestone)->planned_date?->format('M d, Y') ?? 'TBD' }}</span>
+                        <span><i class="bi bi-calendar2-week me-1"></i>{{ optional($nextMilestone)->start_date?->format('M d, Y') ?? 'TBD' }}</span>
                     </div>
                 </div>
             </div>
@@ -110,7 +110,7 @@
                     <div class="metric-main-val text-success" style="font-size: 1.05rem; font-weight:700; line-height:1.2; margin:0.25rem 0;">
                         {{ optional($nextMilestone)->milestone_name ?? 'Next milestone pending' }}
                     </div>
-                    <div class="metric-sub-text text-dark fw-semibold">{{ optional($nextMilestone)->planned_date?->format('M d, Y') ?? 'TBD' }}</div>
+                    <div class="metric-sub-text text-dark fw-semibold">{{ optional($nextMilestone)->start_date?->format('M d, Y') ?? 'TBD' }}</div>
                 </div>
             </div>
         </div>

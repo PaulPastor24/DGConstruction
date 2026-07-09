@@ -36,6 +36,37 @@ class Report extends Model
         'rejected_at' => 'datetime',
     ];
 
+    public function getReportTitleAttribute(): string
+    {
+        $projectName = optional($this->project)->project_name ?? 'Construction Report';
+        $phaseName = optional($this->phase)->phase_name ?? 'Project Phase';
+
+        return trim("{$projectName} - {$phaseName}");
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->approval_status) {
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            default => 'Pending Review',
+        };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->approval_status) {
+            'approved' => 'approved',
+            'rejected' => 'rejected',
+            default => 'pending',
+        };
+    }
+
+    public function getReportIdentifierAttribute(): string
+    {
+        return 'RPT-' . str_pad((string) $this->report_id, 4, '0', STR_PAD_LEFT);
+    }
+
     // Relationships
     public function project()
     {

@@ -19,7 +19,7 @@
 </title>
 
 <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet"
 >
 
@@ -41,6 +41,10 @@
 @stack('styles')
 
 <style>
+    /* Global body font to ensure consistent typography across views */
+    body {
+        font-family: 'Plus Jakarta Sans', 'Syne', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
     #sidebarToggle {
         border: 0;
         background: transparent;
