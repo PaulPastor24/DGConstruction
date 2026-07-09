@@ -496,34 +496,188 @@ class AdminDashboardController extends Controller
     /**
      * Display worker attendance.
      */
-    public function attendance()
+    public function attendance(Request $request)
     {
-        if (
-            !Schema::hasTable(
-                'attendance_logs'
-            )
-        ) {
+        $projects = Schema::hasTable('projects')
+            ? Project::orderBy('project_name')->get()
+            : collect();
+
+        $filters = [
+            'date' => $request->input('date', Carbon::today()->toDateString()),
+            'project_id' => $request->input('project_id'),
+            'status' => $request->input('status'),
+            'biometric' => $request->input('biometric'),
+            'search' => $request->input('search'),
+        ];
+
+        if (!Schema::hasTable('attendance_logs')) {
             $logs = collect();
+
+            $stats = [
+                'total' => 0,
+                'present' => 0,
+                'late' => 0,
+                'absent' => 0,
+                'missing_timeout' => 0,
+                'break_exceeded' => 0,
+                'verified' => 0,
+            ];
+
+            $issues = collect();
 
             return view(
                 'admin.attendance',
-                compact('logs')
+                compact('logs', 'projects', 'filters', 'stats', 'issues')
             );
         }
 
-        $logs = Attendance::query()
+        $query = Attendance::query()
             ->with([
+                'worker',
                 'deployment.worker',
                 'deployment.project',
                 'recordedBy',
-            ])
+            ]);
+
+        if (!empty($filters['date'])) {
+            $query->whereDate('log_date', $filters['date']);
+        }
+
+        if (!empty($filters['project_id'])) {
+            $query->whereHas('deployment', function ($deploymentQuery) use ($filters) {
+                $deploymentQuery->where('project_id', $filters['project_id']);
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'late') {
+                $query->whereIn('status', ['late', 'half_day', 'half day']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
+        }
+
+        if ($filters['biometric'] === 'verified') {
+            $query->where('biometric_matched', 1);
+        }
+
+        if ($filters['biometric'] === 'unverified') {
+            $query->where(function ($biometricQuery) {
+                $biometricQuery
+                    ->where('biometric_matched', 0)
+                    ->orWhereNull('biometric_matched');
+            });
+        }
+
+        if (!empty($filters['search'])) {
+            $keyword = '%' . $filters['search'] . '%';
+
+            $query->where(function ($searchQuery) use ($keyword) {
+                $searchQuery
+                    ->where('status', 'like', $keyword)
+                    ->orWhere('remarks', 'like', $keyword)
+                    ->orWhereHas('worker', function ($workerQuery) use ($keyword) {
+                        $workerQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('trade', 'like', $keyword);
+                    })
+                    ->orWhereHas('deployment.worker', function ($workerQuery) use ($keyword) {
+                        $workerQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('trade', 'like', $keyword);
+                    })
+                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword) {
+                        $projectQuery
+                            ->where('project_name', 'like', $keyword)
+                            ->orWhere('project_location', 'like', $keyword);
+                    })
+                    ->orWhereHas('recordedBy', function ($userQuery) use ($keyword) {
+                        $userQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('name', 'like', $keyword);
+                    });
+            });
+        }
+
+        $logs = $query
             ->orderByDesc('log_date')
             ->orderByDesc('time_in')
+            ->orderByDesc('log_id')
             ->get();
+
+        $breakExceeded = function ($log) {
+            if (!$log->break_out || !$log->break_in) {
+                return false;
+            }
+
+            try {
+                $date = $log->log_date
+                    ? Carbon::parse($log->log_date)->toDateString()
+                    : Carbon::today()->toDateString();
+
+                $breakOut = Carbon::parse($date . ' ' . $log->break_out);
+                $breakIn = Carbon::parse($date . ' ' . $log->break_in);
+
+                return $breakOut->diffInMinutes($breakIn, false) > 60;
+            } catch (\Throwable $error) {
+                return false;
+            }
+        };
+
+        $stats = [
+            'total' => $logs->count(),
+
+            'present' => $logs
+                ->filter(fn ($log) => strtolower($log->status ?? '') === 'present')
+                ->count(),
+
+            'late' => $logs
+                ->filter(fn ($log) => in_array(strtolower($log->status ?? ''), ['late', 'half_day', 'half day'], true))
+                ->count(),
+
+            'absent' => $logs
+                ->filter(fn ($log) => strtolower($log->status ?? '') === 'absent')
+                ->count(),
+
+            'missing_timeout' => $logs
+                ->filter(function ($log) {
+                    $status = strtolower($log->status ?? '');
+
+                    return $log->time_in
+                        && !$log->time_out
+                        && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
+                })
+                ->count(),
+
+            'break_exceeded' => $logs
+                ->filter($breakExceeded)
+                ->count(),
+
+            'verified' => $logs
+                ->filter(fn ($log) => (bool) $log->biometric_matched)
+                ->count(),
+        ];
+
+        $issues = $logs
+            ->filter(function ($log) use ($breakExceeded) {
+                $status = strtolower($log->status ?? '');
+
+                $isLate = in_array($status, ['late', 'half_day', 'half day'], true);
+                $isAbsent = $status === 'absent';
+                $missingTimeout = $log->time_in && !$log->time_out && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
+                $notVerified = !$log->biometric_matched;
+
+                return $isLate || $isAbsent || $missingTimeout || $breakExceeded($log) || $notVerified;
+            })
+            ->take(8)
+            ->values();
 
         return view(
             'admin.attendance',
-            compact('logs')
+            compact('logs', 'projects', 'filters', 'stats', 'issues')
         );
     }
 

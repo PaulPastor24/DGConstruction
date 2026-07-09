@@ -15,20 +15,21 @@ class Attendance extends Model
 
     protected $keyType = 'int';
 
-    /**
-     * Disable Laravel's automatic created_at and updated_at handling.
-     */
     public $timestamps = false;
 
     protected $fillable = [
+        'worker_id',
         'deployment_id',
         'recorded_by',
         'log_date',
         'time_in',
+        'break_out',
+        'break_in',
         'time_out',
         'status',
         'remarks',
         'biometric_matched',
+        'created_at',
     ];
 
     protected $casts = [
@@ -36,12 +37,15 @@ class Attendance extends Model
         'biometric_matched' => 'boolean',
     ];
 
-    /**
-     * Deployment connected to the attendance record.
-     *
-     * attendance_logs.deployment_id
-     * connects to project_workers.deployment_id.
-     */
+    public function worker(): BelongsTo
+    {
+        return $this->belongsTo(
+            Worker::class,
+            'worker_id',
+            'worker_id'
+        );
+    }
+
     public function deployment(): BelongsTo
     {
         return $this->belongsTo(
@@ -51,12 +55,6 @@ class Attendance extends Model
         );
     }
 
-    /**
-     * User who recorded the attendance.
-     *
-     * attendance_logs.recorded_by
-     * connects to users.user_id.
-     */
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(
@@ -66,18 +64,12 @@ class Attendance extends Model
         );
     }
 
-    /**
-     * Convenient access to the worker through the deployment.
-     */
-    public function getWorkerAttribute()
+    public function getDisplayWorkerAttribute()
     {
-        return $this->deployment?->worker;
+        return $this->worker ?: $this->deployment?->worker;
     }
 
-    /**
-     * Convenient access to the project through the deployment.
-     */
-    public function getProjectAttribute()
+    public function getDisplayProjectAttribute()
     {
         return $this->deployment?->project;
     }

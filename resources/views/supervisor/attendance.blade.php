@@ -89,6 +89,38 @@
             transform: scale(0.95);
         }
 
+        .attendance-row-new {
+            animation: attendanceFadeIn 0.45s ease;
+        }
+
+        .attendance-row-updated {
+            animation: attendancePulse 0.8s ease;
+        }
+
+        @keyframes attendanceFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+                background-color: #e7f5ff;
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                background-color: transparent;
+            }
+        }
+
+        @keyframes attendancePulse {
+            0% {
+                background-color: #fff3cd;
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
         /* Tablet */
         @media (max-width: 768px) {
             .workers-modal-dialog {
@@ -124,43 +156,102 @@
 
         /* Phone */
         @media (max-width: 576px) {
-            .workers-modal-dialog {
-                width: calc(100vw - 18px) !important;
-                max-width: calc(100vw - 18px) !important;
+            #supervisorAttendanceTable {
+                min-width: 0 !important;
+                width: 100% !important;
             }
 
-            #viewWorkersModal .modal-title {
-                font-size: 1rem;
+            #supervisorAttendanceTable thead {
+                display: none;
             }
 
-            #viewWorkersModal thead th,
-            #allWorkersTableBody td {
-                font-size: 0.82rem;
-                padding: 0.55rem !important;
+            #attendanceLogTableBody tr {
+                display: block;
+                margin-bottom: 1rem;
+                padding: 1rem;
+                border: 1px solid #e5e7eb !important;
+                border-radius: 16px;
+                background: #ffffff;
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
             }
 
-            #viewWorkersModal .modal-footer {
-                padding: 0.5rem 0.75rem;
+            #attendanceLogTableBody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                border: 0 !important;
+                padding: 0.45rem 0 !important;
+                font-size: 0.95rem;
+                text-align: right !important;
             }
 
-            #viewWorkersModal .btn {
-                padding: 0.25rem 0.6rem;
+            #attendanceLogTableBody td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #111827;
+                text-align: left;
+                padding-right: 1rem;
             }
 
-            .fingerprint-trigger-btn {
-                width: 90px !important;
-                height: 90px !important;
-                min-width: 90px !important;
-                min-height: 90px !important;
-                font-size: 2.6rem !important;
+            #attendanceLogTableBody td:first-child {
+                display: block;
+                text-align: left !important;
+                padding-bottom: 0.75rem !important;
+                border-bottom: 1px solid #e5e7eb !important;
+                margin-bottom: 0.5rem;
             }
 
-            .fingerprint-trigger-btn i {
-                font-size: 2.6rem !important;
+            #attendanceLogTableBody td:first-child::before {
+                content: '';
+                display: none;
             }
 
-            .scan-pulse-container {
-                padding: 2rem !important;
+            #attendanceLogTableBody td:first-child .fw-semibold {
+                font-size: 1.15rem;
+                line-height: 1.2;
+            }
+
+            #attendanceLogTableBody td:nth-child(2) {
+                display: block;
+                text-align: left !important;
+                color: #6b7280 !important;
+                padding-top: 0 !important;
+                margin-bottom: 0.5rem;
+            }
+
+            #attendanceLogTableBody td:nth-child(2)::before {
+                content: '';
+                display: none;
+            }
+
+            #attendanceLogTableBody td:last-child {
+                display: block;
+                text-align: left !important;
+                padding-top: 0.75rem !important;
+                border-top: 1px solid #e5e7eb !important;
+                margin-top: 0.5rem;
+            }
+
+            #attendanceLogTableBody td:last-child::before {
+                content: 'Status Log';
+                display: block;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }
+
+            #attendanceLogTableBody td:last-child .d-flex {
+                align-items: flex-start !important;
+            }
+
+            #attendanceLogTableBody .attendance-action-btn {
+                width: 100%;
+                margin-top: 0.25rem;
+            }
+
+            #attendanceLogTableBody .badge {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.7rem;
             }
         }
     </style>
@@ -474,19 +565,21 @@
         }
 
         function getStatusBadge(status) {
-            if (status === 'present') {
+            const value = String(status || 'present').toLowerCase();
+
+            if (value === 'present') {
                 return '<span class="badge bg-success rounded-pill">Present</span>';
             }
 
-            if (status === 'late') {
+            if (value === 'late') {
                 return '<span class="badge bg-warning text-dark rounded-pill">Late</span>';
             }
 
-            if (status === 'absent') {
+            if (value === 'absent') {
                 return '<span class="badge bg-danger rounded-pill">Absent</span>';
             }
 
-            return '<span class="badge bg-secondary rounded-pill">Not Logged</span>';
+            return `<span class="badge bg-secondary rounded-pill">${escapeHtml(value || 'Not Logged')}</span>`;
         }
 
         function getActionButtons(record) {
@@ -542,40 +635,42 @@
             return buttons;
         }
 
-        function appendAttendanceRecordToLog(record) {
-            const emptyRowPlaceholder = document.getElementById('emptyRowPlaceholder');
-
-            if (emptyRowPlaceholder) {
-                emptyRowPlaceholder.remove();
-            }
-
+        function buildAttendanceRow(record) {
             const workerKey = String(record.worker_id);
-            const existingRow = document.getElementById(`row-worker-${workerKey}`);
-
-            if (existingRow) {
-                existingRow.remove();
-            }
-
-            scannedWorkerIds.add(workerKey);
-
             const fullName = `${escapeHtml(record.first_name)} ${escapeHtml(record.last_name)}`.trim();
             const trade = escapeHtml(record.trade || 'General');
 
-            const rowHtml = `
-                <tr class="border-bottom" id="row-worker-${workerKey}" data-active-log="1">
-                    <td class="py-3">
+            return `
+                <tr class="border-bottom attendance-row-fade"
+                    id="row-worker-${workerKey}"
+                    data-worker-id="${workerKey}"
+                    data-active-log="1">
+                    <td class="py-3" data-label="Personnel Name">
                         <div class="fw-semibold text-dark">${fullName}</div>
                         <input type="hidden" name="biometric_verified[${workerKey}]" value="1">
                     </td>
 
-                    <td class="py-3 text-muted">${trade}</td>
+                    <td class="py-3 text-muted" data-label="Trade">
+                        ${trade}
+                    </td>
 
-                    <td class="py-3 text-center">${formatTime(record.time_in)}</td>
-                    <td class="py-3 text-center">${formatTime(record.break_out)}</td>
-                    <td class="py-3 text-center">${formatTime(record.break_in)}</td>
-                    <td class="py-3 text-center">${formatTime(record.time_out)}</td>
+                    <td class="py-3 text-center" data-label="Time In">
+                        ${formatTime(record.time_in)}
+                    </td>
 
-                    <td class="py-3 text-center">
+                    <td class="py-3 text-center" data-label="Break Out">
+                        ${formatTime(record.break_out)}
+                    </td>
+
+                    <td class="py-3 text-center" data-label="Break In">
+                        ${formatTime(record.break_in)}
+                    </td>
+
+                    <td class="py-3 text-center" data-label="Time Out">
+                        ${formatTime(record.time_out)}
+                    </td>
+
+                    <td class="py-3 text-center" data-label="Status Log">
                         <div class="d-flex flex-column align-items-center gap-2">
                             ${getStatusBadge(record.status)}
 
@@ -586,24 +681,86 @@
                     </td>
                 </tr>
             `;
-
-            attendanceLogTableBody.insertAdjacentHTML('beforeend', rowHtml);
-
-            const activeCount = document.querySelectorAll('#attendanceLogTableBody tr[data-active-log="1"]').length;
-            scannedCountBadge.innerText = `${activeCount} Active Logs`;
-
-            if (activeCount > 0) {
-                formSubmitContainer.classList.remove('d-none');
-            } else {
-                formSubmitContainer.classList.add('d-none');
-            }
         }
 
-        async function loadTodayAttendance() {
-            renderEmptyAttendanceRow();
+        function upsertAttendanceRecord(record, animate = true) {
+            if (!record || !record.worker_id) {
+                return;
+            }
 
-            scannedWorkerIds.clear();
+            const emptyRowPlaceholder = document.getElementById('emptyRowPlaceholder');
+
+            if (emptyRowPlaceholder) {
+                emptyRowPlaceholder.remove();
+            }
+
+            const workerKey = String(record.worker_id);
+            const existingRow = document.getElementById(`row-worker-${workerKey}`);
+            const newRowHtml = buildAttendanceRow(record);
+
+            scannedWorkerIds.add(workerKey);
+
+            if (existingRow) {
+                existingRow.outerHTML = newRowHtml;
+
+                const updatedRow = document.getElementById(`row-worker-${workerKey}`);
+
+                if (animate && updatedRow) {
+                    updatedRow.classList.add('attendance-row-updated');
+
+                    setTimeout(() => {
+                        updatedRow.classList.remove('attendance-row-updated');
+                    }, 900);
+                }
+            } else {
+                attendanceLogTableBody.insertAdjacentHTML('beforeend', newRowHtml);
+
+                const insertedRow = document.getElementById(`row-worker-${workerKey}`);
+
+                if (animate && insertedRow) {
+                    insertedRow.classList.add('attendance-row-new');
+
+                    setTimeout(() => {
+                        insertedRow.classList.remove('attendance-row-new');
+                    }, 900);
+                }
+            }
+
             updateActiveLogCount();
+        }
+
+        function removeMissingRows(latestRecords) {
+            const latestIds = new Set(
+                latestRecords.map(record => String(record.worker_id))
+            );
+
+            attendanceLogTableBody
+                .querySelectorAll('tr[data-worker-id]')
+                .forEach(row => {
+                    if (!latestIds.has(String(row.dataset.workerId))) {
+                        row.remove();
+                    }
+                });
+
+            if (latestIds.size === 0) {
+                scannedWorkerIds.clear();
+                renderEmptyAttendanceRow();
+            }
+
+            updateActiveLogCount();
+        }
+
+        let isAttendanceFetching = false;
+        let isFirstAttendanceLoad = true;
+
+        async function loadTodayAttendance(options = {}) {
+            const silent = options.silent ?? false;
+
+            if (isAttendanceFetching) {
+                return;
+            }
+
+            isAttendanceFetching = true;
 
             try {
                 const response = await fetch(`/supervisor/attendance/today?date=${selectedDateValue()}`, {
@@ -618,27 +775,41 @@
                     throw new Error(result.message || 'Failed to load attendance.');
                 }
 
-                if (result.data && result.data.length > 0) {
-                    result.data.forEach(record => {
-                        appendAttendanceRecordToLog(record);
-                    });
-                }
+                const records = result.data || [];
 
-                if (!attendanceLogTableBody.querySelector('tr')) {
+                if (records.length === 0) {
+                    scannedWorkerIds.clear();
                     renderEmptyAttendanceRow();
+                    updateActiveLogCount();
+                    isFirstAttendanceLoad = false;
+                    return;
                 }
 
-                updateActiveLogCount();
+                if (isFirstAttendanceLoad && !silent) {
+                    attendanceLogTableBody.innerHTML = '';
+                }
+
+                records.forEach(record => {
+                    upsertAttendanceRecord(record, !isFirstAttendanceLoad);
+                });
+
+                removeMissingRows(records);
+
+                isFirstAttendanceLoad = false;
             } catch (error) {
                 console.error(error);
 
-                attendanceLogTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-danger text-center py-5">
-                            ${escapeHtml(error.message || 'Error loading attendance.')}
-                        </td>
-                    </tr>
-                `;
+                if (!silent) {
+                    attendanceLogTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-danger text-center py-5">
+                                ${escapeHtml(error.message || 'Error loading attendance.')}
+                            </td>
+                        </tr>
+                    `;
+                }
+            } finally {
+                isAttendanceFetching = false;
             }
         }
 
@@ -663,7 +834,7 @@
                 throw new Error(result.message || 'Failed to save attendance.');
             }
 
-            appendAttendanceRecordToLog(result.attendance);
+            upsertAttendanceRecord(result.attendance, true);
         }
 
         async function updateAttendanceAction(workerId, action) {
@@ -688,7 +859,7 @@
                 return;
             }
 
-            appendAttendanceRecordToLog(result.attendance);
+            upsertAttendanceRecord(result.attendance, true);
         }
 
         async function loadWorkers(page = 1) {
@@ -792,6 +963,9 @@
         });
 
         attendanceDateInput?.addEventListener('change', function () {
+            isFirstAttendanceLoad = true;
+            scannedWorkerIds.clear();
+            renderEmptyAttendanceRow();
             loadTodayAttendance();
         });
 
@@ -1018,7 +1192,30 @@
             });
         });
 
+        /*
+            OPTION A: SMOOTH SILENT POLLING
+            This checks attendance every 4 seconds without clearing the table.
+            New and updated rows appear smoothly without an obvious reload.
+        */
+        let attendanceRefreshTimer = null;
+
+        function startSilentAttendancePolling() {
+            if (attendanceRefreshTimer) {
+                clearInterval(attendanceRefreshTimer);
+            }
+
+            attendanceRefreshTimer = setInterval(function () {
+                const registerModalOpen = document.getElementById('registerWorkerModal')?.classList.contains('show');
+                const workersModalOpen = document.getElementById('viewWorkersModal')?.classList.contains('show');
+
+                if (!registerModalOpen && !workersModalOpen) {
+                    loadTodayAttendance({ silent: true });
+                }
+            }, 4000);
+        }
+
         loadTodayAttendance();
+        startSilentAttendancePolling();
     });
 </script>
 @endpush
