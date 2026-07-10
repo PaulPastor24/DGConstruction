@@ -112,7 +112,7 @@
         .topbar {
             display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.95rem 1.25rem; background: var(--supervisor-surface);
             border-bottom: 1px solid var(--supervisor-border); position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 0 rgba(0,0,0,0.02);
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
         .topbar-left { display: flex; align-items: center; gap: 0.8rem; min-width: 0; flex: 1 1 220px; }
         .menu-button { display: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--supervisor-border); background: #fff; color: var(--supervisor-primary); align-items: center; justify-content: center; }

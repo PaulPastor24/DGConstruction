@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
@@ -19,10 +20,329 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class SupervisorController extends Controller
 {
-    // ... Keeping all of your existing index(), timeline(), phases(), attendance(), profile(), notifications(), materials() blocks completely untouched ...
+    // ==================== WORKERS / ATTENDANCE AJAX METHODS ====================
+
+    private function extractCredentialId(array $credential): ?string
+    {
+        $credentialId = $credential['id'] ?? $credential['rawId'] ?? null;
+
+        if (!$credentialId || is_array($credentialId)) {
+            return null;
+        }
+
+        return (string) $credentialId;
+    }
+
+    private function resolveAttendanceStatusFromTimeIn($timeIn): string
+    {
+        if (!$timeIn) {
+            return 'absent';
+        }
+
+        $time = $timeIn instanceof Carbon
+            ? $timeIn->copy()
+            : Carbon::parse($timeIn);
+
+        $presentCutoff = Carbon::parse($time->format('Y-m-d') . ' 08:30:59');
+
+        return $time->lte($presentCutoff) ? 'present' : 'late';
+    }
+
+    private function computeTimeInStatus($timeIn): string
+    {
+        if (!$timeIn) {
+            return 'absent';
+        }
+
+        $time = \Carbon\Carbon::parse($timeIn);
+        $presentCutoff = \Carbon\Carbon::parse($time->format('Y-m-d') . ' 08:30:59');
+
+        return $time->lte($presentCutoff) ? 'present' : 'late';
+    }
+
+    private function formatAttendanceRecord($record): array
+    {
+        $record = (array) $record;
+
+        return [
+            'log_id' => $record['log_id'] ?? null,
+            'worker_id' => $record['worker_id'] ?? null,
+            'first_name' => $record['first_name'] ?? '',
+            'last_name' => $record['last_name'] ?? '',
+            'trade' => $record['trade'] ?? 'General',
+            'log_date' => $record['log_date'] ?? null,
+            'time_in' => $record['time_in'] ?? null,
+            'break_out' => $record['break_out'] ?? null,
+            'break_in' => $record['break_in'] ?? null,
+            'time_out' => $record['time_out'] ?? null,
+            'status' => $record['status'] ?? 'present',
+            'remarks' => $record['remarks'] ?? null,
+            'biometric_matched' => $record['biometric_matched'] ?? 0,
+        ];
+    }
+
+    private function getDeploymentIdForWorker(int $workerId): int
+    {
+        /*
+            attendance_logs has deployment_id.
+            This tries to use the worker's project deployment.
+            If none is found, it falls back to 1 to avoid breaking the page.
+        */
+        if (!Schema::hasTable('project_workers') || !Schema::hasColumn('project_workers', 'deployment_id')) {
+            return 1;
+        }
+
+        $query = DB::table('project_workers')->where('worker_id', $workerId);
+
+        $selectedProjectId = session('supervisor_selected_project_id');
+
+        if ($selectedProjectId && Schema::hasColumn('project_workers', 'project_id')) {
+            $deploymentId = (clone $query)
+                ->where('project_id', $selectedProjectId)
+                ->value('deployment_id');
+
+            if ($deploymentId) {
+                return (int) $deploymentId;
+            }
+        }
+
+        $deploymentId = $query->value('deployment_id');
+
+        return $deploymentId ? (int) $deploymentId : 1;
+    }
+
+    private function fetchAttendanceRecord(int $workerId, string $date)
+    {
+        return DB::table('attendance_logs')
+            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+            ->where('attendance_logs.worker_id', $workerId)
+            ->whereDate('attendance_logs.log_date', $date)
+            ->select(
+                'attendance_logs.log_id',
+                'attendance_logs.worker_id',
+                'workers.first_name',
+                'workers.last_name',
+                'workers.trade',
+                'attendance_logs.log_date',
+                'attendance_logs.time_in',
+                'attendance_logs.break_out',
+                'attendance_logs.break_in',
+                'attendance_logs.time_out',
+                'attendance_logs.status',
+                'attendance_logs.remarks',
+                'attendance_logs.biometric_matched'
+            )
+            ->first();
+    }
+
+    public function getWorkersList(Request $request)
+    {
+        $workers = DB::table('workers')
+            ->where('is_active', 1)
+            ->orderByDesc('created_at')
+            ->select('worker_id', 'first_name', 'last_name', 'trade', 'created_at')
+            ->paginate(10);
+
+        return response()->json($workers);
+    }
+
+    public function getTodayAttendance(Request $request)
+    {
+        $date = $request->query('date', now()->toDateString());
+
+        /*
+            IMPORTANT:
+            This only displays workers who already have attendance_logs today.
+            It will NOT display all workers.
+            View all workers stays inside your "View Enrolled Workers" modal.
+        */
+        $attendance = DB::table('attendance_logs')
+            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+            ->whereDate('attendance_logs.log_date', $date)
+            ->where('workers.is_active', 1)
+            ->select(
+                'attendance_logs.log_id',
+                'attendance_logs.worker_id',
+                'workers.first_name',
+                'workers.last_name',
+                'workers.trade',
+                'attendance_logs.log_date',
+                'attendance_logs.time_in',
+                'attendance_logs.break_out',
+                'attendance_logs.break_in',
+                'attendance_logs.time_out',
+                'attendance_logs.status',
+                'attendance_logs.remarks',
+                'attendance_logs.biometric_matched'
+            )
+            ->orderBy('attendance_logs.time_in', 'asc')
+            ->get()
+            ->map(function ($record) {
+                return $this->formatAttendanceRecord($record);
+            });
+
+        return response()->json([
+            'data' => $attendance,
+        ]);
+    }
+
+    public function logWorkerAttendance(Request $request)
+    {
+        $validated = $request->validate([
+            'worker_id' => ['required', 'integer'],
+            'log_date' => ['required', 'date'],
+            'action' => ['nullable', 'string'],
+        ]);
+
+        $worker = DB::table('workers')
+            ->where('worker_id', $validated['worker_id'])
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$worker) {
+            return response()->json([
+                'message' => 'Worker not found or inactive.',
+            ], 404);
+        }
+
+        $action = $validated['action'] ?? 'time_in';
+        $date = $validated['log_date'];
+        $now = now('Asia/Manila');
+
+        $existingLog = DB::table('attendance_logs')
+            ->where('worker_id', $validated['worker_id'])
+            ->whereDate('log_date', $date)
+            ->first();
+
+        if (!$existingLog) {
+            $status = $this->computeTimeInStatus($now);
+
+            DB::table('attendance_logs')->insert([
+                'worker_id' => $validated['worker_id'],
+                'deployment_id' => 1,
+                'recorded_by' => Auth::id(),
+                'log_date' => $date,
+                'time_in' => $now->format('H:i:s'),
+                'break_out' => null,
+                'break_in' => null,
+                'time_out' => null,
+                'status' => $status,
+                'remarks' => $status === 'late'
+                    ? 'Late time-in. Time-in after 8:30 AM.'
+                    : 'Present. Time-in within 8:00 AM to 8:30 AM.',
+                'biometric_matched' => 1,
+                'created_at' => $now,
+            ]);
+        } else {
+            $updates = [];
+
+            if ($action === 'break_out') {
+                if (!$existingLog->time_in) {
+                    return response()->json([
+                        'message' => 'Cannot break out without time in.',
+                    ], 422);
+                }
+
+                if ($existingLog->break_out) {
+                    return response()->json([
+                        'message' => 'Break out is already recorded.',
+                    ], 422);
+                }
+
+                $updates['break_out'] = $now->format('H:i:s');
+                $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break out recorded.');
+            }
+
+            if ($action === 'break_in') {
+                if (!$existingLog->break_out) {
+                    return response()->json([
+                        'message' => 'Cannot break in without break out.',
+                    ], 422);
+                }
+
+                if ($existingLog->break_in) {
+                    return response()->json([
+                        'message' => 'Break in is already recorded.',
+                    ], 422);
+                }
+
+                $breakOutDateTime = \Carbon\Carbon::parse($date . ' ' . $existingLog->break_out);
+                $breakMinutes = $breakOutDateTime->diffInMinutes($now);
+
+                $updates['break_in'] = $now->format('H:i:s');
+
+                if ($breakMinutes > 60) {
+                    $updates['status'] = 'late';
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break exceeded 1 hour.');
+                } else {
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break completed within 1 hour.');
+                }
+            }
+
+            if ($action === 'time_out') {
+                $timeOutAllowed = \Carbon\Carbon::parse($date . ' 17:00:00');
+
+                if ($now->lt($timeOutAllowed)) {
+                    return response()->json([
+                        'message' => 'Time out is only allowed from 5:00 PM onwards.',
+                    ], 422);
+                }
+
+                if (!$existingLog->time_in) {
+                    return response()->json([
+                        'message' => 'Cannot time out without time in.',
+                    ], 422);
+                }
+
+                if ($existingLog->time_out) {
+                    return response()->json([
+                        'message' => 'Time out is already recorded.',
+                    ], 422);
+                }
+
+                $updates['time_out'] = $now->format('H:i:s');
+                $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Time out recorded.');
+            }
+
+            if (!empty($updates)) {
+                DB::table('attendance_logs')
+                    ->where('log_id', $existingLog->log_id)
+                    ->update($updates);
+            }
+        }
+
+        $attendance = DB::table('attendance_logs')
+            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+            ->where('attendance_logs.worker_id', $validated['worker_id'])
+            ->whereDate('attendance_logs.log_date', $date)
+            ->select(
+                'attendance_logs.log_id',
+                'attendance_logs.worker_id',
+                'workers.first_name',
+                'workers.last_name',
+                'workers.trade',
+                'attendance_logs.log_date',
+                'attendance_logs.time_in',
+                'attendance_logs.break_out',
+                'attendance_logs.break_in',
+                'attendance_logs.time_out',
+                'attendance_logs.status',
+                'attendance_logs.remarks',
+                'attendance_logs.biometric_matched'
+            )
+            ->first();
+
+        return response()->json([
+            'message' => 'Attendance updated successfully.',
+            'attendance' => $this->formatAttendanceRecord($attendance),
+        ]);
+    }
+
+
 
     public function index(Request $request)
     {
@@ -1251,24 +1571,67 @@ class SupervisorController extends Controller
         ]);
     }
 
-    public function registerWorkerBiometric(Request $request)
+        public function registerWorkerBiometric(Request $request)
     {
-        // 1. Validate the incoming data from the frontend modal
         $validated = $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'trade' => 'nullable|string|max:100',
-            'credential' => 'required|array'
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'trade' => ['nullable', 'string', 'max:100'],
+            'credential' => ['required', 'array'],
         ]);
 
-        // 2. Here you will eventually save the worker to your database
-        // Example: $worker = Worker::create([...]);
-        // Example: BiometricKey::create(['worker_id' => $worker->id, 'key_data' => json_encode($validated['credential'])]);
+        $credentialId = $this->extractCredentialId($validated['credential']);
 
-        // 3. Return a success response back to the JavaScript fetch call
-        return response()->json([
-            'success' => true, 
-            'message' => 'Worker and biometric token successfully cataloged inside the database!'
-        ]);
+        if (!$credentialId) {
+            return response()->json([
+                'message' => 'Credential ID was not received from the browser.',
+            ], 422);
+        }
+
+        try {
+            $workerId = DB::table('workers')->insertGetId([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'trade' => $validated['trade'] ?: 'General',
+                'contact_number' => null,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ], 'worker_id');
+
+            DB::table('worker_biometric_profiles')->insert([
+                'worker_id' => $workerId,
+                'fingerprint_template' => json_encode([
+                    'credential_id' => $credentialId,
+                    'credential' => $validated['credential'],
+                ]),
+                'enrolled_at' => now(),
+                'enrolled_by' => Auth::id(),
+            ]);
+
+            $worker = DB::table('workers')
+                ->where('worker_id', $workerId)
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Worker and biometric token successfully registered.',
+                'worker' => [
+                    'worker_id' => $worker->worker_id,
+                    'first_name' => $worker->first_name,
+                    'last_name' => $worker->last_name,
+                    'trade' => $worker->trade ?: 'General',
+                    'created_at' => $worker->created_at,
+                ],
+            ]);
+        } catch (\Throwable $error) {
+            report($error);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register worker biometric record.',
+                'error' => $error->getMessage(),
+            ], 500);
+        }
     }
 }
