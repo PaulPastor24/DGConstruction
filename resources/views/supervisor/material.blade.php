@@ -197,7 +197,7 @@
                             <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-400">
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Material</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Unit</th>
-                                <th class="py-4 px-5 bg-gray-50 text-left align-middle">Planned</th>
+                                <th class="py-4 px-5 bg-gray-50 text-left align-middle">Planned Allocation</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Used</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Remaining</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Status</th>
@@ -220,12 +220,14 @@
                                             </div>
                                         </td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-500 font-mono font-medium">{{ $item->unit }}</td>
-                                        <td class="py-4 px-5 align-middle text-sm text-gray-900 font-bold">{{ number_format($item->planned, 2) }}</td>
+                                        <td class="py-4 px-5 align-middle text-sm text-gray-900 font-bold">
+                                            {{ number_format($item->planned, 2) }}
+                                        </td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-600 font-medium">
                                             {{ number_format($item->used, 2) }}
                                         </td>
                                         <td class="py-4 px-5 align-middle text-sm font-bold text-brand-dark font-mono">
-                                            {{ number_format($item->remaining, 2) }}</td>
+                                            {{ number_format(max(0, (float) $item->remaining), 2) }}</td>
                                         <td class="py-4 px-5 align-middle">
                                             @php
                                                 $statusColorMap = [
@@ -301,7 +303,7 @@
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Remaining</span>
-                                        <span class="text-xs font-bold text-brand-dark font-mono">{{ number_format($item->remaining, 2) }}</span>
+                                        <span class="text-xs font-bold text-brand-dark font-mono">{{ number_format(max(0, (float) $item->remaining), 2) }}</span>
                                     </div>
                                 </div>
 

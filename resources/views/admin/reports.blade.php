@@ -112,19 +112,23 @@
         color: #64748b;
     }
     .summary-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 18px;
         display: flex;
+        width: 45px;
+        height: 45px;
+        flex-shrink: 0;
         align-items: center;
         justify-content: center;
         font-size: 1.15rem;
-        box-shadow: inset 0 0 0 1px rgba(15, 32, 21, 0.08);
+        color: #045a33 !important;
+        background-color: rgba(4, 90, 51, 0.08) !important;
+        border-radius: 50%;
+        border: 1px solid rgba(4, 90, 51, 0.14);
     }
-    .summary-card.total .summary-icon { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: var(--theme-accent); }
-    .summary-card.pending .summary-icon { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%); color: var(--theme-accent-bright); }
-    .summary-card.approved .summary-icon { background: linear-gradient(135deg, #ecfdf5 0%, #bbf7d0 100%); color: var(--status-approved-text); }
-    .summary-card.rejected .summary-icon { background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); color: var(--theme-accent-deep); }
+    .summary-icon i { color: #045a33 !important; }
+    .summary-card.total .summary-icon { background-color: rgba(4, 90, 51, 0.08) !important; color: #045a33 !important; }
+    .summary-card.pending .summary-icon { background-color: rgba(4, 90, 51, 0.08) !important; color: #045a33 !important; }
+    .summary-card.approved .summary-icon { background-color: rgba(4, 90, 51, 0.08) !important; color: #045a33 !important; }
+    .summary-card.rejected .summary-icon { background-color: rgba(4, 90, 51, 0.08) !important; color: #045a33 !important; }
     .summary-card.total { border-left: 4px solid var(--theme-accent); }
     .summary-card.pending { border-left: 4px solid var(--theme-accent-bright); }
     .summary-card.approved { border-left: 4px solid var(--status-approved-text); }
@@ -272,15 +276,15 @@
 
     /* Workspace Split Layout Layout */
     .workspace-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 0px;
+        display: flex;
+        align-items: flex-start;
         gap: 0;
-        align-items: start;
-        transition: grid-template-columns 0.35s ease, gap 0.35s ease;
+        width: 100%;
+        min-width: 0;
+        transition: gap 0.35s ease;
     }
     .workspace-layout.is-panel-open {
-        grid-template-columns: minmax(0, 1fr) 380px;
-        gap: 1.5rem;
+        gap: 1.25rem;
     }
     /* Left column groups the filter toolbar + table so they always share
        the exact same width, and both start at the same top edge as the
@@ -297,14 +301,15 @@
     /* Left Side: Table Area */
     .table-container-card {
         background: #ffffff;
-        border: 1px solid rgba(28, 107, 67, 0.1);
-        border-radius: 24px;
+        border: 1px solid rgba(28, 107, 67, 0.12);
+        border-radius: 18px;
         overflow: hidden;
-        box-shadow: 0 28px 80px rgba(15, 32, 21, 0.08);
+        box-shadow: 0 16px 40px rgba(15, 32, 21, 0.06);
         width: 100%;
+        min-width: 0;
     }
     .card-table-header {
-        padding: 1.3rem 1.35rem;
+        padding: 1rem 1.15rem;
         border-bottom: 1px solid rgba(28, 107, 67, 0.08);
         background: linear-gradient(135deg, #f4fcf6 0%, #ffffff 100%);
     }
@@ -317,80 +322,90 @@
     }
     .reports-table {
         width: 100%;
+        min-width: 0;
         border-collapse: separate;
         border-spacing: 0;
         font-size: 0.92rem;
         text-align: left;
         background: transparent;
-        table-layout: auto;
+        table-layout: fixed;
+        margin-bottom: 0;
     }
     .reports-table th,
     .reports-table td {
-        padding: 0.75rem 0.85rem;
+        padding: 0.9rem 1rem;
         vertical-align: middle;
         line-height: 1.35;
         word-break: break-word;
         white-space: normal;
     }
     .reports-table th {
-        background: #f7fbf7;
+        background: #f8fafc;
         font-weight: 700;
-        color: #166534;
-        border-bottom: 1px solid rgba(28, 107, 67, 0.08);
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
     }
     .reports-table td {
-        border-bottom: 1px solid rgba(28, 107, 67, 0.08);
+        border-bottom: 1px solid #eef2f7;
         color: #334155;
         background: #ffffff;
         font-size: 0.92rem;
     }
     .reports-table th:first-child,
     .reports-table td:first-child {
-        width: 126px;
-        min-width: 126px;
+        width: 110px;
+        min-width: 110px;
         white-space: nowrap;
-        padding-left: 1rem;
+        padding-left: 1.1rem;
+        padding-right: 1.1rem;
     }
     .reports-table th:nth-child(2),
     .reports-table td:nth-child(2) {
-        width: 27%;
-        min-width: 220px;
+        width: 24%;
+        min-width: 180px;
     }
     .reports-table th:nth-child(3),
     .reports-table td:nth-child(3),
     .reports-table th:nth-child(4),
     .reports-table td:nth-child(4) {
-        width: 15%;
-        min-width: 140px;
+        width: 14%;
+        min-width: 120px;
     }
     .reports-table th:nth-child(5),
     .reports-table td:nth-child(5) {
-        width: 15%;
-        min-width: 150px;
+        width: 13%;
+        min-width: 120px;
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
     }
     .reports-table th:nth-child(6),
     .reports-table td:nth-child(6),
     .reports-table th:nth-child(7),
     .reports-table td:nth-child(7) {
-        width: 11%;
+        width: 10%;
+        min-width: 100px;
         white-space: nowrap;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
     }
     .reports-table th:nth-child(8),
     .reports-table td:nth-child(8) {
-        width: 80px;
+        width: 96px;
         text-align: center;
         white-space: nowrap;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     .reports-table tbody tr {
-        transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     }
     .reports-table tbody tr:hover {
-        background: #f3fbf4;
+        background: #f8fcf9;
         transform: translateY(-1px);
-        box-shadow: 0 8px 24px rgba(15, 32, 21, 0.06);
+        box-shadow: inset 0 0 0 1px rgba(28, 107, 67, 0.06);
     }
     .reports-table tbody tr.active-row {
         background-color: #ecf8ee;
@@ -433,13 +448,14 @@
     .action-icons-group {
         display: flex;
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.55rem;
         justify-content: center;
         width: 100%;
+        min-width: 0;
     }
     .btn-icon-action {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         border-radius: 12px;
         border: 1px solid rgba(28, 107, 67, 0.12);
         background: #f5fbf3;
@@ -449,9 +465,10 @@
         justify-content: center;
         cursor: pointer;
         text-decoration: none;
-        font-size: 1rem;
+        font-size: 1.05rem;
         transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
         box-shadow: 0 8px 20px rgba(15, 32, 21, 0.06);
+        flex-shrink: 0;
     }
     .btn-icon-action:hover {
         background: #e2f4de;
@@ -559,8 +576,9 @@
         border-radius: 28px;
         padding: 0;
         width: 0;
-        max-width: 380px;
+        max-width: 360px;
         min-width: 0;
+        flex: 0 0 0;
         overflow: hidden;
         opacity: 0;
         pointer-events: none;
@@ -568,10 +586,12 @@
         position: sticky;
         top: 1.5rem;
         box-shadow: 0 28px 90px rgba(15, 32, 21, 0.08);
-        transition: width 0.35s ease, padding 0.35s ease, opacity 0.25s ease, transform 0.35s ease;
+        transition: width 0.35s ease, flex-basis 0.35s ease, padding 0.35s ease, opacity 0.25s ease, transform 0.35s ease;
+        align-self: start;
     }
     .details-sidebar-card.is-open {
-        width: 380px;
+        width: 360px;
+        flex: 0 0 360px;
         padding: 1.75rem;
         opacity: 1;
         pointer-events: auto;
@@ -942,7 +962,7 @@
                 <div class="value">{{ $stats['pending'] ?? 0 }}</div>
                 <div class="subtext">Awaiting your review</div>
             </div>
-            <div class="summary-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="summary-icon stat-icon-wrap"><i class="bi bi-clock-history"></i></div>
         </div>
         <div class="summary-card approved">
             <div class="summary-info">
@@ -950,7 +970,7 @@
                 <div class="value">{{ $stats['approved'] ?? 0 }}</div>
                 <div class="subtext">Reports approved</div>
             </div>
-            <div class="summary-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="summary-icon stat-icon-wrap"><i class="bi bi-check-circle-fill"></i></div>
         </div>
         <div class="summary-card rejected">
             <div class="summary-info">
@@ -958,7 +978,7 @@
                 <div class="value">{{ $stats['rejected'] ?? 0 }}</div>
                 <div class="subtext">Reports rejected</div>
             </div>
-            <div class="summary-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="summary-icon stat-icon-wrap"><i class="bi bi-x-circle-fill"></i></div>
         </div>
     </div>
 
@@ -1013,55 +1033,60 @@
 
         <!-- Left Part Element: Table Core Panel -->
         <div class="table-container-card">
-            <div class="card-table-header">
-                <h3 class="card-table-title" id="reportsListHeading">Reports List ({{ $reports->total() }})</h3>
+            <div class="card-table-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="card-table-title" id="reportsListHeading">Reports List ({{ $reports->total() }})</h3>
+                    <p class="text-muted mb-0 small">Track submitted reports and their review status</p>
+                </div>
             </div>
-            <table class="reports-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Report Title</th>
-                        <th>Project</th>
-                        <th>Phase</th>
-                        <th>Supervisor</th>
-                        <th>Date Submitted</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="reportsTableBody">
-                    @forelse($reports as $report)
-                        <tr data-report-id="{{ $report->report_id }}">
-                            <td class="cell-bold">{{ $report->report_id }}</td>
-                            <td>
-                                <span class="cell-bold">{{ $report->report_title }}</span>
-                            </td>
-                            <td>{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
-                            <td>{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
-                            <td>
-                                <div class="user-cell">
-                                    <span>{{ optional($report->submittedBy)->name ?? 'Unassigned Supervisor' }}</span>
-                                </div>
-                            </td>
-                            <td><span class="cell-bold">{{ optional($report->report_date)->format('M d, Y') ?? $report->created_at->format('M d, Y') }}</span></td>
-                            <td>
-                                <span class="status-pill {{ $report->status_badge_class }}">{{ $report->status_label }}</span>
-                            </td>
-                            <td>
-                                <div class="action-icons-group">
-                                    <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 reports-table">
+                    <thead>
                         <tr>
-                            <td colspan="8" class="text-center py-4">
-                                {{ $reports->count() === 0 ? ($stats['total'] > 0 ? 'No reports match your selected filters.' : 'No accomplishment reports found.') : '' }}
-                            </td>
+                            <th>ID</th>
+                            <th>Report Title</th>
+                            <th>Project</th>
+                            <th>Phase</th>
+                            <th>Supervisor</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        @forelse($reports as $report)
+                            <tr data-report-id="{{ $report->report_id }}">
+                                <td class="cell-bold">{{ $report->report_id }}</td>
+                                <td>
+                                    <span class="cell-bold">{{ $report->report_title }}</span>
+                                </td>
+                                <td>{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
+                                <td>{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <span>{{ optional($report->submittedBy)->name ?? 'Unassigned Supervisor' }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="cell-bold">{{ optional($report->report_date)->format('M d, Y') ?? $report->created_at->format('M d, Y') }}</span></td>
+                                <td>
+                                    <span class="status-pill {{ $report->status_badge_class }}">{{ $report->status_label }}</span>
+                                </td>
+                                <td>
+                                    <div class="action-icons-group">
+                                        <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    {{ $reports->count() === 0 ? ($stats['total'] > 0 ? 'No reports match your selected filters.' : 'No accomplishment reports found.') : '' }}
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Pagination Toolbar Node Footer -->
             <div class="table-pagination-strip">
@@ -1579,7 +1604,11 @@
                         })
                         .then(payload => {
                             Swal.close();
-                            Swal.fire({ title: 'Report Approved', text: payload.message || 'The report has been approved.', icon: 'success', confirmButtonColor: '#1c6b43' });
+                            if (payload.auto_completed) {
+                                Swal.fire({ title: 'Phase Completed', text: 'The phase has automatically been marked as Completed because progress reached 100%.', icon: 'success', confirmButtonColor: '#1c6b43' });
+                            } else {
+                                Swal.fire({ title: 'Report Approved', text: payload.message || 'The report has been approved.', icon: 'success', confirmButtonColor: '#1c6b43' });
+                            }
                             loadReports();
                         })
                         .catch(error => {

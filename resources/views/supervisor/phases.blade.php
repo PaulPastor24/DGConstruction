@@ -1119,11 +1119,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                                 ${canManage ? `
                                 <div class="detail-row">
-                                    <span class="detail-label">Update Progress (%):</span>
-                                    <span class="detail-value">
-                                        <input type="number" id="modalProgressInput" min="0" max="100" value="${Math.round(phase.completion_percentage)}" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6ece9;"> 
-                                        <button id="saveProgressBtn" class="btn-action-solid" style="margin-left:8px;">Save</button>
-                                    </span>
+                                    <span class="detail-label">Current Progress:</span>
+                                    <span class="detail-value">${Math.round(phase.completion_percentage)}%</span>
                                 </div>
                                 <div class="detail-row">
                                     <span class="detail-label">Change Status:</span>
@@ -1142,66 +1139,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Wire up management actions if allowed
                         if (canManage) {
-                            const saveProgressBtn = document.getElementById('saveProgressBtn');
-                            const progressInput = document.getElementById('modalProgressInput');
                             const changeStatusBtn = document.getElementById('changeStatusBtn');
                             const statusSelect = document.getElementById('modalStatusSelect');
-
-                            saveProgressBtn.addEventListener('click', function() {
-                                const val = parseFloat(progressInput.value);
-                                if (isNaN(val) || val < 0 || val > 100) {
-                                    Swal.fire({ title: 'Invalid value', text: 'Progress must be between 0 and 100', icon: 'warning' });
-                                    return;
-                                }
-
-                                Swal.fire({
-                                    title: 'Saving progress',
-                                    didOpen: () => Swal.showLoading(),
-                                    allowOutsideClick: false
-                                });
-
-                                fetch(`{{ url('/supervisor/api/phases') }}/${phase.id}/update-progress`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ completion_percentage: val })
-                                }).then(r => r.json()).then(resp => {
-                                        if (resp.success) {
-                                        Swal.fire({ title: 'Saved', text: 'Progress updated successfully', icon: 'success', confirmButtonColor: '#166534' });
-                                        // Update UI elements
-                                        const newPct = resp.phase.completion_percentage;
-                                        document.querySelectorAll(`[data-phase-id='${phase.id}'] .progress-percent-value`).forEach(el => el.textContent = Math.round(newPct) + '%');
-                                        document.querySelectorAll(`[data-phase-id='${phase.id}'] .table-progress-fill`).forEach(el => el.style.width = Math.round(newPct) + '%');
-                                        if (resp.overallProgress !== undefined) {
-                                            document.getElementById('overallProgressValue').textContent = resp.overallProgress + '%';
-                                            document.getElementById('overallProgressBar').style.width = resp.overallProgress + '%';
-                                        }
-                                        // Update notification badge
-                                        const nb = document.getElementById('notif-badge');
-                                        if (nb) {
-                                            const val = parseInt(nb.textContent || '0', 10) || 0;
-                                            nb.textContent = val + 1;
-                                        } else {
-                                            const link = document.querySelector('.topbar-icon');
-                                            if (link) {
-                                                const span = document.createElement('span');
-                                                span.id = 'notif-badge';
-                                                span.className = 'position-absolute';
-                                                span.style.cssText = 'top:6px; right:6px; width:14px; height:14px; background:#166534; border-radius:999px; display:inline-block; border:2px solid #fff; font-size:0.7rem; line-height:10px; text-align:center; color:#fff;';
-                                                span.textContent = '1';
-                                                link.appendChild(span);
-                                            }
-                                        }
-                                    } else {
-                                        Swal.fire({ title: 'Error', text: resp.message || 'Failed to save progress', icon: 'error' });
-                                    }
-                                }).catch(() => {
-                                    Swal.fire({ title: 'Error', text: 'Request failed', icon: 'error' });
-                                });
-                            });
 
                             changeStatusBtn.addEventListener('click', function() {
                                 const selected = statusSelect.value;

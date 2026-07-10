@@ -4,21 +4,16 @@
 @section('page_title', 'Materials & Inventory')
 
 @push('styles')
-
 <style>
     :root {
-        --mi-dark: #10271a;
-        --mi-green: #087d3d;
-        --mi-green-soft: #e7f6ed;
-        --mi-blue: #1d70e8;
-        --mi-blue-soft: #eaf3ff;
-        --mi-orange: #ff6b25;
-        --mi-orange-soft: #fff0e8;
-        --mi-muted: #7b8880;
-        --mi-border: #e3e9e5;
-        --mi-background: #f6f8f6;
+        --mi-dark: #1f3d2a;
+        --mi-muted: #64748b;
+        --mi-border: #e7f3ea;
+        --mi-background: #f5fbf6;
         --mi-white: #ffffff;
-        --mi-shadow: 0 14px 35px rgba(16, 39, 26, 0.07);
+        --mi-accent: #166534;
+        --mi-accent-soft: #eaf7ef;
+        --mi-accent-hover: #0f5132;
     }
 
     .content {
@@ -30,1487 +25,1064 @@
         padding: 4px 0 28px;
     }
 
-    .mi-heading {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 28px;
+    .inventory-green-theme .card {
+        border: 1px solid var(--mi-border) !important;
+        box-shadow: 0 10px 28px rgba(22, 101, 52, 0.08);
     }
 
-    .mi-heading-copy {
-        min-width: 0;
+    .inventory-green-theme .search-container i {
+        left: 12px;
+        color: #7a8b7f;
     }
 
-    .mi-heading h1 {
-        margin: 0;
-        color: var(--mi-dark);
-        font-family: 'Syne', sans-serif;
-        font-size: 34px;
-        font-weight: 700;
-        letter-spacing: -0.8px;
+    .inventory-green-theme .badge-available {
+        background-color: var(--mi-accent-soft);
+        color: var(--mi-accent);
     }
 
-    .mi-heading p {
-        margin: 8px 0 0;
-        color: var(--mi-muted);
-        font-size: 14px;
-        line-height: 1.6;
+    .inventory-green-theme .badge-low-stock {
+        background-color: #fff7ed;
+        color: #c2410c;
     }
 
-    .mi-heading-right {
+    .inventory-green-theme .badge-out-of-stock {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    .inventory-green-theme .table-hover tbody tr:hover {
+        background-color: #f7fcf8;
+    }
+
+    .inventory-green-theme .btn-primary,
+    .inventory-green-theme .btn-success {
+        background-color: var(--mi-accent) !important;
+        border-color: var(--mi-accent) !important;
+        color: #ffffff !important;
+    }
+
+    .inventory-green-theme .btn-primary:hover,
+    .inventory-green-theme .btn-success:hover,
+    .inventory-green-theme .btn-primary:focus,
+    .inventory-green-theme .btn-success:focus {
+        background-color: var(--mi-accent-hover) !important;
+        border-color: var(--mi-accent-hover) !important;
+        color: #ffffff !important;
+    }
+
+    .inventory-green-theme .btn-outline-secondary:hover {
+        border-color: var(--mi-accent) !important;
+        color: var(--mi-accent) !important;
+        background-color: var(--mi-accent-soft) !important;
+    }
+
+    .inventory-green-theme .text-primary,
+    .inventory-green-theme .nav-link.active,
+    .inventory-green-theme .nav-link.active.text-primary {
+        color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .border-primary {
+        border-color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .bg-primary {
+        background-color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .table thead {
+        background-color: #f2f8f3 !important;
+    }
+
+    .inventory-green-theme .form-control:focus,
+    .inventory-green-theme .form-select:focus {
+        border-color: var(--mi-accent) !important;
+        box-shadow: 0 0 0 0.2rem rgba(22, 101, 52, 0.16) !important;
+    }
+
+    .inventory-view-panel {
+        transition: all 0.2s ease;
+    }
+
+    .inventory-green-theme .pagination .page-link {
+        color: #166534;
+        border-color: #d1fae5;
+    }
+
+    .inventory-green-theme .pagination .page-item.active .page-link {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: #ffffff;
+    }
+
+    .inventory-green-theme .pagination .page-link:hover {
+        color: #14532d;
+        background-color: #ecfdf5;
+        border-color: #86efac;
+    }
+
+    .inventory-card-icon {
         display: flex;
         align-items: center;
-        gap: 16px;
-    }
-
-    .mi-date {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        min-width: 172px;
-        padding: 13px 16px;
-        border: 1px solid var(--mi-border);
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
         border-radius: 14px;
-        background: var(--mi-white);
-        box-shadow: 0 8px 24px rgba(16, 39, 26, 0.05);
-        color: #38483f;
-        font-size: 13px;
+        border: 1px solid rgba(22, 101, 52, 0.14);
+        background-color: rgba(22, 101, 52, 0.08);
+        color: #166534;
+    }
+
+    .inventory-card-icon.available {
+        background-color: rgba(22, 101, 52, 0.08);
+        color: #166534;
+    }
+
+    .inventory-card-icon.low-stock {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #c2410c;
+        border-color: rgba(249, 115, 22, 0.16);
+    }
+
+    .inventory-card-icon.out-of-stock {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border-color: rgba(239, 68, 68, 0.16);
+    }
+
+    .inventory-modal-card {
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    }
+
+    .inventory-stat-pill {
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
         font-weight: 600;
-        white-space: nowrap;
     }
 
-    .mi-date i {
-        color: var(--mi-dark);
-        font-size: 17px;
+    .inventory-modal-pagination .page-link {
+        color: #166534;
+        border-color: #d1fae5;
     }
 
-    .mi-user {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        padding-left: 16px;
-        border-left: 1px solid var(--mi-border);
-    }
-
-    .mi-user-avatar {
-        display: grid;
-        width: 44px;
-        height: 44px;
-        flex-shrink: 0;
-        place-items: center;
-        border-radius: 50%;
-        background: linear-gradient(145deg, #184e2c, #092d19);
+    .inventory-modal-pagination .page-item.active .page-link {
+        background-color: #16a34a;
+        border-color: #16a34a;
         color: #ffffff;
-        font-size: 17px;
     }
 
-    .mi-user-name {
-        color: #17271e;
-        font-size: 13px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .mi-user-role {
-        margin-top: 2px;
-        color: #8a968f;
-        font-size: 11px;
-    }
-
-    .mi-summary-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        margin-bottom: 26px;
-    }
-
-    .mi-summary-card {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        min-height: 132px;
-        padding: 24px;
-        border: 1px solid var(--mi-border);
-        border-radius: 18px;
-        background: var(--mi-white);
-        box-shadow: var(--mi-shadow);
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-    .mi-summary-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 18px 42px rgba(16, 39, 26, 0.1);
-    }
-
-    .mi-summary-card.blue {
-        border-left: 3px solid var(--mi-blue);
-    }
-
-    .mi-summary-card.orange {
-        border-left: 3px solid var(--mi-orange);
-    }
-
-    .mi-summary-card.green {
-        border-left: 3px solid var(--mi-green);
-    }
-
-    .mi-summary-icon {
-        display: grid;
-        width: 64px;
-        height: 64px;
-        flex: 0 0 auto;
-        place-items: center;
-        border-radius: 50%;
-        font-size: 27px;
-    }
-
-    .mi-summary-card.blue .mi-summary-icon {
-        background: var(--mi-blue-soft);
-        color: var(--mi-blue);
-    }
-
-    .mi-summary-card.orange .mi-summary-icon {
-        background: var(--mi-orange-soft);
-        color: var(--mi-orange);
-    }
-
-    .mi-summary-card.green .mi-summary-icon {
-        background: var(--mi-green-soft);
-        color: var(--mi-green);
-    }
-
-    .mi-summary-label {
-        color: #46554c;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .mi-summary-value {
-        margin-top: 2px;
-        color: #101b15;
-        font-family: 'Syne', sans-serif;
-        font-size: 38px;
-        font-weight: 700;
-        line-height: 1.1;
-        letter-spacing: -1px;
-    }
-
-    .mi-summary-note {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        color: #748178;
-        font-size: 11px;
-    }
-
-    .mi-summary-dot {
-        width: 8px;
-        height: 8px;
-        flex: 0 0 auto;
-        border-radius: 50%;
-    }
-
-    .mi-summary-card.blue .mi-summary-dot {
-        background: var(--mi-blue);
-    }
-
-    .mi-summary-card.orange .mi-summary-dot {
-        background: var(--mi-orange);
-    }
-
-    .mi-summary-card.green .mi-summary-dot {
-        background: var(--mi-green);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Main workspace width
-    |--------------------------------------------------------------------------
-    |
-    | Inventory Status is wider.
-    | Delivery and Logistics panels are narrower.
-    |
-    */
-
-    .mi-workspace {
-        display: grid;
-        grid-template-columns:
-            minmax(0, 1.18fr)
-            minmax(0, 0.82fr);
-        gap: 20px;
-        align-items: start;
-    }
-
-    .mi-panel {
-        min-width: 0;
-        overflow: hidden;
-        border: 1px solid var(--mi-border);
-        border-radius: 18px;
-        background: var(--mi-white);
-        box-shadow: var(--mi-shadow);
-    }
-
-    .mi-panel-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        padding: 20px 22px;
-        border-bottom: 1px solid var(--mi-border);
-    }
-
-    .mi-panel-title-wrap {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        min-width: 0;
-    }
-
-    .mi-panel-title-icon {
-        display: grid;
-        width: 38px;
-        height: 38px;
-        flex: 0 0 auto;
-        place-items: center;
-        border-radius: 11px;
-        background: var(--mi-green-soft);
-        color: var(--mi-green);
-        font-size: 17px;
-    }
-
-    .mi-panel-title {
-        margin: 0;
-        color: #15261c;
-        font-family: 'Syne', sans-serif;
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .mi-panel-description {
-        margin: 4px 0 0;
-        color: #929e96;
-        font-size: 11px;
-    }
-
-    .mi-project-filter {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-shrink: 0;
-    }
-
-    .mi-project-filter label {
-        margin: 0;
-        color: #4c5b52;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .mi-project-filter select {
-        min-width: 150px;
-        height: 42px;
-        padding: 0 38px 0 13px;
-        border: 1px solid #dce4de;
-        border-radius: 12px;
-        outline: none;
-        background-color: #ffffff;
-        color: #2f3f36;
-        font-size: 13px;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Desktop table wrapper
-    |--------------------------------------------------------------------------
-    |
-    | No horizontal scrollbar at normal desktop size.
-    |
-    */
-
-    .mi-table-wrapper {
-        width: 100%;
-        overflow-x: hidden;
-    }
-
-    .mi-inventory-table {
-        width: 100%;
-        min-width: 0;
-        table-layout: fixed;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .mi-inventory-table th {
-        padding: 15px 16px;
-        border-bottom: 1px solid var(--mi-border);
-        background: #fafbfa;
-        color: #657269;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-align: left;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
-
-    .mi-inventory-table td {
-        padding: 18px 16px;
-        border-bottom: 1px solid #edf1ee;
-        color: #445249;
-        font-size: 12px;
-        vertical-align: middle;
-    }
-
-    .mi-inventory-table th:nth-child(1),
-    .mi-inventory-table td:nth-child(1) {
-        width: 24%;
-    }
-
-    .mi-inventory-table th:nth-child(2),
-    .mi-inventory-table td:nth-child(2) {
-        width: 30%;
-    }
-
-    .mi-inventory-table th:nth-child(3),
-    .mi-inventory-table td:nth-child(3) {
-        width: 12%;
-    }
-
-    .mi-inventory-table th:nth-child(4),
-    .mi-inventory-table td:nth-child(4) {
-        width: 20%;
-    }
-
-    .mi-inventory-table th:nth-child(5),
-    .mi-inventory-table td:nth-child(5) {
-        width: 14%;
-    }
-
-    .mi-inventory-table tbody tr {
-        transition: background 0.18s ease;
-    }
-
-    .mi-inventory-table tbody tr:hover {
-        background: #fafcfb;
-    }
-
-    .mi-inventory-table tbody tr:last-child td {
-        border-bottom: 0;
-    }
-
-    .mi-material-name {
-        overflow: hidden;
-        color: #17261d;
-        font-size: 13px;
-        font-weight: 700;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .mi-stock {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
-    }
-
-    .mi-stock-track {
-        width: 76px;
-        height: 8px;
-        flex: 0 1 76px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: #e6ebe8;
-    }
-
-    .mi-stock-fill {
-        height: 100%;
-        border-radius: inherit;
-    }
-
-    .mi-stock-number {
-        color: #28372f;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .mi-site {
-        display: block;
-        overflow: hidden;
-        color: #3f4d45;
-        font-weight: 500;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .mi-stock-status {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        max-width: 100%;
-        padding: 7px 10px;
-        border-radius: 999px;
-        font-size: 10px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .mi-stock-status::before {
-        width: 7px;
-        height: 7px;
-        flex: 0 0 auto;
-        border-radius: 50%;
-        content: '';
-    }
-
-    .mi-stock-status.available {
-        background: var(--mi-green-soft);
-        color: var(--mi-green);
-    }
-
-    .mi-stock-status.available::before {
-        background: var(--mi-green);
-    }
-
-    .mi-stock-status.low {
-        background: var(--mi-orange-soft);
-        color: var(--mi-orange);
-    }
-
-    .mi-stock-status.low::before {
-        background: var(--mi-orange);
-    }
-
-    .mi-panel-footer {
-        padding: 15px 20px;
-        border-top: 1px solid var(--mi-border);
-        text-align: center;
-    }
-
-    .mi-panel-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        color: var(--mi-green);
-        font-size: 12px;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    .mi-panel-link:hover {
-        color: #056733;
-    }
-
-    .mi-right-column {
-        display: flex;
-        min-width: 0;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .mi-form-body {
-        padding: 18px 20px;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Narrower right-side delivery form
-    |--------------------------------------------------------------------------
-    */
-
-    .mi-form-grid {
-        display: grid;
-        grid-template-columns:
-            minmax(0, 1.05fr)
-            minmax(0, 0.7fr)
-            minmax(0, 0.75fr)
-            minmax(0, 1.2fr);
-        gap: 12px;
-    }
-
-    .mi-form-group {
-        min-width: 0;
-    }
-
-    .mi-form-group label {
-        display: block;
-        margin-bottom: 8px;
-        color: #435148;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .mi-form-group input,
-    .mi-form-group select {
-        width: 100%;
-        height: 44px;
-        min-width: 0;
-        padding: 0 12px;
-        border: 1px solid #dce4de;
-        border-radius: 12px;
-        outline: none;
-        background: #ffffff;
-        color: #25342c;
-        font-size: 12px;
-        transition:
-            border-color 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-    .mi-form-group input:focus,
-    .mi-form-group select:focus {
-        border-color: #83a18c;
-        box-shadow: 0 0 0 4px rgba(8, 125, 61, 0.1);
-    }
-
-    .mi-delivery-bottom {
-        display: grid;
-        grid-template-columns:
-            minmax(0, 1fr)
-            175px;
-        gap: 14px;
-        margin-top: 16px;
-        align-items: end;
-    }
-
-    .mi-submit {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        width: 100%;
-        height: 44px;
-        border: 0;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #0b9149, #08763d);
-        color: #ffffff;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-    .mi-submit:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 12px 22px rgba(8, 125, 61, 0.22);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Logistics table
-    |--------------------------------------------------------------------------
-    */
-
-    .mi-logistics-table {
-        width: 100%;
-        min-width: 0;
-        table-layout: fixed;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .mi-logistics-table th {
-        padding: 14px 14px;
-        border-bottom: 1px solid var(--mi-border);
-        background: #fafbfa;
-        color: #657269;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.7px;
-        text-align: left;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
-
-    .mi-logistics-table td {
-        padding: 15px 14px;
-        border-bottom: 1px solid #edf1ee;
-        color: #46544b;
-        font-size: 11px;
-        vertical-align: middle;
-    }
-
-    .mi-logistics-table th:nth-child(1),
-    .mi-logistics-table td:nth-child(1) {
-        width: 15%;
-    }
-
-    .mi-logistics-table th:nth-child(2),
-    .mi-logistics-table td:nth-child(2) {
-        width: 20%;
-    }
-
-    .mi-logistics-table th:nth-child(3),
-    .mi-logistics-table td:nth-child(3) {
-        width: 17%;
-    }
-
-    .mi-logistics-table th:nth-child(4),
-    .mi-logistics-table td:nth-child(4) {
-        width: 26%;
-    }
-
-    .mi-logistics-table th:nth-child(5),
-    .mi-logistics-table td:nth-child(5) {
-        width: 22%;
-    }
-
-    .mi-logistics-table tbody tr:hover {
-        background: #fafcfb;
-    }
-
-    .mi-logistics-table tbody tr:last-child td {
-        border-bottom: 0;
-    }
-
-    .mi-trip-code {
-        color: #22342a;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .mi-trip-value {
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .mi-trip-status {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        max-width: 100%;
-        padding: 7px 9px;
-        border-radius: 999px;
-        font-size: 9px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .mi-trip-status::before {
-        width: 7px;
-        height: 7px;
-        flex: 0 0 auto;
-        border-radius: 50%;
-        content: '';
-    }
-
-    .mi-trip-status.route {
-        background: var(--mi-blue-soft);
-        color: var(--mi-blue);
-    }
-
-    .mi-trip-status.route::before {
-        background: var(--mi-blue);
-    }
-
-    .mi-trip-status.delivered {
-        background: var(--mi-green-soft);
-        color: var(--mi-green);
-    }
-
-    .mi-trip-status.delivered::before {
-        background: var(--mi-green);
-    }
-
-    .mi-trip-status.scheduled {
-        background: var(--mi-orange-soft);
-        color: var(--mi-orange);
-    }
-
-    .mi-trip-status.scheduled::before {
-        background: var(--mi-orange);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Responsive layout
-    |--------------------------------------------------------------------------
-    */
-
-    @media (max-width: 1150px) {
-        .mi-workspace {
-            grid-template-columns: 1fr;
-        }
-
-        .mi-form-grid {
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-        }
-
-        .mi-table-wrapper {
-            overflow-x: auto;
-        }
-
-        .mi-inventory-table {
-            min-width: 710px;
-            table-layout: auto;
-        }
-
-        .mi-logistics-table {
-            min-width: 650px;
-            table-layout: auto;
-        }
-    }
-
-    @media (max-width: 1000px) {
-        .mi-summary-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 720px) {
-        .mi-heading {
-            flex-direction: column;
-        }
-
-        .mi-heading-right {
-            width: 100%;
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .mi-user {
-            padding: 0;
-            border: 0;
-        }
-
-        .mi-date {
-            width: 100%;
-        }
-
-        .mi-panel-header {
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .mi-project-filter {
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .mi-project-filter select {
-            width: 100%;
-        }
-
-        .mi-form-grid,
-        .mi-delivery-bottom {
-            grid-template-columns: 1fr;
-        }
+    .inventory-modal-pagination .page-link:hover {
+        color: #14532d;
+        background-color: #ecfdf5;
+        border-color: #86efac;
     }
 </style>
-
 @endpush
 
 @section('content')
-
-@php
-$inventoryRows = [
-[
-'material' => 'Cement',
-'stock' => 420,
-'percentage' => 62,
-'unit' => 'bags',
-'site' => 'Kulas and Rene',
-'status' => 'In Stock',
-],
-[
-'material' => 'Steel Rebar 16mm',
-'stock' => 180,
-'percentage' => 41,
-'unit' => 'pcs',
-'site' => 'Kulas and Rene',
-'status' => 'Low Stock',
-],
-[
-'material' => 'Sand',
-'stock' => 35,
-'percentage' => 68,
-'unit' => 'm³',
-'site' => 'Main Warehouse',
-'status' => 'In Stock',
-],
-[
-'material' => 'Gravel 3/4',
-'stock' => 22,
-'percentage' => 44,
-'unit' => 'm³',
-'site' => 'Main Warehouse',
-'status' => 'Low Stock',
-],
-[
-'material' => 'Form Plywood',
-'stock' => 95,
-'percentage' => 49,
-'unit' => 'sheets',
-'site' => 'Site B',
-'status' => 'In Stock',
-],
-];
-
-$haulingRows = [
-    [
-        'trip' => 'TR-104',
-        'material' => 'Cement',
-        'truck' => 'Truck 02',
-        'destination' => 'Kulas and Rene',
-        'status' => 'En Route',
-    ],
-    [
-        'trip' => 'TR-105',
-        'material' => 'Gravel 3/4',
-        'truck' => 'Truck 05',
-        'destination' => 'Main Warehouse',
-        'status' => 'Delivered',
-    ],
-    [
-        'trip' => 'TR-106',
-        'material' => 'Steel Rebar',
-        'truck' => 'Truck 03',
-        'destination' => 'Site B',
-        'status' => 'Scheduled',
-    ],
-];
-
-@endphp
-
-<div class="mi-page">
-
-<div class="mi-heading">
-
-    <div class="mi-heading-copy">
-
-        <h1>
-            Materials & Inventory
-        </h1>
-
-        <p>
-            Track stock movement, deliveries, inventory value
-            and hauling operations across active projects.
-        </p>
-
+<div class="mi-page inventory-green-theme">
+    
+    <!-- Top 4 Summary Cards Grid Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon available">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Total Materials</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['total_materials'] }}</div>
+                        <div class="text-muted" style="font-size: 11px;">All registered materials</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon available">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Available Materials</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['available_materials'] }}</div>
+                        <div class="text-muted" style="font-size: 11px;">With sufficient stock</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon low-stock">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Low Stock</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['low_stock_alerts'] }}</div>
+                        <div class="text-muted" style="font-size: 11px;">Below minimum level</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon out-of-stock">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Out of Stock</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['out_of_stock'] }}</div>
+                        <div class="text-muted" style="font-size: 11px;">No available stock</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="mi-heading-right">
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Success',
+                    text: '{{ addslashes(session('success')) }}',
+                    icon: 'success',
+                    confirmButtonColor: '#166534'
+                });
+            });
+        </script>
+    @endif
+    @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Action failed',
+                    text: '{{ addslashes(session('error')) }}',
+                    icon: 'error',
+                    confirmButtonColor: '#dc2626'
+                });
+            });
+        </script>
+    @endif
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Validation error',
+                    text: @json($errors->first()),
+                    icon: 'warning',
+                    confirmButtonColor: '#f59e0b'
+                });
+            });
+        </script>
+    @endif
 
-        <div class="mi-date">
+    <!-- Main Workspace Split Grid Layout (Left Content, Right Dashboard Widgets) -->
+    <div class="row g-4">
+        
+        <!-- LEFT MAIN DATA SECTOR -->
+        <div class="col-lg-9">
+            
+            <!-- Core Inventory Management Master Panel -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <ul class="nav nav-tabs border-bottom-0">
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view">Inventory</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view">Material Usage Logs</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-body pt-3">
+                    <div id="inventory-view" class="inventory-view-panel {{ $activeView === 'usage' ? 'd-none' : '' }}">
+                    <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
+                        <div class="col-md-4 position-relative search-container">
+                            <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search materials or usage logs...">
+                            <input type="hidden" name="view" value="inventory" id="inventory-view-input">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="category" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}" {{ $category === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="stock_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="normal" {{ $stockStatus === 'normal' ? 'selected' : '' }}>Available</option>
+                                <option value="low_stock" {{ $stockStatus === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                                <option value="out_of_stock" {{ $stockStatus === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
+                                <i class="bi bi-plus-lg me-1"></i> Add Material
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral">
+                                <i class="bi bi-download me-1"></i> Receive Stock
+                            </button>
+                        </div>
+                    </form>
 
-            <i class="bi bi-calendar3"></i>
+                    <!-- Main Dynamic Table Content Mapping -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                <tr>
+                                    <th class="border-0">Material Name</th>
+                                    <th class="border-0">Category</th>
+                                    <th class="border-0">Unit</th>
+                                    <th class="border-0">Current Stock</th>
+                                    <th class="border-0">Minimum Stock</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($materials as $material)
+                                    @php
+                                        if($material->current_stock <= 0) {
+                                            $badgeClass = 'badge-out-of-stock';
+                                            $statusText = 'Out of Stock';
+                                        } elseif($material->current_stock <= $material->minimum_stock_level) {
+                                            $badgeClass = 'badge-low-stock';
+                                            $statusText = 'Low Stock';
+                                        } else {
+                                            $badgeClass = 'badge-available';
+                                            $statusText = 'Available';
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                        <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                        <td class="text-muted">{{ $material->unit }}</td>
+                                        <td class="fw-bold text-dark">{{ number_format($material->current_stock, 0) }}</td>
+                                        <td class="text-muted">{{ number_format($material->minimum_stock_level, 0) }}</td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $badgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $statusText }}</span></td>
+                                        <td>
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}"><i class="bi bi-pencil"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-warning bg-white" data-bs-toggle="modal" data-bs-target="#receiveStockModal{{ $material->id }}"><i class="bi bi-envelope-open"></i></button>
+                                                <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No structural materials profiles discovered.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-            <span>
-                June 29, 2026
-            </span>
+                    <!-- Layout Footer Summary with Pagination Links -->
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                        <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
+                        <div>{{ $materials->links('pagination::bootstrap-5') }}</div>
+                    </div>
+                    </div>
 
+                    <div id="usage-view" class="inventory-view-panel {{ $activeView === 'inventory' ? 'd-none' : '' }}">
+                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-3" id="usage-search-form">
+                            <input type="hidden" name="category" value="{{ $category }}">
+                            <input type="hidden" name="stock_status" value="{{ $stockStatus }}">
+                            <input type="hidden" name="view" value="usage" id="usage-view-input">
+                            <div class="col-md-4 position-relative search-container">
+                                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search usage logs...">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="usage_category" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat }}" {{ $usageCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="usage_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()" style="display: none;">
+                                    <option value="">All</option>
+                                    <option value="with_remarks" {{ $usageStatus === 'with_remarks' ? 'selected' : '' }}>Has Notes</option>
+                                    <option value="without_remarks" {{ $usageStatus === 'without_remarks' ? 'selected' : '' }}>No Notes</option>
+                                </select>
+                            </div>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px;">
+                                    <tr>
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Project</th>
+                                        <th class="border-0">Phase</th>
+                                        <th class="border-0">Material</th>
+                                        <th class="border-0">Quantity Used</th>
+                                        <th class="border-0">Unit</th>
+                                        <th class="border-0">Used By (Supervisor)</th>
+                                        <th class="border-0 text-center">Other Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($usageLogs as $log)
+                                        <tr>
+                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
+                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->material)->name ?? 'N/A' }}</td>
+                                            <td class="fw-bold text-dark">{{ number_format($log->quantity_used, 0) }}</td>
+                                            <td class="text-muted">{{ optional($log->material)->unit ?? 'Piece' }}</td>
+                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                            <td class="text-center">
+                                                <button type="button"
+                                                    class="btn btn-outline-success btn-sm p-2"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#materialUsageDetailModal"
+                                                    data-date="{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}"
+                                                    data-project="{{ optional($log->project)->project_name ?? 'N/A' }}"
+                                                    data-phase="{{ optional($log->phase)->phase_name ?? 'N/A' }}"
+                                                    data-material="{{ optional($log->material)->name ?? 'N/A' }}"
+                                                    data-quantity="{{ number_format($log->quantity_used, 0) }}"
+                                                    data-unit="{{ optional($log->material)->unit ?? 'Piece' }}"
+                                                    data-recorder="{{ optional($log->recorder)->name ?? 'Unknown' }}"
+                                                    data-notes="{{ e($log->remarks ?? '') }}"
+                                                    data-photo="{{ $log->site_photo_path ? asset('storage/' . ltrim($log->site_photo_path, '/')) : '' }}"
+                                                    title="View usage details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="8" class="text-center text-muted py-4">No analytical usage sequences registered.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="mi-user">
-
-            <div class="mi-user-avatar">
-                <i class="bi bi-person-fill"></i>
+        <!-- RIGHT COMPACT SIDEBAR COLUMN -->
+        <div class="col-lg-3 d-flex flex-column gap-3">
+            
+            <!-- Widget Component 1: Compact Low Stock Visual Tracking alerts -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Low Stock Alerts</h6>
+                <div class="d-flex flex-column gap-3">
+                    @forelse($lowStockMaterials as $lowMat)
+                    <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #f97316;"></span>
+                            <span class="text-dark fw-semibold">{{ $lowMat->name }}</span>
+                        </div>
+                        <span class="text-muted fw-bold">{{ number_format((float) $lowMat->current_stock, 0) }} / <span class="text-muted small fw-normal">{{ number_format((float) $lowMat->minimum_stock_level, 0) }} {{ $lowMat->unit }}</span></span>
+                    </div>
+                    @empty
+                    <div class="text-muted small">No low-stock materials at the moment.</div>
+                    @endforelse
+                </div>
+                <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#lowStockModal">View all low stock</button>
             </div>
 
-            <div>
-
-                <div class="mi-user-name">
-                    John Dela Cruz
+            <!-- Widget Component 2: Dynamic Receivals Stream Log -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Recent Stock Received</h6>
+                <div class="d-flex flex-column gap-3">
+                    @forelse($recentlyUpdatedMaterials as $recMat)
+                    <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
+                        <div>
+                            <div class="text-dark fw-semibold">{{ $recMat->name }}</div>
+                            <div class="text-muted small" style="font-size: 11px;">{{ optional($recMat->updated_at)->format('M d, Y') ?? 'Recently updated' }}</div>
+                        </div>
+                        <span class="text-success fw-bold">{{ number_format((float) $recMat->current_stock, 0) }} {{ $recMat->unit }}</span>
+                    </div>
+                    @empty
+                    <div class="text-muted small">No recent stock updates available.</div>
+                    @endforelse
                 </div>
-
-                <div class="mi-user-role">
-                    Project Manager
-                </div>
-
+                <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#recentStockModal">View all received</button>
             </div>
 
-            <i class="bi bi-chevron-down"></i>
+            <!-- Widget Component 3: Clean Analytics Donut Graphic representation -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Inventory Summary</h6>
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="position-relative d-flex align-items-center justify-content-center" style="width: 115px; height: 115px; border-radius: 50%; background: conic-gradient(#10b981 0% {{ $metrics['available_percentage'] }}%, #f97316 {{ $metrics['available_percentage'] }}% {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}%, #ef4444 {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}% 100%);">
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 85px; height: 85px;">
+                            <div class="text-center">
+                                <span class="fs-4 fw-bold text-dark lh-1 d-block">{{ $metrics['total_materials'] }}</span>
+                                <span class="text-muted" style="font-size: 9px; uppercase;">Total Items</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex flex-column gap-2" style="font-size: 12px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #10b981;"></span>
+                            <span class="text-muted">Available</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['available_materials'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #f97316;"></span>
+                            <span class="text-muted">Low Stock</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['low_stock_alerts'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #ef4444;"></span>
+                            <span class="text-muted">Out of Stock</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['out_of_stock'] }}</span>
+                    </div>
+                </div>
+            </div>
 
         </div>
-
     </div>
-
 </div>
 
-<div class="mi-summary-grid">
-
-    <article class="mi-summary-card blue">
-
-        <div class="mi-summary-icon">
-            <i class="bi bi-truck"></i>
-        </div>
-
-        <div>
-
-            <div class="mi-summary-label">
-                Active Deliveries
-            </div>
-
-            <div class="mi-summary-value">
-                18
-            </div>
-
-            <div class="mi-summary-note">
-
-                <span class="mi-summary-dot"></span>
-
-                6 incoming this week
-
-            </div>
-
-        </div>
-
-    </article>
-
-    <article class="mi-summary-card orange">
-
-        <div class="mi-summary-icon">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-
-        <div>
-
-            <div class="mi-summary-label">
-                Low Stock Alerts
-            </div>
-
-            <div class="mi-summary-value">
-                4
-            </div>
-
-            <div class="mi-summary-note">
-
-                <span class="mi-summary-dot"></span>
-
-                Cement, Rebar, Gravel, Form Ply
-
-            </div>
-
-        </div>
-
-    </article>
-
-    <article class="mi-summary-card green">
-
-        <div class="mi-summary-icon">
-            ₱
-        </div>
-
-        <div>
-
-            <div class="mi-summary-label">
-                Total Inventory Value
-            </div>
-
-            <div class="mi-summary-value">
-                ₱2.48M
-            </div>
-
-            <div class="mi-summary-note">
-
-                <span class="mi-summary-dot"></span>
-
-                Across 5 active project sites
-
-            </div>
-
-        </div>
-
-    </article>
-
-</div>
-
-<div class="mi-workspace">
-
-    <section class="mi-panel">
-
-        <div class="mi-panel-header">
-
-            <div>
-
-                <h2 class="mi-panel-title">
-                    Inventory Status
-                </h2>
-
-                <p class="mi-panel-description">
-                    Review available stock levels by material and site.
-                </p>
-
-            </div>
-
-            <div class="mi-project-filter">
-
-                <label for="inventoryProject">
-                    Project:
-                </label>
-
-                <select id="inventoryProject">
-
-                    <option selected>
-                        Overall
-                    </option>
-
-                    <option>
-                        Kulas and Rene
-                    </option>
-
-                    <option>
-                        Main Warehouse
-                    </option>
-
-                    <option>
-                        Site B
-                    </option>
-
-                </select>
-
-            </div>
-
-        </div>
-
-        <div class="mi-table-wrapper">
-
-            <table class="mi-inventory-table">
-
-                <thead>
-
-                    <tr>
-                        <th>Material</th>
-                        <th>Stock Level</th>
-                        <th>Unit</th>
-                        <th>Site</th>
-                        <th>Status</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    @foreach($inventoryRows as $item)
-
-                        @php
-                            $isLowStock =
-                                $item['status'] === 'Low Stock';
-
-                            $stockClass =
-                                $isLowStock
-                                    ? 'low'
-                                    : 'available';
-
-                            $barColor =
-                                $isLowStock
-                                    ? '#ff6b25'
-                                    : '#087d3d';
-                        @endphp
-
-                        <tr>
-
-                            <td>
-
-                                <div class="mi-material-name">
-                                    {{ $item['material'] }}
-                                </div>
-
-                            </td>
-
-                            <td>
-
-                                <div class="mi-stock">
-
-                                    <div class="mi-stock-track">
-
-                                        <div
-                                            class="mi-stock-fill"
-                                            style="
-                                                width: {{ $item['percentage'] }}%;
-                                                background: {{ $barColor }};
-                                            "
-                                        ></div>
-
-                                    </div>
-
-                                    <span class="mi-stock-number">
-                                        {{ $item['stock'] }}
-                                    </span>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                {{ $item['unit'] }}
-                            </td>
-
-                            <td>
-
-                                <span
-                                    class="mi-site"
-                                    title="{{ $item['site'] }}"
-                                >
-                                    {{ $item['site'] }}
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <span
-                                    class="mi-stock-status {{ $stockClass }}"
-                                >
-                                    {{ $item['status'] }}
-                                </span>
-
-                            </td>
-
-                        </tr>
-
-                    @endforeach
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="mi-panel-footer">
-
-            <a href="#" class="mi-panel-link">
-
-                View full inventory report
-
-                <i class="bi bi-chevron-right"></i>
-
-            </a>
-
-        </div>
-
-    </section>
-
-    <div class="mi-right-column">
-
-        <section class="mi-panel">
-
-            <div class="mi-panel-header">
-
-                <div class="mi-panel-title-wrap">
-
-                    <span class="mi-panel-title-icon">
-                        <i class="bi bi-truck"></i>
-                    </span>
-
-                    <div>
-
-                        <h2 class="mi-panel-title">
-                            Log Material Delivery
-                        </h2>
-
-                        <p class="mi-panel-description">
-                            Record incoming construction materials.
-                        </p>
-
-                    </div>
-
+<!-- Modal Dialog Structures Block Configurations -->
+<div class="modal fade" id="lowStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark">Low Stock Materials</h5>
+                    <p class="text-muted small mb-0">Items that require replenishment soon.</p>
                 </div>
-
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="mi-form-body">
-
-                <form
-                    action="{{ route('admin.inventory.store-delivery') }}"
-                    method="POST"
-                >
-
-                    @csrf
-
-                    <div class="mi-form-grid">
-
-                        <div class="mi-form-group">
-
-                            <label for="material_id">
-                                Material
-                            </label>
-
-                            <select
-                                id="material_id"
-                                name="material_id"
-                                required
-                            >
-
-                                <option value="1" selected>
-                                    Cement
-                                </option>
-
-                                <option value="2">
-                                    Steel Rebar 16mm
-                                </option>
-
-                                <option value="3">
-                                    Sand
-                                </option>
-
-                                <option value="4">
-                                    Gravel 3/4
-                                </option>
-
-                                <option value="5">
-                                    Form Plywood
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="mi-form-group">
-
-                            <label for="quantity">
-                                Quantity
-                            </label>
-
-                            <input
-                                id="quantity"
-                                type="number"
-                                name="quantity"
-                                value="120"
-                                min="1"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="mi-form-group">
-
-                            <label for="unit">
-                                Unit
-                            </label>
-
-                            <select
-                                id="unit"
-                                name="unit"
-                                required
-                            >
-
-                                <option value="bags" selected>
-                                    bags
-                                </option>
-
-                                <option value="pcs">
-                                    pcs
-                                </option>
-
-                                <option value="tons">
-                                    tons
-                                </option>
-
-                                <option value="m³">
-                                    m³
-                                </option>
-
-                                <option value="sheets">
-                                    sheets
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="mi-form-group">
-
-                            <label for="supplier_name">
-                                Supplier
-                            </label>
-
-                            <input
-                                id="supplier_name"
-                                type="text"
-                                name="supplier_name"
-                                value="ABC Builders Supply"
-                                required
-                            >
-
-                        </div>
-
-                    </div>
-
-                    <div class="mi-delivery-bottom">
-
-                        <div class="mi-form-group">
-
-                            <label for="delivery_date">
-                                Delivery Date
-                            </label>
-
-                            <input
-                                id="delivery_date"
-                                type="text"
-                                value="Jun 29, 2026"
-                                readonly
-                            >
-
-                        </div>
-
-                        <button
-                            type="submit"
-                            class="mi-submit"
-                        >
-
-                            Log Delivery
-
-                            <i class="bi bi-send"></i>
-
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </section>
-
-        <section class="mi-panel">
-
-            <div class="mi-panel-header">
-
-                <div class="mi-panel-title-wrap">
-
-                    <span class="mi-panel-title-icon">
-                        <i class="bi bi-truck-front"></i>
-                    </span>
-
-                    <div>
-
-                        <h2 class="mi-panel-title">
-                            Hauling & Logistics
-                        </h2>
-
-                        <p class="mi-panel-description">
-                            Monitor delivery trucks and hauling progress.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="mi-table-wrapper">
-
-                <table class="mi-logistics-table">
-
-                    <thead>
-
-                        <tr>
-                            <th>Trip</th>
-                            <th>Material</th>
-                            <th>Truck</th>
-                            <th>Destination</th>
-                            <th>Status</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        @foreach($haulingRows as $trip)
-
-                            @php
-                                if ($trip['status'] === 'En Route') {
-                                    $statusClass = 'route';
-                                } elseif ($trip['status'] === 'Delivered') {
-                                    $statusClass = 'delivered';
-                                } else {
-                                    $statusClass = 'scheduled';
-                                }
-                            @endphp
-
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-
-                                <td>
-
-                                    <span class="mi-trip-code">
-                                        {{ $trip['trip'] }}
-                                    </span>
-
-                                </td>
-
-                                <td>
-
-                                    <span
-                                        class="mi-trip-value"
-                                        title="{{ $trip['material'] }}"
-                                    >
-                                        {{ $trip['material'] }}
-                                    </span>
-
-                                </td>
-
-                                <td>
-
-                                    <span
-                                        class="mi-trip-value"
-                                        title="{{ $trip['truck'] }}"
-                                    >
-                                        {{ $trip['truck'] }}
-                                    </span>
-
-                                </td>
-
-                                <td>
-
-                                    <span
-                                        class="mi-trip-value"
-                                        title="{{ $trip['destination'] }}"
-                                    >
-                                        {{ $trip['destination'] }}
-                                    </span>
-
-                                </td>
-
-                                <td>
-
-                                    <span
-                                        class="mi-trip-status {{ $statusClass }}"
-                                    >
-                                        {{ $trip['status'] }}
-                                    </span>
-
-                                </td>
-
+                                <th>Material</th>
+                                <th>Category</th>
+                                <th>Current</th>
+                                <th>Minimum</th>
+                                <th>Status</th>
                             </tr>
-
-                        @endforeach
-
-                    </tbody>
-
-                </table>
-
+                        </thead>
+                        <tbody>
+                            @forelse($allLowStockMaterials as $material)
+                                <tr>
+                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                    <td class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }}</td>
+                                    <td class="text-muted">{{ number_format((float) $material->minimum_stock_level, 0) }}</td>
+                                    <td><span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 py-1">Low Stock</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-center text-muted py-4">No low stock items available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                    <span class="text-muted small">Showing {{ $allLowStockMaterials->firstItem() ?? 0 }} to {{ $allLowStockMaterials->lastItem() ?? 0 }} of {{ $allLowStockMaterials->total() }} items</span>
+                    <div class="inventory-modal-pagination">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                </div>
+                    </table>
+                </div>
             </div>
-
-            <div class="mi-panel-footer">
-
-                <a href="#" class="mi-panel-link">
-
-                    View all hauling trips
-
-                    <i class="bi bi-chevron-right"></i>
-
-                </a>
-
-            </div>
-
-        </section>
-
+        </div>
     </div>
-
 </div>
 
+<div class="modal fade" id="recentStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark">Recent Stock Updates</h5>
+                    <p class="text-muted small mb-0">Latest materials with current available stock.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Material</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allRecentlyUpdatedMaterials as $material)
+                                <tr>
+                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                    <td class="fw-bold text-success">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</td>
+                                    <td class="text-muted">{{ optional($material->updated_at)->format('M d, Y H:i') ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center text-muted py-4">No recent stock updates available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                    <span class="text-muted small">Showing {{ $allRecentlyUpdatedMaterials->firstItem() ?? 0 }} to {{ $allRecentlyUpdatedMaterials->lastItem() ?? 0 }} of {{ $allRecentlyUpdatedMaterials->total() }} items</span>
+                    <div class="inventory-modal-pagination">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                </div>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="modal fade" id="receiveStockModalGeneral" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark">Receive Incoming Cargo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Please select the relative messaging or tracking actions icons on each specific table list item row parameters to record stock operations securely.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addMaterialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0">
+            <form method="POST" action="{{ route('admin.inventory.materials.store') }}" class="inventory-form">
+                @csrf
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-dark">Add New Master Material</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Material Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Portland Cement" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Category</label>
+                        <input type="text" name="category" class="form-control" placeholder="e.g. Masonry">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Unit Type</label>
+                        <input type="text" name="unit" class="form-control" placeholder="e.g. Bag" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-semibold">Initial Stock Level</label>
+                            <input type="number" step="0.01" min="0" name="current_stock" class="form-control" value="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-semibold">Minimum Threshold Limit</label>
+                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="0" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label small text-muted fw-semibold">Supplier Source Partner</label>
+                        <input type="text" name="supplier" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Save Material Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach($materials as $material)
+<div class="modal fade" id="viewMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-dark">{{ $material->name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2">Category Segment: <strong class="text-dark">{{ $material->category ?? 'General' }}</strong></p>
+                <p class="text-muted mb-2">Unit Classification: <strong class="text-dark">{{ $material->unit }}</strong></p>
+                <p class="text-muted mb-2">Current Active Stock: <strong class="text-dark">{{ number_format($material->current_stock, 2) }}</strong></p>
+                <p class="text-muted mb-2">Minimum Level Bound: <strong class="text-dark">{{ number_format($material->minimum_stock_level, 2) }}</strong></p>
+                <p class="text-muted mb-0">Assigned Vendor: <strong class="text-dark">{{ $material->supplier ?? 'Not specified' }}</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0">
+            <form method="POST" action="{{ route('admin.inventory.materials.update', $material->id) }}" class="inventory-form">
+                @csrf
+                @method('PUT')
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="inventory-card-icon available">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">Modify Registerd Inventory Item</h5>
+                            <p class="text-muted small mb-0">Update the material profile, reorder threshold, and supplier details.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="inventory-modal-card p-3 mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Current Stock</div>
+                                <div class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Status</div>
+                                <span class="inventory-stat-pill {{ $material->current_stock <= 0 ? 'bg-danger-subtle text-danger' : ($material->current_stock <= $material->minimum_stock_level ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success') }}">{{ $material->current_stock <= 0 ? 'Out of Stock' : ($material->current_stock <= $material->minimum_stock_level ? 'Low Stock' : 'Available') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Material Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ old('name', $material->name) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Category</label>
+                            <input type="text" name="category" class="form-control" value="{{ old('category', $material->category ?? '') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Unit</label>
+                            <input type="text" name="unit" class="form-control" value="{{ old('unit', $material->unit) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Minimum Stock Level</label>
+                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="{{ old('minimum_stock_level', $material->minimum_stock_level) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Supplier</label>
+                            <input type="text" name="supplier" class="form-control" value="{{ old('supplier', $material->supplier ?? '') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ old('description', $material->description) }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="receiveStockModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0">
+            <form method="POST" action="{{ route('admin.inventory.materials.receive', $material->id) }}" class="inventory-form">
+                @csrf
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="inventory-card-icon available">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">Replenish Material Volumes</h5>
+                            <p class="text-muted small mb-0">Record new stock received for this inventory item.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="inventory-modal-card p-3 mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Material</div>
+                                <div class="fw-bold text-dark">{{ $material->name }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Current Stock</div>
+                                <div class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Quantity Received</label>
+                            <input type="number" step="0.01" min="0.01" name="quantity_received" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Received Date</label>
+                            <input type="date" name="received_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Supplier</label>
+                            <input type="text" name="supplier" class="form-control" value="{{ $material->supplier ?? '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4">Receive Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+<div class="modal fade" id="materialUsageDetailModal" tabindex="-1" aria-labelledby="materialUsageDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-2" style="background: linear-gradient(135deg, #ecfdf3 0%, #f8fff9 100%);">
+                <div>
+                    <h5 class="modal-title fw-bold text-success" id="materialUsageDetailModalLabel">Material Usage Details</h5>
+                    <div class="text-muted small">Complete record for this material usage entry</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-4 pt-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Material</div>
+                            <div id="detailMaterial" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Project</div>
+                            <div id="detailProject" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Phase</div>
+                            <div id="detailPhase" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Date Used</div>
+                            <div id="detailDate" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Quantity Used</div>
+                            <div id="detailQuantity" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Used By</div>
+                            <div id="detailRecorder" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Other Details / Notes</div>
+                            <div id="detailNotes" class="text-muted mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Submitted Photo</div>
+                            <div id="detailPhoto" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        function setActiveView(targetId) {
+            document.querySelectorAll('.inventory-view-panel').forEach(function (panel) {
+                panel.classList.toggle('d-none', panel.id !== targetId);
+            });
+
+            document.querySelectorAll('.inventory-view-toggle').forEach(function (link) {
+                const isActive = link.getAttribute('data-target') === targetId;
+                link.classList.toggle('active', isActive);
+                link.classList.toggle('text-primary', isActive);
+                link.classList.toggle('text-muted', !isActive);
+                link.classList.toggle('fw-bold', isActive);
+                link.classList.toggle('border-bottom', isActive);
+                link.classList.toggle('border-primary', isActive);
+                link.classList.toggle('border-2', isActive);
+            });
+
+            document.querySelectorAll('#inventory-view-input, #usage-view-input').forEach(function (input) {
+                input.value = targetId === 'usage-view' ? 'usage' : 'inventory';
+            });
+        }
+
+        document.querySelectorAll('.inventory-view-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                setActiveView(toggle.getAttribute('data-target'));
+            });
+        });
+
+        document.querySelectorAll('#inventory-search-form input[name="search"], #usage-search-form input[name="search"]').forEach(function (input) {
+            let debounceTimer;
+
+            input.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    const form = input.closest('form');
+                    const activeTarget = document.querySelector('.inventory-view-toggle.active')?.getAttribute('data-target');
+                    const viewValue = activeTarget === 'usage-view' ? 'usage' : 'inventory';
+                    const hiddenInput = form.querySelector('input[name="view"]');
+
+                    if (hiddenInput) {
+                        hiddenInput.value = viewValue;
+                    }
+
+                    form.submit();
+                }, 350);
+            });
+        });
+
+        const activePanel = document.querySelector('.inventory-view-panel:not(.d-none)');
+        if (activePanel) {
+            setActiveView(activePanel.id);
+        }
+
+        const detailModal = document.getElementById('materialUsageDetailModal');
+        if (detailModal) {
+            detailModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('detailMaterial').textContent = button.getAttribute('data-material') || 'N/A';
+                document.getElementById('detailProject').textContent = button.getAttribute('data-project') || 'N/A';
+                document.getElementById('detailPhase').textContent = button.getAttribute('data-phase') || 'N/A';
+                document.getElementById('detailDate').textContent = button.getAttribute('data-date') || 'N/A';
+                document.getElementById('detailQuantity').textContent = (button.getAttribute('data-quantity') || '0') + ' ' + (button.getAttribute('data-unit') || '');
+                document.getElementById('detailRecorder').textContent = button.getAttribute('data-recorder') || 'Unknown';
+
+                const notes = button.getAttribute('data-notes') || '';
+                document.getElementById('detailNotes').textContent = notes ? notes : 'No notes were provided for this usage entry.';
+
+                const photoContainer = document.getElementById('detailPhoto');
+                const photoUrl = button.getAttribute('data-photo') || '';
+                if (photoUrl) {
+                    photoContainer.innerHTML = '<img src="' + photoUrl + '" alt="Material usage photo" class="img-fluid rounded-3 border" style="max-height: 240px; object-fit: cover;">';
+                } else {
+                    photoContainer.innerHTML = '<div class="text-muted">No photo was submitted for this usage entry.</div>';
+                }
+            });
+        }
+
+        document.querySelectorAll('.inventory-delete-form').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Remove specific record profile?',
+                    text: 'This operation is absolute and cannot be instantly undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Delete Structural Entry'
+                }).then(function (result) {
+                    if (result.isConfirmed) { form.submit(); }
+                });
+            });
+        });
+
+        function attachModalPaginationHandlers() {
+            document.querySelectorAll('.modal .pagination a').forEach(function (link) {
+                link.onclick = null;
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const modal = link.closest('.modal');
+                    const href = link.getAttribute('href');
+
+                    if (!modal || !href) {
+                        return;
+                    }
+
+                    const modalBody = modal.querySelector('.modal-body');
+                    const paginationContainer = modal.querySelector('.inventory-modal-pagination');
+
+                    if (!modalBody || !paginationContainer) {
+                        return;
+                    }
+
+                    modalBody.classList.add('opacity-50');
+
+                    fetch(href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(function (response) {
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const refreshedModal = doc.getElementById(modal.id);
+
+                            if (!refreshedModal) {
+                                window.location.href = href;
+                                return;
+                            }
+
+                            const refreshedBody = refreshedModal.querySelector('.modal-body');
+                            const refreshedPagination = refreshedModal.querySelector('.inventory-modal-pagination');
+
+                            if (refreshedBody) {
+                                modalBody.innerHTML = refreshedBody.innerHTML;
+                            }
+
+                            if (refreshedPagination && paginationContainer) {
+                                paginationContainer.innerHTML = refreshedPagination.innerHTML;
+                            }
+
+                            window.history.pushState({}, '', href);
+                            attachModalPaginationHandlers();
+                            modalBody.classList.remove('opacity-50');
+                        })
+                        .catch(function () {
+                            window.location.href = href;
+                        });
+                });
+            });
+        }
+
+        attachModalPaginationHandlers();
+    });
+</script>
 @endsection

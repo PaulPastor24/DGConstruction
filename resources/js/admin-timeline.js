@@ -10,20 +10,6 @@ const statusPalette = {
 };
 
 gantt.config.xml_date = '%Y-%m-%d';
-gantt.config.columns = [
-    { name: 'text', label: 'Phases', tree: true, width: 280 },
-    { name: 'start_date', label: 'Start', align: 'center', width: 110 },
-    { name: 'end_date', label: 'End', align: 'center', width: 110 },
-    {
-        name: 'progress',
-        label: 'Progress',
-        align: 'center',
-        width: 100,
-        template: function(task) {
-            return `${Math.round((Number(task.progress) || 0) * 100)}%`;
-        }
-    }
-];
 gantt.config.scale_unit = 'week';
 gantt.config.step = 1;
 gantt.config.date_scale = '%W';
@@ -46,6 +32,40 @@ gantt.config.min_column_width = 46;
 gantt.config.scroll_size = 20;
 gantt.config.round_dnd_dates = false;
 gantt.config.order_branch = true;
+
+function getResponsiveGanttColumns() {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
+    const isMobile = viewportWidth < 768;
+    const isTablet = viewportWidth < 1024;
+
+    return [
+        { name: 'text', label: isMobile ? 'Phase' : 'Phases', tree: true, width: isMobile ? 168 : isTablet ? 220 : 280 },
+        { name: 'start_date', label: 'Start', align: 'center', width: isMobile ? 76 : 110 },
+        { name: 'end_date', label: 'End', align: 'center', width: isMobile ? 76 : 110 },
+        {
+            name: 'progress',
+            label: isMobile ? '%' : 'Progress',
+            align: 'center',
+            width: isMobile ? 62 : 100,
+            template: function(task) {
+                return `${Math.round((Number(task.progress) || 0) * 100)}%`;
+            }
+        }
+    ];
+}
+
+function applyResponsiveGanttSettings() {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
+    const isMobile = viewportWidth < 768;
+    const isTablet = viewportWidth < 1024;
+
+    gantt.config.columns = getResponsiveGanttColumns();
+    gantt.config.row_height = isMobile ? 72 : isTablet ? 84 : 96;
+    gantt.config.task_height = isMobile ? 42 : 56;
+    gantt.config.scale_height = isMobile ? 46 : 54;
+    gantt.config.min_column_width = isMobile ? 34 : isTablet ? 42 : 46;
+    gantt.config.scroll_size = isMobile ? 12 : 20;
+}
 
 if (!document.getElementById('gantt-compact-styles')) {
     const compactStyles = document.createElement('style');
@@ -356,6 +376,7 @@ function attachGanttScrollHooks() {
 
 function refreshGanttView() {
     if (!initialized) return;
+    applyResponsiveGanttSettings();
     applyScalePreset(activeScale);
     gantt.render();
     try { gantt.refreshData(); } catch (err) { console.warn(err); }
@@ -595,6 +616,7 @@ window.initDhtmlxGantt = function (tasks, project) {
     const container = document.getElementById('dhtmlxGantt');
     if (!container) return;
 
+    applyResponsiveGanttSettings();
     container.style.minHeight = container.style.minHeight || '560px';
 
     const needsReinit = !initialized || ganttContainer !== container;
@@ -673,6 +695,7 @@ if (document.readyState !== 'loading') {
 }
 
 window.addEventListener('resize', () => {
+    applyResponsiveGanttSettings();
     if (initialized) {
         gantt.render();
         applyTaskStyling();

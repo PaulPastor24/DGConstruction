@@ -667,16 +667,24 @@ class SupervisorController extends Controller
                     }
 
                     $row = $projectMaterialRows->get($materialId);
-                    $planned = (float) ($row->planned_quantity ?? 0);
-                    $usedFromProject = (float) ($row->used_quantity ?? 0);
-                    $usedFromUsageTable = (float) ($usageRows->get($materialId)->total_used ?? 0);
+                    $plannedFromRow = max(0.0, (float) ($row->planned_quantity ?? 0));
+                    $usedFromProject = max(0.0, (float) ($row->used_quantity ?? 0));
+                    $usedFromUsageTable = max(0.0, (float) ($usageRows->get($materialId)->total_used ?? 0));
                     $used = max($usedFromProject, $usedFromUsageTable);
+                    $stockFallback = 0.0;
 
-                    if ($planned <= 0 && $used <= 0) {
+                    if (Schema::hasColumn('materials', 'current_stock')) {
+                        $stockFallback = max(0.0, (float) ($material->current_stock ?? 0));
+                    }
+
+                    $planned = $plannedFromRow > 0 ? $plannedFromRow : max($used, $stockFallback);
+                    $hasAnyActivity = $planned > 0 || $used > 0 || $stockFallback > 0;
+
+                    if (!$hasAnyActivity) {
                         return null;
                     }
 
-                    $remaining = $planned - $used;
+                    $remaining = $this->normalizeRemaining($planned, $used);
                     $status = $this->resolveMaterialStatus($remaining, $planned);
 
                     return (object) [
@@ -833,6 +841,13 @@ class SupervisorController extends Controller
                     return back()->withInput()->with('error', 'The selected material could not be found.');
                 }
 
+                if ((float) $material->current_stock < (float) $validated['quantity_used']) {
+                    return back()->withInput()->with('error', 'Insufficient Stock. Only ' . (int) $material->current_stock . ' units available.');
+                }
+
+                $material->current_stock = (float) $material->current_stock - (float) $validated['quantity_used'];
+                $material->save();
+
                 $inventoryRow = ProjectMaterial::query()
                     ->where('project_id', $project->project_id)
                     ->where('material_id', $material->id)
@@ -848,22 +863,14 @@ class SupervisorController extends Controller
                     ]);
                 }
 
-                $plannedQuantity = (float) $inventoryRow->planned_quantity;
-                $usedQuantity = (float) $inventoryRow->used_quantity;
-                $remaining = $plannedQuantity - $usedQuantity;
-
-                if ($plannedQuantity > 0 && $validated['quantity_used'] > $remaining) {
-                    return back()->withInput()->with('error', 'The quantity exceeds the remaining stock for this material.');
-                }
+                $inventoryRow->used_quantity = (float) $inventoryRow->used_quantity + (float) $validated['quantity_used'];
+                $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
+                $inventoryRow->save();
 
                 $photoPath = null;
                 if ($request->hasFile('site_photo')) {
                     $photoPath = $request->file('site_photo')->store('material-usage-photos', 'public');
                 }
-
-                $inventoryRow->used_quantity = (float) $inventoryRow->used_quantity + (float) $validated['quantity_used'];
-                $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
-                $inventoryRow->save();
 
                 MaterialUsage::create([
                     'project_id' => $project->project_id,
@@ -930,6 +937,11 @@ class SupervisorController extends Controller
 
             return back()->withInput()->with('error', 'Unexpected server error while saving material data.');
         }
+    }
+
+    private function normalizeRemaining(float $planned, float $used): float
+    {
+        return max(0.0, $planned - $used);
     }
 
     private function resolveMaterialStatus(float $remaining, float $planned): array
@@ -1021,7 +1033,7 @@ class SupervisorController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'completion_percentage' => 'required|numeric|min:0|max:100'
+            'completion_percentage' => 'nullable|numeric|min:0|max:100'
         ]);
 
         $phase = ConstructionPhase::with('project')->where('phase_id', $phaseId)->first();
@@ -1040,21 +1052,13 @@ class SupervisorController extends Controller
         }
 
         try {
-            $newCompletion = round((float)$validated['completion_percentage'], 2);
-            $oldCompletion = round((float)($phase->completion_percentage ?? 0), 2);
-
-            if ($newCompletion === $oldCompletion) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No progress change detected.',
-                    'unchanged' => true,
-                    'phase' => ['completion_percentage' => $oldCompletion],
-                    'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
-                ], 422);
-            }
-
-            $phase->completion_percentage = $newCompletion;
-            $phase->save();
+            return response()->json([
+                'success' => false,
+                'message' => 'Progress is system-managed and can only be updated from approved accomplishment reports.',
+                'unchanged' => true,
+                'phase' => ['completion_percentage' => round((float)($phase->completion_percentage ?? 0), 2)],
+                'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
+            ], 422);
 
             // Recalculate project overall progress
             $overallProgress = ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0;

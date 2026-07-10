@@ -96,10 +96,10 @@
         .nav-section-label { padding: 0.8rem 0.85rem 0.4rem; font-size: 0.72rem; font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.7); }
         .nav-item {
             display: flex; align-items: center; gap: 0.85rem; padding: 0.82rem 0.9rem; color: rgba(255,255,255,0.95);
-            text-decoration: none; transition: all 0.2s ease; border-left: 3px solid transparent; border-radius: 14px; font-weight: 500; font-family: var(--font-ui);
+            text-decoration: none; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; border-left: 3px solid transparent; border-radius: 14px; font-weight: 500; font-family: var(--font-ui);
         }
         .nav-item i { width: 18px; text-align: center; font-size: 0.96rem; opacity: 0.95; }
-        .nav-item:hover { background: rgba(255,255,255,0.12); color: #fff; transform: translateX(2px); }
+        .nav-item:hover { background: rgba(255,255,255,0.12); color: #fff; }
         .nav-item.active { background: rgba(255,255,255,0.16); color: #fff; border-left-color: var(--supervisor-accent); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); font-weight: 600; }
 
         .sidebar-footer { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.12); }
