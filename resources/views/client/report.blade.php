@@ -124,6 +124,28 @@
                                 default => 'bg-warning-subtle text-warning'
                             };
                         @endphp
+                        @php
+                            $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
+                            $detailPayload = [
+                                'id' => $report->report_id,
+                                'report_id' => 'RPT-2026-' . str_pad($report->report_id, 4, '0', STR_PAD_LEFT),
+                                'title' => $report->report_title ?? 'Report Details',
+                                'status' => $status,
+                                'status_label' => ucfirst($status),
+                                'project' => optional($report->project)->project_name ?? 'N/A',
+                                'phase' => optional($report->phase)->phase_name ?? 'N/A',
+                                'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
+                                'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
+                                'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                                'created_at' => optional($report->created_at)->format('M d, Y'),
+                                'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
+                                'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
+                                'report_text' => $report->report_text ?? 'No description was provided for this report.',
+                                'site_images' => array_map(fn ($image) => asset('storage/' . $image), $siteImages),
+                                'submitted_initial' => strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)),
+                                'status_class' => $pillClass,
+                            ];
+                        @endphp
                         <tr>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</div>
@@ -150,7 +172,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
-                                    <button class="btn btn-sm btn-light border report-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#reportModal-{{ $report->report_id }}" title="View details">
+                                    <button class="btn btn-sm btn-light border report-action-btn js-report-view-btn" type="button" data-report-details='@json($detailPayload)' title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="btn btn-sm btn-light border report-action-btn report-export-link" title="Export PDF">
@@ -159,102 +181,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <div class="modal fade report-detail-modal" id="reportModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportModalLabel-{{ $report->report_id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 760px;">
-                                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-                                    <div class="modal-header border-0 px-4 pt-4 pb-2" style="background: #fff;">
-                                        <div>
-                                            <h5 class="modal-title fw-bold" id="reportModalLabel-{{ $report->report_id }}" style="color: var(--brand-green); font-size: 1.2rem; letter-spacing: -0.02em;">
-                                                Report Details
-                                            </h5>
-                                            <p class="text-muted small mb-0">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</p>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="btn btn-sm btn-success report-export-btn" title="Export PDF">
-                                                <i class="bi bi-download"></i> Export PDF
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="modal-body px-4 py-3">
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Report ID</div>
-                                                <div class="fw-bold">RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Approval Status</div>
-                                                <span class="status-pill {{ $pillClass }}">{{ $status }}</span>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Project</div>
-                                                <div class="fw-bold">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Construction Phase</div>
-                                                <div class="fw-bold">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Submitted By</div>
-                                                <div class="fw-bold">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-muted small fw-bold">Reviewed By</div>
-                                                <div class="fw-bold">{{ optional($report->reviewedBy)->name ?? '-' }}</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="d-flex align-items-center gap-2 my-3 p-3 bg-light rounded-3">
-                                            <div class="avatar-pill">{{ strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)) }}</div>
-                                            <div>
-                                                <div class="fw-bold text-dark mb-0" style="font-size:0.9rem;">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
-                                                <div class="text-muted" style="font-size:0.75rem;">Submitted by site supervisor</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="drawer-section-title mt-0">Construction Accomplishment</div>
-                                        <div class="p-3 bg-light rounded-3 text-muted small" style="white-space: pre-line; line-height: 1.6;">
-                                            {{ $report->report_text ?? 'No description was provided for this report.' }}
-                                        </div>
-
-                                        @php($siteImages = is_array($report->site_images ?? null) ? $report->site_images : [])
-                                        @if(count($siteImages) > 0)
-                                            <div class="drawer-section-title">Site Images</div>
-                                            <div class="d-flex gap-2 flex-wrap">
-                                                @foreach(array_slice($siteImages, 0, 3) as $image)
-                                                    <img src="{{ asset('storage/' . $image) }}" class="img-thumbnail" alt="Site image" style="width: 110px; height: 78px; object-fit: cover; border-radius: 10px;">
-                                                @endforeach
-                                            </div>
-                                        @endif
-
-                                        <div class="drawer-section-title">Approval Timeline</div>
-                                        <div class="timeline-row">
-                                            <div class="timeline-step active">
-                                                <div class="timeline-icon"><i class="bi bi-check"></i></div>
-                                                <div class="fw-bold small">Submitted</div>
-                                                <div class="text-muted small">{{ optional($report->created_at)->format('M d, Y') }}</div>
-                                            </div>
-                                            <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
-                                                <div class="timeline-icon">
-                                                    @if($status === 'pending')<i class="bi bi-clock"></i>@else<i class="bi bi-check"></i>@endif
-                                                </div>
-                                                <div class="fw-bold small">Review</div>
-                                                <div class="text-muted small">{{ $status === 'pending' ? 'Awaiting review' : (optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed') }}</div>
-                                            </div>
-                                            <div class="timeline-step {{ $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : '') }}">
-                                                <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                                                <div class="fw-bold small">{{ $status === 'approved' ? 'Approved' : ($status === 'rejected' ? 'Returned' : 'Finalized') }}</div>
-                                                <div class="text-muted small">{{ optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending' }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0 px-4 pb-4 pt-2" style="background: #fff;">
-
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     @empty
                         <tr>
                             <td colspan="6" class="text-center py-4 text-muted">No reports match the current filters.</td>
@@ -263,6 +189,23 @@
                 </tbody>
             </table>
         </div>
+
+        <section id="reportDetailPanel" class="report-detail-panel-card mt-3" aria-live="polite">
+            <div class="report-detail-panel-header">
+                <div>
+                    <div class="report-detail-panel-eyebrow">Report Preview</div>
+                    <h5 id="reportDetailTitle" class="fw-bold mb-0">Select a report</h5>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="reportDetailCloseBtn">Close</button>
+            </div>
+            <div id="reportDetailBody" class="report-detail-panel-body">
+                <div class="report-detail-empty-state">
+                    <div class="avatar-pill avatar-pill-large">?</div>
+                    <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
+                    <div class="text-muted small">The selected record will open here with a smooth transition.</div>
+                </div>
+            </div>
+        </section>
 
         <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
@@ -495,6 +438,69 @@
         color: #fff;
     }
 
+    .report-detail-panel-card {
+        border: 1px solid rgba(42, 64, 40, 0.1);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(10px);
+        pointer-events: none;
+        transition: all 220ms ease;
+    }
+
+    .report-detail-panel-card.is-open {
+        opacity: 1;
+        max-height: 3000px;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .report-detail-panel-card.is-switching .report-detail-panel-body {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    .report-detail-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.15rem;
+        border-bottom: 1px solid rgba(42, 64, 40, 0.08);
+        background: linear-gradient(135deg, #f8fcf8 0%, #ffffff 100%);
+    }
+
+    .report-detail-panel-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand-green);
+    }
+
+    .report-detail-panel-body {
+        padding: 1.1rem 1.15rem 1.2rem;
+        transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .report-detail-empty-state {
+        display: grid;
+        justify-items: center;
+        text-align: center;
+        gap: 0.5rem;
+        padding: 1rem 0 0.2rem;
+        color: var(--text-muted);
+    }
+
+    .avatar-pill-large {
+        width: 46px;
+        height: 46px;
+        font-size: 1rem;
+    }
+
     @media (max-width: 768px) {
         .report-drawer {
             width: 100% !important;
@@ -525,6 +531,133 @@
                         debounceTimer = setTimeout(submitFilters, 220);
                     });
                 }
+            });
+        }
+
+        const panel = document.getElementById('reportDetailPanel');
+        const title = document.getElementById('reportDetailTitle');
+        const body = document.getElementById('reportDetailBody');
+        const closeButton = document.getElementById('reportDetailCloseBtn');
+
+        if (panel && title && body) {
+            panel.classList.remove('is-open');
+            const emptyStateMarkup = `
+                <div class="report-detail-empty-state">
+                    <div class="avatar-pill avatar-pill-large">?</div>
+                    <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
+                    <div class="text-muted small">The selected record will open here with a smooth transition.</div>
+                </div>
+            `;
+
+            const escapeHtml = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            const renderDetails = (payload) => {
+                const status = payload.status || 'pending';
+                const statusClass = payload.status_class || (status === 'approved' ? 'bg-success-subtle text-success' : status === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
+                const siteImages = Array.isArray(payload.site_images) ? payload.site_images : [];
+                const imagesMarkup = siteImages.length > 0 ? `
+                    <div class="drawer-section-title">Site Images</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        ${siteImages.slice(0, 3).map((image) => `<img src="${escapeHtml(image)}" class="img-thumbnail" alt="Site image" style="width: 110px; height: 78px; object-fit: cover; border-radius: 10px;">`).join('')}
+                    </div>
+                ` : '';
+
+                body.innerHTML = `
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Report ID</div>
+                            <div class="fw-bold">${escapeHtml(payload.report_id || 'N/A')}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Approval Status</div>
+                            <span class="status-pill ${escapeHtml(statusClass)}">${escapeHtml(status)}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Project</div>
+                            <div class="fw-bold">${escapeHtml(payload.project || 'N/A')}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Construction Phase</div>
+                            <div class="fw-bold">${escapeHtml(payload.phase || 'N/A')}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Submitted By</div>
+                            <div class="fw-bold">${escapeHtml(payload.submitted_by || 'Supervisor')}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small fw-bold">Reviewed By</div>
+                            <div class="fw-bold">${escapeHtml(payload.reviewed_by || '-')}</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 my-3 p-3 bg-light rounded-3">
+                        <div class="avatar-pill">${escapeHtml(payload.submitted_initial || 'S')}</div>
+                        <div>
+                            <div class="fw-bold text-dark mb-0" style="font-size:0.9rem;">${escapeHtml(payload.submitted_by || 'Supervisor')}</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Submitted by site supervisor</div>
+                        </div>
+                    </div>
+
+                    <div class="drawer-section-title mt-0">Construction Accomplishment</div>
+                    <div class="p-3 bg-light rounded-3 text-muted small" style="white-space: pre-line; line-height: 1.6;">${escapeHtml(payload.report_text || 'No description was provided for this report.')}</div>
+
+                    ${imagesMarkup}
+
+                    <div class="drawer-section-title">Approval Timeline</div>
+                    <div class="timeline-row">
+                        <div class="timeline-step active">
+                            <div class="timeline-icon"><i class="bi bi-check"></i></div>
+                            <div class="fw-bold small">Submitted</div>
+                            <div class="text-muted small">${escapeHtml(payload.created_at || 'N/A')}</div>
+                        </div>
+                        <div class="timeline-step ${status !== 'pending' ? 'active' : 'current'}">
+                            <div class="timeline-icon">${status === 'pending' ? '<i class="bi bi-clock"></i>' : '<i class="bi bi-check"></i>'}</div>
+                            <div class="fw-bold small">Review</div>
+                            <div class="text-muted small">${status === 'pending' ? 'Awaiting review' : escapeHtml(payload.review_date || 'Reviewed')}</div>
+                        </div>
+                        <div class="timeline-step ${status === 'approved' ? 'active' : (status === 'rejected' ? 'active' : '')}">
+                            <div class="timeline-icon"><i class="bi bi-circle"></i></div>
+                            <div class="fw-bold small">${status === 'approved' ? 'Approved' : (status === 'rejected' ? 'Returned' : 'Finalized')}</div>
+                            <div class="text-muted small">${escapeHtml(payload.approval_date || 'Pending')}</div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const openDetails = (payload) => {
+                if (!payload) {
+                    return;
+                }
+
+                title.textContent = payload.title || 'Report Details';
+                panel.classList.remove('is-open');
+                panel.classList.add('is-switching');
+                setTimeout(() => {
+                    renderDetails(payload);
+                    panel.classList.add('is-open');
+                    panel.classList.remove('is-switching');
+                }, 140);
+            };
+
+            document.querySelectorAll('.js-report-view-btn').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const payload = this.dataset.reportDetails ? JSON.parse(this.dataset.reportDetails) : null;
+                    if (payload) {
+                        openDetails(payload);
+                    }
+                });
+            });
+
+            closeButton?.addEventListener('click', () => {
+                panel.classList.remove('is-open');
+                panel.classList.remove('is-switching');
+                title.textContent = 'Select a report';
+                body.innerHTML = emptyStateMarkup;
             });
         }
 

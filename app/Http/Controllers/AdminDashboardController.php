@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
+use App\Models\Material;
+use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AdminDashboardController extends Controller
 {
@@ -150,22 +153,19 @@ class AdminDashboardController extends Controller
 
         if (Schema::hasTable('attendance_logs')) {
             $present = Attendance::query()
-                ->whereDate('log_date', $today)
-                ->where('status', 'present')
-                ->count();
+                ->whereDate('log_date', '=', $today, 'and')
+                ->where('status', '=', 'present', 'and')
+                ->count('*');
 
             $absent = Attendance::query()
-                ->whereDate('log_date', $today)
-                ->where('status', 'absent')
-                ->count();
+                ->whereDate('log_date', '=', $today, 'and')
+                ->where('status', '=', 'absent', 'and')
+                ->count('*');
 
             $late = Attendance::query()
-                ->whereDate('log_date', $today)
-                ->whereIn(
-                    'status',
-                    ['late', 'half_day', 'half day']
-                )
-                ->count();
+                ->whereDate('log_date', '=', $today, 'and')
+                ->whereIn('status', ['late', 'half_day', 'half day'], 'and', false)
+                ->count('*');
 
             $totalExpected =
                 $present + $absent + $late;
@@ -236,7 +236,7 @@ class AdminDashboardController extends Controller
         $hasProjects = Schema::hasTable('projects');
 
         $projects = $hasProjects
-            ? Project::orderBy('project_name')->get()
+            ? Project::query()->orderBy('project_name', 'asc')->get()
             : collect();
 
         $selectedProject = null;
@@ -253,7 +253,8 @@ class AdminDashboardController extends Controller
             $request->filled('project_id')
             && $hasProjects
         ) {
-            $selectedProject = Project::with('phases')
+            $selectedProject = Project::query()
+                ->with('phases')
                 ->find($request->input('project_id'));
 
             if ($selectedProject) {
@@ -392,87 +393,156 @@ class AdminDashboardController extends Controller
      */
     public function inventory(Request $request)
     {
-        $projectId =
-            $request->input('project_id');
+        $search = trim((string) $request->input('search', ''));
+        $category = trim((string) $request->input('category', ''));
+        $stockStatus = trim((string) $request->input('stock_status', ''));
+        $usageCategory = trim((string) $request->input('usage_category', ''));
+        $usageStatus = trim((string) $request->input('usage_status', ''));
+        $activeView = $request->input('view', 'inventory');
+        $activeView = in_array($activeView, ['inventory', 'usage'], true) ? $activeView : 'inventory';
+        $searchForUsage = $search;
 
-        $projects = Schema::hasTable('projects')
-            ? Project::orderBy('project_name')->get()
-            : collect();
+        $query = Material::query();
 
-        $availableMaterials =
-            Schema::hasTable('materials')
-                ? DB::table('materials')
-                    ->orderBy('name')
-                    ->get()
-                : collect();
-
-        $inventoryItems = collect();
-
-        $metrics = [
-            'active_deliveries' => 0,
-            'low_stock_alerts' => 0,
-            'total_value' => 0.00,
-        ];
-
-        if (
-            Schema::hasTable(
-                'material_deliveries'
-            )
-        ) {
-            $query = DB::table(
-                'material_deliveries'
-            );
-
-            if ($projectId) {
-                $query->where(
-                    'project_id',
-                    $projectId
-                );
-            }
-
-            if (
-                Schema::hasColumn(
-                    'material_deliveries',
-                    'delivered_at'
-                )
-            ) {
-                $query->orderByDesc(
-                    'delivered_at'
-                );
-            }
-
-            $inventoryItems = $query->get();
-
-            $metrics['active_deliveries'] =
-                $inventoryItems->count();
-
-            if (
-                Schema::hasColumn(
-                    'material_deliveries',
-                    'total_price'
-                )
-            ) {
-                $metrics['total_value'] =
-                    $inventoryItems->sum(
-                        'total_price'
-                    );
-            }
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('category', 'like', '%' . $search . '%')
+                    ->orWhere('supplier', 'like', '%' . $search . '%');
+            });
         }
 
-        $haulingTrips = collect();
-        $locations = collect();
+        if ($category !== '') {
+            $query->where('category', $category);
+        }
 
-        return view(
-            'admin.inventory',
-            compact(
-                'metrics',
-                'inventoryItems',
-                'availableMaterials',
-                'haulingTrips',
-                'locations',
-                'projects'
-            )
-        );
+        if ($stockStatus !== '') {
+            $query->where(function ($q) use ($stockStatus) {
+                    if ($stockStatus === 'low_stock') {
+                        $q->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+                            ->where('current_stock', '>', 0);
+                    } elseif ($stockStatus === 'normal') {
+                        $q->whereColumn('current_stock', '>', 'minimum_stock_level', 'and');
+                } elseif ($stockStatus === 'out_of_stock') {
+                    $q->where('current_stock', '<=', 0);
+                }
+            });
+        }
+
+        $materials = $query
+            ->orderByDesc('updated_at')
+            ->orderBy('name', 'asc')
+            ->paginate(10)
+            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status']));
+
+        $usageQuery = MaterialUsage::query()->with(['project', 'phase', 'material', 'recorder']);
+        $hasUserNameColumn = Schema::hasTable('users') && Schema::hasColumn('users', 'name');
+        $hasUserFirstNameColumn = Schema::hasTable('users') && Schema::hasColumn('users', 'first_name');
+        $hasUserLastNameColumn = Schema::hasTable('users') && Schema::hasColumn('users', 'last_name');
+        $canSearchUsers = $hasUserNameColumn || $hasUserFirstNameColumn || $hasUserLastNameColumn;
+
+        if ($usageCategory !== '') {
+            $usageQuery->whereHas('material', function ($materialQuery) use ($usageCategory) {
+                $materialQuery->where('category', $usageCategory);
+            });
+        }
+
+        if ($usageStatus !== '') {
+            $usageQuery->when($usageStatus === 'with_remarks', function ($query) {
+                $query->whereNotNull('remarks')->where('remarks', '!=', '');
+            })->when($usageStatus === 'without_remarks', function ($query) {
+                $query->where(function ($subQuery) {
+                    $subQuery->whereNull('remarks')->orWhere('remarks', '');
+                });
+            });
+        }
+
+        if ($search !== '') {
+            $usageSearchValue = $search;
+            $usageQuery->where(function ($q) use ($usageSearchValue, $canSearchUsers, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                $q->whereHas('material', function ($materialQuery) use ($usageSearchValue) {
+                    $materialQuery->where('name', 'like', '%' . $usageSearchValue . '%');
+                })
+                ->orWhereHas('project', function ($projectQuery) use ($usageSearchValue) {
+                    $projectQuery->where('project_name', 'like', '%' . $usageSearchValue . '%');
+                })
+                ->when(Schema::hasTable('construction_phases'), function ($query) use ($usageSearchValue) {
+                    $query->orWhereHas('phase', function ($phaseQuery) use ($usageSearchValue) {
+                        $phaseQuery->where('phase_name', 'like', '%' . $usageSearchValue . '%');
+                    });
+                })
+                ->when($canSearchUsers, function ($query) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                    $query->orWhereHas('recorder', function ($userQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                        $userQuery->where(function ($nestedQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                            if ($hasUserNameColumn) {
+                                $nestedQuery->where('name', 'like', '%' . $usageSearchValue . '%');
+                            }
+
+                            if ($hasUserFirstNameColumn) {
+                                $nestedQuery->orWhere('first_name', 'like', '%' . $usageSearchValue . '%');
+                            }
+
+                            if ($hasUserLastNameColumn) {
+                                $nestedQuery->orWhere('last_name', 'like', '%' . $usageSearchValue . '%');
+                            }
+                        });
+                    });
+                })
+                ->orWhere('remarks', 'like', '%' . $usageSearchValue . '%')
+                ->orWhere('unit', 'like', '%' . $usageSearchValue . '%')
+                ->orWhere('quantity_used', 'like', '%' . $usageSearchValue . '%');
+            });
+        }
+
+        $totalMaterials = Material::count('*');
+        $availableMaterials = Material::where('current_stock', '>', 0, 'and')->count('*');
+        $lowStockAlerts = Material::whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')->where('current_stock', '>', 0, 'and')->count('*');
+        $outOfStock = Material::where('current_stock', '<=', 0, 'and')->count('*');
+        $metrics = [
+            'total_materials' => $totalMaterials,
+            'available_materials' => $availableMaterials,
+            'low_stock_alerts' => $lowStockAlerts,
+            'out_of_stock' => $outOfStock,
+            'available_percentage' => $totalMaterials > 0 ? round(($availableMaterials / $totalMaterials) * 100, 1) : 0,
+            'low_stock_percentage' => $totalMaterials > 0 ? round(($lowStockAlerts / $totalMaterials) * 100, 1) : 0,
+            'out_of_stock_percentage' => $totalMaterials > 0 ? round(($outOfStock / $totalMaterials) * 100, 1) : 0,
+        ];
+
+          $lowStockMaterials = Material::query()
+              ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+            ->where('current_stock', '>', 0, 'and')
+            ->orderBy('current_stock', 'asc')
+            ->orderBy('name', 'asc')
+            ->take(4)
+            ->get();
+
+        $allLowStockMaterials = Material::query()
+              ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+            ->where('current_stock', '>', 0, 'and')
+            ->orderBy('current_stock', 'asc')
+            ->orderBy('name', 'asc')
+            ->paginate(10);
+
+        $recentlyUpdatedMaterials = Material::query()
+            ->where('current_stock', '>', 0)
+            ->orderByDesc('updated_at')
+            ->take(3)
+            ->get();
+
+        $allRecentlyUpdatedMaterials = Material::query()
+            ->where('current_stock', '>', 0)
+            ->orderByDesc('updated_at')
+            ->paginate(10);
+
+        $usageLogs = $usageQuery
+            ->orderByDesc('usage_date')
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status']));
+
+        $categories = Material::query()->distinct()->pluck('category')->filter()->sort()->values();
+
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials'));
     }
 
     /**
@@ -497,18 +567,21 @@ class AdminDashboardController extends Controller
         $reports = $query->orderByDesc('created_at')->paginate(10)->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search']));
 
         $stats = $this->buildReportStats($request);
-        $projects = Project::query()->whereIn('status', ['planning', 'ongoing'])->orderBy('project_name')->get();
+        $projects = Project::query()
+            ->whereIn('status', ['planning', 'ongoing'], 'and', false)
+            ->orderBy('project_name', 'asc')
+            ->get();
         $phases = $this->buildPhaseOptions($request->input('project_id'));
         $supervisors = User::query()
             ->where('role', 'supervisor')
             ->whereHas('submittedReports')
-            ->orderBy('user_id')
+            ->orderBy('user_id', 'asc')
             ->select([
                 'user_id',
                 DB::raw("CONCAT_WS(' ', first_name, last_name) as name")
             ])
             ->get();
-        $selectedProject = $request->filled('project_id') ? Project::find($request->input('project_id')) : null;
+        $selectedProject = $request->filled('project_id') ? Project::query()->find($request->input('project_id')) : null;
 
         return view('admin.reports', compact('reports', 'stats', 'projects', 'phases', 'supervisors', 'selectedProject'));
     }
@@ -559,7 +632,11 @@ class AdminDashboardController extends Controller
                 ];
             })->values(),
             'stats' => $this->buildReportStats($request),
-            'projects' => Project::query()->whereIn('status', ['planning', 'ongoing'])->orderBy('project_name')->get(['project_id', 'project_name']),
+            'projects' => Project::query()
+                ->whereIn('status', ['planning', 'ongoing'], 'and', false)
+                ->orderBy('project_name', 'asc')
+                ->select(['project_id', 'project_name'])
+                ->get(),
             'phases' => $this->buildPhaseOptions($request->input('project_id')),
             'supervisors' => User::query()
                 ->where('role', 'supervisor')
@@ -862,79 +939,117 @@ class AdminDashboardController extends Controller
             );
     }
 
-    /**
-     * Store an incoming material delivery.
-     */
-    public function storeDelivery(
-        Request $request
-    ) {
-        $validated = $request->validate([
-            'project_id' => [
-                'nullable',
-                'integer',
-            ],
+    public function storeMaterial(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255', Rule::unique('materials', 'name')],
+                'category' => ['nullable', 'string', 'max:255'],
+                'unit' => ['required', 'string', 'max:50'],
+                'current_stock' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+                'minimum_stock_level' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+                'supplier' => ['nullable', 'string', 'max:255'],
+                'description' => ['nullable', 'string'],
+            ], [
+                'name.required' => 'Material name is required.',
+                'name.unique' => 'A material with this name already exists.',
+                'unit.required' => 'Please provide the material unit.',
+                'current_stock.min' => 'Current stock cannot be negative.',
+                'minimum_stock_level.min' => 'Minimum stock cannot be negative.',
+            ]);
 
-            'material_id' => [
-                'required',
-                'integer',
-            ],
+            $validated['name'] = trim((string) ($validated['name'] ?? ''));
+            $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
+            $validated['unit'] = trim((string) ($validated['unit'] ?? ''));
+            $validated['supplier'] = trim((string) ($validated['supplier'] ?? '')) ?: null;
+            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
 
-            'quantity' => [
-                'required',
-                'numeric',
-                'min:1',
-            ],
+            Material::create($validated);
 
-            'unit' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'supplier_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-        ]);
-
-        $data = [
-            'material_id' =>
-                $validated['material_id'],
-
-            'quantity' =>
-                $validated['quantity'],
-
-            'unit' =>
-                $validated['unit'],
-
-            'supplier_name' =>
-                $validated['supplier_name'],
-
-            'delivered_at' => now(),
-        ];
-
-        if (
-            !empty($validated['project_id'])
-        ) {
-            $data['project_id'] =
-                $validated['project_id'];
+            return redirect()->back()->with('success', 'Material added successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Unable to add material right now. Please try again.')->withInput();
         }
+    }
 
-        if (
-            Schema::hasTable(
-                'material_deliveries'
-            )
-        ) {
-            DB::table('material_deliveries')
-                ->insert($data);
+    public function updateMaterial(Request $request, Material $material)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255', Rule::unique('materials', 'name')->ignore($material->id)],
+                'category' => ['nullable', 'string', 'max:255'],
+                'unit' => ['required', 'string', 'max:50'],
+                'minimum_stock_level' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+                'supplier' => ['nullable', 'string', 'max:255'],
+                'description' => ['nullable', 'string'],
+            ], [
+                'name.required' => 'Material name is required.',
+                'name.unique' => 'A material with this name already exists.',
+                'unit.required' => 'Please provide the material unit.',
+                'minimum_stock_level.min' => 'Minimum stock cannot be negative.',
+            ]);
+
+            $validated['name'] = trim((string) ($validated['name'] ?? ''));
+            $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
+            $validated['unit'] = trim((string) ($validated['unit'] ?? ''));
+            $validated['supplier'] = trim((string) ($validated['supplier'] ?? '')) ?: null;
+            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
+
+            $material->update($validated);
+
+            return redirect()->back()->with('success', 'Material updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Unable to update material right now. Please try again.')->withInput();
         }
+    }
 
-        return redirect()
-            ->back()
-            ->with(
-                'success',
-                'Material transaction processed successfully.'
-            );
+    public function receiveStock(Request $request, Material $material)
+    {
+        try {
+            $validated = $request->validate([
+                'quantity_received' => ['required', 'numeric', 'min:0.01', 'max:1000000000'],
+                'received_date' => ['required', 'date'],
+                'supplier' => ['nullable', 'string', 'max:255'],
+            ], [
+                'quantity_received.required' => 'Please enter a quantity to receive.',
+                'quantity_received.min' => 'Received quantity must be greater than zero.',
+                'received_date.required' => 'Please select a received date.',
+                'received_date.date' => 'Please enter a valid date.',
+            ]);
+
+            $material->current_stock = max(0, (float) $material->current_stock + (float) $validated['quantity_received']);
+            $material->supplier = trim((string) ($validated['supplier'] ?? '')) ?: $material->supplier;
+            $material->save();
+
+            return redirect()->back()->with('success', 'Stock received successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Unable to receive stock right now. Please try again.')->withInput();
+        }
+    }
+
+    public function destroyMaterial(Material $material)
+    {
+        try {
+            $hasUsage = MaterialUsage::query()->where('material_id', $material->id)->exists();
+            $hasDelivery = Schema::hasTable('material_deliveries')
+                ? DB::table('material_deliveries')->where('material_id', $material->id)->exists()
+                : false;
+
+            if ($hasUsage || $hasDelivery) {
+                return redirect()->back()->with('error', 'Unable to delete. This material has already been used in project records.');
+            }
+
+            Material::destroy($material->id);
+
+            return redirect()->back()->with('success', 'Material deleted successfully.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Unable to delete material right now. Please try again.');
+        }
     }
 }

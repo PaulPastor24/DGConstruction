@@ -6,6 +6,7 @@ use App\Models\ConstructionPhase;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
 
 class PhasesExportController extends Controller
 {
@@ -33,7 +34,7 @@ class PhasesExportController extends Controller
                 $query->where('phase_name', 'like', '%' . $search . '%');
             }
 
-            $phases = $query->orderBy('phase_order')->get();
+            $phases = $query->orderBy('phase_order', 'asc')->get();
 
             if ($phases->isEmpty()) {
                 return response()->json([
@@ -95,7 +96,7 @@ class PhasesExportController extends Controller
                 $query->where('phase_name', 'like', '%' . $search . '%');
             }
 
-            $phases = $query->orderBy('phase_order')->get();
+            $phases = $query->orderBy('phase_order', 'asc')->get();
 
             if ($phases->isEmpty()) {
                 return response()->json([
@@ -104,23 +105,48 @@ class PhasesExportController extends Controller
                 ], 404);
             }
 
-            // Calculate statistics
+            $project = null;
+            if ($projectId) {
+                $project = Project::query()->find($projectId);
+            }
+
             $totalPhases = $phases->count();
             $completedCount = $phases->where('status', 'completed')->count();
             $inProgressCount = $phases->where('status', 'in_progress')->count();
             $delayedCount = $phases->where('status', 'delayed')->count();
+            $pendingCount = $phases->where('status', 'not_started')->count();
             $overallProgress = $totalPhases > 0
                 ? round((float)$phases->avg('completion_percentage'), 0)
                 : 0;
 
-            // HTML content for PDF
-            $html = $this->generatePdfHtml($phases, [
-                'total' => $totalPhases,
-                'completed' => $completedCount,
-                'inProgress' => $inProgressCount,
-                'delayed' => $delayedCount,
-                'overall' => $overallProgress,
-            ]);
+            $html = view('supervisor.phases-pdf', compact(
+                'project',
+                'phases',
+                'overallProgress',
+                'completedCount',
+                'inProgressCount',
+                'delayedCount',
+                'pendingCount'
+            ))->render();
+
+            try {
+                if (class_exists('\Mpdf\\Mpdf')) {
+                    $mpdf = new \Mpdf\Mpdf([
+                        'mode' => 'utf-8',
+                        'format' => 'A4',
+                        'margin_left' => 10,
+                        'margin_right' => 10,
+                        'margin_top' => 10,
+                        'margin_bottom' => 10,
+                    ]);
+                    $mpdf->WriteHTML($html);
+                    $fileName = 'phases_export_' . date('Y-m-d_H-i-s') . '.pdf';
+
+                    return $mpdf->Output($fileName, 'D');
+                }
+            } catch (\Exception $e) {
+                Log::error('Phase PDF export failed: ' . $e->getMessage());
+            }
 
             $fileName = 'phases_export_' . date('Y-m-d_H-i-s') . '.html';
 

@@ -191,6 +191,56 @@ class SupervisorMaterialUsageTest extends TestCase
         $response->assertSee('1');
     }
 
+    public function test_supervisor_material_remaining_uses_available_stock_when_no_planned_allocation_exists(): void
+    {
+        $user = User::create([
+            'name' => 'Supervisor Three',
+            'email' => 'supervisor3@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'supervisor',
+            'is_active' => true,
+        ]);
+
+        $project = Project::create([
+            'project_name' => 'Test Project Three',
+            'status' => 'ongoing',
+        ]);
+
+        DB::table('project_supervisors')->insert([
+            'project_id' => $project->project_id,
+            'supervisor_id' => $user->user_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $materialData = [
+            'name' => 'Cement',
+            'unit' => 'bags',
+        ];
+
+        if (Schema::hasColumn('materials', 'current_stock')) {
+            $materialData['current_stock'] = 20;
+        }
+
+        $material = Material::create($materialData);
+
+        DB::table('project_materials')->insert([
+            'project_id' => $project->project_id,
+            'material_id' => $material->id,
+            'planned_quantity' => 0,
+            'used_quantity' => 0,
+            'unit' => 'bags',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('supervisor.materials', ['project_id' => $project->project_id]));
+
+        $response->assertOk();
+        $response->assertSee('Planned Allocation');
+        $response->assertSee('20.00');
+    }
+
     public function test_supervisor_delivery_logging_is_rejected_when_not_supported(): void
     {
         $user = User::create([

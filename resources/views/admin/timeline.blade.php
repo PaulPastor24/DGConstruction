@@ -1095,13 +1095,26 @@
         .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .page-header-card, .timeline-card-header { flex-direction: column; align-items: flex-start; }
         .toolbar-actions { margin-left: 0; }
+        .top-toolbar { padding: 1rem; gap: 0.75rem; }
+        .toolbar-group { min-width: min(100%, 220px); flex: 1 1 220px; }
+        .toolbar-group.search-group { min-width: min(100%, 280px); flex: 1 1 280px; max-width: none; }
+        .toolbar-actions { width: 100%; justify-content: flex-start; }
+        .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { flex: 1 1 180px; justify-content: center; }
+        .gantt-scroll-shell { max-height: 70vh; }
     }
 
     @media (max-width: 720px) {
         .summary-grid { grid-template-columns: 1fr; }
-        .top-toolbar { align-items: stretch; }
-        .toolbar-actions { width: 100%; }
-        .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { flex: 1; }
+        .page-header-card { padding: 1rem 1rem 1.05rem; }
+        .page-title { font-size: 1.25rem; }
+        .page-subtitle { font-size: 0.88rem; }
+        .top-toolbar { align-items: stretch; padding: 0.9rem; }
+        .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; flex: 1 1 100%; }
+        .toolbar-actions { flex-direction: column; align-items: stretch; }
+        .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { width: 100%; flex: 1 1 auto; }
+        .timeline-card { padding: 1rem; }
+        .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; }
+        .gantt-shell { border-radius: 14px; }
     }
 </style>
 @endpush

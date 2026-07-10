@@ -9,6 +9,10 @@ return new class extends Migration
     public function up()
     {
         if (Schema::hasTable('timeline_milestones')) {
+            if (DB::getDriverName() === 'sqlite') {
+                return;
+            }
+
             if (Schema::hasColumn('timeline_milestones', 'planned_date') && !Schema::hasColumn('timeline_milestones', 'start_date')) {
                 DB::statement("ALTER TABLE `timeline_milestones` CHANGE `planned_date` `start_date` DATE");
             }
@@ -22,6 +26,10 @@ return new class extends Migration
     public function down()
     {
         if (Schema::hasTable('timeline_milestones')) {
+            if (DB::getDriverName() === 'sqlite') {
+                return;
+            }
+
             if (Schema::hasColumn('timeline_milestones', 'start_date') && !Schema::hasColumn('timeline_milestones', 'planned_date')) {
                 DB::statement("ALTER TABLE `timeline_milestones` CHANGE `start_date` `planned_date` DATE");
             }

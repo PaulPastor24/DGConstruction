@@ -509,7 +509,7 @@ class ProjectController extends Controller
      * Render the custom Phase Management Workspace.
      * Aligned explicitly with the Project Engineer / Admin approval ecosystem.
      */
-    public function phaseManagement()
+    public function phaseManagement(Request $request)
     {
         $pendingReports = collect();
 
@@ -534,6 +534,57 @@ class ProjectController extends Controller
                 ->get();
         }
 
-        return view('admin.phases', compact('pendingReports', 'auditLogs'));
+        $projects = Project::query()
+            ->with(['phases' => function ($query) {
+                $query->orderBy('phase_order')->with('milestones');
+            }])
+            ->orderBy('project_name')
+            ->get();
+
+        $selectedProject = null;
+        $phases = collect();
+        $selectedPhase = null;
+        $stats = [
+            'total' => 0,
+            'completed' => 0,
+            'in_progress' => 0,
+            'pending' => 0,
+            'delayed' => 0,
+        ];
+
+        if ($projects->isNotEmpty()) {
+            $selectedProject = $projects->firstWhere('project_id', (int) $request->input('project_id'))
+                ?: $projects->first();
+
+            $selectedProject->loadMissing(['phases' => function ($query) {
+                $query->orderBy('phase_order')->with('milestones');
+            }]);
+
+            $allPhases = $selectedProject->phases;
+            $phases = $selectedProject->phases()
+                ->with('milestones')
+                ->orderBy('phase_order')
+                ->paginate(10)
+                ->appends($request->query());
+            $selectedPhase = null;
+
+            $stats = [
+                'total' => $allPhases->count(),
+                'completed' => $allPhases->where('status', 'completed')->count(),
+                'in_progress' => $allPhases->where('status', 'in_progress')->count(),
+                'pending' => $allPhases->where('status', 'not_started')->count(),
+                'delayed' => $allPhases->where('status', 'delayed')->count(),
+            ];
+        }
+
+        return view('admin.phases', compact(
+            'pendingReports',
+            'auditLogs',
+            'projects',
+            'selectedProject',
+            'phases',
+            'selectedPhase',
+            'stats'
+        ));
     }
 }

@@ -120,26 +120,47 @@ class ReportController extends Controller
                 'approval_remarks' => $validated['approval_remarks'],
             ]);
 
-            // Update phase completion percentage if provided
-            if ($request->filled('completion_percentage')) {
-                $completionPercentage = min(100, max(0, (float)$request->completion_percentage));
-                $report->phase->update(['completion_percentage' => $completionPercentage]);
+            $computedProgress = $this->resolveComputedProgressForApproval($report);
+            $autoCompleted = false;
+            if ($computedProgress !== null) {
+                $phase = $report->phase;
+                if ($phase) {
+                    $phase->completion_percentage = round(min(100, max(0, (float) $computedProgress)), 2);
+                    $phase->status = $this->resolvePhaseStatusForProgress($phase);
 
-                // Notify client about the phase progress change
-                try {
-                    $clientId = optional($report->project)->client_id;
-                    if ($clientId) {
-                        NotificationService::notifyClient($clientId, [
-                            'type' => 'phase',
-                            'title' => 'Project Progress Updated',
-                            'message' => "{$report->phase->phase_name} progress updated to {$completionPercentage}%.",
-                            'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
-                            'related_id' => $report->phase->phase_id,
-                            'related_type' => 'phase',
-                        ]);
+                    if ($phase->completion_percentage >= 100 && $phase->status !== 'completed') {
+                        $phase->status = 'completed';
                     }
-                } catch (\Throwable $e) {
-                    Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
+
+                    if ($phase->completion_percentage >= 100 && $phase->status === 'completed') {
+                        $autoCompleted = true;
+                    }
+
+                    if ($phase->status === 'in_progress' && empty($phase->actual_start_date)) {
+                        $phase->actual_start_date = now()->toDateString();
+                    }
+
+                    if ($phase->status === 'completed' && empty($phase->actual_end_date)) {
+                        $phase->actual_end_date = now()->toDateString();
+                    }
+
+                    $phase->save();
+
+                    try {
+                        $clientId = optional($report->project)->client_id;
+                        if ($clientId) {
+                            NotificationService::notifyClient($clientId, [
+                                'type' => 'phase',
+                                'title' => 'Project Progress Updated',
+                                'message' => "{$phase->phase_name} progress updated to {$phase->completion_percentage}%.",
+                                'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                                'related_id' => $phase->phase_id,
+                                'related_type' => 'phase',
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
+                    }
                 }
             }
 
@@ -186,6 +207,7 @@ class ReportController extends Controller
                     'message' => 'Report approved successfully.',
                     'report_id' => $report->report_id,
                     'status' => 'approved',
+                    'auto_completed' => $autoCompleted,
                 ]);
             }
 
@@ -323,6 +345,7 @@ class ReportController extends Controller
             'phase_id' => 'required|exists:construction_phases,phase_id',
             'report_date' => 'required|date',
             'report_text' => 'required|string|max:5000',
+            'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             'site_images' => 'nullable|array|max:5',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
@@ -354,6 +377,24 @@ class ReportController extends Controller
                 'approval_status' => 'pending',
                 'ai_status' => 'pending',
             ]);
+
+            $computedProgress = $request->filled('accomplishment_percentage')
+                ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
+                : 0.0;
+
+            DB::table('ai_analysis_results')->updateOrInsert(
+                ['report_id' => $report->report_id],
+                [
+                    'report_id' => $report->report_id,
+                    'phase_id' => $validated['phase_id'],
+                    'computed_progress' => $computedProgress,
+                    'confidence_score' => 1.00,
+                    'raw_ai_output' => 'Supervisor submitted accomplishment percentage for approval workflow.',
+                    'processed_at' => now(),
+                ]
+            );
+
+            $report->update(['ai_status' => 'processed']);
 
             $this->logAction(
                 'Report Submitted',
@@ -410,6 +451,45 @@ class ReportController extends Controller
             Log::error('Report submission failed: ' . $e->getMessage());
             return back()->withErrors('Failed to submit report');
         }
+    }
+
+    private function resolveComputedProgressForApproval(Report $report): ?float
+    {
+        $alignedProgress = DB::table('ai_analysis_results')
+            ->join('accomplishment_reports', 'ai_analysis_results.report_id', '=', 'accomplishment_reports.report_id')
+            ->where('accomplishment_reports.phase_id', $report->phase_id)
+            ->where('accomplishment_reports.approval_status', 'approved')
+            ->pluck('ai_analysis_results.computed_progress')
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->map(fn ($value) => (float) $value);
+
+        if ($alignedProgress->isNotEmpty()) {
+            return round($alignedProgress->avg(), 2);
+        }
+
+        $analysis = DB::table('ai_analysis_results')
+            ->where('report_id', $report->report_id)
+            ->latest('result_id')
+            ->first();
+
+        if ($analysis && isset($analysis->computed_progress)) {
+            return round((float) $analysis->computed_progress, 2);
+        }
+
+        return null;
+    }
+
+    private function resolvePhaseStatusForProgress(ConstructionPhase $phase): string
+    {
+        if ($phase->completion_percentage >= 100 || $phase->status === 'completed') {
+            return 'completed';
+        }
+
+        if ($phase->completion_percentage > 0) {
+            return 'in_progress';
+        }
+
+        return $phase->status === 'completed' ? 'completed' : 'not_started';
     }
 
     /**

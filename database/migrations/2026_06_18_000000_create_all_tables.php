@@ -13,7 +13,7 @@ return new class extends Migration
                 $table->id('user_id'); // Sets 'user_id' as the primary key
                 $table->string('name');
                 $table->string('email')->unique();
-                $table->string('password_hash'); // Custom name matching your model
+                $table->string('password_hash')->nullable(); // Legacy password field
                 $table->string('role');
                 $table->string('contact_number')->nullable();
                 $table->boolean('is_active')->default(true);
