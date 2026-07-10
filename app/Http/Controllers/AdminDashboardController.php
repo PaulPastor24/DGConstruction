@@ -889,7 +889,7 @@ class AdminDashboardController extends Controller
     public function attendance(Request $request)
     {
         $projects = Schema::hasTable('projects')
-            ? Project::orderBy('project_name')->get()
+            ? Project::query()->orderBy('project_name', 'asc')->get()
             : collect();
 
         $filters = [
