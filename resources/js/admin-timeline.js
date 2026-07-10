@@ -427,12 +427,13 @@ function getMilestoneColor(milestone, milestoneIndex, phaseIndex) {
 
 function buildMilestonePopoverContent(milestone) {
     const name = milestone?.milestone_name || milestone?.name || 'Milestone';
-    const startDate = formatMilestoneDate(milestone?.planned_date || milestone?.start_date || milestone?.scheduled_date);
-    const endDate = formatMilestoneDate(milestone?.actual_date || milestone?.end_date || milestone?.completed_date || milestone?.actual_end_date);
+    const startDate = formatMilestoneDate(milestone?.start_date || milestone?.planned_date || milestone?.scheduled_date);
+    const actualDateValue = milestone?.end_date || milestone?.actual_date || milestone?.completed_date || milestone?.actual_end_date;
+    const actualDateRow = `<div class="popover-meta"><span class="label">End date</span><span class="value">${actualDateValue ? formatMilestoneDate(actualDateValue) : 'TBD'}</span></div>`;
     return `
         <div class="popover-title">${name}</div>
         <div class="popover-meta"><span class="label">Start date</span><span class="value">${startDate}</span></div>
-        <div class="popover-meta"><span class="label">End date</span><span class="value">${endDate}</span></div>
+        ${actualDateRow}
     `;
 }
 
@@ -524,7 +525,7 @@ function applyTaskStyling() {
             const taskRangeDays = taskStart && taskEnd ? (taskEnd - taskStart) / 86400000 : 0;
 
             milestones.forEach((milestone, milestoneIndex) => {
-                const milestoneStart = parseMilestoneDate(milestone.planned_date || milestone.actual_date || milestone.start || milestone.start_date);
+                const milestoneStart = parseMilestoneDate(milestone.start_date || milestone.end_date || milestone.start || milestone.planned_date || milestone.actual_date);
                 if (!milestoneStart || !taskStart || !taskEnd) return;
                 const elapsedDays = (milestoneStart - taskStart) / 86400000;
                 const ratio = taskRangeDays > 0 ? Math.min(1, Math.max(0, elapsedDays / taskRangeDays)) : 0;

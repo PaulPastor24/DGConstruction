@@ -93,8 +93,9 @@
     }
 
     .toolbar-group.search-group {
-        min-width: 260px;
-        flex: 1;
+        min-width: 300px;
+        flex: 0 1 340px;
+        max-width: 360px;
     }
 
     .toolbar-group label {
@@ -512,7 +513,12 @@
         align-items: center;
         gap: 1rem;
         margin-bottom: 1rem;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+    }
+
+    .timeline-card-header-copy {
+        flex: 1 1 280px;
+        min-width: 0;
     }
 
     .panel-title {
@@ -531,12 +537,73 @@
 
     .gantt-toolbar-actions {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         justify-content: flex-end;
         align-items: center;
         gap: 0.6rem;
         row-gap: 0.6rem;
-        overflow-x: auto;
+        margin-left: auto;
+        overflow: hidden;
+    }
+
+    .gantt-mode-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        row-gap: 0.6rem;
+    }
+
+    .gantt-mode-actions.gantt-controls-enter {
+        animation: gantt-controls-fade-slide 220ms ease-out both;
+    }
+
+    .gantt-mode-actions.gantt-controls-enter .btn-ghost,
+    .gantt-mode-actions.gantt-controls-enter .toolbar-select.compact-select {
+        animation: gantt-controls-item-pop 220ms ease-out both;
+    }
+
+    .gantt-mode-actions.gantt-controls-enter .btn-ghost:nth-of-type(2),
+    .gantt-mode-actions.gantt-controls-enter .toolbar-select.compact-select {
+        animation-delay: 70ms;
+    }
+
+    .gantt-mode-actions.gantt-controls-enter .btn-ghost:nth-of-type(3) {
+        animation-delay: 120ms;
+    }
+
+    .gantt-mode-actions.gantt-controls-enter .btn-ghost:nth-of-type(4) {
+        animation-delay: 170ms;
+    }
+
+    .gantt-toolbar-actions .btn-ghost {
+        white-space: nowrap;
+    }
+
+    .toolbar-select.compact-select {
+        min-width: 120px;
+    }
+
+    @keyframes gantt-controls-fade-slide {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes gantt-controls-item-pop {
+        from {
+            opacity: 0;
+            transform: translateY(6px) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     .view-toggle-group {
@@ -945,6 +1012,64 @@
     .status-pill-badge.delayed { background: #FDECEC; color: #C62828; }
     .status-pill-badge.pending { background: #F3F4F6; color: #6B7280; }
 
+    .timeline-table-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        margin-top: 1rem;
+        padding: 0 0.25rem;
+    }
+
+    .pagination-bar {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .pagination-button {
+        padding: 0.5rem 0.85rem;
+        min-width: 2.4rem;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .pagination-button:not(.active):hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #cbd5e1;
+    }
+
+    .pagination-button.active {
+        background: #166534;
+        border-color: #166534;
+        color: #ffffff;
+    }
+    .pagination-button.active:hover:not(:disabled) {
+        background: #134e4a;
+        border-color: #134e4a;
+    }
+
+    .pagination-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+        background: #f9fafb;
+        border-color: #e5e7eb;
+    }
+
+    .pagination-summary {
+        color: #475569;
+        font-size: 0.86rem;
+        font-weight: 500;
+    }
+
     .btn-icon-table {
         border: 1px solid var(--border);
         border-radius: 10px;
@@ -998,6 +1123,11 @@
     </div>
 
     <div class="top-toolbar">
+        <div class="toolbar-group search-group">
+            <label for="searchMilestones">Search</label>
+            <input id="searchMilestones" class="toolbar-input" type="search" placeholder="Search milestone or phase">
+        </div>
+
         <div class="toolbar-group">
             <label for="projectSelector">Project</label>
             <select id="projectSelector" class="toolbar-select">
@@ -1024,11 +1154,6 @@
                 <option value="delayed">Delayed</option>
                 <option value="pending">Pending</option>
             </select>
-        </div>
-
-        <div class="toolbar-group search-group">
-            <label for="searchMilestones">Search</label>
-            <input id="searchMilestones" class="toolbar-input" type="search" placeholder="Search milestone or phase">
         </div>
 
         <div class="toolbar-actions">
@@ -1085,13 +1210,13 @@
 
                 <div class="milestone-modal-grid">
                     <div class="milestone-modal-field">
-                        <label for="milestonePlannedDate">Planned Date <span class="milestone-modal-required">Required</span></label>
-                        <input id="milestonePlannedDate" name="planned_date" type="date" required>
+                        <label for="milestoneStartDate">Start Date <span class="milestone-modal-required">Required</span></label>
+                        <input id="milestoneStartDate" name="start_date" type="date" required>
                     </div>
 
                     <div class="milestone-modal-field">
-                        <label for="milestoneActualDate">Actual Date</label>
-                        <input id="milestoneActualDate" name="actual_date" type="date">
+                        <label for="milestoneEndDate">End Date</label>
+                        <input id="milestoneEndDate" name="end_date" type="date" required>
                     </div>
                 </div>
             </div>
@@ -1116,6 +1241,58 @@
     let activeTimelineFilter = 'all';
     let timelineViewMode = 'gantt';
     let activeTimelineScale = 'week';
+    const tablePageSize = 10;
+    let currentPhasePage = 1;
+    let currentTimelinePage = 1;
+
+    function resetTablePagination() {
+        currentPhasePage = 1;
+        currentTimelinePage = 1;
+    }
+
+    function getPaginatedItems(items, page) {
+        const start = (page - 1) * tablePageSize;
+        return Array.isArray(items) ? items.slice(start, start + tablePageSize) : [];
+    }
+
+    function buildTablePagination(totalItems, currentPage, tableKey) {
+        const totalPages = Math.max(1, Math.ceil(totalItems / tablePageSize));
+        if (totalPages <= 1) {
+            return '';
+        }
+
+        const previousPage = Math.max(1, currentPage - 1);
+        const nextPage = Math.min(totalPages, currentPage + 1);
+        const buttons = [
+            `<button type="button" class="pagination-button" data-table="${tableKey}" data-page="${previousPage}" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>`
+        ];
+
+        for (let page = 1; page <= totalPages; page += 1) {
+            buttons.push(`
+                <button type="button" class="pagination-button ${page === currentPage ? 'active' : ''}" data-table="${tableKey}" data-page="${page}" aria-label="Page ${page}">${page}</button>
+            `);
+        }
+
+        buttons.push(`<button type="button" class="pagination-button" data-table="${tableKey}" data-page="${nextPage}" ${currentPage === totalPages ? 'disabled' : ''} aria-label="Next page">›</button>`);
+        return buttons.join('');
+    }
+
+    function attachPaginationControls() {
+        document.querySelectorAll('.pagination-button').forEach((button) => {
+            button.addEventListener('click', function () {
+                const targetTable = this.dataset.table;
+                const page = Number(this.dataset.page) || 1;
+                if (targetTable === 'phases') {
+                    currentPhasePage = page;
+                } else if (targetTable === 'timeline') {
+                    currentTimelinePage = page;
+                }
+                if (selectedProject) {
+                    renderTimeline(selectedProject);
+                }
+            });
+        });
+    }
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -1231,6 +1408,7 @@
             return;
         }
 
+        resetTablePagination();
         document.getElementById('projectSelector').value = String(selectedProject.id);
         populatePhaseFilter(selectedProject);
         renderTimeline(selectedProject);
@@ -1258,8 +1436,8 @@
             const milestones = Array.isArray(phase.milestones) ? phase.milestones.map((milestone, milestoneIndex) => ({
                 ...milestone,
                 milestone_name: milestone.milestone_name || milestone.name || `Milestone ${milestoneIndex + 1}`,
-                planned_date: milestone.planned_date || milestone.start || milestone.start_date || '',
-                actual_date: milestone.actual_date || milestone.end || milestone.end_date || '',
+                start_date: milestone.start_date || milestone.planned_date || milestone.start || '',
+                end_date: milestone.end_date || milestone.actual_date || milestone.end || '',
             })) : [];
             return {
                 id: String(phase.phase_id ?? phase.id ?? `${phase.project_id ?? 'project'}-${index}`),
@@ -1315,31 +1493,45 @@
             { key: 'pending', label: 'Pending', count: pendingCount, color: '#F3F4F6', textColor: '#6B7280' }
         ];
 
+        const paginatedPhases = getPaginatedItems(filteredPhases, currentPhasePage);
+        const paginatedMilestones = getPaginatedItems(filteredMilestones, currentTimelinePage);
+        const phasesTotal = filteredPhases.length;
+        const timelineTotal = filteredMilestones.length;
+        const phasesFrom = phasesTotal === 0 ? 0 : ((currentPhasePage - 1) * tablePageSize) + 1;
+        const phasesTo = Math.min(phasesTotal, currentPhasePage * tablePageSize);
+        const timelineFrom = timelineTotal === 0 ? 0 : ((currentTimelinePage - 1) * tablePageSize) + 1;
+        const timelineTo = Math.min(timelineTotal, currentTimelinePage * tablePageSize);
+
+
         const htmlOutput = `
             <div class="timeline-layout">
                 <div class="timeline-main-panel">
                     <div class="timeline-card">
                         <div class="timeline-card-header">
-                            <div>
+                            <div class="timeline-card-header-copy">
                                 <h3 class="panel-title">${escapeHtml(project.name || 'Project Schedule')}</h3>
                                 <p class="panel-subtitle">Live milestone planning with year, quarter, month, week, and day scale views.</p>
                             </div>
                             <div class="gantt-toolbar-actions">
+                                ${timelineViewMode === 'gantt' ? `
+                                    <div class="gantt-mode-actions gantt-controls-enter">
+                                        <button type="button" id="timelineZoomInBtn" class="btn-ghost"><i class="bi bi-plus"></i></button>
+                                        <button type="button" id="timelineZoomOutBtn" class="btn-ghost"><i class="bi bi-dash"></i></button>
+                                        <button type="button" id="timelineTodayBtn" class="btn-ghost"><i class="bi bi-calendar2-week"></i> Today</button>
+                                        <select id="timelineScaleSelector" class="toolbar-select compact-select">
+                                            <option value="day">Day</option>
+                                            <option value="week" selected>Week</option>
+                                            <option value="month">Month</option>
+                                            <option value="quarter">Quarter</option>
+                                            <option value="year">Year</option>
+                                        </select>
+                                    </div>
+                                ` : ''}
                                 <div class="view-toggle-group">
                                     <button type="button" class="view-toggle-btn ${timelineViewMode === 'gantt' ? 'active' : ''}" data-view="gantt"><i class="bi bi-bar-chart-line-fill"></i> Gantt</button>
                                     <button type="button" class="view-toggle-btn ${timelineViewMode === 'phases' ? 'active' : ''}" data-view="phases"><i class="bi bi-diagram-3"></i> Phases</button>
                                     <button type="button" class="view-toggle-btn ${timelineViewMode === 'timeline' ? 'active' : ''}" data-view="timeline"><i class="bi bi-signpost-split"></i> Timeline</button>
                                 </div>
-                                <select id="timelineScaleSelector" class="toolbar-select compact-select">
-                                    <option value="day">Day</option>
-                                    <option value="week" selected>Week</option>
-                                    <option value="month">Month</option>
-                                    <option value="quarter">Quarter</option>
-                                    <option value="year">Year</option>
-                                </select>
-                                <button type="button" id="timelineTodayBtn" class="btn-ghost"><i class="bi bi-calendar2-week"></i> Today</button>
-                                <button type="button" id="timelineZoomInBtn" class="btn-ghost"><i class="bi bi-plus"></i></button>
-                                <button type="button" id="timelineZoomOutBtn" class="btn-ghost"><i class="bi bi-dash"></i></button>
                             </div>
                         </div>
 
@@ -1365,14 +1557,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${filteredPhases.length ? filteredPhases.map((phase, index) => {
+                                        ${paginatedPhases.length ? paginatedPhases.map((phase, index) => {
                                             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
                                             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
                                             const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
                                             const phaseCode = phase.phase_code || phase.code || 'Phase';
                                             return `
                                                 <tr>
-                                                    <td>${index + 1}</td>
+                                                    <td>${phasesFrom + index}</td>
                                                     <td><strong>${escapeHtml(phaseName)}</strong><div class="text-muted small">${escapeHtml(phaseCode)}</div></td>
                                                     <td>${formatDateFull(phase.planned_start_date || phase.start)}</td>
                                                     <td>${formatDateFull(phase.planned_end_date || phase.end)}</td>
@@ -1383,6 +1575,10 @@
                                         }).join('') : `<tr><td colspan="7"><div class="timeline-empty-state">No phases match the current filters.</div></td></tr>`}
                                     </tbody>
                                 </table>
+                            <div class="timeline-table-footer">
+                                <div class="pagination-summary">Showing ${phasesFrom} to ${phasesTo} of ${phasesTotal} phase${phasesTotal === 1 ? '' : 's'}</div>
+                                <div class="pagination-bar">${buildTablePagination(phasesTotal, currentPhasePage, 'phases')}</div>
+                            </div>
                             </div>
                         </div>
 
@@ -1401,15 +1597,15 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${filteredMilestones.length ? filteredMilestones.map((milestone, index) => {
+                                        ${paginatedMilestones.length ? paginatedMilestones.map((milestone, index) => {
                                             const status = getMilestoneStatus(milestone);
                                             return `
                                                 <tr>
-                                                    <td>${index + 1}</td>
+                                                    <td>${timelineFrom + index}</td>
                                                     <td><strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong></td>
                                                     <td>${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
-                                                    <td>${formatDateFull(milestone.planned_start_date || milestone.planned_date || milestone.start)}</td>
-                                                    <td>${formatDateFull(milestone.planned_end_date || milestone.actual_date || milestone.end)}</td>
+                                                    <td>${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
+                                                    <td>${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
                                                     <td><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
                                                     <td>
                                                         <div class="action-icons-flex">
@@ -1421,6 +1617,10 @@
                                         }).join('') : `<tr><td colspan="7"><div class="timeline-empty-state">No milestones match the current filters.</div></td></tr>`}
                                     </tbody>
                                 </table>
+                            <div class="timeline-table-footer">
+                                <div class="pagination-summary">Showing ${timelineFrom} to ${timelineTo} of ${timelineTotal} milestone${timelineTotal === 1 ? '' : 's'}</div>
+                                <div class="pagination-bar">${buildTablePagination(timelineTotal, currentTimelinePage, 'timeline')}</div>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -1469,6 +1669,7 @@
 
         document.getElementById('timelineContainer').innerHTML = htmlOutput;
         attachTimelineControls();
+        attachPaginationControls();
 
         document.querySelectorAll('[data-open-view]').forEach((button) => {
             button.addEventListener('click', () => window.openPhaseModal?.(button.getAttribute('data-open-view'), false));
@@ -1510,7 +1711,7 @@
             const rows = timelineViewMode === 'timeline'
                 ? getFilteredMilestones(selectedProject).map((milestone, index) => {
                     const status = getMilestoneStatus(milestone);
-                    return [index + 1, milestone.milestone_name || 'Unnamed milestone', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.planned_date || milestone.start || '', milestone.planned_end_date || milestone.actual_date || milestone.end || ''];
+                    return [index + 1, milestone.milestone_name || 'Unnamed milestone', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.start_date || milestone.start || '', milestone.planned_end_date || milestone.end_date || milestone.end || ''];
                 })
                 : getFilteredPhases(selectedProject).map((phase, index) => {
                     const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
@@ -1585,8 +1786,8 @@
         document.getElementById('milestoneOriginalPhaseId').value = String(phase?.phase_id ?? phase?.id ?? '');
         document.getElementById('milestoneId').value = milestone?.milestone_id ?? milestone?.id ?? '';
         document.getElementById('milestoneName').value = milestone?.milestone_name || '';
-        document.getElementById('milestonePlannedDate').value = milestone?.planned_date ? String(milestone.planned_date).slice(0, 10) : '';
-        document.getElementById('milestoneActualDate').value = milestone?.actual_date ? String(milestone.actual_date).slice(0, 10) : '';
+        document.getElementById('milestoneStartDate').value = milestone?.start_date ? String(milestone.start_date).slice(0, 10) : '';
+        document.getElementById('milestoneEndDate').value = milestone?.end_date ? String(milestone.end_date).slice(0, 10) : '';
         document.getElementById('milestoneCompleted').value = milestone?.is_completed ? '1' : '0';
         document.getElementById('milestoneDelayed').value = milestone?.is_delayed ? '1' : '0';
         milestoneFormSnapshot = getMilestoneFormSnapshot();
@@ -1612,7 +1813,7 @@
         select.innerHTML = milestones.map((item) => {
             const id = item.milestone_id ?? item.id;
             const label = item.milestone_name || 'Unnamed milestone';
-            const dateLabel = item.planned_date ? ` (${String(item.planned_date).slice(0, 10)})` : '';
+            const dateLabel = item.start_date ? ` (${String(item.start_date).slice(0, 10)})` : '';
             const selectedAttr = String(selectedMilestoneId || '') === String(id || '') ? 'selected' : '';
             return `<option value="${escapeHtml(id)}" ${selectedAttr}>${escapeHtml(label + dateLabel)}</option>`;
         }).join('');
@@ -1674,8 +1875,8 @@
 
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('milestonePlannedDate').value = tomorrow.toISOString().slice(0, 10);
-            document.getElementById('milestoneActualDate').value = '';
+            document.getElementById('milestoneStartDate').value = tomorrow.toISOString().slice(0, 10);
+            document.getElementById('milestoneEndDate').value = '';
             document.getElementById('milestoneCompleted').value = '0';
             document.getElementById('milestoneDelayed').value = '0';
             if (note) {
@@ -1699,8 +1900,8 @@ let milestoneFormSnapshot = null;
         return {
             phaseId: document.getElementById('milestonePhaseId')?.value?.trim() || '',
             name: document.getElementById('milestoneName')?.value?.trim() || '',
-            plannedDate: document.getElementById('milestonePlannedDate')?.value?.trim() || '',
-            actualDate: document.getElementById('milestoneActualDate')?.value?.trim() || '',
+            startDate: document.getElementById('milestoneStartDate')?.value?.trim() || '',
+            endDate: document.getElementById('milestoneEndDate')?.value?.trim() || '',
             completed: document.getElementById('milestoneCompleted')?.value || '0',
             delayed: document.getElementById('milestoneDelayed')?.value || '0'
         };
@@ -1709,8 +1910,8 @@ let milestoneFormSnapshot = null;
     function validateMilestoneForm() {
         const phaseId = document.getElementById('milestonePhaseId')?.value?.trim() || '';
         const name = document.getElementById('milestoneName')?.value?.trim() || '';
-        const plannedDate = document.getElementById('milestonePlannedDate')?.value?.trim() || '';
-        const actualDate = document.getElementById('milestoneActualDate')?.value?.trim() || '';
+        const plannedDate = document.getElementById('milestoneStartDate')?.value?.trim() || '';
+        const actualDate = document.getElementById('milestoneEndDate')?.value?.trim() || '';
         const form = document.getElementById('milestoneModalForm');
         const mode = form?.dataset.mode || 'create';
 
@@ -1727,7 +1928,7 @@ let milestoneFormSnapshot = null;
         }
 
         if (actualDate && plannedDate && actualDate < plannedDate) {
-            return 'Actual date cannot be earlier than the planned date.';
+            return 'End date cannot be earlier than the start date.';
         }
 
         if (mode === 'edit' && milestoneFormSnapshot) {
@@ -1963,14 +2164,17 @@ let milestoneFormSnapshot = null;
         });
 
         phaseFilter?.addEventListener('change', function () {
+            resetTablePagination();
             if (selectedProject) renderTimeline(selectedProject);
         });
 
         statusFilter?.addEventListener('change', function () {
+            resetTablePagination();
             if (selectedProject) renderTimeline(selectedProject);
         });
 
         searchInput?.addEventListener('input', function () {
+            resetTablePagination();
             if (selectedProject) renderTimeline(selectedProject);
         });
 

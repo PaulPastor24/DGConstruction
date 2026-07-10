@@ -11,6 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
 
 class ReportController extends Controller
@@ -70,6 +71,20 @@ class ReportController extends Controller
     }
 
     /**
+     * Evaluate a report decision from the admin review UI.
+     */
+    public function evaluate(Request $request, $reportId)
+    {
+        $decision = strtolower((string) $request->input('decision', 'approve'));
+
+        return match ($decision) {
+            'approve' => $this->approve($request, $reportId),
+            'revision', 'reject' => $this->reject($request, $reportId),
+            default => back()->withErrors('Invalid report decision.'),
+        };
+    }
+
+    /**
      * Approve a report (Admin only)
      */
     public function approve(Request $request, $reportId)
@@ -81,15 +96,25 @@ class ReportController extends Controller
             abort(403, 'Only engineers can approve reports');
         }
 
-        $validated = $request->validate([
-            'approval_remarks' => 'nullable|string|max:1000',
-        ]);
+        try {
+            $validated = $request->validate([
+                'approval_remarks' => 'nullable|string|max:1000',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
+            }
+
+            throw $e;
+        }
 
         try {
             DB::beginTransaction();
 
             $report->update([
                 'approval_status' => 'approved',
+                'reviewed_by' => auth('web')->user()->user_id,
+                'reviewed_at' => now(),
                 'approved_by' => auth('web')->user()->user_id,
                 'approved_at' => now(),
                 'approval_remarks' => $validated['approval_remarks'],
@@ -155,12 +180,34 @@ class ReportController extends Controller
 
             DB::commit();
 
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Report approved successfully.',
+                    'report_id' => $report->report_id,
+                    'status' => 'approved',
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Report approved successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Report approval failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to approve report.'], 500);
+            }
             return back()->withErrors('Failed to approve report');
         }
+    }
+
+    /**
+     * Request a revision for a report (Admin only).
+     */
+    public function revise(Request $request, $reportId)
+    {
+        $request->merge(['decision' => 'revision']);
+
+        return $this->reject($request, $reportId);
     }
 
     /**
@@ -175,9 +222,24 @@ class ReportController extends Controller
             abort(403, 'Only engineers can reject reports');
         }
 
-        $validated = $request->validate([
-            'approval_remarks' => 'required|string|max:1000',
-        ]);
+        try {
+            $validated = $request->validate([
+                'approval_remarks' => 'nullable|string|max:1000',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
+            }
+
+            throw $e;
+        }
+
+        $decision = strtolower((string) $request->input('decision', 'reject'));
+        if (blank($validated['approval_remarks'])) {
+            $validated['approval_remarks'] = $decision === 'revision'
+                ? 'Revision requested by engineer.'
+                : 'Report rejected by engineer.';
+        }
 
         try {
             DB::beginTransaction();
@@ -185,6 +247,7 @@ class ReportController extends Controller
             $report->update([
                 'approval_status' => 'rejected',
                 'reviewed_by' => auth('web')->user()->user_id,
+                'reviewed_at' => now(),
                 'rejected_at' => now(),
                 'approval_remarks' => $validated['approval_remarks'],
             ]);
@@ -226,10 +289,26 @@ class ReportController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Report rejected. Supervisor will see feedback.');
+            $successMessage = $decision === 'revision'
+                ? 'Revision requested. Supervisor will see feedback.'
+                : 'Report rejected. Supervisor will see feedback.';
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'report_id' => $report->report_id,
+                    'status' => 'rejected',
+                ]);
+            }
+
+            return redirect()->back()->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Report rejection failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to reject report.'], 500);
+            }
             return back()->withErrors('Failed to reject report');
         }
     }

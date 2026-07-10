@@ -26,7 +26,7 @@ class MilestoneController extends Controller
             ->firstOrFail();
 
         $milestones = $phase->milestones()
-            ->orderBy('planned_date')
+            ->orderBy('start_date')
             ->get();
 
         $stats = [
@@ -64,8 +64,8 @@ class MilestoneController extends Controller
             'project_id' => 'required|exists:projects,project_id',
             'phase_id' => 'required|exists:construction_phases,phase_id',
             'milestone_name' => 'required|string|max:200',
-            'planned_date' => 'required|date',
-            'actual_date' => 'nullable|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
             'is_completed' => 'nullable|boolean',
             'is_delayed' => 'nullable|boolean',
         ]);
@@ -95,11 +95,11 @@ class MilestoneController extends Controller
         try {
             DB::beginTransaction();
 
-            $milestone = Milestone::create([
+                $milestone = Milestone::create([
                 'phase_id' => $validated['phase_id'],
                 'milestone_name' => $validated['milestone_name'],
-                'planned_date' => $validated['planned_date'],
-                'actual_date' => $validated['actual_date'] ?? null,
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'] ?? null,
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
@@ -192,8 +192,8 @@ class MilestoneController extends Controller
         $validator = validator($request->all(), [
             'phase_id' => 'nullable|exists:construction_phases,phase_id',
             'milestone_name' => 'required|string|max:200',
-            'planned_date' => 'required|date',
-            'actual_date' => 'nullable|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
             'is_completed' => 'boolean',
             'is_delayed' => 'boolean',
         ]);
@@ -223,8 +223,8 @@ class MilestoneController extends Controller
             $milestone->update([
                 'phase_id' => $validated['phase_id'] ?? $oldPhaseId,
                 'milestone_name' => $validated['milestone_name'],
-                'planned_date' => $validated['planned_date'],
-                'actual_date' => $validated['actual_date'] ?? null,
+                'start_date' => $validated['start_date'] ?? $milestone->start_date,
+                'end_date' => $validated['end_date'] ?? $milestone->end_date,
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
@@ -303,7 +303,7 @@ class MilestoneController extends Controller
             $milestone->update([
                 'is_completed' => true,
                 'is_delayed' => false,
-                'actual_date' => now()->toDateString(),
+                'end_date' => now()->toDateString(),
             ]);
 
             $this->logAction(

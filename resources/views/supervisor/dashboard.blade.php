@@ -65,7 +65,7 @@
                 <div class="col-12 col-xl-3">
                     <div class="stat-card">
                         <div class="stat-title">Upcoming Deadline</div>
-                        <div class="stat-value">{{ $upcomingMilestone ? $upcomingMilestone->planned_date->format('M d') : 'No date' }}</div>
+                        <div class="stat-value">{{ $upcomingMilestone ? $upcomingMilestone->start_date->format('M d') : 'No date' }}</div>
                         <div class="stat-meta">{{ $upcomingMilestone->milestone_name ?? 'No upcoming milestone' }}</div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
         })?->phase_name ?? 'Pending';
         $upcomingMilestones = \App\Models\Milestone::whereHas('phase', function ($query) use ($primaryProject) {
             $query->where('project_id', $primaryProject->project_id);
-        })->where('is_completed', false)->orderBy('planned_date')->take(3)->get();
+        })->where('is_completed', false)->orderBy('start_date')->take(3)->get();
         $activityItems = collect();
         foreach ($pendingReports->take(4) as $report) {
             $activityItems->push([
@@ -314,7 +314,7 @@
                                         <span class="dashboard-icon"><i class="bi bi-flag-fill"></i></span>
                                         <div>
                                             <div class="fw-semibold small">{{ $milestone->milestone_name }}</div>
-                                            <div class="small text-muted mt-1">{{ optional($milestone->planned_date)->format('M d, Y') ?? 'Pending' }}</div>
+                                            <div class="small text-muted mt-1">{{ optional($milestone->start_date)->format('M d, Y') ?? 'Pending' }}</div>
                                         </div>
                                     </div>
                                 </div>

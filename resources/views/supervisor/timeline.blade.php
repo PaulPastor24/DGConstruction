@@ -188,6 +188,9 @@
                                         @php
                                             $pStatus = strtolower(data_get($phase, 'status', 'upcoming'));
                                             $pProgress = (float) data_get($phase, 'progress', 0);
+                                            $phaseMilestones = collect(data_get($phase, 'milestones', []))->filter(function ($milestone) {
+                                                return !empty(data_get($milestone, 'name'));
+                                            });
                                             
                                             $borderClass = match($pStatus) {
                                                 'completed' => 'timeline-phase-completed',
@@ -218,8 +221,51 @@
                                                         {!! $statusLabel !!}
                                                     </div>
                                                 </div>
-                                                <div class="progress" style="height: 6px; background-color: #f1f5f9; border-radius: 999px;">
-                                                    <div class="progress-bar" role="progressbar" style="width: {{ $pProgress }}%; background: linear-gradient(90deg, #4DA078, #82DB72);" aria-valuenow="{{ $pProgress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                <div class="timeline-progress-shell">
+                                                    @if($phaseMilestones->isNotEmpty())
+                                                        <div class="milestone-track">
+                                                            @foreach($phaseMilestones as $milestone)
+                                                                @php
+                                                                    $milestoneName = data_get($milestone, 'name', 'Milestone');
+                                                                    $phaseStartValue = data_get($phase, 'start');
+                                                                    $phaseEndValue = data_get($phase, 'end');
+                                                                    $milestoneDateValue = data_get($milestone, 'start_date');
+                                                                    $milestoneLabel = $milestoneDateValue ? \Carbon\Carbon::parse($milestoneDateValue)->format('M d, Y') : 'TBD';
+                                                                    $phaseStartDate = $phaseStartValue ? \Carbon\Carbon::parse($phaseStartValue) : null;
+                                                                    $phaseEndDate = $phaseEndValue ? \Carbon\Carbon::parse($phaseEndValue) : null;
+                                                                    $milestoneDate = $milestoneDateValue ? \Carbon\Carbon::parse($milestoneDateValue) : null;
+                                                                    $markerPercent = 0;
+                                                                    if ($phaseStartDate && $phaseEndDate && $milestoneDate && $phaseEndDate->gt($phaseStartDate)) {
+                                                                        $totalDays = max(1, $phaseStartDate->diffInDays($phaseEndDate, false));
+                                                                        $elapsedDays = $phaseStartDate->diffInDays($milestoneDate, false);
+                                                                        $markerPercent = max(0, min(100, round(($elapsedDays / $totalDays) * 100, 1)));
+                                                                    }
+                                                                    $milestoneActualDateValue = data_get($milestone, 'end_date');
+                                                                    $milestoneActualLabel = $milestoneActualDateValue ? \Carbon\Carbon::parse($milestoneActualDateValue)->format('M d, Y') : null;
+                                                                    $milestoneFlagClass = data_get($milestone, 'is_completed') ? 'phase-milestone-marker completed' : (data_get($milestone, 'is_delayed') ? 'phase-milestone-marker delayed' : 'phase-milestone-marker');
+                                                                @endphp
+                                                                <div class="milestone-marker-wrapper" style="left: {{ $markerPercent }}%;">
+                                                                    <button type="button" class="{{ $milestoneFlagClass }}" aria-label="Milestone: {{ $milestoneName }}">
+                                                                        <i class="bi bi-flag-fill"></i>
+                                                                    </button>
+                                                                    <div class="milestone-info-card" role="tooltip">
+                                                                        <div class="milestone-info-title">{{ $milestoneName }}</div>
+                                                                        <div class="milestone-info-row">
+                                                                            <span>Start</span>
+                                                                            <strong>{{ $milestoneLabel }}</strong>
+                                                                        </div>
+                                                                        <div class="milestone-info-row">
+                                                                            <span>End</span>
+                                                                            <strong>{{ $milestoneActualLabel ?? 'TBD' }}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                    <div class="progress" style="height: 6px; background-color: #f1f5f9; border-radius: 999px;">
+                                                        <div class="progress-bar" role="progressbar" style="width: {{ $pProgress }}%; background: linear-gradient(90deg, #4DA078, #82DB72);" aria-valuenow="{{ $pProgress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -237,7 +283,7 @@
                                 
                                 @php
                                 $activeMilestones = collect(data_get($project, 'activeMilestones', []))
-                                    ->sortBy('planned_date')
+                                    ->sortBy('start_date')
                                     ->take(2);
                             @endphp
                             <div class="row g-3">
@@ -254,7 +300,7 @@
                                 @else
                                     @foreach($activeMilestones as $milestone)
                                         @php
-                                            $plannedDate = data_get($milestone, 'planned_date');
+                                            $plannedDate = data_get($milestone, 'start_date');
                                             $daysRemaining = $plannedDate ? \Carbon\Carbon::parse($plannedDate)->diffInDays(now(), false) : null;
                                             $statusText = data_get($milestone, 'is_delayed') ? 'Delayed' : (data_get($milestone, 'is_completed') ? 'Completed' : 'Upcoming');
                                             $statusClass = data_get($milestone, 'is_delayed') ? 'border-warning-left' : 'border-primary-left';
@@ -532,6 +578,8 @@
         align-items: center;
         width: 100%;
         transition: transform 0.2s, box-shadow 0.2s;
+        overflow: visible;
+        z-index: 1;
     }
     .timeline-phase-card-item:hover {
         transform: translateY(-2px);
@@ -546,6 +594,144 @@
     .stepper-phase-name { font-size: 0.95rem; font-weight: 700; color: #373737; }
     .stepper-phase-dates { font-size: 0.8rem; color: #6b7280; font-weight: 500; }
     .stepper-percentage { font-size: 0.95rem; }
+
+    .timeline-progress-shell {
+        position: relative;
+        padding-top: 1.35rem;
+        margin-top: 0.15rem;
+        overflow: visible;
+        z-index: 1;
+    }
+    .milestone-track {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 32px;
+        z-index: 3;
+        pointer-events: none;
+        overflow: visible;
+    }
+    .milestone-marker-wrapper {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        display: inline-flex;
+        align-items: flex-start;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 20;
+    }
+    .phase-milestone-marker {
+        position: relative;
+        transform: translateY(-2px);
+        min-width: 28px;
+        height: 24px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        color: #166534;
+        border: 1px solid rgba(22, 101, 52, 0.16);
+        box-shadow: 0 10px 20px rgba(34, 197, 94, 0.16);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .phase-milestone-marker:hover,
+    .phase-milestone-marker:focus-visible {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px rgba(34, 197, 94, 0.22);
+    }
+    .phase-milestone-marker i {
+        font-size: 0.74rem;
+        line-height: 1;
+    }
+    .phase-milestone-marker.completed {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #15803d;
+        border-color: rgba(21, 128, 61, 0.16);
+    }
+    .phase-milestone-marker.delayed {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #b91c1c;
+        border-color: rgba(185, 28, 28, 0.16);
+    }
+    .phase-milestone-marker::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #d1fae5;
+        opacity: 0.95;
+    }
+    .phase-milestone-marker.completed::after {
+        border-top-color: #bbf7d0;
+    }
+    .phase-milestone-marker.delayed::after {
+        border-top-color: #fecaca;
+    }
+    .milestone-info-card {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%) translateY(-2px);
+        min-width: 210px;
+        padding: 0.7rem 0.8rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fcf8 100%);
+        border: 1px solid rgba(22, 101, 52, 0.16);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 9999;
+        white-space: normal;
+    }
+    .milestone-marker-wrapper:hover .milestone-info-card,
+    .milestone-marker-wrapper:focus-within .milestone-info-card {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+    .milestone-info-card::before {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: #ffffff;
+        border-left: 1px solid rgba(22, 101, 52, 0.16);
+        border-bottom: 1px solid rgba(22, 101, 52, 0.16);
+        rotate: 45deg;
+    }
+    .milestone-info-title {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #166534;
+        margin-bottom: 0.4rem;
+    }
+    .milestone-info-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        font-size: 0.74rem;
+        color: #64748b;
+        margin-top: 0.2rem;
+    }
+    .milestone-info-row strong {
+        color: #0f172a;
+        font-weight: 700;
+        text-align: right;
+    }
+
 
     /* MILESTONE CARDS */
     .milestone-sub-card {
@@ -603,6 +789,17 @@
             synchronizerSelects.forEach(select => select.value = selectedProjectId);
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.milestone-marker-wrapper').forEach(function (wrapper) {
+            wrapper.addEventListener('mouseenter', function () {
+                wrapper.classList.add('is-active');
+            });
+            wrapper.addEventListener('mouseleave', function () {
+                wrapper.classList.remove('is-active');
+            });
+        });
+    });
 </script>
 @endpush
 @endsection
