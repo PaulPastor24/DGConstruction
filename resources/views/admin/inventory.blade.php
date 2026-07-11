@@ -1144,21 +1144,22 @@
                                         <div class="input-container-group select-caret-wrapper">
                                             <i class="bi bi-box-seam input-icon-left"></i>
                                             <select id="receiveStockMaterialSelect" name="material_id" class="control-field-input" required>
-                                                <option value="" selected>Select material</option>
+                                                <option value="" {{ old('material_id') === null ? 'selected' : '' }}>Select material</option>
                                                 @foreach($materials as $material)
                                                     <option value="{{ $material->id }}"
                                                             data-name="{{ $material->name }}"
                                                             data-unit="{{ $material->unit }}"
                                                             data-stock="{{ $material->current_stock }}"
-                                                            data-min="{{ $material->minimum_stock_level }}">
+                                                            data-min="{{ $material->minimum_stock_level }}"
+                                                            {{ old('material_id') == $material->id ? 'selected' : '' }}>
                                                         {{ $material->name }}
                                                     </option>
                                                 @endforeach
-                                                <option value="new">Other (new material)</option>
+                                                <option value="new" {{ old('material_id') === 'new' ? 'selected' : '' }}>Other (new material)</option>
                                             </select>
                                         </div>
-                                        <div class="form-input-hint">Select an existing material or choose Other to type a new one.</div>
-                                        <input type="text" id="receiveStockMaterialInput" name="material_name" class="control-field-input mt-2 d-none" placeholder="Type new material name" autocomplete="off" value="">
+                                        <div class="form-input-hint">Select an existing material to receive stock, or choose Other to create a new material record while receiving stock.</div>
+                                        <input type="text" id="receiveStockMaterialInput" name="material_name" class="control-field-input mt-2 {{ old('material_id') === 'new' ? '' : 'd-none' }}" placeholder="Type new material name" autocomplete="off" value="{{ old('material_name') }}" {{ old('material_id') === 'new' ? 'required' : '' }}>
                                     </div>
                                 </div>
 
@@ -1167,7 +1168,7 @@
                                         <label class="form-label-custom">Quantity Received<span class="required-asterisk">*</span></label>
                                         <div class="input-container-group">
                                             <i class="bi bi-box input-icon-left"></i>
-                                            <input type="number" step="1" min="0" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" required>
+                                            <input type="number" step="0.01" min="0.01" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" value="{{ old('quantity_received') }}" required>
                                             <span class="input-addon-right" id="addonUnitText">Bags</span>
                                         </div>
                                         <div class="form-input-hint">Enter the total quantity of material received.</div>
@@ -1191,7 +1192,7 @@
                                         <label class="form-label-custom">Supplier</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-person input-icon-left"></i>
-                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)">
+                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)" value="{{ old('supplier') }}">
                                         </div>
                                         <div class="form-input-hint">Supplier who delivered the materials.</div>
                                     </div>
@@ -1214,7 +1215,7 @@
                                         <label class="form-label-custom">Remarks (Optional)</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
-                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;">{{ old('remarks') }}</textarea>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-1">
                                             <div class="form-input-hint my-0">Additional notes about this stock receipt.</div>
@@ -1553,6 +1554,18 @@
         let currentMaterialStockValue = 0;
         let activeMaterialUnitText = "Bags";
 
+        function formatStockValue(value) {
+            const numericValue = Number(value);
+            if (!Number.isFinite(numericValue)) {
+                return '0';
+            }
+
+            const roundedValue = Math.round(numericValue * 100) / 100;
+            return Number.isInteger(roundedValue)
+                ? String(roundedValue)
+                : roundedValue.toFixed(2).replace(/\.0+$/, '').replace(/(\.[1-9]*)0+$/, '$1');
+        }
+
         function resetMaterialSummary() {
             if (metaName) metaName.textContent = 'Select a material';
             if (metaCurrent) metaCurrent.textContent = '—';
@@ -1573,10 +1586,10 @@
             const computedNewTotal = currentMaterialStockValue + incomingQty;
             
             if (sumReceived) {
-                sumReceived.textContent = incomingQty + " " + activeMaterialUnitText;
+                sumReceived.textContent = formatStockValue(incomingQty) + " " + activeMaterialUnitText;
             }
             if (sumCalculatedTotal) {
-                sumCalculatedTotal.textContent = computedNewTotal + " " + activeMaterialUnitText;
+                sumCalculatedTotal.textContent = formatStockValue(computedNewTotal) + " " + activeMaterialUnitText;
             }
             
             if(incomingQty > 0 && sumReceived) {
@@ -1630,10 +1643,10 @@
             }
 
             if (metaName) metaName.textContent = mName;
-            if (metaCurrent) metaCurrent.textContent = currentMaterialStockValue + " " + activeMaterialUnitText;
-            if (metaMin) metaMin.textContent = minStockLevel + " " + activeMaterialUnitText;
+            if (metaCurrent) metaCurrent.textContent = formatStockValue(currentMaterialStockValue) + " " + activeMaterialUnitText;
+            if (metaMin) metaMin.textContent = formatStockValue(minStockLevel) + " " + activeMaterialUnitText;
             if (addonUnit) addonUnit.textContent = activeMaterialUnitText;
-            if (sumCurrent) sumCurrent.textContent = currentMaterialStockValue + " " + activeMaterialUnitText;
+            if (sumCurrent) sumCurrent.textContent = formatStockValue(currentMaterialStockValue) + " " + activeMaterialUnitText;
 
             if (metaStatus) {
                 if (currentMaterialStockValue <= 0) {

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -1165,7 +1166,8 @@ class AdminDashboardController extends Controller
     public function receiveStock(Request $request, ?Material $material = null)
     {
         try {
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(), [
+                'material_id' => ['nullable'],
                 'material_name' => ['nullable', 'string', 'max:255'],
                 'quantity_received' => ['required', 'numeric', 'min:0.01', 'max:1000000000'],
                 'received_date' => ['required', 'date'],
@@ -1179,6 +1181,25 @@ class AdminDashboardController extends Controller
                 'received_date.date' => 'Please enter a valid date.',
             ]);
 
+            $validator->after(function ($validator) use ($request, $material) {
+                if ($material instanceof Material) {
+                    return;
+                }
+
+                $selectedMaterialId = $request->input('material_id');
+                $materialName = trim((string) $request->input('material_name'));
+
+                if ((empty($selectedMaterialId) || $selectedMaterialId === 'new') && $materialName === '') {
+                    $validator->errors()->add('material_name', 'Please select a material or enter a new material name.');
+                }
+
+                if (is_numeric($selectedMaterialId) && (int) $selectedMaterialId > 0 && !Material::query()->where('id', (int) $selectedMaterialId)->exists()) {
+                    $validator->errors()->add('material_id', 'The selected material does not exist.');
+                }
+            });
+
+            $validated = $validator->validate();
+
             $materialName = trim((string) ($validated['material_name'] ?? ''));
             $selectedMaterialId = $request->input('material_id');
 
@@ -1191,8 +1212,8 @@ class AdminDashboardController extends Controller
                     throw new \InvalidArgumentException('Selected material was not found.');
                 }
             } elseif ($materialName !== '') {
-                $materialRecord = Material::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($materialName)])->first();
 
+                $materialRecord = Material::query()->whereRaw('LOWER(name) = ?', [Str::lower($materialName)], 'and')->first();
                 if (!$materialRecord) {
                     $materialRecord = Material::create([
                         'name' => $materialName,
@@ -1230,6 +1251,8 @@ class AdminDashboardController extends Controller
             return redirect()->back()->with('success', 'Stock received successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->withErrors(['material_name' => $e->getMessage()])->withInput();
         } catch (\Throwable $e) {
             report($e);
 

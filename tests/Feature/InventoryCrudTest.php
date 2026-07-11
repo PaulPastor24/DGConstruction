@@ -215,6 +215,33 @@ class InventoryCrudTest extends TestCase
         $this->assertSame('Metro Supply', $delivery->supplier_name);
     }
 
+    public function test_receive_stock_requires_material_selection_or_name(): void
+    {
+        $request = Request::create('/admin/inventory/materials/receive', 'POST', [
+            'quantity_received' => 5,
+            'received_date' => now()->toDateString(),
+        ]);
+
+        $response = (new AdminDashboardController())->receiveStock($request, null);
+
+        $this->assertTrue($response->isRedirect());
+        $this->assertSame('Please select a material or enter a new material name.', session('errors')->first('material_name'));
+    }
+
+    public function test_receive_stock_rejects_nonexistent_selected_material(): void
+    {
+        $request = Request::create('/admin/inventory/materials/receive', 'POST', [
+            'material_id' => 9999,
+            'quantity_received' => 5,
+            'received_date' => now()->toDateString(),
+        ]);
+
+        $response = (new AdminDashboardController())->receiveStock($request, null);
+
+        $this->assertTrue($response->isRedirect());
+        $this->assertSame('The selected material does not exist.', session('errors')->first('material_id'));
+    }
+
     public function test_inventory_crud_actions_work(): void
     {
         $controller = new AdminDashboardController();
