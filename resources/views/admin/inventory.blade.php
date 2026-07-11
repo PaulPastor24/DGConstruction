@@ -461,9 +461,10 @@
         border-radius: 8px;
         padding: 0.85rem 1rem;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 0.75rem;
         margin-top: 1.5rem;
+        min-height: 96px;
     }
 
     .modal-receive-stock .alert-banner-toast i {
@@ -760,11 +761,8 @@
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
-                            <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
-                                <i class="bi bi-plus-lg me-1"></i> Add Material
-                            </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral">
-                                <i class="bi bi-download me-1"></i> Receive Stock
+                                <i class="bi bi-plus-lg me-1"></i> Add Material
                             </button>
                         </div>
                     </form>
@@ -1096,8 +1094,8 @@
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div>
-                        <h4 class="modal-title-text mb-0">Receive Stock</h4>
-                        <p class="modal-subtitle mb-0">Add received stock to increase the inventory of the selected material.</p>
+                        <h4 class="modal-title-text mb-0">Add Material</h4>
+                        <p class="modal-subtitle mb-0">Create a new material or receive stock to update inventory.</p>
                     </div>
                 </div>
                 <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
@@ -1151,6 +1149,7 @@
                                                             data-unit="{{ $material->unit }}"
                                                             data-stock="{{ $material->current_stock }}"
                                                             data-min="{{ $material->minimum_stock_level }}"
+                                                            data-category="{{ $material->category }}"
                                                             {{ old('material_id') == $material->id ? 'selected' : '' }}>
                                                         {{ $material->name }}
                                                     </option>
@@ -1158,11 +1157,24 @@
                                                 <option value="new" {{ old('material_id') === 'new' ? 'selected' : '' }}>Other (new material)</option>
                                             </select>
                                         </div>
-                                        <div class="form-input-hint">Select an existing material to receive stock, or choose Other to create a new material record while receiving stock.</div>
+                                        <div class="form-input-hint">Select an existing material or choose Other to type a new material name.</div>
                                         <input type="text" id="receiveStockMaterialInput" name="material_name" class="control-field-input mt-2 {{ old('material_id') === 'new' ? '' : 'd-none' }}" placeholder="Type new material name" autocomplete="off" value="{{ old('material_name') }}" {{ old('material_id') === 'new' ? 'required' : '' }}>
                                     </div>
+                                    </div>
+
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Category</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-tags input-icon-left"></i>
+                                            <input type="text" id="receiveStockMaterialCategoryInput" name="category" class="control-field-input" placeholder="Category" value="{{ old('category') }}">
+                                        </div>
+                                        <div class="form-input-hint">Material category — stored in materials table.</div>
+                                        </div>
+                                </div>
                                 </div>
 
+                                <div class="row g-3">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group-wrapper mb-0">
                                         <label class="form-label-custom">Quantity Received<span class="required-asterisk">*</span></label>
@@ -1172,11 +1184,9 @@
                                             <span class="input-addon-right" id="addonUnitText">Bags</span>
                                         </div>
                                         <div class="form-input-hint">Enter the total quantity of material received.</div>
-                                    </div>
+                                        </div>
                                 </div>
-                            </div>
 
-                            <div class="row g-3">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group-wrapper mb-0">
                                         <label class="form-label-custom">Received Date<span class="required-asterisk">*</span></label>
@@ -1186,7 +1196,10 @@
                                         </div>
                                         <div class="form-input-hint">Select the date when the stock was received.</div>
                                     </div>
+                                    </div>
                                 </div>
+
+                                <div class="row g-3 mt-1">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group-wrapper mb-0">
                                         <label class="form-label-custom">Supplier</label>
@@ -1196,20 +1209,20 @@
                                         </div>
                                         <div class="form-input-hint">Supplier who delivered the materials.</div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-1">
+                                    </div>
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group-wrapper mb-0">
                                         <label class="form-label-custom">Reference / OR No.</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-file-earmark-text input-icon-left"></i>
-                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)">
+                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)" value="{{ old('notes') }}">
                                         </div>
                                         <div class="form-input-hint">Delivery receipt number or official receipt number.</div>
                                     </div>
                                 </div>
+                                </div>
+
+                                <div class="row g-3 mt-1">
                                 <div class="col-12 col-lg-6">
                                     <div class="form-group-wrapper mb-2">
                                         <label class="form-label-custom">Remarks (Optional)</label>
@@ -1223,15 +1236,15 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Toast Banner Note System Alert -->
-                            <div class="alert-banner-toast">
-                                <i class="bi bi-info-circle"></i>
-                                <div class="alert-banner-text">
-                                    <strong>Note:</strong> The received quantity will be added to the current stock of this material.
+                                <div class="col-12 col-lg-6">
+                                    <div class="alert-banner-toast">
+                                        <i class="bi bi-info-circle" style="font-size:1.25rem; margin-right:0.6rem;"></i>
+                                        <div class="alert-banner-text">
+                                            <strong>Note:</strong> The received quantity will be added to the current stock of this material.
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                                </div>
                         </div>
 
                         <!-- Right Calculation Dynamic Summary Box Sidebar -->
@@ -1266,7 +1279,7 @@
                             <i class="bi bi-x-lg"></i> Cancel
                         </button>
                         <button type="submit" class="btn-action-submit">
-                            <i class="bi bi-check-circle"></i> Receive Stock
+                            <i class="bi bi-check-circle"></i> Add Material
                         </button>
                     </div>
                 </form>
@@ -1535,6 +1548,7 @@
         const receiveStockForm = document.getElementById('receiveStockForm');
         const receiveStockSelect = document.getElementById('receiveStockMaterialSelect');
         const receiveStockTextInput = document.getElementById('receiveStockMaterialInput');
+        const receiveStockCategoryInput = document.getElementById('receiveStockMaterialCategoryInput');
         const receiveStockSubmitRoute = '{{ route('admin.inventory.materials.receive') }}';
 
         const inputQty = document.getElementById('inputQuantityReceived');
@@ -1606,12 +1620,21 @@
 
             if (receiveStockSelect.value === 'new') {
                 receiveStockTextInput.classList.remove('d-none');
+                if (receiveStockCategoryInput) {
+                    receiveStockCategoryInput.removeAttribute('readonly');
+                    receiveStockCategoryInput.setAttribute('required', 'required');
+                }
                 receiveStockTextInput.setAttribute('required', 'required');
                 receiveStockTextInput.focus();
             } else {
                 receiveStockTextInput.classList.add('d-none');
                 receiveStockTextInput.removeAttribute('required');
                 receiveStockTextInput.value = '';
+                if (receiveStockCategoryInput) {
+                    // for existing, keep category visible but not required and set readonly=false so user can change if desired
+                    receiveStockCategoryInput.removeAttribute('required');
+                    receiveStockCategoryInput.removeAttribute('readonly');
+                }
             }
         }
 
@@ -1637,6 +1660,12 @@
             activeMaterialUnitText = chosenOption.getAttribute('data-unit') || "Bags";
             currentMaterialStockValue = parseFloat(chosenOption.getAttribute('data-stock')) || 0;
             const minStockLevel = parseFloat(chosenOption.getAttribute('data-min')) || 0;
+            const existingCategory = chosenOption.getAttribute('data-category') || '';
+
+            if (receiveStockCategoryInput) {
+                // populate category input for existing materials but keep it hidden unless creating new
+                receiveStockCategoryInput.value = existingCategory;
+            }
 
             if (receiveStockForm) {
                 receiveStockForm.setAttribute('action', receiveStockSubmitRoute);

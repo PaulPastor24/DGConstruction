@@ -1169,6 +1169,7 @@ class AdminDashboardController extends Controller
             $validator = Validator::make($request->all(), [
                 'material_id' => ['nullable'],
                 'material_name' => ['nullable', 'string', 'max:255'],
+                'category' => ['nullable', 'string', 'max:255'],
                 'quantity_received' => ['required', 'numeric', 'min:0.01', 'max:1000000000'],
                 'received_date' => ['required', 'date'],
                 'supplier' => ['nullable', 'string', 'max:255'],
@@ -1191,6 +1192,12 @@ class AdminDashboardController extends Controller
 
                 if ((empty($selectedMaterialId) || $selectedMaterialId === 'new') && $materialName === '') {
                     $validator->errors()->add('material_name', 'Please select a material or enter a new material name.');
+                }
+
+                // When creating a new material, category should be provided
+                $categoryValue = trim((string) $request->input('category', ''));
+                if (($selectedMaterialId === 'new' || empty($selectedMaterialId)) && $materialName !== '' && $categoryValue === '') {
+                    $validator->errors()->add('category', 'Please enter a category for the new material.');
                 }
 
                 if (is_numeric($selectedMaterialId) && (int) $selectedMaterialId > 0 && !Material::query()->where('id', (int) $selectedMaterialId)->exists()) {
@@ -1217,7 +1224,7 @@ class AdminDashboardController extends Controller
                 if (!$materialRecord) {
                     $materialRecord = Material::create([
                         'name' => $materialName,
-                        'category' => null,
+                        'category' => trim((string) ($validated['category'] ?? '')) ?: null,
                         'unit' => 'Unit',
                         'current_stock' => 0,
                         'minimum_stock_level' => 0,
@@ -1227,6 +1234,11 @@ class AdminDashboardController extends Controller
                 }
             } else {
                 throw new \InvalidArgumentException('Material is required.');
+            }
+
+            // Update category if provided (for existing material the user may update category here)
+            if (!empty($validated['category'])) {
+                $materialRecord->category = trim((string) $validated['category']);
             }
 
             $materialRecord->current_stock = max(0, (float) $materialRecord->current_stock + (float) $validated['quantity_received']);
