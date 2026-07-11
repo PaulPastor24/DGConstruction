@@ -915,26 +915,94 @@
     /* Responsive scaling fixes */
     @media (max-width: 1400px) {
         .workspace-layout {
-            grid-template-columns: minmax(0, 1fr) 0px;
+            flex-direction: column;
+            align-items: stretch;
         }
         .workspace-layout.is-panel-open {
-            grid-template-columns: minmax(0, 1fr);
             gap: 1.25rem;
         }
         .details-sidebar-card {
             position: static;
             max-width: 100%;
+            width: 100%;
+            flex: 0 0 auto;
+            display: none;
+        }
+        .details-sidebar-card.is-open {
+            display: block;
+            width: 100%;
+            flex: 0 0 auto;
+            padding: 1.25rem;
         }
     }
     @media (max-width: 1100px) {
-        .summary-grid { grid-template-columns: repeat(3, 1fr); }
+        .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .top-toolbar { flex-direction: column; align-items: stretch; }
+        .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; flex: 1 1 100%; }
+        .toolbar-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
     }
     @media (max-width: 768px) {
-        .summary-grid { grid-template-columns: repeat(2, 1fr); }
-        .filters-row { flex-direction: column; gap: 0.6rem; }
-        .search-wrapper { flex: 1 1 auto; margin-right: 0; }
-        .filters-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 0.5rem; }
-        .filters-actions .filter-group { min-width: 100%; }
+        #pg-reports { padding: 1rem; }
+        .reports-header h1 { font-size: 1.4rem; }
+        .reports-header p { font-size: 0.82rem; }
+        .summary-grid { grid-template-columns: 1fr; }
+        .summary-card { min-height: 96px; padding: 1rem; }
+        .summary-info .value { font-size: 1.5rem; }
+        .top-toolbar { padding: 0.9rem; gap: 0.75rem; }
+        .table-container-card { border-radius: 14px; }
+        .card-table-header { padding: 0.9rem 1rem; }
+        .table-responsive { overflow-x: hidden; }
+        .reports-table,
+        .reports-table thead,
+        .reports-table tbody,
+        .reports-table tr,
+        .reports-table th,
+        .reports-table td {
+            display: block;
+        }
+        .reports-table thead { display: none; }
+        .reports-table tbody tr {
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(28, 107, 67, 0.12);
+            border-radius: 14px;
+            padding: 0.85rem;
+            background: #ffffff;
+            box-shadow: 0 10px 24px rgba(15, 32, 21, 0.05);
+        }
+        .reports-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.35rem 0;
+            border: 0;
+        }
+        .reports-table td::before {
+            content: attr(data-label);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            flex: 0 0 42%;
+        }
+        .reports-table td > * {
+            flex: 1;
+            min-width: 0;
+        }
+        .table-pagination-strip { flex-direction: column; align-items: flex-start; }
+        .pagination-bar { width: 100%; overflow-x: auto; }
+        .prop-row { grid-template-columns: 1fr; }
+        .attachment-thumbnail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .sidebar-actions-footer { flex-direction: column; }
+        .sidebar-actions-footer button,
+        .sidebar-actions-footer .btn-export-action { width: 100%; max-width: none; }
+    }
+    @media (max-width: 576px) {
+        #pg-reports { padding: 0.8rem; }
+        .summary-card { padding: 0.95rem; }
+        .attachment-thumbnail-grid { grid-template-columns: 1fr; }
+        .reports-table tbody tr { padding: 0.75rem; }
     }
 </style>
 @endpush
@@ -1056,22 +1124,22 @@
                     <tbody id="reportsTableBody">
                         @forelse($reports as $report)
                             <tr data-report-id="{{ $report->report_id }}">
-                                <td class="cell-bold">{{ $report->report_id }}</td>
-                                <td>
+                                <td class="cell-bold" data-label="ID">{{ $report->report_id }}</td>
+                                <td data-label="Report Title">
                                     <span class="cell-bold">{{ $report->report_title }}</span>
                                 </td>
-                                <td>{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
-                                <td>{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
-                                <td>
+                                <td data-label="Project">{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
+                                <td data-label="Phase">{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
+                                <td data-label="Supervisor">
                                     <div class="user-cell">
                                         <span>{{ optional($report->submittedBy)->name ?? 'Unassigned Supervisor' }}</span>
                                     </div>
                                 </td>
-                                <td><span class="cell-bold">{{ optional($report->report_date)->format('M d, Y') ?? $report->created_at->format('M d, Y') }}</span></td>
-                                <td>
+                                <td data-label="Date"><span class="cell-bold">{{ optional($report->report_date)->format('M d, Y') ?? $report->created_at->format('M d, Y') }}</span></td>
+                                <td data-label="Status">
                                     <span class="status-pill {{ $report->status_badge_class }}">{{ $report->status_label }}</span>
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     <div class="action-icons-group">
                                         <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
                                     </div>
@@ -1268,6 +1336,9 @@
                 workspaceLayout?.classList.toggle('is-panel-open', isOpen);
                 detailsSidebarCard?.classList.toggle('is-open', isOpen);
                 detailsSidebarCard?.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+                if (isOpen && window.innerWidth < 1200) {
+                    detailsSidebarCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
 
             function beginDetailsTransition() {
@@ -1414,14 +1485,14 @@
 
                 tableBody.innerHTML = reports.map(report => `
                     <tr data-report-id="${report.id}">
-                        <td class="cell-bold">${report.report_id}</td>
-                        <td><span class="cell-bold">${report.report_title}</span></td>
-                        <td>${report.project_name}</td>
-                        <td>${report.phase_name}</td>
-                        <td><div class="user-cell"><span>${report.supervisor_name}</span></div></td>
-                        <td><span class="cell-bold">${report.submitted_at}</span></td>
-                        <td><span class="status-pill ${report.status_class}">${report.status_label}</span></td>
-                        <td>
+                        <td class="cell-bold" data-label="ID">${report.report_id}</td>
+                        <td data-label="Report Title"><span class="cell-bold">${report.report_title}</span></td>
+                        <td data-label="Project">${report.project_name}</td>
+                        <td data-label="Phase">${report.phase_name}</td>
+                        <td data-label="Supervisor"><div class="user-cell"><span>${report.supervisor_name}</span></div></td>
+                        <td data-label="Date"><span class="cell-bold">${report.submitted_at}</span></td>
+                        <td data-label="Status"><span class="status-pill ${report.status_class}">${report.status_label}</span></td>
+                        <td data-label="Actions">
                             <div class="action-icons-group">
                                 <button type="button" class="btn-icon-action js-view-report" data-report-id="${report.id}" title="View Details"><i class="bi bi-eye"></i></button>
                             </div>

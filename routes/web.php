@@ -58,7 +58,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/materials', [AdminDashboardController::class, 'storeMaterial'])->name('admin.inventory.materials.store');
     Route::put('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'updateMaterial'])->name('admin.inventory.materials.update');
-    Route::post('/admin/inventory/materials/{material}/receive', [AdminDashboardController::class, 'receiveStock'])->name('admin.inventory.materials.receive');
+    Route::post('/admin/inventory/materials/receive', [AdminDashboardController::class, 'receiveStock'])->name('admin.inventory.materials.receive');
     Route::delete('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'destroyMaterial'])->name('admin.inventory.materials.destroy');
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');

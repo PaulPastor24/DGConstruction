@@ -132,6 +132,22 @@
         border: 1px solid rgba(22, 101, 52, 0.14);
         background-color: rgba(22, 101, 52, 0.08);
         color: #166534;
+        flex-shrink: 0;
+    }
+
+    .inventory-action-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .inventory-action-stack .btn {
+        white-space: nowrap;
+    }
+
+    .inventory-mobile-table-label {
+        display: none;
     }
 
     .inventory-card-icon.available {
@@ -180,6 +196,422 @@
         background-color: #ecfdf5;
         border-color: #86efac;
     }
+
+    /* HIGH-FIDELITY RECEIVE STOCK MODAL STYLING OVERRIDES */
+    .modal-receive-stock .modal-content {
+        border-radius: 12px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        background-color: #ffffff;
+    }
+
+    .modal-receive-stock .modal-header-custom {
+        padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .modal-receive-stock .modal-body-custom {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+
+    .modal-receive-stock .modal-icon-container {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background-color: #f0f7f4;
+        border: 1px solid #e1efe8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #166534;
+        font-size: 1.35rem;
+    }
+
+    .modal-receive-stock .modal-title-text {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #166534;
+    }
+
+    .modal-receive-stock .modal-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 0.15rem;
+    }
+
+    .modal-receive-stock .close-btn-x {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: #1e293b;
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    .modal-receive-stock .meta-info-card {
+        background-color: #ffffff;
+        border: 1px solid #edf2f0;
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-receive-stock .meta-item {
+        position: relative;
+    }
+
+    .modal-receive-stock .meta-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 15%;
+        height: 70%;
+        width: 1px;
+        background-color: #e2e8f0;
+    }
+
+    .modal-receive-stock .meta-label {
+        font-size: 0.725rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.25rem;
+    }
+
+    .modal-receive-stock .meta-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .modal-receive-stock .badge-status-pill {
+        background-color: #eaf7ef;
+        color: #166534;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        display: inline-block;
+    }
+
+    .modal-receive-stock .form-group-wrapper {
+        margin-bottom: 1.25rem;
+    }
+
+    .modal-receive-stock .form-label-custom {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #0f172a;
+        margin-bottom: 0.4rem;
+    }
+
+    .modal-receive-stock .form-label-custom .required-asterisk {
+        color: #ef4444;
+        margin-left: 0.15rem;
+    }
+
+    .modal-receive-stock .input-container-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .modal-receive-stock .input-icon-left {
+        position: absolute;
+        left: 14px;
+        color: #94a3b8;
+        font-size: 0.95rem;
+    }
+
+    .modal-receive-stock .control-field-input {
+        width: 100%;
+        padding: 0.65rem 0.85rem 0.65rem 2.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #334155;
+        background-color: #ffffff;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .control-field-input:focus {
+        outline: none;
+        border-color: #166534;
+        box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.08);
+    }
+
+    .modal-receive-stock .select-caret-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .modal-receive-stock .select-caret-wrapper select {
+        padding-right: 2.5rem;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .modal-receive-stock .select-caret-wrapper::after {
+        content: '\f282';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 0.8rem;
+        pointer-events: none;
+    }
+
+    .modal-receive-stock .input-addon-right {
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-left: none;
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+        color: #475569;
+        font-weight: 500;
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+    }
+
+    .modal-receive-stock .input-has-addon {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    .modal-receive-stock .form-input-hint {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.35rem;
+    }
+
+    .modal-receive-stock .char-count-indicator {
+        font-size: 0.725rem;
+        color: #94a3b8;
+    }
+
+    .modal-receive-stock .summary-box-card {
+        background-color: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        height: auto;
+        min-height: auto;
+    }
+
+    .modal-receive-stock .summary-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: #0f172a;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.55rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .modal-receive-stock .summary-row-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.65rem;
+        font-size: 0.84rem;
+    }
+
+    .modal-receive-stock .summary-row-label {
+        color: #475569;
+    }
+
+    .modal-receive-stock .summary-row-value {
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .modal-receive-stock .summary-row-value.received-highlight {
+        color: #166534;
+    }
+
+    .modal-receive-stock .summary-total-divider {
+        border-top: 1px dashed #cbd5e1;
+        margin: 0.9rem 0 0.8rem 0;
+    }
+
+    .modal-receive-stock .new-stock-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+
+    .modal-receive-stock .new-stock-big-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #166534;
+        line-height: 1.1;
+    }
+
+    .modal-receive-stock .alert-banner-toast {
+        background-color: #f0fdf4;
+        border: 1px solid #dcfce7;
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .modal-receive-stock .alert-banner-toast i {
+        color: #166534;
+        font-size: 1.15rem;
+    }
+
+    .modal-receive-stock .alert-banner-text {
+        font-size: 0.8rem;
+        color: #14532d;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .modal-receive-stock .footer-action-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .modal-receive-stock .btn-action-cancel {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .btn-action-cancel:hover {
+        background-color: #f8fafc;
+    }
+
+    .modal-receive-stock .btn-action-submit {
+        background-color: #166534;
+        border: 1px solid #166534;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .btn-action-submit:hover {
+        background-color: #14532d;
+        border-color: #14532d;
+    }
+
+    @media (max-width: 991.98px) {
+        .mi-page {
+            padding: 4px 0 20px;
+        }
+
+        .inventory-green-theme .card-header .nav-tabs {
+            flex-wrap: wrap;
+        }
+
+        .inventory-green-theme .card-header .nav-tabs .nav-link {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .inventory-action-stack {
+            justify-content: flex-start;
+        }
+
+        .modal-receive-stock .modal-dialog {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem);
+        }
+
+        .modal-receive-stock .modal-body-custom {
+            padding: 0 1rem 1rem 1rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .inventory-green-theme .card-body {
+            padding: 1rem;
+        }
+
+        .inventory-green-theme .row.g-3 > [class*='col-'] {
+            width: 100%;
+        }
+
+        .inventory-card-icon {
+            width: 42px;
+            height: 42px;
+            font-size: 18px;
+        }
+
+        .inventory-green-theme .search-container,
+        .inventory-green-theme .col-md-2,
+        .inventory-green-theme .col-md-4 {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .inventory-action-stack {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .inventory-action-stack .btn {
+            width: 100%;
+        }
+
+        .inventory-mobile-table-label {
+            display: inline-block;
+            min-width: 96px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .inventory-green-theme .table-responsive {
+            border: 1px solid #eef5ef;
+            border-radius: 12px;
+        }
+
+        .modal-receive-stock .receive-stock-form-main,
+        .modal-receive-stock .receive-stock-form-sidebar {
+            flex: 0 0 100%;
+            max-width: 100%;
+            margin-left: 0;
+        }
+
+        .modal-receive-stock .footer-action-row {
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .modal-receive-stock .btn-action-cancel,
+        .modal-receive-stock .btn-action-submit {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 @endpush
 
@@ -188,7 +620,7 @@
     
     <!-- Top 4 Summary Cards Grid Row -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6 col-12">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="inventory-card-icon available">
@@ -306,7 +738,7 @@
                     <div id="inventory-view" class="inventory-view-panel {{ $activeView === 'usage' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
-                        <div class="col-md-4 position-relative search-container">
+                        <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
                             <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search materials or usage logs...">
                             <input type="hidden" name="view" value="inventory" id="inventory-view-input">
                             <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
@@ -327,7 +759,7 @@
                                 <option value="out_of_stock" {{ $stockStatus === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                             </select>
                         </div>
-                        <div class="col-md-4 d-flex gap-2 justify-content-end">
+                        <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
                             <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#addMaterialModal">
                                 <i class="bi bi-plus-lg me-1"></i> Add Material
                             </button>
@@ -376,7 +808,7 @@
                                             <div class="d-flex justify-content-center gap-1">
                                                 <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}"><i class="bi bi-eye"></i></button>
                                                 <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}"><i class="bi bi-pencil"></i></button>
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-warning bg-white" data-bs-toggle="modal" data-bs-target="#receiveStockModal{{ $material->id }}"><i class="bi bi-envelope-open"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-warning bg-white" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" data-material-id="{{ $material->id }}" data-material-name="{{ $material->name }}" data-material-unit="{{ $material->unit }}"><i class="bi bi-envelope-open"></i></button>
                                                 <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
                                                     @csrf
                                                     @method('DELETE')
@@ -393,9 +825,9 @@
                     </div>
 
                     <!-- Layout Footer Summary with Pagination Links -->
-                    <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                         <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
-                        <div>{{ $materials->links('pagination::bootstrap-5') }}</div>
+                        <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
                     </div>
                     </div>
 
@@ -404,7 +836,7 @@
                             <input type="hidden" name="category" value="{{ $category }}">
                             <input type="hidden" name="stock_status" value="{{ $stockStatus }}">
                             <input type="hidden" name="view" value="usage" id="usage-view-input">
-                            <div class="col-md-4 position-relative search-container">
+                            <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
                                 <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search usage logs...">
                                 <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
                             </div>
@@ -600,11 +1032,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                     <span class="text-muted small">Showing {{ $allLowStockMaterials->firstItem() ?? 0 }} to {{ $allLowStockMaterials->lastItem() ?? 0 }} of {{ $allLowStockMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
-                </div>
-                    </table>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
                 </div>
             </div>
         </div>
@@ -646,26 +1076,199 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                     <span class="text-muted small">Showing {{ $allRecentlyUpdatedMaterials->firstItem() ?? 0 }} to {{ $allRecentlyUpdatedMaterials->lastItem() ?? 0 }} of {{ $allRecentlyUpdatedMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
-                </div>
-                    </table>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="receiveStockModalGeneral" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content rounded-4 border-0">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">Receive Incoming Cargo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- HIGH-FIDELITY RECEIVE STOCK MODAL (MATCHES IMAGE EXACTLY) -->
+<div class="modal fade modal-receive-stock" id="receiveStockModalGeneral" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Header Segment -->
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Receive Stock</h4>
+                        <p class="modal-subtitle mb-0">Add received stock to increase the inventory of the selected material.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted small">Please select the relative messaging or tracking actions icons on each specific table list item row parameters to record stock operations securely.</p>
+
+            <!-- Modal Content Body -->
+            <div class="modal-body-custom">
+                <!-- Meta Statistics Header Bar -->
+                <div class="meta-info-card">
+                    <div class="row g-2 text-center text-sm-start">
+                        <div class="col-sm-3 meta-item">
+                            <div class="meta-label">Material</div>
+                            <div class="meta-value" id="metaMaterialName">Cement (Holcim)</div>
+                        </div>
+                        <div class="col-sm-3 meta-item text-sm-center">
+                            <div class="meta-label">Current Stock</div>
+                            <div class="meta-value text-success" id="metaCurrentStock">120 Bags</div>
+                        </div>
+                        <div class="col-sm-3 meta-item text-sm-center">
+                            <div class="meta-label">Minimum Stock</div>
+                            <div class="meta-value" id="metaMinimumStock">50 Bags</div>
+                        </div>
+                        <div class="col-sm-3 text-sm-center">
+                            <div class="meta-label">Status</div>
+                            <div class="mt-1">
+                                <span class="badge-status-pill" id="metaStatusBadge">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="receiveStockForm" method="POST" action="{{ route('admin.inventory.materials.receive') }}">
+                    @csrf
+                    <div class="row g-4 align-items-start receive-stock-form-layout">
+                        <!-- Left Layout Form Parameter Fields -->
+                        <div class="receive-stock-form-main">
+                            
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Material<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group select-caret-wrapper">
+                                            <i class="bi bi-box-seam input-icon-left"></i>
+                                            <select id="receiveStockMaterialSelect" name="material_id" class="control-field-input" required>
+                                                <option value="" selected>Select material</option>
+                                                @foreach($materials as $material)
+                                                    <option value="{{ $material->id }}"
+                                                            data-name="{{ $material->name }}"
+                                                            data-unit="{{ $material->unit }}"
+                                                            data-stock="{{ $material->current_stock }}"
+                                                            data-min="{{ $material->minimum_stock_level }}">
+                                                        {{ $material->name }}
+                                                    </option>
+                                                @endforeach
+                                                <option value="new">Other (new material)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-input-hint">Select an existing material or choose Other to type a new one.</div>
+                                        <input type="text" id="receiveStockMaterialInput" name="material_name" class="control-field-input mt-2 d-none" placeholder="Type new material name" autocomplete="off" value="">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Quantity Received<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-box input-icon-left"></i>
+                                            <input type="number" step="1" min="0" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" required>
+                                            <span class="input-addon-right" id="addonUnitText">Bags</span>
+                                        </div>
+                                        <div class="form-input-hint">Enter the total quantity of material received.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Received Date<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group select-caret-wrapper">
+                                            <i class="bi bi-calendar3 input-icon-left"></i>
+                                            <input type="date" id="inputReceivedDate" name="received_date" class="control-field-input" value="{{ now()->toDateString() }}" required>
+                                        </div>
+                                        <div class="form-input-hint">Select the date when the stock was received.</div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Supplier</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-person input-icon-left"></i>
+                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)">
+                                        </div>
+                                        <div class="form-input-hint">Supplier who delivered the materials.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Reference / OR No.</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-file-earmark-text input-icon-left"></i>
+                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)">
+                                        </div>
+                                        <div class="form-input-hint">Delivery receipt number or official receipt number.</div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-2">
+                                        <label class="form-label-custom">Remarks (Optional)</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <div class="form-input-hint my-0">Additional notes about this stock receipt.</div>
+                                            <div class="char-count-indicator" id="remarksCharCounter">0 / 255</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Toast Banner Note System Alert -->
+                            <div class="alert-banner-toast">
+                                <i class="bi bi-info-circle"></i>
+                                <div class="alert-banner-text">
+                                    <strong>Note:</strong> The received quantity will be added to the current stock of this material.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Calculation Dynamic Summary Box Sidebar -->
+                        <div class="receive-stock-form-sidebar">
+                            <div class="summary-box-card">
+                                <div class="summary-header">
+                                    <i class="bi bi-graph-up-arrow text-muted"></i>
+                                    <span>Stock Summary</span>
+                                </div>
+                                
+                                <div class="summary-row-item">
+                                    <span class="summary-row-label">Current Stock</span>
+                                    <span class="summary-row-value" id="summaryCurrentStock">120 Bags</span>
+                                </div>
+
+                                <div class="summary-row-item">
+                                    <span class="summary-row-label">Quantity Received</span>
+                                    <span class="summary-row-value received-highlight" id="summaryQtyReceived">0 Bags</span>
+                                </div>
+
+                                <div class="summary-total-divider"></div>
+
+                                <div class="new-stock-title">New Stock (After Receive)</div>
+                                <div class="new-stock-big-value" id="summaryNewStockCalculation">120 Bags</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lower Footer Interactive Buttons Row -->
+                    <div class="footer-action-row">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Receive Stock
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -748,7 +1351,7 @@
                             <i class="bi bi-pencil-square"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold text-dark">Modify Registerd Inventory Item</h5>
+                            <h5 class="modal-title fw-bold text-dark">Modify Registered Inventory Item</h5>
                             <p class="text-muted small mb-0">Update the material profile, reorder threshold, and supplier details.</p>
                         </div>
                     </div>
@@ -797,60 +1400,6 @@
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="receiveStockModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content rounded-4 border-0">
-            <form method="POST" action="{{ route('admin.inventory.materials.receive', $material->id) }}" class="inventory-form">
-                @csrf
-                <div class="modal-header border-0 pb-0">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="inventory-card-icon available">
-                            <i class="bi bi-truck"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title fw-bold text-dark">Replenish Material Volumes</h5>
-                            <p class="text-muted small mb-0">Record new stock received for this inventory item.</p>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="inventory-modal-card p-3 mb-3">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="text-muted small fw-semibold mb-1">Material</div>
-                                <div class="fw-bold text-dark">{{ $material->name }}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="text-muted small fw-semibold mb-1">Current Stock</div>
-                                <div class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small text-muted fw-semibold">Quantity Received</label>
-                            <input type="number" step="0.01" min="0.01" name="quantity_received" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label small text-muted fw-semibold">Received Date</label>
-                            <input type="date" name="received_date" class="form-control" value="{{ now()->toDateString() }}" required>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label class="form-label small text-muted fw-semibold">Supplier</label>
-                            <input type="text" name="supplier" class="form-control" value="{{ $material->supplier ?? '' }}">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success px-4">Receive Stock</button>
                 </div>
             </form>
         </div>
@@ -978,6 +1527,174 @@
         const activePanel = document.querySelector('.inventory-view-panel:not(.d-none)');
         if (activePanel) {
             setActiveView(activePanel.id);
+        }
+
+        // REAL-TIME MODAL MATHEMATICAL COMPUTATION & VALUE TRACKING LOGIC
+        const receiveStockModal = document.getElementById('receiveStockModalGeneral');
+        const receiveStockForm = document.getElementById('receiveStockForm');
+        const receiveStockSelect = document.getElementById('receiveStockMaterialSelect');
+        const receiveStockTextInput = document.getElementById('receiveStockMaterialInput');
+        const receiveStockSubmitRoute = '{{ route('admin.inventory.materials.receive') }}';
+
+        const inputQty = document.getElementById('inputQuantityReceived');
+        const txtRemarks = document.getElementById('textareaRemarks');
+        const charCounter = document.getElementById('remarksCharCounter');
+
+        const metaName = document.getElementById('metaMaterialName');
+        const metaCurrent = document.getElementById('metaCurrentStock');
+        const metaMin = document.getElementById('metaMinimumStock');
+        const metaStatus = document.getElementById('metaStatusBadge');
+        const addonUnit = document.getElementById('addonUnitText');
+
+        const sumCurrent = document.getElementById('summaryCurrentStock');
+        const sumReceived = document.getElementById('summaryQtyReceived');
+        const sumCalculatedTotal = document.getElementById('summaryNewStockCalculation');
+
+        let currentMaterialStockValue = 0;
+        let activeMaterialUnitText = "Bags";
+
+        function resetMaterialSummary() {
+            if (metaName) metaName.textContent = 'Select a material';
+            if (metaCurrent) metaCurrent.textContent = '—';
+            if (metaMin) metaMin.textContent = '—';
+            if (metaStatus) {
+                metaStatus.textContent = 'Select material';
+                metaStatus.className = 'badge-status-pill';
+            }
+            if (addonUnit) addonUnit.textContent = 'Unit';
+            if (sumCurrent) sumCurrent.textContent = '—';
+            if (sumReceived) sumReceived.textContent = '0 Unit';
+            if (sumCalculatedTotal) sumCalculatedTotal.textContent = '0 Unit';
+            if (receiveStockForm) receiveStockForm.setAttribute('action', receiveStockSubmitRoute);
+        }
+
+        function calculateLiveStockSummary() {
+            const incomingQty = parseFloat(inputQty.value) || 0;
+            const computedNewTotal = currentMaterialStockValue + incomingQty;
+            
+            if (sumReceived) {
+                sumReceived.textContent = incomingQty + " " + activeMaterialUnitText;
+            }
+            if (sumCalculatedTotal) {
+                sumCalculatedTotal.textContent = computedNewTotal + " " + activeMaterialUnitText;
+            }
+            
+            if(incomingQty > 0 && sumReceived) {
+                sumReceived.classList.add('text-success');
+            } else if (sumReceived) {
+                sumReceived.classList.remove('text-success');
+            }
+        }
+
+        function toggleNewMaterialInput() {
+            if (!receiveStockSelect || !receiveStockTextInput) {
+                return;
+            }
+
+            if (receiveStockSelect.value === 'new') {
+                receiveStockTextInput.classList.remove('d-none');
+                receiveStockTextInput.setAttribute('required', 'required');
+                receiveStockTextInput.focus();
+            } else {
+                receiveStockTextInput.classList.add('d-none');
+                receiveStockTextInput.removeAttribute('required');
+                receiveStockTextInput.value = '';
+            }
+        }
+
+        function updateMaterialSummaryFromSelection() {
+            if (!receiveStockSelect) {
+                return;
+            }
+
+            const chosenOption = receiveStockSelect.options[receiveStockSelect.selectedIndex];
+
+            if (!chosenOption || chosenOption.value === "") {
+                resetMaterialSummary();
+                return;
+            }
+
+            if (receiveStockSelect.value === 'new') {
+                resetMaterialSummary();
+                toggleNewMaterialInput();
+                return;
+            }
+
+            const mName = chosenOption.getAttribute('data-name') || chosenOption.textContent.trim();
+            activeMaterialUnitText = chosenOption.getAttribute('data-unit') || "Bags";
+            currentMaterialStockValue = parseFloat(chosenOption.getAttribute('data-stock')) || 0;
+            const minStockLevel = parseFloat(chosenOption.getAttribute('data-min')) || 0;
+
+            if (receiveStockForm) {
+                receiveStockForm.setAttribute('action', receiveStockSubmitRoute);
+            }
+
+            if (metaName) metaName.textContent = mName;
+            if (metaCurrent) metaCurrent.textContent = currentMaterialStockValue + " " + activeMaterialUnitText;
+            if (metaMin) metaMin.textContent = minStockLevel + " " + activeMaterialUnitText;
+            if (addonUnit) addonUnit.textContent = activeMaterialUnitText;
+            if (sumCurrent) sumCurrent.textContent = currentMaterialStockValue + " " + activeMaterialUnitText;
+
+            if (metaStatus) {
+                if (currentMaterialStockValue <= 0) {
+                    metaStatus.textContent = "Out of Stock";
+                    metaStatus.className = "badge-status-pill bg-danger-subtle text-danger";
+                } else if (currentMaterialStockValue <= minStockLevel) {
+                    metaStatus.textContent = "Low Stock";
+                    metaStatus.className = "badge-status-pill bg-warning-subtle text-warning";
+                } else {
+                    metaStatus.textContent = "Available";
+                    metaStatus.className = "badge-status-pill";
+                }
+            }
+
+            if (inputQty) inputQty.value = '';
+            if (txtRemarks) txtRemarks.value = '';
+            if (charCounter) charCounter.textContent = '0 / 255';
+            calculateLiveStockSummary();
+        }
+
+        if (txtRemarks && charCounter) {
+            txtRemarks.addEventListener('input', function() {
+                charCounter.textContent = this.value.length + " / 255";
+            });
+        }
+
+        if (inputQty) {
+            inputQty.addEventListener('input', calculateLiveStockSummary);
+        }
+
+        if (receiveStockSelect) {
+            receiveStockSelect.addEventListener('change', function () {
+                toggleNewMaterialInput();
+                updateMaterialSummaryFromSelection();
+            });
+        }
+
+        if (receiveStockModal) {
+            receiveStockModal.addEventListener('show.bs.modal', function (event) {
+                const triggerButton = event.relatedTarget;
+                const materialId = triggerButton?.getAttribute('data-material-id') || '';
+                const materialName = triggerButton?.getAttribute('data-material-name') || '';
+
+                if (receiveStockSelect) {
+                    if (materialId) {
+                        receiveStockSelect.value = materialId;
+                    } else if (materialName) {
+                        const matchingOption = Array.from(receiveStockSelect.options).find(function (option) {
+                            return option.getAttribute('data-name')?.trim() === materialName.trim();
+                        });
+                        if (matchingOption) {
+                            receiveStockSelect.value = matchingOption.value;
+                        }
+                    } else {
+                        receiveStockSelect.selectedIndex = 1;
+                    }
+
+                    toggleNewMaterialInput();
+                    updateMaterialSummaryFromSelection();
+                }
+            });
         }
 
         const detailModal = document.getElementById('materialUsageDetailModal');

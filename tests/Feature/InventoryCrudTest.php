@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\AdminDashboardController;
 use App\Models\Material;
+use App\Models\MaterialDelivery;
 use App\Models\MaterialUsage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -47,6 +48,19 @@ class InventoryCrudTest extends TestCase
             $table->string('unit')->nullable();
             $table->date('usage_date')->nullable();
             $table->text('remarks')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('material_deliveries', function ($table) {
+            $table->id('delivery_id');
+            $table->unsignedBigInteger('material_id');
+            $table->unsignedBigInteger('project_id')->nullable();
+            $table->decimal('quantity', 12, 2)->default(0);
+            $table->string('unit')->nullable();
+            $table->decimal('total_price', 12, 2)->nullable();
+            $table->string('supplier_name')->nullable();
+            $table->date('delivered_at')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
@@ -170,6 +184,37 @@ class InventoryCrudTest extends TestCase
         $this->assertSame('Portland Cement', $data['usageLogs']->first()->material->name);
     }
 
+    public function test_receive_stock_can_create_new_material_when_name_is_provided(): void
+    {
+        $request = Request::create('/admin/inventory/materials/receive', 'POST', [
+            'material_name' => 'Aluminum Frames',
+            'quantity_received' => 12,
+            'received_date' => now()->toDateString(),
+            'supplier' => 'Metro Supply',
+            'remarks' => 'New material received',
+        ]);
+
+        $response = (new AdminDashboardController())->receiveStock($request, null);
+
+        $this->assertTrue($response->isRedirect());
+        $this->assertEquals('Stock received successfully.', session('success'));
+
+        $material = Material::query()->where('name', 'Aluminum Frames')->first();
+        $this->assertNotNull($material);
+        $this->assertSame('Unit', $material->unit);
+        $this->assertEquals(12, (float) $material->current_stock);
+        $this->assertSame('Metro Supply', $material->supplier);
+
+        $delivery = MaterialDelivery::query()
+            ->where('material_id', $material->id)
+            ->latest('delivery_id')
+            ->first();
+
+        $this->assertNotNull($delivery);
+        $this->assertEquals(12, (float) $delivery->quantity);
+        $this->assertSame('Metro Supply', $delivery->supplier_name);
+    }
+
     public function test_inventory_crud_actions_work(): void
     {
         $controller = new AdminDashboardController();
@@ -220,9 +265,18 @@ class InventoryCrudTest extends TestCase
         $material->refresh();
         $this->assertEquals(35, (float) $material->current_stock);
 
+        $delivery = MaterialDelivery::query()
+            ->where('material_id', $material->id)
+            ->latest('delivery_id')
+            ->first();
+
+        $this->assertNotNull($delivery);
+        $this->assertEquals(15, (float) $delivery->quantity);
+        $this->assertSame('Build Supply Co', $delivery->supplier_name);
+
         $deleteResponse = $controller->destroyMaterial($material);
         $this->assertTrue($deleteResponse->isRedirect());
-        $this->assertEquals('Material deleted successfully.', session('success'));
-        $this->assertNull(Material::query()->find($material->id));
+        $this->assertEquals('Unable to delete. This material has already been used in project records.', session('error'));
+        $this->assertNotNull(Material::query()->find($material->id));
     }
 }

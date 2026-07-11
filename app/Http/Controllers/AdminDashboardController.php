@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
+use App\Models\MaterialDelivery;
 use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\Report;
@@ -1161,13 +1162,16 @@ class AdminDashboardController extends Controller
         }
     }
 
-    public function receiveStock(Request $request, Material $material)
+    public function receiveStock(Request $request, ?Material $material = null)
     {
         try {
             $validated = $request->validate([
+                'material_name' => ['nullable', 'string', 'max:255'],
                 'quantity_received' => ['required', 'numeric', 'min:0.01', 'max:1000000000'],
                 'received_date' => ['required', 'date'],
                 'supplier' => ['nullable', 'string', 'max:255'],
+                'notes' => ['nullable', 'string'],
+                'remarks' => ['nullable', 'string'],
             ], [
                 'quantity_received.required' => 'Please enter a quantity to receive.',
                 'quantity_received.min' => 'Received quantity must be greater than zero.',
@@ -1175,14 +1179,60 @@ class AdminDashboardController extends Controller
                 'received_date.date' => 'Please enter a valid date.',
             ]);
 
-            $material->current_stock = max(0, (float) $material->current_stock + (float) $validated['quantity_received']);
-            $material->supplier = trim((string) ($validated['supplier'] ?? '')) ?: $material->supplier;
-            $material->save();
+            $materialName = trim((string) ($validated['material_name'] ?? ''));
+            $selectedMaterialId = $request->input('material_id');
+
+            if ($material instanceof Material) {
+                $materialRecord = $material;
+            } elseif (is_numeric($selectedMaterialId) && (int) $selectedMaterialId > 0) {
+                $materialRecord = Material::query()->find((int) $selectedMaterialId);
+
+                if (!$materialRecord) {
+                    throw new \InvalidArgumentException('Selected material was not found.');
+                }
+            } elseif ($materialName !== '') {
+                $materialRecord = Material::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($materialName)])->first();
+
+                if (!$materialRecord) {
+                    $materialRecord = Material::create([
+                        'name' => $materialName,
+                        'category' => null,
+                        'unit' => 'Unit',
+                        'current_stock' => 0,
+                        'minimum_stock_level' => 0,
+                        'supplier' => trim((string) ($validated['supplier'] ?? '')) ?: null,
+                        'description' => null,
+                    ]);
+                }
+            } else {
+                throw new \InvalidArgumentException('Material is required.');
+            }
+
+            $materialRecord->current_stock = max(0, (float) $materialRecord->current_stock + (float) $validated['quantity_received']);
+            $materialRecord->supplier = trim((string) ($validated['supplier'] ?? '')) ?: $materialRecord->supplier;
+            $materialRecord->save();
+
+            if (Schema::hasTable('material_deliveries')) {
+                $notes = trim((string) ($validated['remarks'] ?? $validated['notes'] ?? '')) ?: null;
+
+                MaterialDelivery::create([
+                    'material_id' => $materialRecord->id,
+                    'project_id' => null,
+                    'quantity' => (float) $validated['quantity_received'],
+                    'unit' => $materialRecord->unit,
+                    'total_price' => null,
+                    'supplier_name' => trim((string) ($validated['supplier'] ?? '')) ?: null,
+                    'delivered_at' => $validated['received_date'],
+                    'notes' => $notes,
+                ]);
+            }
 
             return redirect()->back()->with('success', 'Stock received successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
+            report($e);
+
             return redirect()->back()->with('error', 'Unable to receive stock right now. Please try again.')->withInput();
         }
     }

@@ -38,6 +38,30 @@
         border-bottom: 1px solid #eef2f7;
         border-radius: 0.75rem 0.75rem 0 0;
     }
+
+    .project-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .project-form-actions .btn {
+        flex: 0 0 auto;
+    }
+
+    @media (max-width: 767.98px) {
+        .project-form-actions {
+            flex-direction: column;
+        }
+
+        .project-form-actions .btn {
+            width: 100%;
+        }
+
+        .page#pg-project-edit .card-body {
+            padding: 1rem;
+        }
+    }
 </style>
 @endpush
 
@@ -126,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     @endif
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
@@ -275,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             @enderror
                         </div>
 
-                        <div class="d-flex gap-2">
+                        <div class="project-form-actions">
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-save"></i> Update Project
                             </button>

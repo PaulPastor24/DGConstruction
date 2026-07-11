@@ -24,7 +24,7 @@
     /* Stat Cards using Dashboard Design */
     .project-stats-grid {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 16px;
         margin-bottom: 24px;
     }
@@ -227,9 +227,15 @@
         color: #fff;
     }
 
+    @media (max-width: 1199.98px) {
+        .project-stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
     @media (max-width: 767.98px) {
         .project-stats-grid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 16px;
         }
@@ -258,13 +264,20 @@
         }
 
         .project-filters-form {
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.6rem;
         }
 
         .project-filters-form input,
         .project-filters-form select,
         .project-filters-form .btn {
             width: 100%;
+            min-width: 0;
+        }
+
+        .project-card-shell .card-header {
+            padding: 1rem;
         }
 
         .project-mobile-card {
@@ -317,6 +330,14 @@
         }
         .table-wrapper-desktop {
             display: none;
+        }
+        .card-footer {
+            padding: 0.9rem 1rem;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .project-stats-grid {
+            grid-template-columns: 1fr;
         }
     }
     @media (min-width: 768px) {

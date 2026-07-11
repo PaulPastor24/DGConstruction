@@ -1101,6 +1101,7 @@
         .toolbar-actions { width: 100%; justify-content: flex-start; }
         .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { flex: 1 1 180px; justify-content: center; }
         .gantt-scroll-shell { max-height: 70vh; }
+        .timeline-layout { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 720px) {
@@ -1115,6 +1116,62 @@
         .timeline-card { padding: 1rem; }
         .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; }
         .gantt-shell { border-radius: 14px; }
+        .view-toggle-group { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .view-toggle-btn { padding: 0.55rem 0.4rem; font-size: 0.74rem; text-align: center; }
+        .gantt-toolbar-actions { width: 100%; justify-content: stretch; }
+        .gantt-mode-actions { width: 100%; }
+        .gantt-mode-actions .btn-ghost,
+        .gantt-mode-actions .toolbar-select.compact-select { flex: 1 1 0; min-width: 0; }
+        .toolbar-select.compact-select { max-width: none; }
+        .table-wrapper { overflow-x: hidden; }
+        .standard-data-table,
+        .standard-data-table thead,
+        .standard-data-table tbody,
+        .standard-data-table tr,
+        .standard-data-table th,
+        .standard-data-table td {
+            display: block;
+        }
+        .standard-data-table thead {
+            display: none;
+        }
+        .standard-data-table tbody tr {
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 0.85rem;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+        }
+        .standard-data-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.35rem 0;
+            border: 0;
+        }
+        .standard-data-table td::before {
+            content: attr(data-label);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--secondary-text);
+            flex: 0 0 42%;
+        }
+        .standard-data-table td > * {
+            flex: 1;
+            min-width: 0;
+        }
+        .timeline-table-footer {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .pagination-bar {
+            width: 100%;
+            overflow-x: auto;
+        }
     }
 </style>
 @endpush
@@ -1577,12 +1634,12 @@
                                             const phaseCode = phase.phase_code || phase.code || 'Phase';
                                             return `
                                                 <tr>
-                                                    <td>${phasesFrom + index}</td>
-                                                    <td><strong>${escapeHtml(phaseName)}</strong><div class="text-muted small">${escapeHtml(phaseCode)}</div></td>
-                                                    <td>${formatDateFull(phase.planned_start_date || phase.start)}</td>
-                                                    <td>${formatDateFull(phase.planned_end_date || phase.end)}</td>
-                                                    <td><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
-                                                    <td>${Math.round(percentage)}%</td>
+                                                    <td data-label="#">${phasesFrom + index}</td>
+                                                    <td data-label="Phase"><strong>${escapeHtml(phaseName)}</strong><div class="text-muted small">${escapeHtml(phaseCode)}</div></td>
+                                                    <td data-label="Start">${formatDateFull(phase.planned_start_date || phase.start)}</td>
+                                                    <td data-label="End">${formatDateFull(phase.planned_end_date || phase.end)}</td>
+                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
+                                                    <td data-label="Progress">${Math.round(percentage)}%</td>
                                                 </tr>
                                             `;
                                         }).join('') : `<tr><td colspan="7"><div class="timeline-empty-state">No phases match the current filters.</div></td></tr>`}
@@ -1614,13 +1671,13 @@
                                             const status = getMilestoneStatus(milestone);
                                             return `
                                                 <tr>
-                                                    <td>${timelineFrom + index}</td>
-                                                    <td><strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong></td>
-                                                    <td>${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
-                                                    <td>${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
-                                                    <td>${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
-                                                    <td><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
-                                                    <td>
+                                                    <td data-label="#">${timelineFrom + index}</td>
+                                                    <td data-label="Milestone"><strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong></td>
+                                                    <td data-label="Phase">${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
+                                                    <td data-label="Start Planned Date">${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
+                                                    <td data-label="End Planned Date">${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
+                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
+                                                    <td data-label="Actions">
                                                         <div class="action-icons-flex">
                                                             <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}"><i class="bi bi-pencil"></i></button>
                                                         </div>

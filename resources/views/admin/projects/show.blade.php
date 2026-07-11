@@ -33,9 +33,47 @@
         word-break: break-word;
     }
 
+    .project-show-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .project-show-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 991.98px) {
+        .project-details-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
     @media (max-width: 768px) {
         .project-details-grid {
             grid-template-columns: 1fr;
+        }
+
+        .project-show-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .project-show-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .project-show-actions .btn {
+            width: 100%;
+        }
+
+        .page#pg-project-show .card-body {
+            padding: 1rem;
         }
     }
 </style>
@@ -81,10 +119,10 @@
         </div>
     @endif
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-8">
             <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header project-show-header">
                     <div>
                         <h5 class="mb-0">{{ $project->project_name ?? 'N/A' }}</h5>
                         <small class="text-muted">ID: #{{ $project->project_id ?? 'N/A' }}</small>
@@ -288,7 +326,7 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end mt-3">
+    <div class="project-show-actions mt-3">
         <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back to List
         </a>
