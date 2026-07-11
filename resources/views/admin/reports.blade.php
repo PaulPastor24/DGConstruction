@@ -19,15 +19,15 @@
     }
 
     #pg-reports {
-        --color-primary: #0f2015;
+        --color-primary: var(--brand-dark);
         --color-subtitle: #5f6f66;
-        --border-color: #dfe7e0;
-        --bg-light: #f4f7f3;
-        --theme-accent: #0f2015;
-        --theme-accent-soft: #e8efe9;
-        --theme-accent-strong: #173a25;
-        --theme-accent-bright: #1c6b43;
-        --theme-accent-deep: #123c26;
+        --border-color: var(--border);
+        --bg-light: var(--bg-page);
+        --theme-accent: var(--brand-dark);
+        --theme-accent-soft: var(--brand-accent-soft);
+        --theme-accent-strong: var(--brand-dark);
+        --theme-accent-bright: var(--brand-green);
+        --theme-accent-deep: var(--brand-dark);
 
         /* Status Colors */
         --status-pending-bg: #fff7e6;

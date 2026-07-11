@@ -8,8 +8,8 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap');
 
     #pg-timeline {
-        --primary-green: #166534;
-        --secondary-green: #16A34A;
+        --primary-green: var(--brand-green);
+        --secondary-green: var(--brand-accent);
         --light-green: #DCFCE7;
         --background: #F8FAFC;
         --card: #FFFFFF;

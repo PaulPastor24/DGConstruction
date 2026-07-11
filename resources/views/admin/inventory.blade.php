@@ -6,14 +6,15 @@
 @push('styles')
 <style>
     :root {
-        --mi-dark: #1f3d2a;
+        /* map to global brand tokens */
+        --mi-dark: var(--brand-dark);
         --mi-muted: #64748b;
-        --mi-border: #e7f3ea;
-        --mi-background: #f5fbf6;
-        --mi-white: #ffffff;
-        --mi-accent: #166534;
-        --mi-accent-soft: #eaf7ef;
-        --mi-accent-hover: #0f5132;
+        --mi-border: var(--border);
+        --mi-background: var(--bg-page);
+        --mi-white: var(--surface);
+        --mi-accent: var(--brand-green);
+        --mi-accent-soft: var(--brand-accent-soft);
+        --mi-accent-hover: var(--brand-green);
     }
 
     .content {

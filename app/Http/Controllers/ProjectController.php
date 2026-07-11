@@ -25,12 +25,57 @@ class ProjectController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('project_name', 'like', "%{$search}%")
-                  ->orWhere('project_location', 'like', "%{$search}%")
-                  ->orWhereHas('client.user', function ($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%");
-                  });
+
+            // Choose a safe column fallback depending on current DB schema
+            $locationColumn = null;
+            try {
+                if (Schema::hasColumn('projects', 'project_location')) {
+                    $locationColumn = 'project_location';
+                } elseif (Schema::hasColumn('projects', 'location')) {
+                    $locationColumn = 'location';
+                }
+            } catch (\Exception $e) {
+                // If schema introspection fails (e.g., remote DB privileges) just leave null
+                $locationColumn = null;
+            }
+
+            $query->where(function ($q) use ($search, $locationColumn) {
+                $q->where('project_name', 'like', "%{$search}%");
+
+                if ($locationColumn) {
+                    $q->orWhere($locationColumn, 'like', "%{$search}%");
+                }
+
+                // Determine how user name is stored in the users table and build a safe search
+                $usersHasName = false;
+                $usersHasFirst = false;
+                $usersHasLast = false;
+                $usersHasFull = false;
+
+                try {
+                    $usersHasName = Schema::hasColumn('users', 'name');
+                    $usersHasFirst = Schema::hasColumn('users', 'first_name');
+                    $usersHasLast = Schema::hasColumn('users', 'last_name');
+                    $usersHasFull = Schema::hasColumn('users', 'full_name');
+                } catch (\Exception $e) {
+                    // ignore schema failures and fallback to conservative options
+                }
+
+                $q->orWhereHas('client.user', function ($userQuery) use ($search, $usersHasName, $usersHasFirst, $usersHasLast, $usersHasFull) {
+                    if ($usersHasName) {
+                        $userQuery->where('name', 'like', "%{$search}%");
+                    } elseif ($usersHasFirst && $usersHasLast) {
+                        // Use CONCAT fallback for first + last
+                        $userQuery->whereRaw("CONCAT(IFNULL(first_name,''),' ',IFNULL(last_name,'')) LIKE ?", ["%{$search}%"]);
+                    } elseif ($usersHasFirst) {
+                        $userQuery->where('first_name', 'like', "%{$search}%");
+                    } elseif ($usersHasFull) {
+                        $userQuery->where('full_name', 'like', "%{$search}%");
+                    } else {
+                        // last resort, try email
+                        $userQuery->where('email', 'like', "%{$search}%");
+                    }
+                });
             });
         }
 
@@ -39,7 +84,7 @@ class ProjectController extends Controller
         }
 
         $projects = $query->paginate(15)->appends($request->only(['search', 'status']));
-
+ 
         $stats = [
             'total' => Project::query()->count('*'),
             'planning' => Project::query()->where('status', 'planning')->count('*'),
@@ -49,7 +94,17 @@ class ProjectController extends Controller
             'archived' => Project::query()->where('status', 'archived')->count('*'),
         ];
 
-        return view('admin.projects.index', compact('projects', 'stats'));
+        // Provide clients list for the Add Project modal used on this page
+        $clients = Client::with('user')->get();
+
+        // Provide supervisors list for project assignment dropdown in modal
+        $supervisors = User::query()
+            ->where('role', 'supervisor')
+            ->where('is_active', true)
+            ->orderBy('first_name', 'asc')
+            ->get();
+ 
+        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors'));
     }
 
     /**

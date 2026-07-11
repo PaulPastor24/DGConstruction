@@ -6,11 +6,11 @@
 @push('styles')
 <!-- Custom Styles to precise match UI colors and spacing -->
 <style>
-    .bg-forest-green { background-color: #045a33 !important; color: #ffffff !important; }
-    .btn-forest-green { background-color: #045a33 !important; color: #ffffff !important; border: 1px solid #045a33; }
-    .btn-forest-green:hover { background-color: #034426 !important; color: #ffffff !important; }
-    .text-forest-green { color: #045a33 !important; }
-    .bg-forest-light { background-color: rgba(4, 90, 51, 0.08) !important; color: #045a33 !important; }
+    .bg-forest-green { background-color: var(--brand-green) !important; color: var(--surface) !important; }
+    .btn-forest-green { background-color: var(--brand-green) !important; color: var(--surface) !important; border: 1px solid var(--brand-green); }
+    .btn-forest-green:hover { background-color: var(--brand-dark) !important; color: var(--surface) !important; }
+    .text-forest-green { color: var(--brand-green) !important; }
+    .bg-forest-light { background-color: rgba(54,82,51,0.08) !important; color: var(--brand-green) !important; }
     
     .status-completed { background-color: #e6f6ee !important; color: #16a34a !important; border: 1px solid #d1fae5; }
     .status-inprogress { background-color: #eff6ff !important; color: #2563eb !important; border: 1px solid #dbeafe; }

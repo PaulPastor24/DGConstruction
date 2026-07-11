@@ -8,19 +8,34 @@ GLOBAL RESET
   box-sizing: border-box;
   }
 
+:root {
+  --brand-dark: #2a4028;
+  --brand-green: #365233;
+  --brand-accent: #4b6b46;
+  --brand-accent-soft: #eaf7ef;
+  --bg-page: #f8fafc;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --shadow-saas: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
 html,
 body {
-width: 100%;
-min-height: 100%;
+  width: 100%;
+  min-height: 100%;
 }
 
 body {
-min-height: 100vh;
-overflow-x: hidden;
-font-family: 'DM Sans', sans-serif;
-background-color: #ebedea;
-color: #111827;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background-color: var(--bg-page);
+  color: #111827;
 }
+
 
 a {
 color: inherit;
