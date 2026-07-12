@@ -160,12 +160,42 @@
         </table>
     </div>
 
+    @php
+        $currentPage = max(1, (int) $projects->currentPage());
+        $lastPage = max(1, (int) $projects->lastPage());
+        $queryParams = request()->query();
+    @endphp
+
     <div class="table-pagination-footer-bar">
-        <div>Showing {{ $projects->firstItem() ?: 0 }} to {{ $projects->lastItem() ?: 0 }} of {{ $projects->total() }} projects</div>
-        <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-light border px-2"><i class="bi bi-chevron-left"></i></button>
-            <button class="btn btn-sm btn-success px-3">1</button>
-            <button class="btn btn-sm btn-light border px-2"><i class="bi bi-chevron-right"></i></button>
+        <div class="text-muted small">Showing {{ $projects->firstItem() ?: 0 }} to {{ $projects->lastItem() ?: 0 }} of {{ $projects->total() }} projects</div>
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+            @if($currentPage > 1)
+                <a href="{{ $projects->appends($queryParams)->url($currentPage - 1) }}" class="btn btn-sm btn-outline-secondary px-2">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            @else
+                <span class="btn btn-sm btn-outline-secondary px-2 disabled" aria-disabled="true">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            @endif
+
+            @for($page = 1; $page <= $lastPage; $page++)
+                @if($page === $currentPage)
+                    <span class="btn btn-sm btn-success px-3">{{ $page }}</span>
+                @else
+                    <a href="{{ $projects->appends($queryParams)->url($page) }}" class="btn btn-sm btn-outline-secondary px-3">{{ $page }}</a>
+                @endif
+            @endfor
+
+            @if($currentPage < $lastPage)
+                <a href="{{ $projects->appends($queryParams)->url($currentPage + 1) }}" class="btn btn-sm btn-outline-secondary px-2">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            @else
+                <span class="btn btn-sm btn-outline-secondary px-2 disabled" aria-disabled="true">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+            @endif
         </div>
     </div>
 </div>

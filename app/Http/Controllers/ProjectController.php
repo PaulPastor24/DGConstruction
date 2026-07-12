@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectArchive;
 use App\Models\Client;
 use App\Models\MaterialUsage;
 use App\Models\User;
@@ -166,6 +167,11 @@ class ProjectController extends Controller
             })->count(),
         ];
 
+        $archives = ProjectArchive::query()
+            ->with(['project', 'client.user', 'engineer'])
+            ->latest('archived_at')
+            ->get();
+
         $clients = Client::with('user')->get();
         $supervisors = User::query()
             ->where('role', 'supervisor')
@@ -188,7 +194,7 @@ class ProjectController extends Controller
 
         }
 
-        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors', 'newProject'));
+        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors', 'newProject', 'archives'));
     }
 
     /**
@@ -577,7 +583,7 @@ class ProjectController extends Controller
             }
 
             $payload = [
-                'status' => DB::getDriverName() === 'sqlite' ? 'completed' : 'archived',
+                'status' => $this->getArchiveStatusValue(),
             ];
             if (Schema::hasColumn('projects', 'is_archived')) {
                 $payload['is_archived'] = true;
@@ -586,6 +592,22 @@ class ProjectController extends Controller
             $project->forceFill($payload);
             $project->save();
             $project->refresh();
+
+            ProjectArchive::updateOrCreate(
+                ['project_id' => $project->getKey()],
+                [
+                    'project_name' => $project->project_name,
+                    'project_location' => \App\Models\ProjectArchive::resolveLocation($project),
+                    'client_id' => $project->client_id,
+                    'engineer_id' => $project->engineer_id,
+                    'start_date' => $project->start_date,
+                    'target_end_date' => $project->target_end_date,
+                    'actual_end_date' => $project->actual_end_date,
+                    'status' => 'archived',
+                    'description' => $project->description,
+                    'archived_at' => now(),
+                ]
+            );
 
             return redirect()->route('admin.projects.index')
                 ->with('success', 'Project archived successfully.')
@@ -619,20 +641,23 @@ class ProjectController extends Controller
         }
 
         try {
-            if (!$this->projectIsArchived($project)) {
+            $project->refresh();
+            $isArchived = $this->projectIsArchived($project);
+            if (!$isArchived) {
                 return redirect()
                     ->back()
                     ->with('info', 'Only archived projects can be restored.')
                     ->with('error_title', 'Restore Not Available');
             }
 
-            $payload = ['status' => 'planning'];
+            $payload = ['status' => $this->getRestoreStatusValue()];
             if (Schema::hasColumn('projects', 'is_archived')) {
                 $payload['is_archived'] = false;
             }
 
             $project->forceFill($payload);
             $project->save();
+            $project->refresh();
 
             return redirect()->route('admin.projects.index')
                 ->with('success', 'Project restored successfully.')
@@ -711,11 +736,25 @@ class ProjectController extends Controller
             return true;
         }
 
+        if ($status === 'completed' && (bool) $project->getAttribute('is_archived')) {
+            return true;
+        }
+
         if (!Schema::hasColumn('projects', 'is_archived')) {
             return false;
         }
 
         return (bool) $project->getAttribute('is_archived');
+    }
+
+    protected function getArchiveStatusValue(): string
+    {
+        return 'archived';
+    }
+
+    protected function getRestoreStatusValue(): string
+    {
+        return 'planning';
     }
 
     private function isAdminUser($user): bool

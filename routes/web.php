@@ -10,6 +10,7 @@ use App\Http\Controllers\PhasesExportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectArchiveController;
 use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\UserController;
@@ -63,6 +64,8 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
 
+    Route::get('/admin/project-archives', [ProjectArchiveController::class, 'index'])->name('admin.project-archives.index');
+
     Route::prefix('admin/projects')->name('admin.projects.')->group(function () {
         Route::get('/', [ProjectController::class, 'index'])->name('index');
         Route::get('/create', [ProjectController::class, 'create'])->name('create');
@@ -72,6 +75,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::put('/{project}', [ProjectController::class, 'update'])->name('update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('destroy');
         Route::patch('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
+        Route::patch('/{project}/restore', [ProjectController::class, 'restore'])->name('restore');
     });
 
     Route::prefix('admin/users')->name('admin.users.')->group(function () {

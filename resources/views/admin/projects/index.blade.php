@@ -87,6 +87,12 @@
         color: var(--mi-white);
     }
 
+    .dashboard-header-row .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(22, 101, 52, 0.12);
+        filter: brightness(0.98);
+    }
+
     /* Metric Cards Grid */
     .metrics-row-grid {
         display: grid;
@@ -385,21 +391,67 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
         border-top: 1px solid #e5e7eb;
         font-size: 13px;
         color: #4b5563;
+        flex-wrap: wrap;
     }
 
     /* Dynamic Side Details Container Panel layout style */
     .right-details-sidebar-panel {
-        width: 380px;
+        width: 0;
+        max-width: 0;
+        min-height: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        overflow: hidden;
         background: white;
-        border: 1px solid #e5e7eb;
+        border: 1px solid transparent;
         border-radius: 8px;
-        padding: 24px;
+        padding: 0;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         position: sticky;
         top: 24px;
+        flex: 0 0 auto;
+        transform: translateX(24px);
+        transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    max-width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    padding 0.3s ease,
+                    opacity 0.24s ease,
+                    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    border-color 0.24s ease,
+                    box-shadow 0.24s ease;
+    }
+
+    .right-details-sidebar-panel.is-visible {
+        width: 380px;
+        max-width: 380px;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        overflow: visible;
+        padding: 24px;
+        border-color: #e5e7eb;
+        transform: translateX(0);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    .right-details-sidebar-panel.is-refreshing .sidebar-header-flex,
+    .right-details-sidebar-panel.is-refreshing .sidebar-field-group,
+    .right-details-sidebar-panel.is-refreshing .summary-box-card-grid,
+    .right-details-sidebar-panel.is-refreshing .sidebar-actions-footer-row {
+        animation: projectSidebarContentIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .right-details-sidebar-panel.is-refreshing .sidebar-field-group { animation-delay: 0.04s; }
+    .right-details-sidebar-panel.is-refreshing .summary-box-card-grid { animation-delay: 0.08s; }
+    .right-details-sidebar-panel.is-refreshing .sidebar-actions-footer-row { animation-delay: 0.12s; }
+
+    @keyframes projectSidebarContentIn {
+        0% { opacity: 0; transform: translateY(6px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
 
     .sidebar-header-flex {
@@ -478,17 +530,29 @@
     }
 
     .sidebar-actions-footer-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap;
         gap: 8px;
         margin-top: 24px;
+        overflow-x: auto;
+    }
+
+    .sidebar-actions-footer-row > * {
+        display: inline-flex;
+        flex: 0 0 auto;
     }
 
     .sidebar-actions-footer-row .btn {
         font-size: 12px;
-        padding: 8px 4px;
+        padding: 8px 10px;
         font-weight: 500;
         text-align: center;
+        border-radius: 10px;
+        min-width: 96px;
+        justify-content: center;
+        white-space: nowrap;
     }
 
     /* Lower Section Workflow Layout */
@@ -938,10 +1002,14 @@
                 <h2>Project Management</h2>
                 <p>Create, manage, and monitor all construction projects.</p>
             </div>
-            <!-- Modal trigger action replace standard full layout redirection[cite: 3] -->
-            <button type="button" class="btn btn-dg-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
-                <i class="bi bi-plus"></i> New Project
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-dg-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addProjectModal" style="min-width: 180px; transition: all 0.2s ease-in-out;">
+                    <i class="bi bi-plus"></i> New Project
+                </button>
+                <button type="button" class="btn btn-dg-primary px-4 py-2" style="min-width: 180px; border: 1px solid #c8e6c9; color:#166534; background:#f6fff7; box-shadow: none; transition: all 0.2s ease-in-out;" data-bs-toggle="modal" data-bs-target="#projectArchivesModal">
+                    <i class="bi bi-archive"></i> Project Archives
+                </button>
+            </div>
         </div>
 
         <!-- System Total Metrics Highlight Panels Row[cite: 3] -->
@@ -1033,7 +1101,7 @@
     </div>
 
     <!-- Right Custom Slider-Like Detail Information Meta Panel Component -->
-    <div class="right-details-sidebar-panel" id="projectDetailsSidebar" style="display: none;">
+    <div class="right-details-sidebar-panel" id="projectDetailsSidebar" aria-hidden="true">
         <div class="sidebar-header-flex">
             <h3>Project Details</h3>
             <button type="button" class="btn-close-sidebar" id="closeSidebarBtn">&times;</button>
@@ -1117,25 +1185,162 @@
         </div>
 
         <div class="sidebar-actions-footer-row">
-            <button type="button" id="sideEditProjectBtn" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-pencil"></i> Edit Project</button>
+            <button type="button" id="sideEditProjectBtn" class="btn btn-sm" style="border:1px solid #bfdbfe; color:#1d4ed8; background:#eff6ff;"><i class="bi bi-pencil"></i> Edit Project</button>
             <form id="sideArchiveForm" action="{{ route('admin.projects.archive', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-project-confirm="archive" data-confirm-title="Archive Project?" data-confirm-text="This project will be removed from the Active Project list. All construction history, reports, phases, milestones, attendance, and materials will remain available." data-confirm-button="Archive" data-cancel-button="Cancel">
                 @csrf
                 @method('PATCH')
-                <button type="submit" class="btn btn-sm btn-outline-warning" style="border-color:#f5d9a0; color:#b7791f; background:#fffaf1;"><i class="bi bi-archive"></i> Archive</button>
+                <button type="submit" class="btn btn-sm" style="border:1px solid #c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-archive"></i> Archive</button>
             </form>
             <form id="sideDeleteForm" action="{{ route('admin.projects.destroy', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-project-confirm="delete" data-confirm-title="Delete Project?" data-confirm-text="This project has no construction records. This action is permanent and cannot be undone." data-confirm-button="Delete" data-cancel-button="Cancel">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-sm px-3 py-2 btn-outline-danger" style="border-color:#fecaca; color:#b91c1c; background:#fff7f7;"><i class="bi bi-trash"></i> Delete</button>
-            </form>
-            <form id="sideRestoreForm" action="{{ route('admin.projects.restore', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel" style="display:none;">
-                @csrf
-                @method('PATCH')
-                <button type="submit" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                <button type="submit" class="btn btn-sm px-3 py-2" style="border:1px solid #fecaca; color:#b91c1c; background:#fff7f7;"><i class="bi bi-trash"></i> Delete</button>
             </form>
         </div>
     </div>
 
+</div>
+
+<div class="modal fade" id="projectArchivesModal" tabindex="-1" aria-labelledby="projectArchivesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0" style="border-radius: 16px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);">
+            <div class="modal-header border-0 pb-2 pt-4 px-4">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark" id="projectArchivesModalLabel" style="font-size: 1.25rem;">Archived Projects</h5>
+                    <p class="mb-0 text-muted small">Review archived projects and restore them when needed.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body pt-2 px-4 pb-4">
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted mb-1">Search</label>
+                        <input type="text" id="projectArchiveSearch" class="form-control" placeholder="Search archived projects">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted mb-1">Client</label>
+                        <select id="projectArchiveClientFilter" class="form-select">
+                            <option value="">All Clients</option>
+                            @foreach(($archives ?? collect())->filter(fn ($archive) => !empty($archive->client_id))->map(fn ($archive) => $archive->client)->filter()->unique('client_id')->sortBy(fn ($client) => $client->company_name ?? '')->values() as $client)
+                                @php
+                                    $clientOptionLabel = trim((string) ($client->company_name ?? ''));
+                                    if ($clientOptionLabel === '' || strtolower($clientOptionLabel) === 'd&g construction corp') {
+                                        $clientOptionLabel = 'Client';
+                                    }
+                                @endphp
+                                <option value="{{ $client->client_id }}">{{ $clientOptionLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small text-muted mb-1">Engineer</label>
+                        <select id="projectArchiveEngineerFilter" class="form-select">
+                            <option value="">All Engineers</option>
+                            @foreach(($archives ?? collect())->filter(fn ($archive) => !empty($archive->engineer_id))->map(fn ($archive) => $archive->engineer)->filter()->unique('user_id')->sortBy(fn ($engineer) => $engineer->full_name ?? $engineer->name ?? '')->values() as $engineer)
+                                @php
+                                    $engineerOptionLabel = trim((string) ($engineer->full_name ?? $engineer->name ?? ''));
+                                    if ($engineerOptionLabel === '' || strtolower($engineerOptionLabel) === 'lead engineer') {
+                                        $engineerOptionLabel = 'Engineer';
+                                    }
+                                @endphp
+                                <option value="{{ $engineer->user_id }}">{{ $engineerOptionLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-3 border overflow-hidden">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Project</th>
+                                <th>Location</th>
+                                <th>Client</th>
+                                <th>Engineer</th>
+                                <th>Timeline</th>
+                                <th>Archived At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectArchivesTableBody">
+                            @forelse ($archives ?? collect() as $archive)
+                                @php
+                                    $archiveClientLabel = trim((string) ($archive->client?->company_name ?? ''));
+                                    if ($archiveClientLabel === '' || strtolower($archiveClientLabel) === 'd&g construction corp') {
+                                        $archiveClientLabel = null;
+                                    }
+
+                                    $archiveClientContact = trim((string) ($archive->client?->user?->name ?? ''));
+                                    if ($archiveClientContact === '' || strtolower($archiveClientContact) === 'd&g construction corp') {
+                                        $archiveClientContact = null;
+                                    }
+
+                                    $archiveEngineerLabel = trim((string) ($archive->engineer?->full_name ?: $archive->engineer?->name ?? ''));
+                                    if ($archiveEngineerLabel === '' || strtolower($archiveEngineerLabel) === 'lead engineer') {
+                                        $archiveEngineerLabel = null;
+                                    }
+
+                                    $archiveEngineerEmail = trim((string) ($archive->engineer?->email ?? ''));
+                                    if ($archiveEngineerEmail === '' || strtolower($archiveEngineerEmail) === 'lead engineer') {
+                                        $archiveEngineerEmail = null;
+                                    }
+                                @endphp
+                                <tr class="archive-row"
+                                    data-client-id="{{ $archive->client_id ?: '' }}"
+                                    data-engineer-id="{{ $archive->engineer_id ?: '' }}"
+                                    data-search="{{ strtolower(($archive->project_name ?? '') . ' ' . ($archive->project_location ?: '') . ' ' . ($archive->client?->company_name ?: '') . ' ' . ($archive->client?->user?->first_name ?: '') . ' ' . ($archive->client?->user?->last_name ?: '') . ' ' . ($archive->engineer?->first_name ?: '') . ' ' . ($archive->engineer?->last_name ?: '') . ' ' . ($archive->engineer?->name ?: '')) }}">
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ $archive->project_name }}</div>
+                                        <div class="small text-muted">#{{ $archive->project_id }}</div>
+                                    </td>
+                                    <td>{{ $archive->project_location ?: optional($archive->project)->location ?: optional($archive->project)->project_location ?: '—' }}</td>
+                                    <td>
+                                        <div class="fw-semibold small text-dark">{{ $archiveClientLabel }}</div>
+                                        <div class="small text-muted">{{ $archiveClientContact }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold small text-dark">{{ $archiveEngineerLabel }}</div>
+                                        <div class="small text-muted">{{ $archiveEngineerEmail }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="small text-muted">Start: {{ $archive->start_date ? $archive->start_date->format('M d, Y') : '—' }}</div>
+                                        <div class="small text-muted">Target: {{ $archive->target_end_date ? $archive->target_end_date->format('M d, Y') : '—' }}</div>
+                                        <div class="small text-muted">Actual: {{ $archive->actual_end_date ? $archive->actual_end_date->format('M d, Y') : '—' }}</div>
+                                    </td>
+                                    <td>{{ $archive->archived_at ? $archive->archived_at->format('M d, Y H:i') : '—' }}</td>
+                                    <td>
+                                        @if($archive->project)
+                                            <form action="{{ route('admin.projects.restore', $archive->project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="btn btn-sm" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button class="btn btn-sm btn-outline-secondary" disabled>Unavailable</button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr id="projectArchivesEmptyState">
+                                    <td colspan="7" class="text-center text-muted py-4">No archived projects found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                    <div class="text-muted small" id="projectArchivesPaginationSummary"></div>
+                    <nav aria-label="Archived projects pagination">
+                        <ul class="pagination pagination-sm mb-0" id="projectArchivesPagination" style="display:flex; gap:4px;"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ========================================== -->
@@ -2190,6 +2395,103 @@
 document.addEventListener('DOMContentLoaded', function() {
     const addProjectModalEl = document.getElementById('addProjectModal');
     const addProjectForm = document.querySelector('#addProjectModal form');
+
+    window.projectArchiveVisibleRows = [];
+    window.projectArchiveCurrentPage = 1;
+
+    window.renderArchivedProjectsPage = function (pageNumber) {
+        const pageSize = 10;
+        const visibleRows = window.projectArchiveVisibleRows || [];
+        const totalPages = visibleRows.length > 0 ? Math.ceil(visibleRows.length / pageSize) : 1;
+        const safePage = Math.min(Math.max(parseInt(pageNumber, 10) || 1, 1), totalPages);
+        window.projectArchiveCurrentPage = safePage;
+
+        visibleRows.forEach(function (row, index) {
+            const shouldShow = index >= (safePage - 1) * pageSize && index < safePage * pageSize;
+            row.style.display = shouldShow ? '' : 'none';
+        });
+
+        const paginationEl = document.getElementById('projectArchivesPagination');
+        const summaryEl = document.getElementById('projectArchivesPaginationSummary');
+        const emptyState = document.getElementById('projectArchivesEmptyState');
+
+        if (emptyState) {
+            emptyState.style.display = visibleRows.length ? 'none' : '';
+        }
+
+        if (paginationEl) {
+            paginationEl.innerHTML = '';
+            if (visibleRows.length === 0) {
+                const item = document.createElement('li');
+                item.className = 'page-item disabled';
+                item.innerHTML = '<span class="page-link" style="color:#198754;">1</span>';
+                paginationEl.appendChild(item);
+            } else {
+                const prevItem = document.createElement('li');
+                prevItem.className = 'page-item' + (safePage === 1 ? ' disabled' : '');
+                prevItem.innerHTML = '<a class="page-link" href="#" tabindex="-1" style="color:#198754;" aria-label="Previous page" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + (safePage - 1) + ');"><i class="bi bi-chevron-left"></i></a>';
+                paginationEl.appendChild(prevItem);
+
+                for (let page = 1; page <= totalPages; page++) {
+                    const item = document.createElement('li');
+                    item.className = 'page-item' + (page === safePage ? ' active' : '');
+                    item.innerHTML = '<a class="page-link" href="#" style="' + (page === safePage ? 'background-color:#198754; border-color:#198754; color:#fff;' : 'color:#198754;') + '" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + page + ');">' + page + '</a>';
+                    paginationEl.appendChild(item);
+                }
+
+                const nextItem = document.createElement('li');
+                nextItem.className = 'page-item' + (safePage === totalPages ? ' disabled' : '');
+                nextItem.innerHTML = '<a class="page-link" href="#" style="color:#198754;" aria-label="Next page" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + (safePage + 1) + ');"><i class="bi bi-chevron-right"></i></a>';
+                paginationEl.appendChild(nextItem);
+            }
+        }
+
+        if (summaryEl) {
+            const start = visibleRows.length ? (safePage - 1) * pageSize + 1 : 0;
+            const end = Math.min(safePage * pageSize, visibleRows.length);
+            summaryEl.textContent = visibleRows.length ? 'Showing ' + start + '–' + end + ' of ' + visibleRows.length + ' archived projects' : 'No archived projects match the current filters';
+        }
+    };
+
+    window.filterArchivedProjects = function () {
+        const searchValue = (document.getElementById('projectArchiveSearch')?.value || '').trim().toLowerCase();
+        const clientValue = document.getElementById('projectArchiveClientFilter')?.value || '';
+        const engineerValue = document.getElementById('projectArchiveEngineerFilter')?.value || '';
+        const rows = Array.from(document.querySelectorAll('#projectArchivesTableBody .archive-row'));
+
+        window.projectArchiveVisibleRows = rows.filter(function (row) {
+            const rowText = (row.getAttribute('data-search') || '').toLowerCase();
+            const matchesSearch = !searchValue || rowText.includes(searchValue);
+            const matchesClient = !clientValue || (row.getAttribute('data-client-id') || '') === clientValue;
+            const matchesEngineer = !engineerValue || (row.getAttribute('data-engineer-id') || '') === engineerValue;
+            return matchesSearch && matchesClient && matchesEngineer;
+        });
+
+        rows.forEach(function (row) {
+            row.style.display = 'none';
+        });
+
+        window.projectArchiveCurrentPage = 1;
+        window.renderArchivedProjectsPage(1);
+    };
+
+    const projectArchiveSearch = document.getElementById('projectArchiveSearch');
+    if (projectArchiveSearch) {
+        projectArchiveSearch.addEventListener('input', function () {
+            window.filterArchivedProjects();
+        });
+    }
+
+    ['projectArchiveClientFilter', 'projectArchiveEngineerFilter'].forEach(function (id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', function () {
+                window.filterArchivedProjects();
+            });
+        }
+    });
+
+    window.filterArchivedProjects();
     const editProjectModalEl = document.getElementById('editProjectModal');
     const editProjectForm = document.getElementById('editProjectForm');
     const editProjectIdInput = document.getElementById('editProjectId');
@@ -2446,12 +2748,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let searchTimer;
 
-    async function ajaxSubmitFilters() {
-        if (!filterForm) return;
-        const params = new URLSearchParams(new FormData(filterForm));
-        const url = filterForm.action + '?' + params.toString();
+    async function loadProjectsTable(url) {
+        if (!url) return;
 
-        // Show subtle loading state on the search input
         if (searchInput) {
             searchInput.classList.add('loading');
         }
@@ -2463,24 +2762,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
-            // Replace the table-container-card with the new content from server
             const newTableCard = doc.querySelector('.table-container-card');
             const currentTableCard = document.querySelector('.table-container-card');
             if (newTableCard && currentTableCard) {
                 currentTableCard.replaceWith(newTableCard);
             }
 
-            // Replace pagination/footer if available (already part of table card in our view)
-
-            // Update URL without reloading
             try { history.replaceState(null, '', url); } catch (e) { /* ignore */ }
 
-            // Re-bind any interactive handlers in replaced content
             bindViewButtons();
+            attachProjectsPaginationHandlers();
         } catch (err) {
-            // On failure, fallback to full submit to keep functionality
-            console.error('AJAX filter failed, falling back to full submit', err);
-            filterForm.submit();
+            console.error('AJAX table update failed, falling back to full submit', err);
+            if (filterForm) {
+                filterForm.submit();
+            }
         } finally {
             if (searchInput) {
                 searchInput.classList.remove('loading');
@@ -2488,9 +2784,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function ajaxSubmitFilters() {
+        if (!filterForm) return;
+        const params = new URLSearchParams(new FormData(filterForm));
+        const url = filterForm.action + '?' + params.toString();
+        await loadProjectsTable(url);
+    }
+
     function submitFilters() {
         // kept for compatibility
         return ajaxSubmitFilters();
+    }
+
+    function handleProjectsPaginationClick(event) {
+        const href = this.getAttribute('href');
+        if (!href || href === '#') return;
+        event.preventDefault();
+        event.stopPropagation();
+        loadProjectsTable(href);
+    }
+
+    function attachProjectsPaginationHandlers() {
+        document.querySelectorAll('.table-container-card .pagination a, .table-container-card .table-pagination-footer-bar a').forEach(function(link) {
+            link.removeEventListener('click', handleProjectsPaginationClick);
+            link.addEventListener('click', handleProjectsPaginationClick);
+        });
     }
 
     if (filterForm) {
@@ -2522,6 +2840,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ajaxSubmitFilters();
         });
     });
+
+    attachProjectsPaginationHandlers();
 
     // Bind view/details panel buttons - extracted so we can re-run after AJAX updates
     function bindViewButtons() {
@@ -2634,7 +2954,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const sideEditProjectBtn = document.getElementById('sideEditProjectBtn');
         const sideArchiveForm = document.getElementById('sideArchiveForm');
         const sideDeleteForm = document.getElementById('sideDeleteForm');
-        const sideRestoreForm = document.getElementById('sideRestoreForm');
 
         const project = JSON.parse(btn.getAttribute('data-project-json'));
         const supervisorName = btn.getAttribute('data-supervisor-name');
@@ -2671,8 +2990,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sideProgressPctText) sideProgressPctText.textContent = pct + '%';
         if (sideProgressBarFill) sideProgressBarFill.style.width = pct + '%';
 
+        const normalizedSidebarStatus = String(status || project.status || 'planning').toLowerCase();
+
         if (sideProjectStatus) {
-            const normalizedSidebarStatus = String(status || project.status || 'planning').toLowerCase();
             if (normalizedSidebarStatus === 'ongoing' || normalizedSidebarStatus === 'in_progress' || normalizedSidebarStatus === 'inprogress' || normalizedSidebarStatus === 'active') {
                 sideProjectStatus.textContent = 'In Progress';
                 sideProjectStatus.className = 'status-pill in-progress';
@@ -2706,13 +3026,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        if (sideArchiveForm) sideArchiveForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline';
-        if (sideDeleteForm) sideDeleteForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline';
-        if (sideRestoreForm) sideRestoreForm.style.display = normalizedSidebarStatus === 'archived' ? 'inline' : 'none';
-        if (sideRestoreForm) {
-            const restoreAction = sideRestoreForm.getAttribute('action');
-            sideRestoreForm.setAttribute('action', restoreAction.replace('__PROJECT_ID__', project.project_id));
-        }
+        if (sideArchiveForm) sideArchiveForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline-flex';
+        if (sideDeleteForm) sideDeleteForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline-flex';
         if (sideArchiveForm) {
             const archiveAction = sideArchiveForm.getAttribute('action');
             sideArchiveForm.setAttribute('action', archiveAction.replace('__PROJECT_ID__', project.project_id));
@@ -2722,16 +3037,30 @@ document.addEventListener('DOMContentLoaded', function() {
             sideDeleteForm.setAttribute('action', deleteAction.replace('__PROJECT_ID__', project.project_id));
         }
 
-        if (sidebar) sidebar.style.display = 'block';
+        if (sidebar) {
+            sidebar.classList.remove('is-refreshing');
+            void sidebar.offsetWidth;
+            sidebar.classList.add('is-visible', 'is-refreshing');
+            sidebar.setAttribute('aria-hidden', 'false');
+            window.clearTimeout(sidebar._refreshTimer);
+            sidebar._refreshTimer = window.setTimeout(function () {
+                sidebar.classList.remove('is-refreshing');
+            }, 220);
+        }
     }
 
     // Initial bind
     bindViewButtons();
 
-    const closeBtn = document.getElementById('closeSidebarBtn');
-    if (closeBtn) closeBtn.addEventListener('click', function() { document.getElementById('projectDetailsSidebar').style.display = 'none'; });
-
     const sidebar = document.getElementById('projectDetailsSidebar');
+    function closeProjectDetailsSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.remove('is-visible', 'is-refreshing');
+        sidebar.setAttribute('aria-hidden', 'true');
+    }
+
+    const closeBtn = document.getElementById('closeSidebarBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeProjectDetailsSidebar);
     const sideProjectName = document.getElementById('sideProjectName');
     const sideProjectLocation = document.getElementById('sideProjectLocation');
     const sideProjectStatus = document.getElementById('sideProjectStatus');
@@ -2745,9 +3074,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sideEditProjectBtn = document.getElementById('sideEditProjectBtn');
 
     if (closeBtn && sidebar) {
-        closeBtn.addEventListener('click', function() {
-            sidebar.style.display = 'none';
-        });
+        closeBtn.addEventListener('click', closeProjectDetailsSidebar);
     }
 
     // Opens the full Project Details modal, loaded via AJAX from the show() route.

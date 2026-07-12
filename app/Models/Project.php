@@ -13,6 +13,7 @@ class Project extends Model
     public $timestamps = true;
 
     protected $fillable = [
+        'project_id',
         'project_name',
         'project_location',
         'client_id',
@@ -125,11 +126,18 @@ class Project extends Model
     }
 
     /**
-     * Relationship: Project has many attendance logs
+     * Relationship: Project has many attendance logs through deployments
      */
     public function attendanceLogs()
     {
-        return $this->hasMany(Attendance::class, 'project_id', 'project_id');
+        return $this->hasManyThrough(
+            Attendance::class,
+            ProjectWorker::class,
+            'project_id',
+            'deployment_id',
+            'project_id',
+            'deployment_id'
+        );
     }
 
     /**
@@ -154,6 +162,14 @@ class Project extends Model
     public function reports()
     {
         return $this->hasManyThrough(Report::class, ConstructionPhase::class, 'project_id', 'phase_id', 'project_id', 'phase_id');
+    }
+
+    /**
+     * Relationship: Project has many material assignments
+     */
+    public function projectMaterials()
+    {
+        return $this->hasMany(ProjectMaterial::class, 'project_id', 'project_id');
     }
 
     /*
