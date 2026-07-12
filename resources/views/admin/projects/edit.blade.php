@@ -230,26 +230,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <label for="start_date" class="form-label">Planned Start Date <span class="text-danger">*</span></label>
                                 <input type="date" 
                                        class="form-control @error('start_date') is-invalid @enderror" 
                                        id="start_date" 
                                        name="start_date" 
                                        value="{{ old('start_date', $project->start_date->format('Y-m-d')) }}" 
                                        required>
+                                <div class="form-text small text-muted mt-1">Planned kickoff date.</div>
                                 @error('start_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="col-md-4 mb-3">
-                                <label for="target_end_date" class="form-label">Target End Date <span class="text-danger">*</span></label>
+                                <label for="target_end_date" class="form-label">Planned End Date <span class="text-danger">*</span></label>
                                 <input type="date" 
                                        class="form-control @error('target_end_date') is-invalid @enderror" 
                                        id="target_end_date" 
                                        name="target_end_date" 
                                        value="{{ old('target_end_date', $project->target_end_date->format('Y-m-d')) }}" 
                                        required>
+                                <div class="form-text small text-muted mt-1">Target schedule for completion.</div>
                                 @error('target_end_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -262,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                        id="actual_end_date" 
                                        name="actual_end_date" 
                                        value="{{ old('actual_end_date', $project->actual_end_date?->format('Y-m-d')) }}">
+                                <div class="form-text small text-muted mt-1">Actual completion date, if finished.</div>
                                 @error('actual_end_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
