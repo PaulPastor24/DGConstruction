@@ -101,7 +101,7 @@ FILTER CARD
 .attendance-filter-card {
     position: relative;
     margin-bottom: 18px;
-    padding: 14px;
+    padding: 14px 16px;
     border: 1px solid #e5ece7;
     border-radius: 18px;
     background: #ffffff;
@@ -121,13 +121,15 @@ FILTER CARD
 
 .attendance-filter-form {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
     align-items: end;
 }
 
 .filter-group {
     display: flex;
+    min-width: 0;
     flex-direction: column;
     gap: 6px;
     padding: 10px;
@@ -190,13 +192,16 @@ FILTER CARD
 }
 
 .filter-search-wide {
-    grid-column: span 2;
+    grid-column: span 3;
 }
 
 .filter-actions {
-    display: flex;
-    align-items: end;
+    display: grid;
+    width: 100%;
+    grid-column: span 1;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
+    align-items: end;
 }
 
 .btn-filter-primary,
@@ -206,6 +211,8 @@ FILTER CARD
     align-items: center;
     justify-content: center;
     gap: 7px;
+    width: 100%;
+    min-width: 0;
     height: 40px;
     padding: 0 14px;
     border-radius: 12px;
@@ -764,14 +771,6 @@ RESPONSIVE
     .attendance-stat-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-
-    .attendance-filter-form {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .filter-search-wide {
-        grid-column: span 2;
-    }
 }
 
 @media (max-width: 992px) {
@@ -779,6 +778,18 @@ RESPONSIVE
     .attendance-toolbar {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .attendance-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-search-wide {
+        grid-column: 1 / -1;
+    }
+
+    .filter-actions {
+        grid-column: 1 / -1;
     }
 
     .attendance-toolbar-actions {
