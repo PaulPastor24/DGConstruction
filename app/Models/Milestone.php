@@ -14,15 +14,15 @@ class Milestone extends Model
     protected $fillable = [
         'phase_id',
         'milestone_name',
-        'start_date',
-        'end_date',
+        'planned_date',
+        'actual_date',
         'is_completed',
         'is_delayed',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'planned_date' => 'date',
+        'actual_date' => 'date',
         'is_completed' => 'boolean',
         'is_delayed' => 'boolean',
     ];
@@ -67,6 +67,6 @@ class Milestone extends Model
     {
         return $query->where('is_completed', false)
             ->where('is_delayed', false)
-            ->where('start_date', '>', now());
+            ->where('planned_date', '>', now());
     }
 }
