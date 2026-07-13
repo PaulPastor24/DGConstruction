@@ -33,6 +33,7 @@ class StoreProjectRequest extends FormRequest
             'supervisor_id' => ['nullable', 'exists:users,user_id'],
             'start_date' => ['required', 'date'],
             'target_end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'actual_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'in:planning,ongoing,completed,on_hold'],
             'description' => ['nullable', 'string'],
         ];
@@ -53,6 +54,7 @@ class StoreProjectRequest extends FormRequest
             'start_date.required' => 'Start date is required.',
             'target_end_date.required' => 'Target end date is required.',
             'target_end_date.after_or_equal' => 'Target end date must be after or equal to start date.',
+            'actual_end_date.after_or_equal' => 'Actual end date must be on or after the planned start date.',
         ];
     }
 

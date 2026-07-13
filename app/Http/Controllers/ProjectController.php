@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\ProjectArchive;
 use App\Models\Client;
+use App\Models\MaterialUsage;
 use App\Models\User;
 use App\Models\Report; // Added explicitly to prevent class structural errors
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -20,13 +23,11 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::with(['client.user', 'engineer', 'supervisors'])
-            ->orderBy('created_at', 'desc');
+        $query = Project::with(['client.user', 'engineer', 'supervisors']);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
 
-            // Choose a safe column fallback depending on current DB schema
             $locationColumn = null;
             try {
                 if (Schema::hasColumn('projects', 'project_location')) {
@@ -35,7 +36,6 @@ class ProjectController extends Controller
                     $locationColumn = 'location';
                 }
             } catch (\Exception $e) {
-                // If schema introspection fails (e.g., remote DB privileges) just leave null
                 $locationColumn = null;
             }
 
@@ -46,7 +46,6 @@ class ProjectController extends Controller
                     $q->orWhere($locationColumn, 'like', "%{$search}%");
                 }
 
-                // Determine how user name is stored in the users table and build a safe search
                 $usersHasName = false;
                 $usersHasFirst = false;
                 $usersHasLast = false;
@@ -65,46 +64,137 @@ class ProjectController extends Controller
                     if ($usersHasName) {
                         $userQuery->where('name', 'like', "%{$search}%");
                     } elseif ($usersHasFirst && $usersHasLast) {
-                        // Use CONCAT fallback for first + last
                         $userQuery->whereRaw("CONCAT(IFNULL(first_name,''),' ',IFNULL(last_name,'')) LIKE ?", ["%{$search}%"]);
                     } elseif ($usersHasFirst) {
                         $userQuery->where('first_name', 'like', "%{$search}%");
                     } elseif ($usersHasFull) {
                         $userQuery->where('full_name', 'like', "%{$search}%");
                     } else {
-                        // last resort, try email
                         $userQuery->where('email', 'like', "%{$search}%");
+                    }
+                });
+
+                $q->orWhereHas('supervisors', function ($supervisorQuery) use ($search, $usersHasName, $usersHasFirst, $usersHasLast, $usersHasFull) {
+                    if ($usersHasName) {
+                        $supervisorQuery->where('name', 'like', "%{$search}%");
+                    } elseif ($usersHasFirst && $usersHasLast) {
+                        $supervisorQuery->whereRaw("CONCAT(IFNULL(first_name,''),' ',IFNULL(last_name,'')) LIKE ?", ["%{$search}%"]);
+                    } elseif ($usersHasFirst) {
+                        $supervisorQuery->where('first_name', 'like', "%{$search}%");
+                    } elseif ($usersHasFull) {
+                        $supervisorQuery->where('full_name', 'like', "%{$search}%");
+                    } else {
+                        $supervisorQuery->where('email', 'like', "%{$search}%");
                     }
                 });
             });
         }
 
-        if ($request->filled('status') && in_array($request->status, ['planning', 'ongoing', 'completed', 'on_hold', 'archived'])) {
-            $query->where('status', $request->status);
+        $requestedStatus = $request->input('status');
+        $hasArchiveFlag = Schema::hasColumn('projects', 'is_archived');
+
+        if ($requestedStatus !== null && $requestedStatus !== '') {
+            $normalizedStatus = $this->normalizeProjectStatus($requestedStatus);
+            if ($normalizedStatus === 'archived') {
+                $query->where(function ($q) use ($hasArchiveFlag) {
+                    $q->where('status', 'archived');
+                    if ($hasArchiveFlag) {
+                        $q->orWhereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 1');
+                    }
+                });
+            } elseif ($normalizedStatus !== 'all') {
+                $query->whereIn('status', $this->getProjectStatusVariants($normalizedStatus))
+                    ->where('status', '!=', 'archived');
+
+                if ($hasArchiveFlag) {
+                    $query->where(function ($q) {
+                        $q->whereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 0');
+                    });
+                }
+            }
+        } else {
+            $query->where(function ($q) use ($hasArchiveFlag) {
+                $q->where('status', '!=', 'archived');
+
+                if ($hasArchiveFlag) {
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 0');
+                    });
+                }
+            });
         }
 
-        $projects = $query->paginate(15)->appends($request->only(['search', 'status']));
- 
+        if ($request->filled('client')) {
+            $query->where('client_id', $request->client);
+        }
+
+        if ($request->filled('supervisor')) {
+            $query->whereHas('supervisors', function ($supervisorQuery) use ($request) {
+                $supervisorQuery->where('users.user_id', $request->supervisor)
+                    ->where('project_supervisors.is_active', true);
+            });
+        }
+
+        $sortBy = $request->input('sort_by');
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('project_name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('project_name', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $projects = $query->paginate(15)->appends($request->only(['search', 'status', 'client', 'supervisor', 'sort_by']));
+
         $stats = [
-            'total' => Project::query()->count('*'),
-            'planning' => Project::query()->where('status', 'planning')->count('*'),
-            'ongoing' => Project::query()->where('status', 'ongoing')->count('*'),
-            'completed' => Project::query()->where('status', 'completed')->count('*'),
-            'on_hold' => Project::query()->where('status', 'on_hold')->count('*'),
-            'archived' => Project::query()->where('status', 'archived')->count('*'),
+            'total' => Project::query()->count(),
+            'planning' => Project::query()->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
+            'ongoing' => Project::query()->whereIn('status', $this->getProjectStatusVariants('in_progress'))->count(),
+            'completed' => Project::query()->whereIn('status', $this->getProjectStatusVariants('completed'))->count(),
+            'on_hold' => Project::query()->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
+            'archived' => Project::query()->where(function ($q) {
+                $q->where('status', 'archived');
+                if (Schema::hasColumn('projects', 'is_archived')) {
+                    $q->orWhereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 1');
+                }
+            })->count(),
         ];
 
-        // Provide clients list for the Add Project modal used on this page
-        $clients = Client::with('user')->get();
+        $archives = ProjectArchive::query()
+            ->with(['project', 'client.user', 'engineer'])
+            ->latest('archived_at')
+            ->get();
 
-        // Provide supervisors list for project assignment dropdown in modal
+        $clients = Client::with('user')->get();
         $supervisors = User::query()
             ->where('role', 'supervisor')
             ->where('is_active', true)
             ->orderBy('first_name', 'asc')
             ->get();
- 
-        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors'));
+
+        $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        if ($isAjax) {
+            return response()->view('admin.projects.partials.table', compact('projects'));
+        }
+
+        // If we just redirected here after creating a project, load that project
+        // so the success modal can display its details on top of the table page.
+        $newProject = null;
+        if ((session('show_create_success_modal') || session('show_success_modal')) && session('new_project_id')) {
+            $newProject = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+                ->find(session('new_project_id'));
+
+        }
+
+        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors', 'newProject', 'archives'));
     }
 
     /**
@@ -137,17 +227,20 @@ class ProjectController extends Controller
                 throw new \Exception('User not authenticated');
             }
 
-            // Create the project with default status "planning"
-            $project = Project::create([
+            $projectData = [
                 'project_name' => $request->project_name,
-                'project_location' => $request->project_location,
                 'client_id' => $request->client_id,
                 'engineer_id' => $user->user_id,
                 'start_date' => $request->start_date,
                 'target_end_date' => $request->target_end_date,
-                'status' => 'planning', // Always default to planning on create
+                'actual_end_date' => $request->filled('actual_end_date') ? $request->input('actual_end_date') : null,
+                'status' => $request->filled('status') ? $request->input('status') : 'planning',
                 'description' => $request->description,
-            ]);
+            ];
+
+            $projectData = array_merge($projectData, $this->buildProjectLocationPayload($request->project_location));
+
+            $project = Project::create($projectData);
 
             // Assign supervisor if provided
             if ($request->supervisor_id) {
@@ -187,60 +280,33 @@ class ProjectController extends Controller
                 Log::error('Failed to notify client on project creation: ' . $e->getMessage());
             }
 
-            // AUTOMATION LINK: Seed default physical construction timelines into 'phases' table
-            $defaultPhases = [
-                ['phase_name' => 'Phase 1: Mobilization & Site Clearance', 'weight' => 10],
-                ['phase_name' => 'Phase 2: Substructure & Foundation Works', 'weight' => 30],
-                ['phase_name' => 'Phase 3: Structural Frame & Superstructure', 'weight' => 40],
-                ['phase_name' => 'Phase 4: Architectural Works & Finishing', 'weight' => 20],
-            ];
-
-            foreach ($defaultPhases as $index => $phase) {
-                $createdPhase = $project->phases()->create([
-                    'phase_name'            => $phase['phase_name'],
-                    'status'                => $index === 0 ? 'in_progress' : 'not_started', 
-                    'completion_percentage' => 0,
-                    'planned_start_date'    => $project->start_date,      
-                    'planned_end_date'      => $project->target_end_date, 
-                    'phase_order'           => $index + 1,
-                ]);
-
-                // Notify assigned supervisors about new phase
-                $project->supervisors()->wherePivot('is_active', true)->get()->each(function ($sup) use ($createdPhase) {
-                    try {
-                        \App\Services\NotificationService::notifySupervisor($sup->user_id, [
-                            'type' => 'phase',
-                            'title' => 'New Construction Phase',
-                            'message' => "A new construction phase '{$createdPhase->phase_name}' has been added to your project.",
-                            'data' => ['module' => 'supervisor.phases', 'phase_id' => $createdPhase->phase_id],
-                            'related_id' => $createdPhase->phase_id,
-                            'related_type' => 'phase',
-                        ]);
-                    } catch (\Throwable $e) {
-                        // ignore errors
-                    }
-                });
-            }
-
             DB::commit();
 
             return redirect()
-                ->route('admin.projects.show', $project)
-                ->with('success', 'Project created and architectural milestones initialized successfully!');
+                ->route('admin.projects.index')
+                ->with('success', 'Project created successfully. Construction phases and milestones can now be added manually by the admin.')
+                ->with('success_title', 'Project Created Successfully')
+                ->with('show_create_success_modal', true)
+                ->with('new_project_id', $project->project_id);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Failed to create project: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'user_id' => optional(auth('web')->user())->user_id,
+            ]);
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to create project: ' . $e->getMessage());
+                ->with('error', 'We could not create the project right now. Please review the form and try again.');
         }
     }
 
     /**
      * Display the specified project.
      */
-    public function show(Project $project)
+    public function show(Project $project, Request $request)
     {
         // Load all required relationships
         $project->load([
@@ -257,13 +323,15 @@ class ProjectController extends Controller
                 ->with('error', 'Project not found.');
         }
 
-        // Debug: Log the project data being passed to view
-        Log::info('Project show data:', [
-            'project_id' => $project->project_id,
-            'project_name' => $project->project_name,
-            'status' => $project->status,
-            'location' => $project->project_location
-        ]);
+        $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        if ($isAjax) {
+            // Used by the Project Details modal (fetched from the projects table / sidebar).
+            return response()->view('admin.projects.partials.details-modal', [
+                'project' => $project,
+                'isModal' => true,
+            ]);
+        }
 
         return view('admin.projects.show', compact('project'));
     }
@@ -293,44 +361,90 @@ class ProjectController extends Controller
      */
     public function update(UpdateProjectRequest $request, Project $project)
     {
+        $redirectTarget = $this->buildAdminProjectsRedirectUrl($request);
+
         try {
             DB::beginTransaction();
 
+            $project = Project::query()->findOrFail($request->input('project_id', $project->getKey()));
+
             // Prepare the update data with proper normalization
-            $projectName = trim($request->input('project_name', ''));
-            $projectLocation = trim($request->input('project_location', ''));
+            $projectName = trim((string) $request->input('project_name', ''));
+            $projectLocation = trim((string) $request->input('project_location', $request->input('location', '')));
             $clientId = (int) $request->input('client_id', 0);
             $startDate = $request->input('start_date');
             $targetEndDate = $request->input('target_end_date');
-            $actualEndDate = $request->input('actual_end_date');
-            $status = $request->input('status');
-            $description = $request->input('description') ? trim($request->input('description')) : null;
+            $actualEndDate = $request->filled('actual_end_date') ? $request->input('actual_end_date') : null;
+            $status = (string) $request->input('status', $project->status);
+            $description = $request->filled('description') ? trim((string) $request->input('description')) : null;
 
-            // Prevent invalid status transitions
-            $currentStatus = $project->status;
-            if ($currentStatus === 'archived') {
+            $currentStatus = strtolower((string) $project->status);
+            $requestedStatus = strtolower((string) $status);
+            $normalizedCurrentStatus = match ($currentStatus) {
+                'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
+                'completed', 'complete', 'finished' => 'completed',
+                'on_hold', 'pending' => 'on_hold',
+                'planning', 'not_started', 'paused', 'delayed' => 'planning',
+                'archived' => 'archived',
+                default => 'planning',
+            };
+            $normalizedRequestedStatus = match ($requestedStatus) {
+                'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
+                'completed', 'complete', 'finished' => 'completed',
+                'on_hold', 'pending' => 'on_hold',
+                'planning', 'not_started', 'paused', 'delayed' => 'planning',
+                'archived' => 'archived',
+                default => 'planning',
+            };
+
+            if ($normalizedCurrentStatus === 'archived') {
                 return redirect()
-                    ->back()
+                    ->route('admin.projects.index')
                     ->withInput()
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
                     ->with('error', 'An archived project cannot be modified.');
             }
 
-            if ($currentStatus === 'ongoing' && $status === 'planning') {
+            if ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'planning') {
+                // Planning projects can stay planning or advance to in progress.
+            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'ongoing') {
+                // Allowed progression from planning to in progress.
+            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'completed') {
                 return redirect()
-                    ->back()
+                    ->route('admin.projects.index')
                     ->withInput()
-                    ->with('error', 'An ongoing project cannot be changed back to planning.');
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
+                    ->with('error', 'A planning project must move to in progress before it can be marked as completed.');
+            } elseif ($normalizedCurrentStatus === 'ongoing' && $normalizedRequestedStatus === 'planning') {
+                return redirect()
+                    ->route('admin.projects.index')
+                    ->withInput()
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
+                    ->with('error', 'A project that is already in progress cannot be moved back to planning.');
+            } elseif ($normalizedCurrentStatus === 'on_hold' && $normalizedRequestedStatus === 'planning') {
+                // On-hold projects may return to planning when needed.
+            } elseif ($normalizedCurrentStatus === 'on_hold' && $normalizedRequestedStatus === 'on_hold') {
+                // On-hold projects can remain on hold.
+            } elseif ($normalizedCurrentStatus === 'completed' && $normalizedRequestedStatus !== 'completed') {
+                return redirect()
+                    ->route('admin.projects.index')
+                    ->withInput()
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
+                    ->with('error', 'A completed project cannot be changed back to planning or in progress.');
+            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'archived') {
+                return redirect()
+                    ->route('admin.projects.index')
+                    ->withInput()
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
+                    ->with('error', 'A planning project cannot be archived directly.');
             }
 
-            if ($currentStatus === 'completed' && in_array($status, ['planning', 'ongoing'])) {
-                return redirect()
-                    ->back()
-                    ->withInput()
-                    ->with('error', 'A completed project cannot be changed to planning or ongoing.');
-            }
-
-            // If a project is being completed, make sure actual end date is set
-            if ($status === 'completed' && empty($actualEndDate)) {
+            if ($normalizedRequestedStatus === 'completed' && empty($actualEndDate)) {
                 $actualEndDate = now()->toDateString();
             }
 
@@ -338,86 +452,23 @@ class ProjectController extends Controller
             $oldStatus = $project->status;
             $oldClientId = $project->client_id;
 
-            // Compare each field to detect actual changes
-            $hasChanges = false;
-
-            // Compare text fields
-            if ($project->project_name !== $projectName) {
-                $hasChanges = true;
-            }
-            if ($project->project_location !== $projectLocation) {
-                $hasChanges = true;
-            }
-            if ((int) $project->client_id !== $clientId) {
-                $hasChanges = true;
-            }
-            if ($project->status !== $status) {
-                $hasChanges = true;
-            }
-            if ($project->description !== $description) {
-                $hasChanges = true;
-            }
-
-            // Compare dates as strings
-            if ($startDate && $project->start_date) {
-                $newStartDate = \Carbon\Carbon::parse($startDate)->toDateString();
-                $oldStartDate = $project->start_date->toDateString();
-                if ($newStartDate !== $oldStartDate) {
-                    $hasChanges = true;
-                }
-            }
-
-            if ($targetEndDate && $project->target_end_date) {
-                $newTargetDate = \Carbon\Carbon::parse($targetEndDate)->toDateString();
-                $oldTargetDate = $project->target_end_date->toDateString();
-                if ($newTargetDate !== $oldTargetDate) {
-                    $hasChanges = true;
-                }
-            }
-
-            // Compare actual end date (can be null)
-            if ($actualEndDate && $project->actual_end_date) {
-                $newActualDate = \Carbon\Carbon::parse($actualEndDate)->toDateString();
-                $oldActualDate = $project->actual_end_date->toDateString();
-                if ($newActualDate !== $oldActualDate) {
-                    $hasChanges = true;
-                }
-            } elseif (($actualEndDate === null && $project->actual_end_date !== null) || 
-                      ($actualEndDate !== null && $project->actual_end_date === null)) {
-                $hasChanges = true;
-            }
-
-            // Check for supervisor changes
-            $newSupervisorId = $request->input('supervisor_id') ? (int) $request->input('supervisor_id') : null;
-            $currentSupervisor = $project->supervisors()
-                ->wherePivot('is_active', true)
-                ->first();
-            $currentSupervisorId = $currentSupervisor ? (int) $currentSupervisor->user_id : null;
-
-            if ($newSupervisorId !== $currentSupervisorId) {
-                $hasChanges = true;
-            }
-
-            // If no actual changes detected, return early
-            if (!$hasChanges) {
-                DB::rollBack();
-                return redirect()
-                    ->route('admin.projects.edit', $project)
-                    ->withInput()
-                    ->with('info', 'No changes were detected.');
-            }
-
-            // Update project details
-            $project->update([
+            // Update project details directly once the request passes validation.
+            $payload = array_merge([
                 'project_name' => $projectName,
-                'project_location' => $projectLocation,
                 'client_id' => $clientId,
                 'start_date' => $startDate,
                 'target_end_date' => $targetEndDate,
                 'actual_end_date' => $actualEndDate,
                 'status' => $status,
                 'description' => $description,
-            ]);
+            ], $this->buildProjectLocationPayload($projectLocation));
+
+            $project->forceFill($payload);
+            $project->save();
+
+            // Preserve the explicit status chosen in the edit form.
+            // The workflow status is derived from phases elsewhere, so avoid overwriting
+            // the user-submitted status during a manual project update.
 
             // Update supervisor assignment
             if ($request->has('supervisor_id')) {
@@ -456,6 +507,8 @@ class ProjectController extends Controller
 
             DB::commit();
 
+            session()->forget(['edit_project_id', 'show_edit_project_modal']);
+
             // Notify client on important changes
             try {
                 // If project status changed
@@ -485,16 +538,26 @@ class ProjectController extends Controller
                 Log::error('Failed to notify client on project update: ' . $e->getMessage());
             }
 
-            return redirect()
-                ->route('admin.projects.index')
-                ->with('success', 'Project updated successfully!');
+            return redirect($redirectTarget)
+                ->with('success', 'Project updated successfully.')
+                ->with('success_title', 'Project Updated')
+                ->with('show_create_success_modal', false)
+                ->with('show_edit_project_modal', false)
+                ->with('new_project_id', $project->project_id);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()
-                ->back()
+            Log::error('Failed to update project: ' . $e->getMessage(), [
+                'project_id' => $project->project_id,
+                'request' => $request->all(),
+                'user_id' => optional(auth('web')->user())->user_id,
+            ]);
+
+            return redirect($redirectTarget)
                 ->withInput()
-                ->with('error', 'Failed to update project: ' . $e->getMessage());
+                ->with('edit_project_id', $project->project_id)
+                ->with('show_edit_project_modal', true)
+                ->with('error', 'We could not update the project right now. Please review the form and try again.');
         }
     }
 
@@ -503,23 +566,114 @@ class ProjectController extends Controller
      */
     public function archive(Project $project)
     {
-        try {
-            if (in_array($project->status, ['completed', 'archived'])) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'Completed or archived projects cannot be archived again.');
-            }
-
-            $project->update(['status' => 'archived']);
-
-            return redirect()
-                ->route('admin.projects.index')
-                ->with('success', 'Project archived successfully!');
-
-        } catch (\Exception $e) {
+        $user = Auth::guard('web')->user();
+        if (!$this->isAdminUser($user)) {
             return redirect()
                 ->back()
-                ->with('error', 'Failed to archive project: ' . $e->getMessage());
+                ->with('error', 'Only admins can archive projects.')
+                ->with('error_title', 'Permission Denied');
+        }
+
+        try {
+            if ($this->projectIsArchived($project)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'This project is already archived.')
+                    ->with('error_title', 'Cannot Archive Project');
+            }
+
+            $payload = [
+                'status' => $this->getArchiveStatusValue(),
+            ];
+            if (Schema::hasColumn('projects', 'is_archived')) {
+                $payload['is_archived'] = true;
+            }
+
+            $project->forceFill($payload);
+            $project->save();
+            $project->refresh();
+
+            ProjectArchive::updateOrCreate(
+                ['project_id' => $project->getKey()],
+                [
+                    'project_name' => $project->project_name,
+                    'project_location' => \App\Models\ProjectArchive::resolveLocation($project),
+                    'client_id' => $project->client_id,
+                    'engineer_id' => $project->engineer_id,
+                    'start_date' => $project->start_date,
+                    'target_end_date' => $project->target_end_date,
+                    'actual_end_date' => $project->actual_end_date,
+                    'status' => 'archived',
+                    'description' => $project->description,
+                    'archived_at' => now(),
+                ]
+            );
+
+            return redirect()->route('admin.projects.index')
+                ->with('success', 'Project archived successfully.')
+                ->with('success_title', 'Project Archived');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to archive project.', [
+                'project_id' => $project->project_id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to archive project: ' . $e->getMessage())
+                ->with('error_title', 'Archive Failed');
+        }
+    }
+
+    /**
+     * Restore an archived project back to the active workflow.
+     */
+    public function restore(Project $project)
+    {
+        $user = Auth::guard('web')->user();
+        if (!$this->isAdminUser($user)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Only admins can restore projects.')
+                ->with('error_title', 'Permission Denied');
+        }
+
+        try {
+            $project->refresh();
+            $isArchived = $this->projectIsArchived($project);
+            if (!$isArchived) {
+                return redirect()
+                    ->back()
+                    ->with('info', 'Only archived projects can be restored.')
+                    ->with('error_title', 'Restore Not Available');
+            }
+
+            $payload = ['status' => $this->getRestoreStatusValue()];
+            if (Schema::hasColumn('projects', 'is_archived')) {
+                $payload['is_archived'] = false;
+            }
+
+            $project->forceFill($payload);
+            $project->save();
+            $project->refresh();
+
+            return redirect()->route('admin.projects.index')
+                ->with('success', 'Project restored successfully.')
+                ->with('success_title', 'Project Restored');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to restore project.', [
+                'project_id' => $project->project_id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to restore project: ' . $e->getMessage())
+                ->with('error_title', 'Restore Failed');
         }
     }
 
@@ -528,42 +682,140 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        try {
-            $hasRelatedRecords = (
-                $project->phases()->exists() ||
-                $project->supervisors()->exists() ||
-                $project->reports()->exists() ||
-                $project->attendanceLogs()->exists() ||
-                $project->workers()->exists()
-            );
-
-            if ($hasRelatedRecords) {
-                $project->phases()->delete();
-                $project->supervisors()->detach();
-                $project->attendanceLogs()->delete();
-                $project->workers()->detach();
-                $project->reports()->delete();
-            }
-
-            DB::table('projects')
-                ->where('project_id', $project->project_id)
-                ->delete();
-
-            return redirect()
-                ->route('admin.projects.index')
-                ->with('success', 'Project deleted successfully!');
-
-        } catch (\Exception $e) {
+        $user = Auth::guard('web')->user();
+        if (!$this->isAdminUser($user)) {
             return redirect()
                 ->back()
-                ->with('error', 'Failed to delete project: ' . $e->getMessage());
+                ->with('error', 'Only admins can delete projects.')
+                ->with('error_title', 'Permission Denied');
         }
+
+        try {
+            if ($this->projectHasRelatedRecords($project)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'This project already contains construction records. Projects with existing phases, milestones, reports, attendance, or material usage cannot be deleted. Please archive the project instead.')
+                    ->with('error_title', 'Cannot Delete Project');
+            }
+
+            $project->delete();
+
+            return redirect()->route('admin.projects.index')
+                ->with('success', 'Project deleted successfully.')
+                ->with('success_title', 'Project Deleted');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to delete project.', [
+                'project_id' => $project->project_id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to delete project: ' . $e->getMessage())
+                ->with('error_title', 'Delete Failed');
+        }
+    }
+
+    private function projectHasRelatedRecords(Project $project): bool
+    {
+        return (
+            $project->phases()->exists() ||
+            $project->phases()->whereHas('milestones')->exists() ||
+            $project->reports()->exists() ||
+            $project->materialUsages()->exists() ||
+            $project->attendanceLogs()->exists()
+        );
+    }
+
+    private function projectIsArchived(Project $project): bool
+    {
+        $status = strtolower((string) ($project->status ?? ''));
+        if ($status === 'archived') {
+            return true;
+        }
+
+        if ($status === 'completed' && (bool) $project->getAttribute('is_archived')) {
+            return true;
+        }
+
+        if (!Schema::hasColumn('projects', 'is_archived')) {
+            return false;
+        }
+
+        return (bool) $project->getAttribute('is_archived');
+    }
+
+    protected function getArchiveStatusValue(): string
+    {
+        return 'archived';
+    }
+
+    protected function getRestoreStatusValue(): string
+    {
+        return 'planning';
+    }
+
+    private function isAdminUser($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return in_array(strtolower((string) $user->role), ['engineer', 'admin', 'administrator'], true);
     }
 
     /**
      * Render the custom Phase Management Workspace.
      * Aligned explicitly with the Project Engineer / Admin approval ecosystem.
      */
+    private function buildAdminProjectsRedirectUrl(?Request $request = null): string
+    {
+        return route('admin.projects.index', [], false);
+    }
+
+    private function buildProjectLocationPayload(string $location): array
+    {
+        $payload = [];
+
+        if (Schema::hasColumn('projects', 'project_location')) {
+            $payload['project_location'] = $location;
+        }
+
+        if (Schema::hasColumn('projects', 'location')) {
+            $payload['location'] = $location;
+        }
+
+        if (empty($payload)) {
+            $payload['project_location'] = $location;
+        }
+
+        return $payload;
+    }
+
+    private function normalizeProjectStatus($status): string
+    {
+        return match (strtolower((string) $status)) {
+            'in_progress', 'inprogress', 'ongoing', 'active' => 'in_progress',
+            'completed', 'complete', 'finished' => 'completed',
+            'pending', 'planning', 'not_started', 'on_hold', 'paused', 'delayed' => 'pending',
+            'archived' => 'archived',
+            default => 'pending',
+        };
+    }
+
+    private function getProjectStatusVariants(string $status): array
+    {
+        return match ($status) {
+            'in_progress' => ['in_progress', 'ongoing', 'inprogress', 'active'],
+            'completed' => ['completed', 'complete', 'finished'],
+            'pending' => ['planning', 'on_hold'],
+            'archived' => ['archived'],
+            default => ['pending'],
+        };
+    }
+
     public function phaseManagement(Request $request)
     {
         $pendingReports = collect();

@@ -65,7 +65,7 @@
 
     .project-form-actions .btn {
         flex: 0 0 auto;
-        padding: 0.6rem 1.5rem;
+        padding: 0.45rem 1rem;
         border-radius: 6px;
         font-size: 0.875rem;
     }
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="start_date" class="form-label fw-bold text-dark small">Planned Start Date <span class="text-danger">*</span></label>
                                 <input type="date" 
                                        class="form-control form-control-sm @error('start_date') is-invalid @enderror" 
@@ -223,20 +223,35 @@ document.addEventListener('DOMContentLoaded', function() {
                                        name="start_date" 
                                        value="{{ old('start_date') }}" 
                                        required>
+                                <div class="form-text small text-muted mt-1">Planned kickoff date.</div>
                                 @error('start_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="target_end_date" class="form-label fw-bold text-dark small">Target Completion Date <span class="text-danger">*</span></label>
+                            <div class="col-md-4 mb-3">
+                                <label for="target_end_date" class="form-label fw-bold text-dark small">Planned End Date <span class="text-danger">*</span></label>
                                 <input type="date" 
                                        class="form-control form-control-sm @error('target_end_date') is-invalid @enderror" 
                                        id="target_end_date" 
                                        name="target_end_date" 
                                        value="{{ old('target_end_date') }}" 
                                        required>
+                                <div class="form-text small text-muted mt-1">Target schedule for completion.</div>
                                 @error('target_end_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="actual_end_date" class="form-label fw-bold text-dark small">Actual End Date</label>
+                                <input type="date" 
+                                       class="form-control form-control-sm @error('actual_end_date') is-invalid @enderror" 
+                                       id="actual_end_date" 
+                                       name="actual_end_date" 
+                                       value="{{ old('actual_end_date') }}">
+                                <div class="form-text small text-muted mt-1">Actual completion date, if finished.</div>
+                                @error('actual_end_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
