@@ -99,7 +99,7 @@ class ProjectController extends Controller
                 $query->where(function ($q) use ($hasArchiveFlag) {
                     $q->where('status', 'archived');
                     if ($hasArchiveFlag) {
-                        $q->orWhereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 1');
+                        $q->orWhereRaw('COALESCE(is_archived, 0) = 1');
                     }
                 });
             } elseif ($normalizedStatus !== 'all') {
@@ -108,7 +108,7 @@ class ProjectController extends Controller
 
                 if ($hasArchiveFlag) {
                     $query->where(function ($q) {
-                        $q->whereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 0');
+                        $q->whereRaw('COALESCE(is_archived, 0) = 0');
                     });
                 }
             }
@@ -118,7 +118,7 @@ class ProjectController extends Controller
 
                 if ($hasArchiveFlag) {
                     $q->where(function ($subQuery) {
-                        $subQuery->whereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 0');
+                        $subQuery->whereRaw('COALESCE(is_archived, 0) = 0');
                     });
                 }
             });
@@ -162,7 +162,7 @@ class ProjectController extends Controller
             'archived' => Project::query()->where(function ($q) {
                 $q->where('status', 'archived');
                 if (Schema::hasColumn('projects', 'is_archived')) {
-                    $q->orWhereRaw('COALESCE(CAST(is_archived AS INTEGER), 0) = 1');
+                    $q->orWhereRaw('COALESCE(is_archived, 0) = 1');
                 }
             })->count(),
         ];
@@ -271,7 +271,7 @@ class ProjectController extends Controller
                         'type' => 'project',
                         'title' => 'Project Created',
                         'message' => "A new project '{$project->project_name}' has been created for you.",
-                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id]],
                         'related_id' => $project->project_id,
                         'related_type' => 'project',
                     ]);
@@ -517,7 +517,7 @@ class ProjectController extends Controller
                         'type' => 'project',
                         'title' => 'Project Status Updated',
                         'message' => "Project '{$project->project_name}' status changed to {$project->status}.",
-                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id, 'status' => $project->status],
+                        'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
                         'related_id' => $project->project_id,
                         'related_type' => 'project',
                     ]);
@@ -529,7 +529,7 @@ class ProjectController extends Controller
                         'type' => 'project',
                         'title' => 'Assigned To Project',
                         'message' => "You have been assigned to project '{$project->project_name}'.",
-                        'data' => ['module' => 'client.projects', 'project_id' => $project->project_id],
+                        'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id]],
                         'related_id' => $project->project_id,
                         'related_type' => 'project',
                     ]);
@@ -658,6 +658,8 @@ class ProjectController extends Controller
             $project->forceFill($payload);
             $project->save();
             $project->refresh();
+
+            ProjectArchive::where('project_id', $project->project_id)->delete();
 
             return redirect()->route('admin.projects.index')
                 ->with('success', 'Project restored successfully.')
