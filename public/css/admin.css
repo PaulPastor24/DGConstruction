@@ -138,15 +138,14 @@ flex: 1 1 auto;
 flex-direction: column;
 gap: 2px;
 
-
 padding: 10px 16px 8px;
 
-overflow: hidden;
+overflow-x: hidden;
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
 
 scrollbar-width: none;
 -ms-overflow-style: none;
-
-
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -1374,3 +1373,66 @@ width: min(280px, 86vw);
 
 }
 
+/* ==========================================================================
+MOBILE SIDEBAR SCROLL FIX
+========================================================================== */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .sidebar-logo {
+        flex: 0 0 auto;
+    }
+
+    .sidebar-nav {
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 18px;
+    }
+
+    .sidebar-footer {
+        flex: 0 0 82px;
+        min-height: 82px;
+        padding-bottom: 12px;
+    }
+
+    .blueprint-watermark {
+        height: 92px;
+    }
+
+    .sidebar-slogan {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 520px) {
+    .sidebar {
+        width: min(280px, 86vw);
+    }
+
+    .sidebar-nav {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar-footer {
+        flex-basis: 72px;
+        min-height: 72px;
+    }
+
+    .blueprint-watermark {
+        height: 82px;
+    }
+
+    .sidebar-slogan {
+        font-size: 14px;
+    }
+}

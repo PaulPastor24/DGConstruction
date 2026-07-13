@@ -4,181 +4,13 @@
 @section('page_title', 'Worker Attendance')
 
 @push('styles')
-    @vite(['resources/css/admin-attendance.css'])
-
-    <style>
-        .attendance-filter-card {
-            position: relative !important;
-            margin-bottom: 24px !important;
-            padding: 22px !important;
-            overflow: hidden !important;
-            border: 1px solid #e5ece7 !important;
-            border-radius: 24px !important;
-            background: linear-gradient(180deg, #ffffff 0%, #f8faf8 100%) !important;
-            box-shadow:
-                0 14px 34px rgba(16, 39, 27, 0.07),
-                inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-        }
-
-        .attendance-filter-card::before {
-            position: absolute !important;
-            top: 0 !important;
-            right: 24px !important;
-            left: 24px !important;
-            height: 4px !important;
-            border-radius: 999px !important;
-            background: linear-gradient(90deg, #6f8b67 0%, #97ab93 100%) !important;
-            content: '' !important;
-        }
-
-        .attendance-filter-form {
-            display: grid !important;
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-            gap: 16px !important;
-            align-items: stretch !important;
-        }
-
-        .filter-group {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 8px !important;
-            padding: 14px !important;
-            border: 1px solid #edf2ee !important;
-            border-radius: 18px !important;
-            background: #ffffff !important;
-            box-shadow: 0 6px 18px rgba(16, 39, 27, 0.04) !important;
-        }
-
-        .filter-group label {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            color: #738178 !important;
-            font-size: 10px !important;
-            font-weight: 800 !important;
-            letter-spacing: 1px !important;
-            line-height: 1 !important;
-            text-transform: uppercase !important;
-        }
-
-        .filter-group label i {
-            color: #6f8b67 !important;
-            font-size: 12px !important;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            width: 100% !important;
-            height: 50px !important;
-            padding: 0 15px !important;
-            border: 1px solid #dde6df !important;
-            border-radius: 15px !important;
-            outline: none !important;
-            background: #f9fbf9 !important;
-            color: #203128 !important;
-            font-size: 14px !important;
-            font-weight: 500 !important;
-            appearance: none !important;
-            -webkit-appearance: none !important;
-        }
-
-        .filter-group select {
-            padding-right: 42px !important;
-            background-image:
-                linear-gradient(45deg, transparent 50%, #7b8c80 50%),
-                linear-gradient(135deg, #7b8c80 50%, transparent 50%) !important;
-            background-position:
-                calc(100% - 20px) calc(50% - 3px),
-                calc(100% - 14px) calc(50% - 3px) !important;
-            background-repeat: no-repeat !important;
-            background-size: 6px 6px, 6px 6px !important;
-        }
-
-        .filter-search-wide {
-            grid-column: span 2 !important;
-        }
-
-        .filter-actions {
-            display: flex !important;
-            grid-column: span 2 !important;
-            align-items: stretch !important;
-            gap: 10px !important;
-        }
-
-        .btn-filter-primary,
-        .btn-filter-secondary {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            height: 50px !important;
-            padding: 0 18px !important;
-            border-radius: 16px !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            text-decoration: none !important;
-            white-space: nowrap !important;
-        }
-
-        .btn-filter-primary {
-            min-width: 140px !important;
-            border: 1px solid #173824 !important;
-            background: linear-gradient(135deg, #173824 0%, #264a33 100%) !important;
-            color: #ffffff !important;
-            box-shadow: 0 10px 24px rgba(23, 56, 36, 0.22) !important;
-        }
-
-        .btn-filter-secondary {
-            min-width: 110px !important;
-            border: 1px solid #dde6df !important;
-            background: #ffffff !important;
-            color: #304339 !important;
-        }
-
-        @media (max-width: 768px) {
-            .attendance-filter-card {
-                padding: 18px !important;
-                border-radius: 20px !important;
-            }
-
-            .attendance-filter-form {
-                grid-template-columns: 1fr !important;
-                gap: 12px !important;
-            }
-
-            .filter-group {
-                padding: 12px !important;
-                border-radius: 16px !important;
-            }
-
-            .filter-group input,
-            .filter-group select {
-                height: 48px !important;
-                border-radius: 14px !important;
-                font-size: 15px !important;
-            }
-
-            .filter-search-wide,
-            .filter-actions {
-                grid-column: auto !important;
-            }
-
-            .filter-actions {
-                flex-direction: column !important;
-            }
-
-            .btn-filter-primary,
-            .btn-filter-secondary {
-                width: 100% !important;
-                height: 48px !important;
-                border-radius: 14px !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/admin-attendance.css') }}?v={{ time() }}">
 @endpush
 
 @section('content')
 @php
+    $logs = $logs ?? collect();
+
     $filters = $filters ?? [
         'date' => now()->toDateString(),
         'project_id' => '',
@@ -216,19 +48,6 @@
             <p class="attendance-subtitle">
                 Review daily worker attendance, late records, absences, break logs, biometric verification, and supervisor-submitted entries.
             </p>
-        </div>
-
-        <div class="attendance-date-control">
-            <span class="date-icon">
-                <i class="bi bi-calendar3"></i>
-            </span>
-
-            <span class="date-copy">
-                <span class="date-label">Selected Date</span>
-                <span class="date-value">
-                    {{ !empty($filters['date']) ? \Carbon\Carbon::parse($filters['date'])->format('F d, Y') : 'All Dates' }}
-                </span>
-            </span>
         </div>
     </div>
 
@@ -308,7 +127,7 @@
             <div class="filter-actions">
                 <button type="submit" class="btn-filter-primary">
                     <i class="bi bi-funnel"></i>
-                    Apply Filters
+                    Apply
                 </button>
 
                 <a href="{{ route('admin.attendance') }}" class="btn-filter-secondary">
@@ -320,7 +139,7 @@
     </section>
 
     <div class="attendance-stat-grid">
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="all">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Total Records</span>
                 <span class="attendance-stat-icon">
@@ -331,9 +150,9 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['total'] ?? 0) }}
             </div>
-        </article>
+        </button>
 
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="present">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Present</span>
                 <span class="attendance-stat-icon">
@@ -344,9 +163,9 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['present'] ?? 0) }}
             </div>
-        </article>
+        </button>
 
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="late">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Late / Half Day</span>
                 <span class="attendance-stat-icon">
@@ -357,9 +176,9 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['late'] ?? 0) }}
             </div>
-        </article>
+        </button>
 
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="absent">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Absent</span>
                 <span class="attendance-stat-icon">
@@ -370,9 +189,9 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['absent'] ?? 0) }}
             </div>
-        </article>
+        </button>
 
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="missing-timeout">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Missing Time Out</span>
                 <span class="attendance-stat-icon">
@@ -383,9 +202,9 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['missing_timeout'] ?? 0) }}
             </div>
-        </article>
+        </button>
 
-        <article class="attendance-stat-card">
+        <button type="button" class="attendance-stat-card stat-filter-card" data-stat-filter="break-exceeded">
             <div class="attendance-stat-header">
                 <span class="attendance-stat-label">Break Exceeded</span>
                 <span class="attendance-stat-icon">
@@ -396,7 +215,7 @@
             <div class="attendance-stat-value">
                 {{ number_format($stats['break_exceeded'] ?? 0) }}
             </div>
-        </article>
+        </button>
     </div>
 
     <section class="attendance-issues-panel">
@@ -490,7 +309,7 @@
 
                 <div>
                     <h2>Attendance Records</h2>
-                    <p>Review worker logs, project assignment, verification state, break records, and supervisor notes.</p>
+                    <p>Tap a summary card above to show the matching workers.</p>
                 </div>
             </div>
 
@@ -510,6 +329,17 @@
                     Print
                 </button>
             </div>
+        </div>
+
+        <div class="table-filter-note d-none" id="tableFilterNote">
+            <span>
+                Showing:
+                <strong id="tableFilterLabel">All Records</strong>
+            </span>
+
+            <button type="button" id="clearTableFilter">
+                Clear table filter
+            </button>
         </div>
 
         <div class="attendance-table-wrapper">
@@ -574,9 +404,35 @@
                             if ($recordedByName === '') {
                                 $recordedByName = $log->recordedBy?->name ?? 'Unknown User';
                             }
+
+                            $missingTimeout = $log->time_in
+                                && !$log->time_out
+                                && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
+
+                            $breakExceeded = false;
+
+                            if ($log->break_out && $log->break_in) {
+                                try {
+                                    $rowDate = $log->log_date
+                                        ? \Carbon\Carbon::parse($log->log_date)->toDateString()
+                                        : now()->toDateString();
+
+                                    $breakOutTime = \Carbon\Carbon::parse($rowDate . ' ' . $log->break_out);
+                                    $breakInTime = \Carbon\Carbon::parse($rowDate . ' ' . $log->break_in);
+
+                                    $breakExceeded = $breakOutTime->diffInMinutes($breakInTime, false) > 60;
+                                } catch (\Throwable $error) {
+                                    $breakExceeded = false;
+                                }
+                            }
                         @endphp
 
-                        <tr>
+                        <tr
+                            data-attendance-row="1"
+                            data-status="{{ $status }}"
+                            data-missing-timeout="{{ $missingTimeout ? '1' : '0' }}"
+                            data-break-exceeded="{{ $breakExceeded ? '1' : '0' }}"
+                        >
                             <td data-label="Worker">
                                 <div class="worker-info">
                                     <div class="worker-avatar">
@@ -676,16 +532,108 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const attendanceSearch = document.getElementById('attendanceSearch');
-        const attendanceRows = document.querySelectorAll('#attendanceTable tbody tr');
+        const attendanceRows = document.querySelectorAll('#attendanceTable tbody tr[data-attendance-row="1"]');
+        const statFilterCards = document.querySelectorAll('.stat-filter-card');
+        const tableFilterNote = document.getElementById('tableFilterNote');
+        const tableFilterLabel = document.getElementById('tableFilterLabel');
+        const clearTableFilter = document.getElementById('clearTableFilter');
 
-        attendanceSearch?.addEventListener('input', function () {
-            const keyword = this.value.toLowerCase().trim();
+        let activeStatFilter = 'all';
+
+        const filterLabels = {
+            all: 'All Records',
+            present: 'Present Workers',
+            late: 'Late / Half Day Workers',
+            absent: 'Absent Workers',
+            'missing-timeout': 'Workers Missing Time Out',
+            'break-exceeded': 'Workers With Break Exceeded'
+        };
+
+        function rowMatchesStatFilter(row) {
+            const status = row.dataset.status || '';
+
+            if (activeStatFilter === 'all') {
+                return true;
+            }
+
+            if (activeStatFilter === 'present') {
+                return status === 'present';
+            }
+
+            if (activeStatFilter === 'late') {
+                return ['late', 'half_day', 'half day'].includes(status);
+            }
+
+            if (activeStatFilter === 'absent') {
+                return status === 'absent';
+            }
+
+            if (activeStatFilter === 'missing-timeout') {
+                return row.dataset.missingTimeout === '1';
+            }
+
+            if (activeStatFilter === 'break-exceeded') {
+                return row.dataset.breakExceeded === '1';
+            }
+
+            return true;
+        }
+
+        function applyTableFilters() {
+            const keyword = attendanceSearch
+                ? attendanceSearch.value.toLowerCase().trim()
+                : '';
 
             attendanceRows.forEach(function (row) {
                 const searchableText = row.textContent.toLowerCase();
+                const matchesSearch = searchableText.includes(keyword);
+                const matchesStat = rowMatchesStatFilter(row);
 
-                row.style.display = searchableText.includes(keyword) ? '' : 'none';
+                row.style.display = matchesSearch && matchesStat ? '' : 'none';
             });
+
+            statFilterCards.forEach(function (card) {
+                card.classList.toggle(
+                    'active-stat-filter',
+                    card.dataset.statFilter === activeStatFilter
+                );
+            });
+
+            if (activeStatFilter === 'all') {
+                tableFilterNote?.classList.add('d-none');
+            } else {
+                tableFilterNote?.classList.remove('d-none');
+
+                if (tableFilterLabel) {
+                    tableFilterLabel.textContent = filterLabels[activeStatFilter] || 'Filtered Records';
+                }
+            }
+        }
+
+        attendanceSearch?.addEventListener('input', function () {
+            applyTableFilters();
+        });
+
+        statFilterCards.forEach(function (card) {
+            card.addEventListener('click', function () {
+                activeStatFilter = this.dataset.statFilter || 'all';
+                applyTableFilters();
+
+                document.getElementById('attendanceTable')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        });
+
+        clearTableFilter?.addEventListener('click', function () {
+            activeStatFilter = 'all';
+
+            if (attendanceSearch) {
+                attendanceSearch.value = '';
+            }
+
+            applyTableFilters();
         });
     });
 </script>
