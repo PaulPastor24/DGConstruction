@@ -300,7 +300,9 @@
         @include('partials.supervisor.topbar')
         <main class="content-shell">
             <div class="page-frame">
-                @yield('content')
+                <div id="silentReloadContent">
+                    @yield('content')
+                </div>
             </div>
         </main>
     </div>
@@ -310,98 +312,272 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('supervisorSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('supervisorSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
 
-        function updateToggleVisibility() {
-            if (window.innerWidth <= 1024) {
-                if (sidebarToggle) sidebarToggle.style.display = 'inline-flex';
+    const profileToggle = document.getElementById('profileDropdownToggle');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+
+    const logoutButtonTopbar = document.getElementById('logoutButtonTopbar');
+    const logoutFormTopbar = document.getElementById('logout-form-topbar');
+
+    const SILENT_RELOAD_INTERVAL = 15000; // 15 seconds
+    const CONTENT_SELECTOR = '#silentReloadContent';
+
+    let isSilentReloading = false;
+
+    function updateToggleVisibility() {
+        if (window.innerWidth <= 1024) {
+            if (sidebarToggle) {
+                sidebarToggle.style.display = 'inline-flex';
+            }
+        } else {
+            if (sidebarToggle) {
+                sidebarToggle.style.display = 'none';
+            }
+
+            closeSidebar();
+        }
+    }
+
+    function openSidebar() {
+        sidebar?.classList.add('show');
+        overlay?.classList.add('show');
+    }
+
+    function closeSidebar() {
+        sidebar?.classList.remove('show');
+        overlay?.classList.remove('show');
+    }
+
+    function toggleSidebar() {
+        const isOpen = sidebar?.classList.contains('show');
+
+        if (isOpen) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    }
+
+    function closeProfileMenu() {
+        profileMenu?.classList.remove('show');
+    }
+
+    function toggleProfileMenu() {
+        profileMenu?.classList.toggle('show');
+    }
+
+    function initializeBootstrapComponents(root = document) {
+        if (!window.bootstrap) {
+            return;
+        }
+
+        root.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (element) {
+            if (!bootstrap.Popover.getInstance(element)) {
+                new bootstrap.Popover(element);
+            }
+        });
+
+        root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+            if (!bootstrap.Tooltip.getInstance(element)) {
+                new bootstrap.Tooltip(element);
+            }
+        });
+    }
+
+    function captureInitialFormValues(root = document) {
+        root.querySelectorAll('input, textarea, select').forEach(function (field) {
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                field.dataset.initialChecked = field.checked ? '1' : '0';
             } else {
-                if (sidebarToggle) sidebarToggle.style.display = 'none';
-                if (sidebar) sidebar.classList.remove('show');
-                if (overlay) overlay.classList.remove('show');
+                field.dataset.initialValue = field.value ?? '';
+            }
+        });
+    }
+
+    function userIsTyping() {
+        const active = document.activeElement;
+
+        if (!active) {
+            return false;
+        }
+
+        return (
+            active.tagName === 'INPUT' ||
+            active.tagName === 'TEXTAREA' ||
+            active.tagName === 'SELECT' ||
+            active.isContentEditable
+        );
+    }
+
+    function modalIsOpen() {
+        return document.querySelector('.modal.show') !== null;
+    }
+
+    function hasDirtyFormInput() {
+        const fields = document.querySelectorAll('input, textarea, select');
+
+        for (const field of fields) {
+            if (
+                field.type === 'hidden' ||
+                field.type === 'submit' ||
+                field.type === 'button' ||
+                field.type === 'reset'
+            ) {
+                continue;
+            }
+
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                const initialChecked = field.dataset.initialChecked ?? (field.defaultChecked ? '1' : '0');
+                const currentChecked = field.checked ? '1' : '0';
+
+                if (initialChecked !== currentChecked) {
+                    return true;
+                }
+            } else {
+                const initialValue = field.dataset.initialValue ?? field.defaultValue ?? '';
+                const currentValue = field.value ?? '';
+
+                if (initialValue !== currentValue) {
+                    return true;
+                }
             }
         }
 
-        updateToggleVisibility();
-        window.addEventListener('resize', updateToggleVisibility);
+        return false;
+    }
 
-        if (sidebarToggle && sidebar && overlay) {
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-            });
+    async function silentReloadContent() {
+        const currentContent = document.querySelector(CONTENT_SELECTOR);
 
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            });
-
-            document.querySelectorAll('.sidebar .nav-item').forEach(function(item) {
-                item.addEventListener('click', function() {
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                });
-            });
-
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape' && sidebar.classList.contains('show')) {
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                }
-            });
+        if (!currentContent) {
+            return;
         }
 
-        const profileToggle = document.getElementById('profileDropdownToggle');
-        const profileMenu = document.getElementById('profileDropdownMenu');
-
-        if (profileToggle && profileMenu) {
-            profileToggle.addEventListener('click', function(event) {
-                event.stopPropagation();
-                profileMenu.classList.toggle('show');
-            });
-
-            document.addEventListener('click', function(event) {
-                if (!profileMenu.contains(event.target) && event.target !== profileToggle) {
-                    profileMenu.classList.remove('show');
-                }
-            });
-
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    profileMenu.classList.remove('show');
-                }
-            });
+        if (
+            isSilentReloading ||
+            document.hidden ||
+            userIsTyping() ||
+            modalIsOpen() ||
+            hasDirtyFormInput()
+        ) {
+            return;
         }
 
-        const logoutButtonTopbar = document.getElementById('logoutButtonTopbar');
-        const logoutFormTopbar = document.getElementById('logout-form-topbar');
+        try {
+            isSilentReloading = true;
 
-        if (logoutButtonTopbar && logoutFormTopbar) {
-            logoutButtonTopbar.addEventListener('click', function(event) {
-                event.preventDefault();
-                Swal.fire({
-                    title: 'Sign out?',
-                    text: 'Are you sure you want to log out?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#2a4028',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, log out',
-                    cancelButtonText: 'Cancel',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        logoutFormTopbar.submit();
-                    }
-                });
+            const currentScrollY = window.scrollY;
+
+            const response = await fetch(window.location.href, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-Silent-Reload': 'true'
+                },
+                cache: 'no-store',
+                credentials: 'same-origin'
             });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const newDocument = parser.parseFromString(html, 'text/html');
+            const newContent = newDocument.querySelector(CONTENT_SELECTOR);
+
+            if (!newContent) {
+                return;
+            }
+
+            currentContent.innerHTML = newContent.innerHTML;
+
+            captureInitialFormValues(currentContent);
+            initializeBootstrapComponents(currentContent);
+
+            window.scrollTo({
+                top: currentScrollY,
+                behavior: 'instant'
+            });
+
+            document.dispatchEvent(new CustomEvent('silentReloadComplete'));
+        } catch (error) {
+            console.warn('Silent reload skipped:', error);
+        } finally {
+            isSilentReloading = false;
+        }
+    }
+
+    updateToggleVisibility();
+    window.addEventListener('resize', updateToggleVisibility);
+
+    if (sidebarToggle && sidebar && overlay) {
+        sidebarToggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleSidebar();
+        });
+
+        overlay.addEventListener('click', closeSidebar);
+
+        document.querySelectorAll('.sidebar .nav-item, .sidebar a').forEach(function (item) {
+            item.addEventListener('click', closeSidebar);
+        });
+    }
+
+    if (profileToggle && profileMenu) {
+        profileToggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleProfileMenu();
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!profileMenu.contains(event.target) && !profileToggle.contains(event.target)) {
+                closeProfileMenu();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeSidebar();
+            closeProfileMenu();
         }
     });
+
+    if (logoutButtonTopbar && logoutFormTopbar) {
+        logoutButtonTopbar.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            Swal.fire({
+                title: 'Sign out?',
+                text: 'Are you sure you want to log out?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2a4028',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, log out',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    logoutFormTopbar.submit();
+                }
+            });
+        });
+    }
+
+    initializeBootstrapComponents();
+    captureInitialFormValues();
+
+    setInterval(silentReloadContent, SILENT_RELOAD_INTERVAL);
+});
 </script>
 @stack('scripts')
 </body>

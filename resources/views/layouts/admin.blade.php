@@ -28,7 +28,9 @@
         <div class="main">
             @include('partials.admin.topbar')
             <div class="content">
-                @yield('content')
+                <div id="silentReloadContent">
+                    @yield('content')
+                </div>
             </div>
         </div>
     </div>
@@ -37,122 +39,254 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('adminSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebar = document.getElementById('appSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggles = document.querySelectorAll('#sidebarToggle');
 
-            function updateToggleVisibility() {
-                if (window.innerWidth <= 1024) {
-                    if (sidebarToggle) sidebarToggle.style.display = 'inline-flex';
+        const popup = document.getElementById('notificationPopup');
+        const bells = document.querySelectorAll('.notification-toggle-btn');
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        const notificationMarkReadUrlTemplate = "{{ route('client.notifications.markRead', ['id' => '__ID__']) }}";
+
+        const SILENT_RELOAD_INTERVAL = 7000;
+        const CONTENT_SELECTOR = '#silentReloadContent';
+
+        let isSilentReloading = false;
+
+        function closeSidebar() {
+            sidebar?.classList.remove('show');
+            overlay?.classList.remove('show');
+        }
+
+        function toggleSidebar() {
+            const isOpen = sidebar?.classList.contains('show');
+
+            sidebar?.classList.toggle('show', !isOpen);
+            overlay?.classList.toggle('show', !isOpen);
+        }
+
+        function toggleNotifications() {
+            popup?.classList.toggle('show');
+        }
+
+        function initializeBootstrapComponents(root = document) {
+            root.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (element) {
+                if (!bootstrap.Popover.getInstance(element)) {
+                    new bootstrap.Popover(element);
+                }
+            });
+
+            root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+                if (!bootstrap.Tooltip.getInstance(element)) {
+                    new bootstrap.Tooltip(element);
+                }
+            });
+        }
+
+        function captureInitialFormValues(root = document) {
+            root.querySelectorAll('input, textarea, select').forEach(function (field) {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.dataset.initialChecked = field.checked ? '1' : '0';
                 } else {
-                    if (sidebarToggle) sidebarToggle.style.display = 'none';
-                    if (sidebar) sidebar.classList.remove('show');
-                    if (overlay) overlay.classList.remove('show');
+                    field.dataset.initialValue = field.value ?? '';
+                }
+            });
+        }
+
+        function userIsTyping() {
+            const active = document.activeElement;
+
+            if (!active) {
+                return false;
+            }
+
+            return (
+                active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.tagName === 'SELECT' ||
+                active.isContentEditable
+            );
+        }
+
+        function modalIsOpen() {
+            return document.querySelector('.modal.show') !== null;
+        }
+
+        function hasDirtyFormInput() {
+            const fields = document.querySelectorAll('input, textarea, select');
+
+            for (const field of fields) {
+                if (
+                    field.type === 'hidden' ||
+                    field.type === 'submit' ||
+                    field.type === 'button' ||
+                    field.type === 'reset'
+                ) {
+                    continue;
+                }
+
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    const initialChecked = field.dataset.initialChecked ?? (field.defaultChecked ? '1' : '0');
+                    const currentChecked = field.checked ? '1' : '0';
+
+                    if (initialChecked !== currentChecked) {
+                        return true;
+                    }
+                } else {
+                    const initialValue = field.dataset.initialValue ?? field.defaultValue ?? '';
+                    const currentValue = field.value ?? '';
+
+                    if (initialValue !== currentValue) {
+                        return true;
+                    }
                 }
             }
 
-            updateToggleVisibility();
-            window.addEventListener('resize', updateToggleVisibility);
+            return false;
+        }
 
-            if (sidebarToggle && sidebar && overlay) {
-                sidebarToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    sidebar.classList.toggle('show');
-                    overlay.classList.toggle('show');
-                });
+        async function silentReloadContent() {
+            const currentContent = document.querySelector(CONTENT_SELECTOR);
 
-                overlay.addEventListener('click', function() {
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                });
-
-                document.querySelectorAll('.sidebar .nav-item').forEach(function(item) {
-                    item.addEventListener('click', function() {
-                        sidebar.classList.remove('show');
-                        overlay.classList.remove('show');
-                    });
-                });
-
-                document.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape' && sidebar.classList.contains('show')) {
-                        sidebar.classList.remove('show');
-                        overlay.classList.remove('show');
-                    }
-                });
+            if (!currentContent) {
+                return;
             }
 
-            const profileToggle = document.getElementById('profileDropdownToggle');
-            const profileMenu = document.getElementById('profileDropdownMenu');
-
-            if (profileToggle && profileMenu) {
-                profileToggle.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    profileMenu.classList.toggle('show');
-                });
-
-                document.addEventListener('click', function(event) {
-                    if (!profileMenu.contains(event.target) && event.target !== profileToggle) {
-                        profileMenu.classList.remove('show');
-                    }
-                });
-
-                document.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape') {
-                        profileMenu.classList.remove('show');
-                    }
-                });
+            if (
+                isSilentReloading ||
+                document.hidden ||
+                userIsTyping() ||
+                modalIsOpen() ||
+                hasDirtyFormInput()
+            ) {
+                return;
             }
 
-            const logoutButtonTopbar = document.getElementById('logoutButtonTopbar');
-            const logoutFormTopbar = document.getElementById('logout-form-topbar');
+            try {
+                isSilentReloading = true;
 
-            if (logoutButtonTopbar && logoutFormTopbar) {
-                logoutButtonTopbar.addEventListener('click', function(event) {
+                const currentScrollY = window.scrollY;
+
+                const response = await fetch(window.location.href, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-Silent-Reload': 'true'
+                    },
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const newDocument = parser.parseFromString(html, 'text/html');
+                const newContent = newDocument.querySelector(CONTENT_SELECTOR);
+
+                if (!newContent) {
+                    return;
+                }
+
+                currentContent.innerHTML = newContent.innerHTML;
+
+                captureInitialFormValues(currentContent);
+                initializeBootstrapComponents(currentContent);
+
+                window.scrollTo({
+                    top: currentScrollY,
+                    behavior: 'instant'
+                });
+
+                document.dispatchEvent(new CustomEvent('silentReloadComplete'));
+            } catch (error) {
+                console.warn('Silent reload skipped:', error);
+            } finally {
+                isSilentReloading = false;
+            }
+        }
+
+        toggles.forEach(function (toggle) {
+            toggle?.addEventListener('click', toggleSidebar);
+        });
+
+        overlay?.addEventListener('click', closeSidebar);
+
+        document.querySelectorAll('.sidebar .nav-item').forEach(function (item) {
+            item.addEventListener('click', closeSidebar);
+        });
+
+        bells.forEach(function (bell) {
+            bell?.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggleNotifications();
+            });
+
+            bell?.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    Swal.fire({
-                        title: 'Sign out?',
-                        text: 'Are you sure you want to log out?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#2a4028',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, log out',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            logoutFormTopbar.submit();
-                        }
-                    });
-                });
-            }
+                    toggleNotifications();
+                }
+            });
+        });
 
-            const logoutButtonSidebar = document.getElementById('logoutButtonSidebar');
-            const logoutFormSidebar = document.getElementById('logout-form-sidebar');
+        document.addEventListener('click', function (event) {
+            const clickedBell = Array.from(bells).some(function (bell) {
+                return bell?.contains(event.target);
+            });
 
-            if (logoutButtonSidebar && logoutFormSidebar) {
-                logoutButtonSidebar.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    Swal.fire({
-                        title: 'Sign out?',
-                        text: 'Are you sure you want to log out?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#2a4028',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, log out',
-                        cancelButtonText: 'Cancel',
-                        reverseButtons: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            logoutFormSidebar.submit();
-                        }
-                    });
-                });
+            if (!clickedBell && !popup?.contains(event.target)) {
+                popup?.classList.remove('show');
             }
         });
+
+        popup?.addEventListener('click', function (event) {
+            const item = event.target.closest('.notification-item');
+
+            if (!item) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const id = item.getAttribute('data-notif-id');
+            const href = item.getAttribute('href');
+
+            if (!id || !href) {
+                return;
+            }
+
+            const markReadUrl = notificationMarkReadUrlTemplate.replace('__ID__', encodeURIComponent(id));
+
+            fetch(markReadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({})
+            }).then(function (response) {
+                if (!response.ok) {
+                    console.error('Notification mark-read failed:', response.statusText);
+                }
+            }).catch(function (error) {
+                console.error('Notification mark-read error:', error);
+            }).finally(function () {
+                window.location = href;
+            });
+        });
+
+        initializeBootstrapComponents();
+        captureInitialFormValues();
+
+        setInterval(silentReloadContent, SILENT_RELOAD_INTERVAL);
+    });
     </script>
     @stack('scripts')
 </body>
