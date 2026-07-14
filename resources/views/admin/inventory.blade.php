@@ -524,6 +524,57 @@
         border-color: #14532d;
     }
 
+    .mi-smooth-loading {
+        opacity: 0.55;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+    }
+
+    .mi-filter-card {
+        border: 1px solid rgba(22, 101, 52, 0.10);
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    }
+
+    .mi-expense-summary-card {
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 32, 21, 0.05);
+    }
+
+    .mi-expense-summary-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(22, 101, 52, 0.08);
+        color: #166534;
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        flex-shrink: 0;
+    }
+
+    .mi-search-input {
+        padding-left: 2.15rem !important;
+    }
+
+    .mi-search-icon {
+        left: 12px;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .mi-empty-row {
+        display: none;
+    }
+
+    .mi-empty-row.is-visible {
+        display: table-row;
+    }
+
+
     @media (max-width: 991.98px) {
         .mi-page {
             padding: 4px 0 20px;
@@ -619,6 +670,72 @@
 
 @section('content')
 <div class="mi-page inventory-green-theme">
+    @php
+        $activeInventoryView = request('view', $activeView ?? 'inventory');
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses']) ? $activeInventoryView : 'inventory';
+
+        $usageLogItems = collect();
+        if (isset($usageLogs)) {
+            $usageLogItems = method_exists($usageLogs, 'items')
+                ? collect($usageLogs->items())
+                : collect($usageLogs);
+        }
+
+        $inventoryProjectOptions = collect();
+        if (isset($projects)) {
+            $inventoryProjectOptions = collect($projects);
+        }
+
+        if ($inventoryProjectOptions->isEmpty()) {
+            $inventoryProjectOptions = $usageLogItems
+                ->map(fn ($log) => $log->project ?? null)
+                ->filter()
+                ->unique(fn ($project) => data_get($project, 'project_id') ?? data_get($project, 'id') ?? data_get($project, 'project_name') ?? (is_object($project) ? spl_object_id($project) : md5(json_encode($project))))
+                ->values();
+        }
+
+        $inventoryPhaseOptions = $usageLogItems
+            ->map(fn ($log) => $log->phase ?? null)
+            ->filter()
+            ->unique(fn ($phase) => data_get($phase, 'phase_id') ?? data_get($phase, 'id') ?? data_get($phase, 'phase_name') ?? (is_object($phase) ? spl_object_id($phase) : md5(json_encode($phase))))
+            ->values();
+
+        $selectedInventoryProjectId = request('project_id', '');
+        $selectedInventoryPhaseId = request('phase_id', '');
+
+        $expenseTotalAmount = $usageLogItems->sum(function ($log) {
+            $material = $log->material ?? null;
+            $quantity = (float) ($log->quantity_used ?? 0);
+            $unitCost = (float) (
+                $log->unit_cost
+                ?? $log->cost_per_unit
+                ?? optional($material)->unit_cost
+                ?? optional($material)->cost
+                ?? optional($material)->price
+                ?? 0
+            );
+            $totalCost = (float) (
+                $log->total_cost
+                ?? $log->amount
+                ?? $log->expense_amount
+                ?? 0
+            );
+
+            return $totalCost > 0 ? $totalCost : ($quantity * $unitCost);
+        });
+
+        $expenseTotalQuantity = $usageLogItems->sum(fn ($log) => (float) ($log->quantity_used ?? 0));
+        $expenseProjectCount = $usageLogItems
+            ->map(fn ($log) => optional($log->project)->project_id ?? optional($log->project)->id ?? optional($log->project)->project_name)
+            ->filter()
+            ->unique()
+            ->count();
+        $expensePhaseCount = $usageLogItems
+            ->map(fn ($log) => optional($log->phase)->phase_id ?? optional($log->phase)->id ?? optional($log->phase)->phase_name)
+            ->filter()
+            ->unique()
+            ->count();
+    @endphp
     
     <!-- Top 4 Summary Cards Grid Row -->
     <div class="row g-3 mb-4">
@@ -728,25 +845,30 @@
                 <div class="card-header bg-white border-0 pt-3 pb-0">
                     <ul class="nav nav-tabs border-bottom-0">
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view">Inventory</a>
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view">Inventory</a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view">Material Usage Logs</a>
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view">Material Usage Logs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
+                                Project / Phase Expenses
+                            </a>
                         </li>
                     </ul>
                 </div>
                 
                 <div class="card-body pt-3">
-                    <div id="inventory-view" class="inventory-view-panel {{ $activeView === 'usage' ? 'd-none' : '' }}">
+                    <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                            <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search materials or usage logs...">
+                            <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
                             <input type="hidden" name="view" value="inventory" id="inventory-view-input">
-                            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                         </div>
                         <div class="col-md-2">
-                            <select name="category" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                            <select name="category" class="form-select form-select-sm text-muted" >
                                 <option value="">All Categories</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat }}" {{ $category === $cat ? 'selected' : '' }}>{{ $cat }}</option>
@@ -754,7 +876,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="stock_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                            <select name="stock_status" class="form-select form-select-sm text-muted" >
                                 <option value="">All Status</option>
                                 <option value="normal" {{ $stockStatus === 'normal' ? 'selected' : '' }}>Available</option>
                                 <option value="low_stock" {{ $stockStatus === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
@@ -782,21 +904,29 @@
                                     <th class="border-0 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="inventoryMaterialsTableBody">
                                 @forelse($materials as $material)
                                     @php
                                         if($material->current_stock <= 0) {
                                             $badgeClass = 'badge-out-of-stock';
                                             $statusText = 'Out of Stock';
+                                            $stockStatusKey = 'out_of_stock';
                                         } elseif($material->current_stock <= $material->minimum_stock_level) {
                                             $badgeClass = 'badge-low-stock';
                                             $statusText = 'Low Stock';
+                                            $stockStatusKey = 'low_stock';
                                         } else {
                                             $badgeClass = 'badge-available';
                                             $statusText = 'Available';
+                                            $stockStatusKey = 'normal';
                                         }
+
+                                        $materialSearchText = strtolower(trim(($material->name ?? '') . ' ' . ($material->category ?? 'General') . ' ' . ($material->unit ?? '') . ' ' . $statusText));
                                     @endphp
-                                    <tr>
+                                    <tr data-inventory-row="true"
+                                        data-material-search="{{ $materialSearchText }}"
+                                        data-material-category="{{ $material->category ?? 'General' }}"
+                                        data-material-status="{{ $stockStatusKey }}">
                                         <td class="fw-semibold text-dark">{{ $material->name }}</td>
                                         <td class="text-muted">{{ $material->category ?? 'General' }}</td>
                                         <td class="text-muted">{{ $material->unit }}</td>
@@ -817,7 +947,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="7" class="text-center text-muted py-4">No structural materials profiles discovered.</td></tr>
+                                    <tr id="inventoryEmptyStateRow"><td colspan="7" class="text-center text-muted py-4">No structural materials profiles discovered.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -830,17 +960,46 @@
                     </div>
                     </div>
 
-                    <div id="usage-view" class="inventory-view-panel {{ $activeView === 'inventory' ? 'd-none' : '' }}">
+                    <div id="usage-view" class="inventory-view-panel {{ $activeInventoryView !== 'usage' ? 'd-none' : '' }}">
                         <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-3" id="usage-search-form">
                             <input type="hidden" name="category" value="{{ $category }}">
                             <input type="hidden" name="stock_status" value="{{ $stockStatus }}">
                             <input type="hidden" name="view" value="usage" id="usage-view-input">
                             <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm ps-4" placeholder="Search usage logs...">
-                                <i class="bi bi-search position-absolute top-50 translate-middle-y ms-1 text-muted small"></i>
+                                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search usage logs...">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="project_id" id="usageProjectFilter" class="form-select form-select-sm text-muted">
+                                    <option value="">All Projects</option>
+                                    @foreach($inventoryProjectOptions as $projectOption)
+                                        @php
+                                            $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                            $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                        @endphp
+                                        <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
+                                            {{ $projectOptionName }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="phase_id" id="usagePhaseFilter" class="form-select form-select-sm text-muted">
+                                    <option value="">All Phases</option>
+                                    @foreach($inventoryPhaseOptions as $phaseOption)
+                                        @php
+                                            $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
+                                            $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
+                                            $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
+                                        @endphp
+                                        <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
+                                            {{ $phaseOptionName }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-2">
-                                <select name="usage_category" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                <select name="usage_category" class="form-select form-select-sm text-muted" >
                                     <option value="">All Categories</option>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat }}" {{ $usageCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
@@ -848,7 +1007,7 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <select name="usage_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()" style="display: none;">
+                                <select name="usage_status" class="form-select form-select-sm text-muted"  style="display: none;">
                                     <option value="">All</option>
                                     <option value="with_remarks" {{ $usageStatus === 'with_remarks' ? 'selected' : '' }}>Has Notes</option>
                                     <option value="without_remarks" {{ $usageStatus === 'without_remarks' ? 'selected' : '' }}>No Notes</option>
@@ -869,9 +1028,42 @@
                                         <th class="border-0 text-center">Other Details</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="usageLogsTableBody">
                                     @forelse($usageLogs as $log)
-                                        <tr>
+                                        @php
+                                            $usageProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
+                                            $usagePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
+                                            $usageMaterial = $log->material ?? null;
+                                            $usageQuantity = (float) ($log->quantity_used ?? 0);
+                                            $usageUnitCost = (float) (
+                                                $log->unit_cost
+                                                ?? $log->cost_per_unit
+                                                ?? optional($usageMaterial)->unit_cost
+                                                ?? optional($usageMaterial)->cost
+                                                ?? optional($usageMaterial)->price
+                                                ?? 0
+                                            );
+                                            $usageTotalCost = (float) (
+                                                $log->total_cost
+                                                ?? $log->amount
+                                                ?? $log->expense_amount
+                                                ?? 0
+                                            );
+                                            $usageExpenseAmount = $usageTotalCost > 0 ? $usageTotalCost : ($usageQuantity * $usageUnitCost);
+                                            $usageSearchText = strtolower(trim(
+                                                (optional($log->project)->project_name ?? '') . ' ' .
+                                                (optional($log->phase)->phase_name ?? '') . ' ' .
+                                                (optional($usageMaterial)->name ?? '') . ' ' .
+                                                (optional($log->recorder)->name ?? '') . ' ' .
+                                                ($log->remarks ?? '')
+                                            ));
+                                        @endphp
+                                        <tr data-usage-row="true"
+                                            data-project-id="{{ $usageProjectId }}"
+                                            data-phase-id="{{ $usagePhaseId }}"
+                                            data-usage-category="{{ optional($usageMaterial)->category ?? 'General' }}"
+                                            data-usage-search="{{ $usageSearchText }}"
+                                            data-expense-amount="{{ $usageExpenseAmount }}">
                                             <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
                                             <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
                                             <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
@@ -899,10 +1091,179 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="8" class="text-center text-muted py-4">No analytical usage sequences registered.</td></tr>
+                                        <tr id="usageEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No analytical usage sequences registered.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
+                        </div>
+
+
+                    </div>
+
+                    <div id="expenses-view" class="inventory-view-panel {{ $activeInventoryView !== 'expenses' ? 'd-none' : '' }}">
+                        <div class="mi-filter-card p-3 mb-3">
+                            <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="expenses-filter-form">
+                                <input type="hidden" name="view" value="expenses">
+                                <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                                    <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search project, phase, material, or supervisor...">
+                                    <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="project_id" id="expenseProjectFilter" class="form-select form-select-sm text-muted">
+                                        <option value="">All Projects</option>
+                                        @foreach($inventoryProjectOptions as $projectOption)
+                                            @php
+                                                $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                                $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                            @endphp
+                                            <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
+                                                {{ $projectOptionName }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="phase_id" id="expensePhaseFilter" class="form-select form-select-sm text-muted">
+                                        <option value="">All Phases</option>
+                                        @foreach($inventoryPhaseOptions as $phaseOption)
+                                            @php
+                                                $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
+                                                $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
+                                                $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
+                                            @endphp
+                                            <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
+                                                {{ $phaseOptionName }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="expenseClearFilterBtn">
+                                        Clear
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-cash-stack"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Total Expense</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalAmount">₱{{ number_format($expenseTotalAmount, 2) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-boxes"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Materials Used</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalQuantity">{{ number_format($expenseTotalQuantity, 0) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-building"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Projects</div>
+                                            <div class="fw-bold text-dark" id="expenseProjectCount">{{ $expenseProjectCount }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-bar-chart-steps"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Phases</div>
+                                            <div class="fw-bold text-dark" id="expensePhaseCount">{{ $expensePhaseCount }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px;">
+                                    <tr>
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Project</th>
+                                        <th class="border-0">Phase</th>
+                                        <th class="border-0">Material</th>
+                                        <th class="border-0">Qty Used</th>
+                                        <th class="border-0">Unit Cost</th>
+                                        <th class="border-0">Total Expense</th>
+                                        <th class="border-0">Used By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    @forelse($usageLogItems as $log)
+                                        @php
+                                            $expenseProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
+                                            $expensePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
+                                            $expenseMaterial = $log->material ?? null;
+                                            $expenseQuantity = (float) ($log->quantity_used ?? 0);
+                                            $expenseUnitCost = (float) (
+                                                $log->unit_cost
+                                                ?? $log->cost_per_unit
+                                                ?? optional($expenseMaterial)->unit_cost
+                                                ?? optional($expenseMaterial)->cost
+                                                ?? optional($expenseMaterial)->price
+                                                ?? 0
+                                            );
+                                            $expenseDirectCost = (float) (
+                                                $log->total_cost
+                                                ?? $log->amount
+                                                ?? $log->expense_amount
+                                                ?? 0
+                                            );
+                                            $expenseAmount = $expenseDirectCost > 0 ? $expenseDirectCost : ($expenseQuantity * $expenseUnitCost);
+                                            $expenseSearchText = strtolower(trim(
+                                                (optional($log->project)->project_name ?? '') . ' ' .
+                                                (optional($log->phase)->phase_name ?? '') . ' ' .
+                                                (optional($expenseMaterial)->name ?? '') . ' ' .
+                                                (optional($log->recorder)->name ?? '') . ' ' .
+                                                ($log->remarks ?? '')
+                                            ));
+                                        @endphp
+                                        <tr data-expense-row="true"
+                                            data-project-id="{{ $expenseProjectId }}"
+                                            data-phase-id="{{ $expensePhaseId }}"
+                                            data-expense-search="{{ $expenseSearchText }}"
+                                            data-expense-amount="{{ $expenseAmount }}"
+                                            data-expense-quantity="{{ $expenseQuantity }}">
+                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
+                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($expenseMaterial)->name ?? 'N/A' }}</td>
+                                            <td class="fw-bold text-dark">{{ number_format($expenseQuantity, 0) }} {{ optional($expenseMaterial)->unit ?? 'Piece' }}</td>
+                                            <td class="text-muted">₱{{ number_format($expenseUnitCost, 2) }}</td>
+                                            <td class="fw-bold text-success">₱{{ number_format($expenseAmount, 2) }}</td>
+                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr id="expenseEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No material expense records available.</td></tr>
+                                    @endforelse
+                                    @if($usageLogItems->count() > 0)
+                                        <tr id="expenseEmptyStateRow" class="mi-empty-row"><td colspan="8" class="text-center text-muted py-4">No matching expense records found.</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-light border mt-3 mb-0 small text-muted">
+                            <i class="bi bi-info-circle text-success me-1"></i>
+                            Expense values use <strong>total_cost</strong>, <strong>amount</strong>, or <strong>expense_amount</strong> when available. If not available, the page estimates expense using quantity used × material unit cost.
                         </div>
                     </div>
                 </div>
@@ -1507,8 +1868,8 @@
                 link.classList.toggle('border-2', isActive);
             });
 
-            document.querySelectorAll('#inventory-view-input, #usage-view-input').forEach(function (input) {
-                input.value = targetId === 'usage-view' ? 'usage' : 'inventory';
+            document.querySelectorAll('#inventory-view-input, #usage-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+                input.value = getPanelViewValue(targetId);
             });
         }
 
@@ -1519,30 +1880,385 @@
             });
         });
 
-        document.querySelectorAll('#inventory-search-form input[name="search"], #usage-search-form input[name="search"]').forEach(function (input) {
-            let debounceTimer;
+        let smoothSearchTimer = null;
 
-            input.addEventListener('input', function () {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(function () {
-                    const form = input.closest('form');
-                    const activeTarget = document.querySelector('.inventory-view-toggle.active')?.getAttribute('data-target');
-                    const viewValue = activeTarget === 'usage-view' ? 'usage' : 'inventory';
-                    const hiddenInput = form.querySelector('input[name="view"]');
+        function formatCurrency(value) {
+            const number = Number(value || 0);
+            return '₱' + number.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
 
-                    if (hiddenInput) {
-                        hiddenInput.value = viewValue;
+        function setPanelLoading(panel, isLoading) {
+            if (panel) {
+                panel.classList.toggle('mi-smooth-loading', isLoading);
+            }
+        }
+
+        function getPanelViewValue(panelId) {
+            if (panelId === 'usage-view') {
+                return 'usage';
+            }
+
+            if (panelId === 'expenses-view') {
+                return 'expenses';
+            }
+
+            return 'inventory';
+        }
+
+        function buildInventoryUrl(form, panelId) {
+            const url = new URL(form.getAttribute('action') || window.location.href, window.location.origin);
+            const data = new FormData(form);
+
+            data.set('view', getPanelViewValue(panelId));
+
+            Array.from(data.entries()).forEach(function ([key, value]) {
+                if (value !== null && String(value).trim() !== '') {
+                    url.searchParams.set(key, value);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            });
+
+            return url;
+        }
+
+        async function fetchInventoryPanel(form, panelId) {
+            const panel = document.getElementById(panelId);
+
+            if (!form || !panel) {
+                return;
+            }
+
+            const url = buildInventoryUrl(form, panelId);
+
+            try {
+                setPanelLoading(panel, true);
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Unable to refresh inventory data.');
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const refreshedPanel = doc.getElementById(panelId);
+
+                if (!refreshedPanel) {
+                    window.location.href = url.toString();
+                    return;
+                }
+
+                panel.innerHTML = refreshedPanel.innerHTML;
+                window.history.replaceState({}, '', url.toString());
+
+                bindSmoothInventoryForms();
+                bindInventoryPagination();
+                bindExpenseFilters();
+                bindUsageClientFilters();
+
+                if (panelId === 'usage-view') {
+                    applyUsageClientFilters();
+                }
+
+                if (panelId === 'expenses-view') {
+                    applyExpenseFilters();
+                }
+            } catch (error) {
+                console.error(error);
+                window.location.href = url.toString();
+            } finally {
+                setPanelLoading(panel, false);
+            }
+        }
+
+        function bindSmoothInventoryForms() {
+            document.querySelectorAll('#inventory-search-form, #usage-search-form').forEach(function (form) {
+                if (form.dataset.smoothBound === '1') {
+                    return;
+                }
+
+                form.dataset.smoothBound = '1';
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const panel = form.closest('.inventory-view-panel');
+                    fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                });
+
+                form.querySelectorAll('input[name="search"]').forEach(function (input) {
+                    input.addEventListener('input', function () {
+                        clearTimeout(smoothSearchTimer);
+                        smoothSearchTimer = setTimeout(function () {
+                            const panel = form.closest('.inventory-view-panel');
+                            fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                        }, 350);
+                    });
+                });
+
+                form.querySelectorAll('select').forEach(function (select) {
+                    select.addEventListener('change', function () {
+                        const panel = form.closest('.inventory-view-panel');
+
+                        if (select.id === 'usageProjectFilter' || select.id === 'usagePhaseFilter') {
+                            applyUsageClientFilters();
+                            return;
+                        }
+
+                        fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                    });
+                });
+            });
+        }
+
+        function bindInventoryPagination() {
+            document.querySelectorAll('#inventory-view .pagination a, #usage-view .pagination a').forEach(function (link) {
+                if (link.dataset.smoothBound === '1') {
+                    return;
+                }
+
+                link.dataset.smoothBound = '1';
+
+                link.addEventListener('click', function (event) {
+                    const href = link.getAttribute('href');
+
+                    if (!href || href === '#') {
+                        return;
                     }
 
-                    form.submit();
-                }, 350);
+                    event.preventDefault();
+
+                    const panel = link.closest('.inventory-view-panel');
+                    const targetPanelId = panel?.id || 'inventory-view';
+
+                    fetch(href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        },
+                        cache: 'no-store'
+                    })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Pagination failed.');
+                            }
+
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const refreshedPanel = doc.getElementById(targetPanelId);
+
+                            if (!refreshedPanel || !panel) {
+                                window.location.href = href;
+                                return;
+                            }
+
+                            panel.innerHTML = refreshedPanel.innerHTML;
+                            window.history.replaceState({}, '', href);
+
+                            bindSmoothInventoryForms();
+                            bindInventoryPagination();
+                            bindExpenseFilters();
+                            bindUsageClientFilters();
+                            applyUsageClientFilters();
+                        })
+                        .catch(function () {
+                            window.location.href = href;
+                        });
+                });
             });
-        });
+        }
+
+        function filterPhaseOptions(projectSelect, phaseSelect) {
+            if (!projectSelect || !phaseSelect) {
+                return;
+            }
+
+            const projectId = projectSelect.value;
+
+            Array.from(phaseSelect.options).forEach(function (option) {
+                if (!option.value) {
+                    option.hidden = false;
+                    return;
+                }
+
+                const optionProjectId = option.getAttribute('data-project-id') || '';
+                option.hidden = projectId && optionProjectId && optionProjectId !== projectId;
+            });
+
+            if (phaseSelect.selectedOptions[0]?.hidden) {
+                phaseSelect.value = '';
+            }
+        }
+
+        function applyUsageClientFilters() {
+            const projectSelect = document.getElementById('usageProjectFilter');
+            const phaseSelect = document.getElementById('usagePhaseFilter');
+            const projectId = projectSelect?.value || '';
+            const phaseId = phaseSelect?.value || '';
+            const rows = Array.from(document.querySelectorAll('#usageLogsTableBody tr[data-usage-row="true"]'));
+            const emptyRow = document.getElementById('usageEmptyStateRow');
+            let visibleCount = 0;
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+
+            rows.forEach(function (row) {
+                const matchesProject = !projectId || row.dataset.projectId === projectId;
+                const matchesPhase = !phaseId || row.dataset.phaseId === phaseId;
+                const isVisible = matchesProject && matchesPhase;
+
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        function bindUsageClientFilters() {
+            const projectSelect = document.getElementById('usageProjectFilter');
+            const phaseSelect = document.getElementById('usagePhaseFilter');
+
+            [projectSelect, phaseSelect].forEach(function (select) {
+                if (!select || select.dataset.clientFilterBound === '1') {
+                    return;
+                }
+
+                select.dataset.clientFilterBound = '1';
+                select.addEventListener('change', applyUsageClientFilters);
+            });
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+        }
+
+        function updateExpenseSummary() {
+            const visibleRows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'))
+                .filter(function (row) {
+                    return row.style.display !== 'none';
+                });
+
+            const amount = visibleRows.reduce(function (total, row) {
+                return total + Number(row.dataset.expenseAmount || 0);
+            }, 0);
+
+            const quantity = visibleRows.reduce(function (total, row) {
+                return total + Number(row.dataset.expenseQuantity || 0);
+            }, 0);
+
+            const projects = new Set();
+            const phases = new Set();
+
+            visibleRows.forEach(function (row) {
+                if (row.dataset.projectId) {
+                    projects.add(row.dataset.projectId);
+                }
+                if (row.dataset.phaseId) {
+                    phases.add(row.dataset.phaseId);
+                }
+            });
+
+            const totalAmountEl = document.getElementById('expenseTotalAmount');
+            const totalQuantityEl = document.getElementById('expenseTotalQuantity');
+            const projectCountEl = document.getElementById('expenseProjectCount');
+            const phaseCountEl = document.getElementById('expensePhaseCount');
+
+            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(amount);
+            if (totalQuantityEl) totalQuantityEl.textContent = Math.round(quantity).toLocaleString();
+            if (projectCountEl) projectCountEl.textContent = projects.size;
+            if (phaseCountEl) phaseCountEl.textContent = phases.size;
+        }
+
+        function applyExpenseFilters() {
+            const form = document.getElementById('expenses-filter-form');
+            const searchInput = form?.querySelector('input[name="search"]');
+            const projectSelect = document.getElementById('expenseProjectFilter');
+            const phaseSelect = document.getElementById('expensePhaseFilter');
+            const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+            const projectId = projectSelect?.value || '';
+            const phaseId = phaseSelect?.value || '';
+            const rows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'));
+            const emptyRow = document.getElementById('expenseEmptyStateRow');
+            let visibleCount = 0;
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+
+            rows.forEach(function (row) {
+                const matchesSearch = !searchTerm || (row.dataset.expenseSearch || '').includes(searchTerm);
+                const matchesProject = !projectId || row.dataset.projectId === projectId;
+                const matchesPhase = !phaseId || row.dataset.phaseId === phaseId;
+                const isVisible = matchesSearch && matchesProject && matchesPhase;
+
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (emptyRow) {
+                emptyRow.classList.toggle('is-visible', visibleCount === 0);
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+
+            updateExpenseSummary();
+        }
+
+        function bindExpenseFilters() {
+            const form = document.getElementById('expenses-filter-form');
+            const clearBtn = document.getElementById('expenseClearFilterBtn');
+
+            if (form && form.dataset.expenseBound !== '1') {
+                form.dataset.expenseBound = '1';
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    applyExpenseFilters();
+                });
+
+                form.querySelectorAll('input, select').forEach(function (control) {
+                    control.addEventListener('input', applyExpenseFilters);
+                    control.addEventListener('change', applyExpenseFilters);
+                });
+            }
+
+            if (clearBtn && clearBtn.dataset.expenseClearBound !== '1') {
+                clearBtn.dataset.expenseClearBound = '1';
+                clearBtn.addEventListener('click', function () {
+                    form?.reset();
+                    applyExpenseFilters();
+                });
+            }
+
+            applyExpenseFilters();
+        }
 
         const activePanel = document.querySelector('.inventory-view-panel:not(.d-none)');
         if (activePanel) {
             setActiveView(activePanel.id);
         }
+
+        bindSmoothInventoryForms();
+        bindInventoryPagination();
+        bindUsageClientFilters();
+        bindExpenseFilters();
+        applyUsageClientFilters();
+        applyExpenseFilters();
 
         // REAL-TIME MODAL MATHEMATICAL COMPUTATION & VALUE TRACKING LOGIC
         const receiveStockModal = document.getElementById('receiveStockModalGeneral');

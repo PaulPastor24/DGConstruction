@@ -274,6 +274,11 @@
                         <i class="bi bi-people-fill"></i> View Enrolled Workers
                     </button>
 
+                    <button type="button" class="btn btn-outline-dark fw-semibold btn-sm px-3 py-2"
+                            data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+                        <i class="bi bi-pencil-square"></i> Manual Attendance
+                    </button>
+
                     <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2"
                             data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
                         <i class="bi bi-person-plus-fill"></i> Register New Worker
@@ -455,6 +460,69 @@
         </div>
     </div>
 </div>
+
+<!-- MANUAL ATTENDANCE MODAL -->
+<div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square text-dark"></i> Manual Attendance Log
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Use this only when the biometric reader is unavailable or not working.
+                    </p>
+                </div>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <div id="manualAttendanceStatus" class="alert alert-light border text-muted small py-2 mb-3">
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    Select a worker and attendance action.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Worker</label>
+                    <select id="manualWorkerSelect" class="form-select" required>
+                        <option value="">Loading workers...</option>
+                    </select>
+                    <div class="form-text">
+                        The worker must already be enrolled in the system.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Attendance Action</label>
+                    <select id="manualActionSelect" class="form-select" required>
+                        <option value="time_in">Time In</option>
+                        <option value="break_out">Break Out</option>
+                        <option value="break_in">Break In</option>
+                        <option value="time_out">Time Out</option>
+                    </select>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label small fw-semibold text-muted">Reason / Remarks</label>
+                    <textarea id="manualReasonInput" class="form-control" rows="3"
+                              placeholder="Example: Biometric reader not working / fingerprint scan failed."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light fw-medium btn-sm" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button" class="btn btn-dark fw-semibold btn-sm" id="btnSaveManualAttendance">
+                    <i class="bi bi-save"></i> Save Manual Log
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -470,6 +538,12 @@
         const formSubmitContainer = document.getElementById('formSubmitContainer');
         const scannedCountBadge = document.getElementById('scannedCount');
         const viewWorkersModal = document.getElementById('viewWorkersModal');
+        const manualAttendanceModal = document.getElementById('manualAttendanceModal');
+        const manualWorkerSelect = document.getElementById('manualWorkerSelect');
+        const manualActionSelect = document.getElementById('manualActionSelect');
+        const manualReasonInput = document.getElementById('manualReasonInput');
+        const manualAttendanceStatus = document.getElementById('manualAttendanceStatus');
+        const btnSaveManualAttendance = document.getElementById('btnSaveManualAttendance');
 
         const btnRegisterFingerprint = document.getElementById('btnRegisterWorkerFingerprint');
         const btnSaveWorker = document.getElementById('btnSaveWorkerRecord');
@@ -482,6 +556,7 @@
         let capturedPasskeyCredential = null;
         let currentPage = 1;
         let scannedWorkerIds = new Set();
+        let manualWorkersCache = [];
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -862,6 +937,208 @@
             upsertAttendanceRecord(result.attendance, true);
         }
 
+        async function fetchWorkersPage(page = 1) {
+            const response = await fetch(`/supervisor/workers/list?page=${page}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Unable to load workers.');
+            }
+
+            return data;
+        }
+
+        async function loadManualWorkers() {
+            if (!manualWorkerSelect) {
+                return;
+            }
+
+            manualWorkerSelect.innerHTML = '<option value="">Loading workers...</option>';
+            btnSaveManualAttendance.disabled = true;
+
+            manualAttendanceStatus.className = 'alert alert-light border text-muted small py-2 mb-3';
+            manualAttendanceStatus.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Loading enrolled workers...
+            `;
+
+            try {
+                const firstPage = await fetchWorkersPage(1);
+
+                const allWorkers = [];
+                const firstPageWorkers = Array.isArray(firstPage)
+                    ? firstPage
+                    : (firstPage.data || firstPage.workers || []);
+
+                firstPageWorkers.forEach(item => allWorkers.push(normalizeWorker(item)));
+
+                const lastPage = Number(firstPage.last_page || 1);
+
+                if (!Array.isArray(firstPage) && lastPage > 1) {
+                    for (let page = 2; page <= lastPage; page++) {
+                        const nextPage = await fetchWorkersPage(page);
+                        const nextWorkers = nextPage.data || nextPage.workers || [];
+                        nextWorkers.forEach(item => allWorkers.push(normalizeWorker(item)));
+                    }
+                }
+
+                manualWorkersCache = allWorkers.filter(worker => worker.worker_id);
+
+                if (!manualWorkersCache.length) {
+                    manualWorkerSelect.innerHTML = '<option value="">No enrolled workers found</option>';
+
+                    manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                    manualAttendanceStatus.innerHTML = `
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        No enrolled workers available for manual attendance.
+                    `;
+
+                    return;
+                }
+
+                manualWorkerSelect.innerHTML = `
+                    <option value="">Select worker...</option>
+                    ${manualWorkersCache.map(worker => {
+                        const fullName = `${escapeHtml(worker.first_name)} ${escapeHtml(worker.last_name)}`.trim();
+                        const trade = escapeHtml(worker.trade || 'General');
+
+                        return `
+                            <option value="${escapeHtml(worker.worker_id)}">
+                                ${fullName} — ${trade}
+                            </option>
+                        `;
+                    }).join('')}
+                `;
+
+                btnSaveManualAttendance.disabled = false;
+
+                manualAttendanceStatus.className = 'alert alert-light border text-muted small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    Select a worker and attendance action.
+                `;
+            } catch (error) {
+                console.error(error);
+
+                manualWorkerSelect.innerHTML = '<option value="">Unable to load workers</option>';
+
+                manualAttendanceStatus.className = 'alert alert-danger border text-danger small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${escapeHtml(error.message || 'Unable to load workers.')}
+                `;
+            }
+        }
+
+        async function saveManualAttendance() {
+            if (!manualWorkerSelect || !manualActionSelect) {
+                return;
+            }
+
+            const workerId = manualWorkerSelect.value;
+            const action = manualActionSelect.value || 'time_in';
+            const reason = manualReasonInput?.value.trim()
+                || 'Manual attendance log because biometric reader is unavailable.';
+
+            if (!workerId) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Please select a worker first.
+                `;
+
+                return;
+            }
+
+            btnSaveManualAttendance.disabled = true;
+            btnSaveManualAttendance.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Saving...
+            `;
+
+            manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+            manualAttendanceStatus.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Saving manual attendance...
+            `;
+
+            try {
+                const response = await fetch('/supervisor/attendance/log-worker', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        worker_id: workerId,
+                        log_date: selectedDateValue(),
+                        action: action,
+                        manual: true,
+                        biometric_matched: false,
+                        remarks: reason
+                    })
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to save manual attendance.');
+                }
+
+                if (result.attendance) {
+                    upsertAttendanceRecord(result.attendance, true);
+                } else {
+                    await loadTodayAttendance();
+                }
+
+                manualAttendanceStatus.className = 'alert alert-success border text-success small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    Manual attendance saved successfully.
+                `;
+
+                const selectedWorker = manualWorkersCache.find(worker => String(worker.worker_id) === String(workerId));
+
+                globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    Manual ${escapeHtml(action.replace('_', ' '))} saved
+                    ${selectedWorker ? `for <strong>${escapeHtml(selectedWorker.first_name)} ${escapeHtml(selectedWorker.last_name)}</strong>` : ''}.
+                `;
+
+                manualActionSelect.value = 'time_in';
+                if (manualReasonInput) {
+                    manualReasonInput.value = '';
+                }
+
+                setTimeout(() => {
+                    const modalInstance = bootstrap.Modal.getInstance(manualAttendanceModal)
+                        || bootstrap.Modal.getOrCreateInstance(manualAttendanceModal);
+
+                    modalInstance.hide();
+                }, 700);
+            } catch (error) {
+                console.error(error);
+
+                manualAttendanceStatus.className = 'alert alert-danger border text-danger small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${escapeHtml(error.message || 'Failed to save manual attendance.')}
+                `;
+            } finally {
+                btnSaveManualAttendance.disabled = false;
+                btnSaveManualAttendance.innerHTML = `
+                    <i class="bi bi-save"></i> Save Manual Log
+                `;
+            }
+        }
+
         async function loadWorkers(page = 1) {
             const tableBody = document.getElementById('allWorkersTableBody');
             const pageInfo = document.getElementById('pageInfo');
@@ -941,6 +1218,12 @@
         viewWorkersModal?.addEventListener('show.bs.modal', function () {
             loadWorkers(1);
         });
+
+        manualAttendanceModal?.addEventListener('show.bs.modal', function () {
+            loadManualWorkers();
+        });
+
+        btnSaveManualAttendance?.addEventListener('click', saveManualAttendance);
 
         prevPageBtn?.addEventListener('click', function () {
             if (currentPage > 1) {
@@ -1207,8 +1490,9 @@
             attendanceRefreshTimer = setInterval(function () {
                 const registerModalOpen = document.getElementById('registerWorkerModal')?.classList.contains('show');
                 const workersModalOpen = document.getElementById('viewWorkersModal')?.classList.contains('show');
+                const manualModalOpen = document.getElementById('manualAttendanceModal')?.classList.contains('show');
 
-                if (!registerModalOpen && !workersModalOpen) {
+                if (!registerModalOpen && !workersModalOpen && !manualModalOpen) {
                     loadTodayAttendance({ silent: true });
                 }
             }, 4000);
