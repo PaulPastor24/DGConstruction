@@ -531,14 +531,13 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const attendanceSearch = document.getElementById('attendanceSearch');
-        const attendanceRows = document.querySelectorAll('#attendanceTable tbody tr[data-attendance-row="1"]');
-        const statFilterCards = document.querySelectorAll('.stat-filter-card');
-        const tableFilterNote = document.getElementById('tableFilterNote');
-        const tableFilterLabel = document.getElementById('tableFilterLabel');
-        const clearTableFilter = document.getElementById('clearTableFilter');
+        const SILENT_RELOAD_INTERVAL = 5000; // 5 seconds for real-time admin attendance monitoring
+        const ATTENDANCE_PAGE_SELECTOR = '.attendance-page';
+        const FILTER_FORM_SELECTOR = '.attendance-filter-form';
 
         let activeStatFilter = 'all';
+        let isSilentReloading = false;
+        let silentReloadTimer = null;
 
         const filterLabels = {
             all: 'All Records',
@@ -548,6 +547,18 @@
             'missing-timeout': 'Workers Missing Time Out',
             'break-exceeded': 'Workers With Break Exceeded'
         };
+
+        function getAttendanceRows() {
+            return Array.from(document.querySelectorAll('#attendanceTable tbody tr[data-attendance-row="1"]'));
+        }
+
+        function getAttendanceSearch() {
+            return document.getElementById('attendanceSearch');
+        }
+
+        function getStatFilterCards() {
+            return Array.from(document.querySelectorAll('.stat-filter-card'));
+        }
 
         function rowMatchesStatFilter(row) {
             const status = row.dataset.status || '';
@@ -580,11 +591,15 @@
         }
 
         function applyTableFilters() {
+            const attendanceSearch = getAttendanceSearch();
+            const tableFilterNote = document.getElementById('tableFilterNote');
+            const tableFilterLabel = document.getElementById('tableFilterLabel');
+
             const keyword = attendanceSearch
                 ? attendanceSearch.value.toLowerCase().trim()
                 : '';
 
-            attendanceRows.forEach(function (row) {
+            getAttendanceRows().forEach(function (row) {
                 const searchableText = row.textContent.toLowerCase();
                 const matchesSearch = searchableText.includes(keyword);
                 const matchesStat = rowMatchesStatFilter(row);
@@ -592,7 +607,7 @@
                 row.style.display = matchesSearch && matchesStat ? '' : 'none';
             });
 
-            statFilterCards.forEach(function (card) {
+            getStatFilterCards().forEach(function (card) {
                 card.classList.toggle(
                     'active-stat-filter',
                     card.dataset.statFilter === activeStatFilter
@@ -610,31 +625,211 @@
             }
         }
 
-        attendanceSearch?.addEventListener('input', function () {
-            applyTableFilters();
+        function captureFilterFormInitialValues() {
+            const filterForm = document.querySelector(FILTER_FORM_SELECTOR);
+
+            if (!filterForm) {
+                return;
+            }
+
+            filterForm.querySelectorAll('input, select, textarea').forEach(function (field) {
+                field.dataset.initialValue = field.value ?? '';
+            });
+        }
+
+        function filterFormHasUnsavedChanges() {
+            const filterForm = document.querySelector(FILTER_FORM_SELECTOR);
+
+            if (!filterForm) {
+                return false;
+            }
+
+            const fields = filterForm.querySelectorAll('input, select, textarea');
+
+            for (const field of fields) {
+                const initialValue = field.dataset.initialValue ?? field.defaultValue ?? '';
+                const currentValue = field.value ?? '';
+
+                if (initialValue !== currentValue) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function userIsEditing() {
+            const active = document.activeElement;
+
+            if (!active) {
+                return false;
+            }
+
+            return (
+                active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.tagName === 'SELECT' ||
+                active.isContentEditable
+            );
+        }
+
+        function modalIsOpen() {
+            return document.querySelector('.modal.show') !== null;
+        }
+
+        function shouldSkipSilentReload() {
+            return (
+                isSilentReloading ||
+                document.hidden ||
+                modalIsOpen() ||
+                userIsEditing() ||
+                filterFormHasUnsavedChanges()
+            );
+        }
+
+        function setLiveRefreshStatus(message, type = 'muted') {
+            let badge = document.getElementById('attendanceLiveRefreshStatus');
+            const toolbarActions = document.querySelector('.attendance-toolbar-actions');
+
+            if (!toolbarActions) {
+                return;
+            }
+
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.id = 'attendanceLiveRefreshStatus';
+                badge.className = 'attendance-live-refresh-status';
+                badge.style.fontSize = '12px';
+                badge.style.fontWeight = '700';
+                badge.style.whiteSpace = 'nowrap';
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '6px';
+                badge.style.color = '#64748b';
+                toolbarActions.prepend(badge);
+            }
+
+            const icon = type === 'success'
+                ? 'bi-arrow-repeat'
+                : (type === 'error' ? 'bi-wifi-off' : 'bi-broadcast');
+
+            badge.innerHTML = `<i class="bi ${icon}"></i> ${message}`;
+            badge.style.color = type === 'error' ? '#dc2626' : (type === 'success' ? '#166534' : '#64748b');
+        }
+
+        async function silentReloadAttendancePage() {
+            if (shouldSkipSilentReload()) {
+                return;
+            }
+
+            const currentPage = document.querySelector(ATTENDANCE_PAGE_SELECTOR);
+
+            if (!currentPage) {
+                return;
+            }
+
+            const quickSearchValue = getAttendanceSearch()?.value || '';
+            const currentScrollY = window.scrollY;
+
+            try {
+                isSilentReloading = true;
+                setLiveRefreshStatus('Updating...', 'muted');
+
+                const response = await fetch(window.location.href, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-Silent-Attendance-Reload': 'true'
+                    },
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Unable to refresh attendance records.');
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const newDocument = parser.parseFromString(html, 'text/html');
+                const newPage = newDocument.querySelector(ATTENDANCE_PAGE_SELECTOR);
+
+                if (!newPage) {
+                    throw new Error('Attendance content was not found in the response.');
+                }
+
+                currentPage.replaceWith(newPage);
+
+                const refreshedSearch = getAttendanceSearch();
+
+                if (refreshedSearch) {
+                    refreshedSearch.value = quickSearchValue;
+                }
+
+                captureFilterFormInitialValues();
+                applyTableFilters();
+
+                window.scrollTo({
+                    top: currentScrollY,
+                    behavior: 'instant'
+                });
+
+                setLiveRefreshStatus('Live updating', 'success');
+                document.dispatchEvent(new CustomEvent('adminAttendanceSilentReloadComplete'));
+            } catch (error) {
+                console.warn('Admin attendance silent reload skipped:', error);
+                setLiveRefreshStatus('Live update paused', 'error');
+            } finally {
+                isSilentReloading = false;
+            }
+        }
+
+        document.addEventListener('input', function (event) {
+            if (event.target && event.target.id === 'attendanceSearch') {
+                applyTableFilters();
+            }
         });
 
-        statFilterCards.forEach(function (card) {
-            card.addEventListener('click', function () {
-                activeStatFilter = this.dataset.statFilter || 'all';
+        document.addEventListener('click', function (event) {
+            const statCard = event.target.closest('.stat-filter-card');
+
+            if (statCard) {
+                activeStatFilter = statCard.dataset.statFilter || 'all';
                 applyTableFilters();
 
                 document.getElementById('attendanceTable')?.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
-            });
-        });
 
-        clearTableFilter?.addEventListener('click', function () {
-            activeStatFilter = 'all';
-
-            if (attendanceSearch) {
-                attendanceSearch.value = '';
+                return;
             }
 
-            applyTableFilters();
+            const clearButton = event.target.closest('#clearTableFilter');
+
+            if (clearButton) {
+                activeStatFilter = 'all';
+
+                const attendanceSearch = getAttendanceSearch();
+
+                if (attendanceSearch) {
+                    attendanceSearch.value = '';
+                }
+
+                applyTableFilters();
+            }
         });
+
+        captureFilterFormInitialValues();
+        applyTableFilters();
+        setLiveRefreshStatus('Live updating', 'success');
+
+        if (silentReloadTimer) {
+            clearInterval(silentReloadTimer);
+        }
+
+        silentReloadTimer = setInterval(silentReloadAttendancePage, SILENT_RELOAD_INTERVAL);
     });
 </script>
 @endpush
