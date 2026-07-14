@@ -12,6 +12,7 @@
         "spatie/laravel-passkeys": "^1.8"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.7",
         "fakerphp/faker": "^1.23",
         "laravel/breeze": "^2.4",
         "laravel/pail": "^1.2.2",
