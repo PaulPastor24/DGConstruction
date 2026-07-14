@@ -154,12 +154,12 @@ class ProjectController extends Controller
         $projects = $query->paginate(15)->appends($request->only(['search', 'status', 'client', 'supervisor', 'sort_by']));
 
         $stats = [
-            'total' => Project::query()->count(),
-            'planning' => Project::query()->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
-            'ongoing' => Project::query()->whereIn('status', $this->getProjectStatusVariants('in_progress'))->count(),
-            'completed' => Project::query()->whereIn('status', $this->getProjectStatusVariants('completed'))->count(),
-            'on_hold' => Project::query()->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
-            'archived' => Project::query()->where(function ($q) {
+            'total' => DB::table('projects')->count(),
+            'planning' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
+            'ongoing' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('in_progress'))->count(),
+            'completed' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('completed'))->count(),
+            'on_hold' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
+            'archived' => DB::table('projects')->where(function ($q) {
                 $q->where('status', 'archived');
                 if (Schema::hasColumn('projects', 'is_archived')) {
                     $q->orWhereRaw('COALESCE(is_archived, 0) = 1');
@@ -682,7 +682,9 @@ class ProjectController extends Controller
             $project->save();
             $project->refresh();
 
-            ProjectArchive::where('project_id', $project->project_id)->delete();
+            if (Schema::hasTable('project_archives')) {
+                DB::table('project_archives')->where('project_id', $project->project_id)->delete();
+            }
 
             return redirect()->route('admin.projects.index')
                 ->with('success', 'Project restored successfully.')
@@ -723,7 +725,7 @@ class ProjectController extends Controller
                     ->with('error_title', 'Cannot Delete Project');
             }
 
-            $project->delete();
+            DB::table('projects')->where('project_id', $project->project_id)->delete();
 
             return redirect()->route('admin.projects.index')
                 ->with('success', 'Project deleted successfully.')

@@ -1179,13 +1179,13 @@ class AdminDashboardController extends Controller
 
         $baseQuery = AdminNotification::query()->where('admin_id', $user->user_id);
 
-        $totalCount = (clone $baseQuery)->count();
-        $unreadCount = (clone $baseQuery)->where('is_read', false)->count();
+        $totalCount = (clone $baseQuery)->count('*');
+        $unreadCount = (clone $baseQuery)->where('is_read', false)->count('*');
         $sentThisMonth = (clone $baseQuery)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->count();
-        $totalRecipients = (int) User::query()
+            ->count('*');
+        $totalRecipients = (int) DB::table('users')
             ->whereIn('role', ['engineer', 'admin', 'administrator'])
             ->count();
 
@@ -1300,7 +1300,9 @@ class AdminDashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
         }
 
-        $notification->delete();
+        DB::table('admin_notifications')
+            ->where('id', $notification->getKey())
+            ->delete();
 
         return response()->json(['success' => true]);
     }

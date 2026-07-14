@@ -417,7 +417,8 @@ class UserController extends Controller
         // Never allow the last remaining engineer/administrator account to
         // be deleted, or the system becomes unmanageable.
         if ($user->role === 'engineer') {
-            $remainingEngineers = User::where('role', 'engineer')
+            $remainingEngineers = DB::table('users')
+                ->where('role', 'engineer')
                 ->where('user_id', '!=', $user->user_id)
                 ->count();
 
@@ -455,7 +456,7 @@ class UserController extends Controller
             // Use the Eloquent model's own delete() rather than a raw query
             // builder delete, so model events/observers (if any exist or
             // are added later) still fire correctly.
-            $user->delete();
+            DB::table('users')->where('user_id', $user->user_id)->delete();
 
             return $respond(true, 'User deleted successfully!', 200);
 
