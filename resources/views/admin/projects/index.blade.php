@@ -1369,7 +1369,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.projects.store') }}" method="POST">
+                <form action="{{ route('admin.projects.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <div class="modal-section-card">
@@ -1397,6 +1397,19 @@
                                           rows="3"
                                           placeholder="Enter project description">{{ old('description') }}</textarea>
                                 @error('description')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="modal_project_image" class="form-label modal-custom-label">Project Cover Image</label>
+                                <input type="file"
+                                       class="form-control modal-custom-input w-100 @error('project_image') is-invalid @enderror"
+                                       id="modal_project_image"
+                                       name="project_image"
+                                       accept="image/png,image/jpeg,image/jpg,image/webp">
+                                <div class="form-text small text-muted mt-1">Optional. Upload a photo of the project site (JPG, PNG or WEBP, max 5MB).</div>
+                                @error('project_image')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -1544,7 +1557,7 @@
             </div>
 
             <div class="modal-body pt-2 px-4 pb-4">
-                <form action="{{ old('project_id', session('edit_project_id')) ? route('admin.projects.update', ['project' => old('project_id', session('edit_project_id'))]) : route('admin.projects.index') }}" method="POST" id="editProjectForm" class="edit-project-form">
+                <form action="{{ old('project_id', session('edit_project_id')) ? route('admin.projects.update', ['project' => old('project_id', session('edit_project_id'))]) : route('admin.projects.index') }}" method="POST" id="editProjectForm" class="edit-project-form" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="_method" value="PUT">
                     <input type="hidden" name="project_id" id="editProjectId" value="{{ old('project_id', session('edit_project_id', '')) }}">
@@ -1574,6 +1587,26 @@
                                           rows="3"
                                           placeholder="Enter project description">{{ old('description', '') }}</textarea>
                                 @error('description')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="edit_project_image" class="form-label modal-custom-label">Project Cover Image</label>
+                                <input type="file"
+                                       class="form-control modal-custom-input w-100 @error('project_image') is-invalid @enderror"
+                                       id="edit_project_image"
+                                       name="project_image"
+                                       accept="image/png,image/jpeg,image/jpg,image/webp">
+                                <div class="form-text small text-muted mt-1">Optional. Replace the current cover image (JPG, PNG or WEBP, max 5MB).</div>
+                                <div id="editProjectImagePreview" class="mt-2 d-none">
+                                    <img src="" alt="Current project image" class="img-thumbnail" style="max-height: 96px;">
+                                    <div class="form-check mt-1">
+                                        <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="editRemoveImage">
+                                        <label class="form-check-label small text-muted" for="editRemoveImage">Remove current image</label>
+                                    </div>
+                                </div>
+                                @error('project_image')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -2877,6 +2910,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (projectNameInput) projectNameInput.value = project.project_name || '';
         if (projectLocationInput) projectLocationInput.value = projectLocationValue;
         if (descriptionInput) descriptionInput.value = project.description || '';
+
+        const editImagePreview = document.getElementById('editProjectImagePreview');
+        const editImagePreviewImg = editImagePreview ? editImagePreview.querySelector('img') : null;
+        const editRemoveImageInput = document.getElementById('editRemoveImage');
+        if (editImagePreview && editImagePreviewImg) {
+            if (project.project_image) {
+                editImagePreviewImg.src = '/storage/' + String(project.project_image).replace(/^\/+/, '');
+                editImagePreview.classList.remove('d-none');
+            } else {
+                editImagePreviewImg.src = '';
+                editImagePreview.classList.add('d-none');
+            }
+        }
+        if (editRemoveImageInput) editRemoveImageInput.checked = false;
+
         if (clientSelect) clientSelect.value = project.client_id || '';
         if (startDateInput) startDateInput.value = project.start_date ? project.start_date.split('T')[0] : '';
         if (targetEndDateInput) targetEndDateInput.value = project.target_end_date ? project.target_end_date.split('T')[0] : '';

@@ -63,6 +63,13 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::delete('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'destroyMaterial'])->name('admin.inventory.materials.destroy');
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
+    Route::post('/admin/notifications/{id}/mark-read', [AdminDashboardController::class, 'markNotificationRead'])->name('admin.notifications.markRead');
+    Route::post('/admin/notifications/mark-all-read', [AdminDashboardController::class, 'markAllNotificationsRead'])->name('admin.notifications.markAllRead');
+    Route::post('/admin/notifications/{id}/delete', [AdminDashboardController::class, 'destroyNotification'])->name('admin.notifications.destroy');
+
+    Route::get('/admin/profile', [AdminDashboardController::class, 'profile'])->name('admin.profile');
+    Route::put('/admin/profile', [AdminDashboardController::class, 'updateProfile'])->name('admin.profile.update');
+    Route::put('/admin/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::get('/admin/project-archives', [ProjectArchiveController::class, 'index'])->name('admin.project-archives.index');
 

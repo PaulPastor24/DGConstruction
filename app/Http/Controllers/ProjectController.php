@@ -236,6 +236,7 @@ class ProjectController extends Controller
                 'actual_end_date' => $request->filled('actual_end_date') ? $request->input('actual_end_date') : null,
                 'status' => $request->filled('status') ? $request->input('status') : 'planning',
                 'description' => $request->description,
+                'project_image' => $this->storeProjectImage($request),
             ];
 
             $projectData = array_merge($projectData, $this->buildProjectLocationPayload($request->project_location));
@@ -281,6 +282,20 @@ class ProjectController extends Controller
             }
 
             DB::commit();
+
+            // Notify all admins about new project creation
+            try {
+                \App\Services\NotificationService::notifyAdmins([
+                    'type' => 'project',
+                    'title' => 'New Project Created',
+                    'message' => "Project \"{$project->project_name}\" has been created successfully.",
+                    'data' => ['module' => 'admin.projects', 'project_id' => $project->project_id, 'project_name' => $project->project_name, 'recipient' => 'Admin'],
+                    'related_id' => $project->project_id,
+                    'related_type' => 'project',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify admins on project creation: ' . $e->getMessage());
+            }
 
             return redirect()
                 ->route('admin.projects.index')
@@ -462,6 +477,14 @@ class ProjectController extends Controller
                 'status' => $status,
                 'description' => $description,
             ], $this->buildProjectLocationPayload($projectLocation));
+
+            $imageDecision = $this->resolveProjectImage($request, $project);
+            if ($imageDecision['delete_old'] && !empty($project->project_image)) {
+                $this->deleteProjectImageFile($project->project_image);
+            }
+            if (array_key_exists('project_image', $imageDecision)) {
+                $payload['project_image'] = $imageDecision['project_image'];
+            }
 
             $project->forceFill($payload);
             $project->save();
@@ -794,6 +817,54 @@ class ProjectController extends Controller
         }
 
         return $payload;
+    }
+
+    /**
+     * Store an uploaded project cover image (create flow).
+     */
+    private function storeProjectImage(Request $request): ?string
+    {
+        if ($request->hasFile('project_image') && $request->file('project_image')->isValid()) {
+            return $request->file('project_image')->store('project-images', 'public');
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the image action for the update flow.
+     * Returns project_image key only when it should change.
+     */
+    private function resolveProjectImage(Request $request, Project $project): array
+    {
+        if ($request->hasFile('project_image') && $request->file('project_image')->isValid()) {
+            return [
+                'project_image' => $request->file('project_image')->store('project-images', 'public'),
+                'delete_old' => true,
+            ];
+        }
+
+        if ((int) $request->input('remove_image', 0) === 1) {
+            return [
+                'project_image' => null,
+                'delete_old' => true,
+            ];
+        }
+
+        return ['delete_old' => false];
+    }
+
+    private function deleteProjectImageFile(?string $path): void
+    {
+        if (empty($path)) {
+            return;
+        }
+
+        try {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+        } catch (\Throwable $e) {
+            Log::error('Failed to delete project image: ' . $e->getMessage());
+        }
     }
 
     private function normalizeProjectStatus($status): string

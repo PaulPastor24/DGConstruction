@@ -126,6 +126,20 @@ class MilestoneController extends Controller
 
             DB::commit();
 
+            // Notify admins about new milestone creation
+            try {
+                \App\Services\NotificationService::notifyAdmins([
+                    'type' => 'milestone',
+                    'title' => 'New Timeline Milestone',
+                    'message' => "Milestone \"{$milestone->milestone_name}\" has been created.",
+                    'data' => ['module' => 'admin.timeline', 'milestone_id' => $milestone->milestone_id, 'project_id' => $project->project_id, 'project_name' => $project->project_name, 'recipient' => 'Admin'],
+                    'related_id' => $milestone->milestone_id,
+                    'related_type' => 'milestone',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify admins on milestone creation: ' . $e->getMessage());
+            }
+
             if ($request->ajax()) {
                 return response()->json(['success' => true, 'message' => 'Milestone created successfully']);
             }
@@ -373,6 +387,25 @@ class MilestoneController extends Controller
                 }
             } catch (\Throwable $e) {
                 Log::error('Failed to notify client on milestone delay: ' . $e->getMessage());
+            }
+
+            try {
+                \App\Services\NotificationService::notifyAdmins([
+                    'type' => 'milestone',
+                    'title' => 'Milestone Delayed',
+                    'message' => "Milestone '{$milestone->milestone_name}' has been marked delayed for project '{$project->project_name}'.",
+                    'data' => [
+                        'module' => 'admin.timeline',
+                        'milestone_id' => $milestone->milestone_id,
+                        'project_id' => $project->project_id,
+                        'project_name' => $project->project_name,
+                        'recipient' => 'Admin',
+                    ],
+                    'related_id' => $milestone->milestone_id,
+                    'related_type' => 'milestone',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify admin on milestone delay: ' . $e->getMessage());
             }
 
             DB::commit();

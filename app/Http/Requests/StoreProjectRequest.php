@@ -36,6 +36,7 @@ class StoreProjectRequest extends FormRequest
             'actual_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['nullable', 'in:planning,ongoing,completed,on_hold'],
             'description' => ['nullable', 'string'],
+            'project_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
 

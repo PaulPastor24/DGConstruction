@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdminNotification;
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -73,6 +75,10 @@ class AdminDashboardController extends Controller
                 ? DB::table('accomplishment_reports')
                     ->count()
                 : 0,
+
+            'inventory_count' => Schema::hasTable('materials')
+                ? DB::table('materials')->count()
+                : 0,
         ];
 
         /*
@@ -83,57 +89,129 @@ class AdminDashboardController extends Controller
 
         $activeProjects = collect();
 
+        $overallProgress = [
+            'percentage' => 0,
+            'on_track' => 0,
+            'delayed' => 0,
+            'total' => 0,
+        ];
+
         if ($hasProjects) {
-            $activeProjects = Project::with('client.user')
+            $projectsQuery = Project::with(['client.user', 'phases'])
                 ->whereIn(
                     'status',
                     ['planning', 'ongoing']
                 )
                 ->orderByDesc('created_at')
-                ->take(5)
+                ->take(5);
+
+            $activeProjects = $projectsQuery->get()->map(function ($project) {
+                $phases = $project->phases;
+
+                $progressPercentage = $phases->isNotEmpty()
+                    ? round($phases->avg('completion_percentage'), 2)
+                    : 0;
+
+                $color = 'blue';
+
+                if ($progressPercentage >= 80) {
+                    $color = 'green';
+                } elseif ($progressPercentage < 40) {
+                    $color = 'orange';
+                }
+
+                $currentPhase = $phases->firstWhere('status', 'in_progress');
+
+                return (object) [
+                    'id' => $project->project_id,
+
+                    'name' =>
+                        $project->project_name
+                        ?? $project->name
+                        ?? 'Unnamed Project',
+
+                    'location' =>
+                        $project->project_location
+                        ?? $project->location
+                        ?? 'No location',
+
+                    'status_label' =>
+                        ucfirst(
+                            $project->status ?? 'planning'
+                        ),
+
+                    'current_phase' =>
+                        $currentPhase->phase_name
+                        ?? 'Phase 1: Mobilization',
+
+                    'image' =>
+                        $project->image_url,
+
+                    'progress_percentage' =>
+                        $progressPercentage,
+
+                    'progress_color_class' =>
+                        $color,
+
+                    'target_end_date' =>
+                        $project->target_end_date,
+                ];
+            });
+
+            $allActiveProjects = Project::with('phases')
+                ->whereIn('status', ['planning', 'ongoing'])
+                ->get();
+
+            $overallProgress['total'] = $allActiveProjects->count();
+
+            if ($overallProgress['total'] > 0) {
+                $totalProgress = $allActiveProjects->reduce(function ($carry, $project) {
+                    $phases = $project->phases;
+
+                    return $carry + ($phases->isNotEmpty()
+                        ? $phases->avg('completion_percentage')
+                        : 0);
+                }, 0);
+
+                $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
+
+                $overallProgress['on_track'] = $allActiveProjects->filter(function ($project) {
+                    $phases = $project->phases;
+
+                    return $phases->isNotEmpty()
+                        ? $phases->avg('completion_percentage') >= 50
+                        : false;
+                })->count();
+
+                $overallProgress['delayed'] = $overallProgress['total'] - $overallProgress['on_track'];
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recent accomplishment reports
+        |--------------------------------------------------------------------------
+        */
+
+        $recentReports = collect();
+
+        if ($hasReportsTable) {
+            $recentReports = Report::with(['project', 'phase', 'submittedBy'])
+                ->orderByDesc('report_date')
+                ->orderByDesc('created_at')
+                ->take(2)
                 ->get()
-                ->map(function ($project) {
-                    $progressPercentage =
-                        $project->progress_percentage ?? 0;
-
-                    $color = 'blue';
-
-                    if ($progressPercentage >= 80) {
-                        $color = 'green';
-                    } elseif ($progressPercentage < 40) {
-                        $color = 'orange';
-                    }
-
+                ->map(function ($report) {
                     return (object) [
-                        'id' => $project->project_id,
-
-                        'name' =>
-                            $project->project_name
-                            ?? $project->name
-                            ?? 'Unnamed Project',
-
-                        'location' =>
-                            $project->project_location
-                            ?? $project->location
-                            ?? 'No location',
-
-                        'status_label' =>
-                            ucfirst(
-                                $project->status ?? 'planning'
-                            ),
-
-                        'current_phase' =>
-                            $project->current_phase
-                            ?? 'Phase 1: Mobilization',
-
-                        'progress_percentage' =>
-                            $progressPercentage,
-
-                        'progress_color_class' =>
-                            $color,
-
-                        'target_end_date' =>
-                            $project->target_end_date,
+                        'id' => $report->report_id,
+                        'title' => $report->report_title,
+                        'project_name' => optional($report->project)->project_name ?? 'Unassigned Project',
+                        'phase_name' => optional($report->phase)->phase_name ?? 'Unassigned Phase',
+                        'supervisor_name' => optional($report->submittedBy)->name ?? 'Unassigned',
+                        'status' => $report->approval_status,
+                        'status_label' => $report->status_label,
+                        'status_class' => $report->status_badge_class,
+                        'submitted_at' => optional($report->report_date)->format('M d, Y') ?? $report->created_at->format('M d, Y'),
                     ];
                 });
         }
@@ -195,7 +273,9 @@ class AdminDashboardController extends Controller
                 'stats',
                 'activeProjects',
                 'attendance',
-                'burnRateData'
+                'burnRateData',
+                'overallProgress',
+                'recentReports'
             )
         );
     }
@@ -1074,11 +1154,155 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Display system alerts.
+     * Display system alerts / admin notifications.
      */
-    public function alerts()
+    public function alerts(Request $request)
     {
-        return view('admin.alerts');
+        $user = Auth::user();
+
+        // Avoid querying a missing table if the migration hasn't run yet.
+        if (!Schema::hasTable('admin_notifications')) {
+            $notifications = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10, 1, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+
+            $summary = [
+                'total_count' => 0,
+                'unread_count' => 0,
+                'sent_this_month' => 0,
+                'total_recipients' => 0,
+            ];
+
+            return view('admin.alerts', compact('notifications', 'summary'));
+        }
+
+        $baseQuery = AdminNotification::query()->where('admin_id', $user->user_id);
+
+        $totalCount = (clone $baseQuery)->count();
+        $unreadCount = (clone $baseQuery)->where('is_read', false)->count();
+        $sentThisMonth = (clone $baseQuery)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $totalRecipients = (int) User::query()
+            ->whereIn('role', ['engineer', 'admin', 'administrator'])
+            ->count();
+
+        $summary = [
+            'total_count' => $totalCount,
+            'unread_count' => $unreadCount,
+            'sent_this_month' => $sentThisMonth,
+            'total_recipients' => $totalRecipients,
+        ];
+
+        $query = AdminNotification::query()
+            ->where('admin_id', $user->user_id)
+            ->orderBy('created_at', 'desc');
+
+        $type = strtolower((string) $request->query('type', 'all'));
+
+        if ($type !== 'all' && $type !== '') {
+            switch ($type) {
+                case 'unread':
+                    $query->where('is_read', false);
+                    break;
+                case 'read':
+                    $query->where('is_read', true);
+                    break;
+                case 'project':
+                case 'report':
+                case 'phase':
+                case 'milestone':
+                case 'assignment':
+                case 'system':
+                case 'user':
+                case 'reminder':
+                case 'announcement':
+                    $query->where('type', $type);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->query('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $status = strtolower((string) $request->query('status'));
+            if ($status === 'unread') {
+                $query->where('is_read', false);
+            } elseif ($status === 'read') {
+                $query->where('is_read', true);
+            }
+        }
+
+        $notifications = $query->paginate(10)->withQueryString();
+
+        return view('admin.alerts', compact('notifications', 'summary'));
+    }
+
+    /**
+     * Mark a single admin notification as read.
+     */
+    public function markNotificationRead($id)
+    {
+        $user = Auth::user();
+
+        $notification = AdminNotification::query()
+            ->where('id', $id)
+            ->where('admin_id', $user->user_id)
+            ->first();
+
+        if (!$notification) {
+            return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
+        }
+
+        $notification->update(['is_read' => true, 'read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark all admin notifications as read for the logged in admin.
+     */
+    public function markAllNotificationsRead()
+    {
+        $user = Auth::user();
+
+        AdminNotification::query()
+            ->where('admin_id', $user->user_id)
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Delete a single admin notification.
+     */
+    public function destroyNotification($id)
+    {
+        $user = Auth::user();
+
+        $notification = AdminNotification::query()
+            ->where('id', $id)
+            ->where('admin_id', $user->user_id)
+            ->first();
+
+        if (!$notification) {
+            return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
+        }
+
+        $notification->delete();
+
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -1245,6 +1469,22 @@ class AdminDashboardController extends Controller
             $materialRecord->supplier = trim((string) ($validated['supplier'] ?? '')) ?: $materialRecord->supplier;
             $materialRecord->save();
 
+            // If stock is at or below minimum after receiving (possible when receiving negative adjustments), notify admins
+            try {
+                if ($materialRecord->minimum_stock_level !== null && $materialRecord->current_stock <= $materialRecord->minimum_stock_level) {
+                    \App\Services\NotificationService::notifyAdmins([
+                        'type' => 'material',
+                        'title' => 'Low Material Stock',
+                        'message' => "Material '{$materialRecord->name}' stock is low (current: {$materialRecord->current_stock}).",
+                        'data' => ['module' => 'admin.inventory', 'material_id' => $materialRecord->id, 'material_name' => $materialRecord->name, 'recipient' => 'Admin'],
+                        'related_id' => $materialRecord->id,
+                        'related_type' => 'material',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to notify admins on low stock: ' . $e->getMessage());
+            }
+
             if (Schema::hasTable('material_deliveries')) {
                 $notes = trim((string) ($validated['remarks'] ?? $validated['notes'] ?? '')) ?: null;
 
@@ -1290,5 +1530,62 @@ class AdminDashboardController extends Controller
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Unable to delete material right now. Please try again.');
         }
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+
+        return view('admin.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->user_id, 'user_id')],
+            'contact_number' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if (Schema::hasColumn('users', 'name')) {
+            $validated['name'] = trim(($validated['first_name'] ?? $user->first_name) . ' ' . ($validated['last_name'] ?? $user->last_name));
+        }
+
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profile information updated successfully.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return back()->withErrors(['current_password' => 'The current password is incorrect.']);
+        }
+
+        $newPassword = $request->input('password');
+        if (Hash::check($newPassword, $user->password)) {
+            return back()->withErrors(['password' => 'The new password must be different from your current password.']);
+        }
+
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }

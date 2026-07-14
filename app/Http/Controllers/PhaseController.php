@@ -120,6 +120,20 @@ class PhaseController extends Controller
 
             DB::commit();
 
+            // Notify admins about new construction phase
+            try {
+                NotificationService::notifyAdmins([
+                    'type' => 'phase',
+                    'title' => 'New Construction Phase',
+                    'message' => "Phase \"{$phase->phase_name}\" has been added to \"{$project->project_name}\".",
+                    'data' => ['module' => 'admin.phases', 'phase_id' => $phase->phase_id, 'project_id' => $phase->project_id, 'project_name' => $project->project_name, 'recipient' => 'Admin'],
+                    'related_id' => $phase->phase_id,
+                    'related_type' => 'phase',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify admins on phase creation: ' . $e->getMessage());
+            }
+
             if ($request->expectsJson() || $request->ajax()) {
                 $phasePayload = [
                     'phase_id' => $phase->phase_id,
@@ -328,6 +342,27 @@ class PhaseController extends Controller
 
             if ($oldStatus !== $phase->status) {
                 $this->logAction('Phase Status Changed', "Phase '{$phase->phase_name}' status changed from {$oldStatus} to {$phase->status}");
+
+                if ($phase->status === 'delayed' && $oldStatus !== 'delayed') {
+                    try {
+                        NotificationService::notifyAdmins([
+                            'type' => 'phase',
+                            'title' => 'Phase Delayed',
+                            'message' => "Phase '{$phase->phase_name}' in project '{$project->project_name}' has been marked delayed.",
+                            'data' => [
+                                'module' => 'admin.timeline',
+                                'phase_id' => $phase->phase_id,
+                                'project_id' => $project->project_id,
+                                'project_name' => $project->project_name,
+                                'recipient' => 'Admin',
+                            ],
+                            'related_id' => $phase->phase_id,
+                            'related_type' => 'phase',
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to notify admin on phase delay: ' . $e->getMessage());
+                    }
+                }
             }
 
             if ($oldCompletion !== $phase->completion_percentage) {

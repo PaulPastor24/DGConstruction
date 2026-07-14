@@ -68,7 +68,7 @@ class ClientController extends Controller
         })->where('is_delayed', true)
             ->where('is_completed', false)
             ->with(['phase.project'])
-            ->orderBy('planned_date')
+            ->orderBy('start_date')
             ->get();
 
         $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($primaryProject) {
@@ -77,9 +77,9 @@ class ClientController extends Controller
             }
         })->where('is_completed', false)
             ->where('is_delayed', false)
-            ->whereBetween('planned_date', [now(), now()->addDays(14)])
+            ->whereBetween('start_date', [now(), now()->addDays(14)])
             ->with(['phase.project'])
-            ->orderBy('planned_date')
+            ->orderBy('start_date')
             ->get();
 
         // Recent reports: if the user explicitly selected a project, filter to it;

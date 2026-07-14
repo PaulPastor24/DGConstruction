@@ -61,8 +61,12 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-start gap-3">
-                                <div class="metric-icon-wrapper" style="background-color: {{ $normalizedStatus === 'planning' ? '#198754' : ($normalizedStatus === 'ongoing' ? '#0d6efd' : ($normalizedStatus === 'archived' ? '#6c757d' : '#198754')) }}; color: white; width: 36px; height: 36px;">
-                                    <i class="bi bi-building"></i>
+                                <div class="project-thumb-wrapper" style="width: 44px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eef2f7; display: flex; align-items: center; justify-content: center;">
+                                    @if($project->image_url)
+                                        <img src="{{ $project->image_url }}" alt="{{ $project->project_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <i class="bi bi-building text-muted"></i>
+                                    @endif
                                 </div>
                                 <div>
                                     <div class="project-title-bold">{{ $project->project_name }}</div>

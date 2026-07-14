@@ -2,16 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\AdminNotification;
 use App\Models\ClientNotification;
 use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\Report;
+use App\Models\SupervisorNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\URL; // ◄ Crucial import added for the secure URL handler
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use App\Models\SupervisorNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -84,6 +85,25 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
             $view->with('supervisorUnreadCount', $unread);
+        });
+
+        // Share unread admin notification count with admin layout/topbar
+        View::composer('layouts.admin', function ($view) {
+            $user = Auth::user();
+            $unread = 0;
+            if ($user) {
+                try {
+                    if (\Illuminate\Support\Facades\Schema::hasTable('admin_notifications')) {
+                        $unread = AdminNotification::query()
+                            ->where('admin_id', $user->user_id)
+                            ->where('is_read', false)
+                            ->count('*');
+                    }
+                } catch (\Throwable $e) {
+                    $unread = 0;
+                }
+            }
+            $view->with('adminUnreadCount', $unread);
         });
 
         // 2. Force HTTPS scheme if running via an ngrok tunnel proxy

@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h5 class="mb-0">Project Information</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.projects.update', $project) }}" method="POST">
+                    <form action="{{ route('admin.projects.update', $project) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -298,6 +298,28 @@ document.addEventListener('DOMContentLoaded', function() {
                                       name="description" 
                                       rows="4">{{ old('description', $project->description) }}</textarea>
                             @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="project_image" class="form-label">Project Cover Image</label>
+                            <input type="file" 
+                                   class="form-control @error('project_image') is-invalid @enderror" 
+                                   id="project_image" 
+                                   name="project_image" 
+                                   accept="image/png,image/jpeg,image/jpg,image/webp">
+                            <div class="form-text small text-muted mt-1">Optional. Replace the current cover image (JPG, PNG or WEBP, max 5MB).</div>
+                            @if($project->image_url)
+                                <div class="mt-2">
+                                    <img src="{{ $project->image_url }}" alt="Current project image" class="img-thumbnail" style="max-height: 120px;">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="remove_image">
+                                        <label class="form-check-label small text-muted" for="remove_image">Remove current image</label>
+                                    </div>
+                                </div>
+                            @endif
+                            @error('project_image')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

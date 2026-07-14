@@ -5,16 +5,19 @@ namespace App\Console;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\NotifyPhaseDeadlines;
+use App\Console\Commands\ScanMilestonesAndMaterials;
 
 class Kernel extends ConsoleKernel
 {
     protected $commands = [
         NotifyPhaseDeadlines::class,
+        ScanMilestonesAndMaterials::class,
     ];
 
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('notify:phases-deadlines')->dailyAt('08:00');
+        $schedule->command('notifications:scan')->dailyAt('07:00');
     }
 
     protected function commands()

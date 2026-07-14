@@ -157,6 +157,20 @@ class UserController extends Controller
             ];
             $finish(200, $payload);
 
+            // Notify admins about new user creation
+            try {
+                \App\Services\NotificationService::notifyAdmins([
+                    'type' => 'user',
+                    'title' => 'New User Created',
+                    'message' => "A new user '{$user->first_name} {$user->last_name}' was created.",
+                    'data' => ['module' => 'admin.users', 'user_id' => $user->user_id, 'recipient' => 'Admin'],
+                    'related_id' => $user->user_id,
+                    'related_type' => 'user',
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to notify admins on new user creation: ' . $e->getMessage());
+            }
+
             // Always return JSON for AJAX requests (indicated by X-Requested-With header)
             if ($isAjax) {
                 return response()->json($payload, 200);

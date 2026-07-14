@@ -40,6 +40,8 @@ class UpdateProjectRequest extends FormRequest
             'actual_end_date' => ['nullable', 'date', 'after_or_equal:start_date', 'before_or_equal:target_end_date'],
             'status' => ['required', 'in:planning,ongoing,completed,on_hold'],
             'description' => ['nullable', 'string'],
+            'project_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_image' => ['nullable', 'in:0,1'],
         ];
     }
 

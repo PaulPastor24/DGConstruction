@@ -23,6 +23,7 @@ class Project extends Model
         'actual_end_date',
         'status',
         'description',
+        'project_image',
     ];
 
     protected $casts = [
@@ -30,6 +31,18 @@ class Project extends Model
         'target_end_date' => 'date',
         'actual_end_date' => 'date',
     ];
+
+    /**
+     * Full public URL for the project cover image (or null when not set).
+     */
+    public function getImageUrlAttribute()
+    {
+        if (empty($this->project_image)) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($this->project_image, '/'));
+    }
 
     /**
      * Get the route key for the model.

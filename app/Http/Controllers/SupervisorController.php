@@ -376,7 +376,7 @@ class SupervisorController extends Controller
             })->where('is_delayed', true)
                 ->where('is_completed', false)
                 ->with(['phase.project'])
-                ->orderBy('planned_date')
+                ->orderBy('start_date')
                 ->get();
 
             $pendingReports = Report::query()
@@ -415,9 +415,9 @@ class SupervisorController extends Controller
             $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($selectedProjectId) {
                 $q->where('project_id', $selectedProjectId);
             })->where('is_completed', false)
-                ->whereNotNull('planned_date')
-                ->where('planned_date', '>', now())
-                ->orderBy('planned_date')
+                ->whereNotNull('start_date')
+                ->where('start_date', '>', now())
+                ->orderBy('start_date')
                 ->get();
 
             $primaryPhase = $primaryProject->phases->firstWhere('status', 'in_progress')
@@ -461,7 +461,7 @@ class SupervisorController extends Controller
             ? max(0, min($projectWorkersCount, $projectWorkersCount - 1))
             : $attendancePresentCount;
 
-        $upcomingMilestone = $upcomingMilestones->sortBy('planned_date')->first();
+        $upcomingMilestone = $upcomingMilestones->sortBy('start_date')->first();
         $pendingTasksCount = max(0, $pendingReports->count() + ($primaryPhase ? 1 : 0));
 
         $stats = [
@@ -508,7 +508,7 @@ class SupervisorController extends Controller
             }, 'phases' => function ($query) {
                 $query->orderBy('phase_order')->orderBy('planned_start_date');
             }, 'phases.milestones' => function ($query) {
-                $query->orderBy('planned_date');
+                $query->orderBy('start_date');
             }])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -527,13 +527,13 @@ class SupervisorController extends Controller
                         'name' => $milestone->milestone_name,
                         'project_name' => $phase->project->project_name ?? null,
                         'phase_name' => $phase->phase_name,
-                        'start_date' => optional($milestone->planned_date)->toDateString(),
+                        'start_date' => optional($milestone->start_date)->toDateString(),
                         'is_completed' => (bool) $milestone->is_completed,
                         'is_delayed' => (bool) $milestone->is_delayed,
                         'phase_order' => $phase->phase_order,
                     ];
                 });
-            })->sortBy('planned_date')->values();
+            })->sortBy('start_date')->values();
 
             $activeMilestones = $allMilestones->filter(function ($milestone) {
                 return !$milestone['is_completed'] && !$milestone['is_delayed'] && $milestone['start_date'] && \Carbon\Carbon::parse($milestone['start_date'])->lte(now()->addDays(7));
@@ -586,8 +586,8 @@ class SupervisorController extends Controller
                             return [
                                 'id' => $milestone->milestone_id,
                                 'name' => $milestone->milestone_name,
-                                'start_date' => optional($milestone->planned_date)->toDateString(),
-                                'end_date' => optional($milestone->actual_date)->toDateString(),
+                                'start_date' => optional($milestone->start_date)->toDateString(),
+                                'end_date' => optional($milestone->end_date)->toDateString(),
                                 'is_completed' => (bool) $milestone->is_completed,
                                 'is_delayed' => (bool) $milestone->is_delayed,
                             ];
@@ -749,7 +749,7 @@ class SupervisorController extends Controller
         if ($assignedProjects->isNotEmpty()) {
             $upcomingMilestone = Milestone::whereHas('phase', function ($q) use ($assignedProjectIds) {
                 $q->whereIn('project_id', $assignedProjectIds);
-            })->where('is_completed', false)->where('is_delayed', false)->orderBy('planned_date')->first();
+            })->where('is_completed', false)->where('is_delayed', false)->orderBy('start_date')->first();
         }
 
         return view('supervisor.profile', compact('user', 'assignedProjects', 'pendingReportsCount', 'avgProjectCompletion', 'upcomingMilestone'));

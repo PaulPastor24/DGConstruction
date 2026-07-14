@@ -49,16 +49,16 @@
             <div class="stat-icon-wrap"><i class="bi bi-building"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Active Projects</div>
-                <div class="stat-number">{{ $stats['active_projects'] ?? 8 }}</div>
+                <div class="stat-number">{{ $stats['active_projects'] ?? 0 }}</div>
                 <div class="stat-subtext link">View all &rarr;</div>
             </div>
         </div>
-        
+
         <div class="stat-box">
             <div class="stat-icon-wrap"><i class="bi bi-people"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Total Workers</div>
-                <div class="stat-number">{{ $stats['total_workforce'] ?? 128 }}</div>
+                <div class="stat-number">{{ $stats['total_workforce'] ?? 0 }}</div>
                 <div class="stat-subtext up"><i class="bi bi-arrow-up-short"></i> +12 this week</div>
             </div>
         </div>
@@ -67,7 +67,7 @@
             <div class="stat-icon-wrap"><i class="bi bi-layers"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Materials in Stock</div>
-                <div class="stat-number">{{ $stats['inventory_count'] ?? 245 }}</div>
+                <div class="stat-number">{{ $stats['inventory_count'] ?? 0 }}</div>
                 <div class="stat-subtext link"><span style="color:#10b981;">●</span> On track</div>
             </div>
         </div>
@@ -76,15 +76,15 @@
             <div class="stat-icon-wrap"><i class="bi bi-clipboard-data"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Pending Reports</div>
-                <div class="stat-number">{{ $stats['pending_reports'] ?? 5 }}</div>
+                <div class="stat-number">{{ $stats['pending_reports'] ?? 0 }}</div>
                 <div class="stat-subtext link">View reports &rarr;</div>
             </div>
         </div>
     </div>
 
-    <!-- BOTTOM ROW: Projects List & Sidebar Charts -->
+    <!-- BOTTOM ROW: Projects List & Sidebar Cards -->
     <div class="bottom-row-grid">
-        
+
         <!-- Left: Recent Projects -->
         <div class="dash-card">
             <div class="dash-card-header">
@@ -95,8 +95,8 @@
             <div class="project-list">
                 @forelse($activeProjects ?? [] as $project)
                     <div class="project-list-item" onclick="window.location.href='{{ route('admin.projects.show', $project->id) }}'" style="cursor: pointer;">
-                        <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80" alt="Project" class="proj-thumb">
-                        
+                        <img src="{{ $project->image ?? 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80' }}" alt="Project" class="proj-thumb" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80';">
+
                         <div class="proj-details">
                             <div class="proj-title">{{ $project->name }}</div>
                             <div class="proj-sub">{{ $project->current_phase ?? 'Phase 1 - Construction' }}</div>
@@ -104,16 +104,18 @@
 
                         <div class="proj-progress-wrapper">
                             <div class="progress-bar-bg">
-                                <div class="progress-bar-fill {{ $project->progress_percentage >= 50 ? 'green' : 'yellow' }}" style="width: {{ $project->progress_percentage }}%"></div>
+                                <div class="progress-bar-fill {{ $project->progress_color_class ?? 'blue' }}" style="width: {{ $project->progress_percentage }}%"></div>
                             </div>
                             <div class="proj-percent">{{ $project->progress_percentage }}%</div>
                         </div>
 
                         <div>
-                            @if($project->progress_percentage >= 50)
+                            @if(($project->progress_percentage ?? 0) >= 80)
                                 <div class="proj-badge on-track">On Track</div>
-                            @else
+                            @elseif(($project->progress_percentage ?? 0) < 40)
                                 <div class="proj-badge delayed">Delayed</div>
+                            @else
+                                <div class="proj-badge in-progress">In Progress</div>
                             @endif
                         </div>
                     </div>
@@ -142,7 +144,7 @@
                             <div class="progress-bar-bg"><div class="progress-bar-fill green" style="width: 65%"></div></div>
                             <div class="proj-percent">65%</div>
                         </div>
-                        <div><div class="proj-badge on-track">On Track</div></div>
+                        <div><div class="proj-badge in-progress">In Progress</div></div>
                     </div>
 
                     <div class="project-list-item">
@@ -152,8 +154,8 @@
                             <div class="proj-sub">Finishing Works</div>
                         </div>
                         <div class="proj-progress-wrapper">
-                            <div class="progress-bar-bg"><div class="progress-bar-fill yellow" style="width: 45%"></div></div>
-                            <div class="proj-percent">45%</div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill orange" style="width: 35%"></div></div>
+                            <div class="proj-percent">35%</div>
                         </div>
                         <div><div class="proj-badge delayed">Delayed</div></div>
                     </div>
@@ -161,7 +163,7 @@
             </div>
         </div>
 
-        <!-- Right Column: Chart & Schedule -->
+        <!-- Right Column: Chart & Recent Reports -->
         <div>
             <!-- Overall Progress Donut -->
             <div class="dash-card" style="margin-bottom: 24px;">
@@ -171,59 +173,52 @@
                 </div>
 
                 <div class="donut-chart-container">
-                    <div class="donut-chart">
-                        <div class="donut-inner">72%</div>
+                    <div class="donut-chart" style="background: conic-gradient(#4d7c53 0% {{ $overallProgress['percentage'] }}%, #f3f4f6 {{ $overallProgress['percentage'] }}% 100%);">
+                        <div class="donut-inner">{{ $overallProgress['percentage'] }}%</div>
                     </div>
                     <div class="donut-legend">
                         <div class="legend-item">
                             <div class="legend-title"><div class="legend-dot green"></div> On Track</div>
-                            <div class="legend-sub">6 Projects</div>
+                            <div class="legend-sub">{{ $overallProgress['on_track'] }} Projects</div>
                         </div>
                         <div class="legend-item" style="margin-bottom: 0;">
-                            <div class="legend-title"><div class="legend-dot yellow"></div> Delayed</div>
-                            <div class="legend-sub">2 Projects</div>
+                            <div class="legend-title"><div class="legend-dot orange"></div> Delayed</div>
+                            <div class="legend-sub">{{ $overallProgress['delayed'] }} Projects</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Today's Schedule -->
+            <!-- Recent Reports -->
             <div class="dash-card">
                 <div class="dash-card-header">
-                    <div class="dash-card-title">Today's Schedule</div>
-                    <a href="#" class="dash-card-link">View calendar</a>
+                    <div class="dash-card-title">Recent Reports</div>
+                    <a href="{{ route('admin.reports.index') }}" class="dash-card-link">View all reports &rarr;</a>
                 </div>
 
-                <div class="schedule-list">
-                    <div class="schedule-item">
-                        <div class="schedule-time">8:00 AM</div>
-                        <div class="schedule-icon green"><i class="bi bi-clipboard-check"></i></div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Site Inspection</div>
-                            <div class="schedule-loc">Greenview Residences</div>
+                <div class="reports-list">
+                    @forelse($recentReports ?? [] as $report)
+                        <div class="report-list-item" onclick="window.location.href='{{ route('admin.reports.index') }}'" style="cursor: pointer;">
+                            <div class="report-info">
+                                <div class="report-title">{{ $report->title }}</div>
+                                <div class="report-meta">{{ $report->project_name }} &middot; {{ $report->phase_name }}</div>
+                            </div>
+                            <div class="report-meta-right">
+                                <span class="report-badge {{ $report->status_class }}">{{ $report->status_label }}</span>
+                                <div class="report-date">{{ $report->submitted_at }}</div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="schedule-item">
-                        <div class="schedule-time">10:30 AM</div>
-                        <div class="schedule-icon orange"><i class="bi bi-truck"></i></div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Material Delivery</div>
-                            <div class="schedule-loc">Skyline Tower</div>
+                    @empty
+                        <div class="report-list-item">
+                            <div class="report-info">
+                                <div class="report-title">No recent reports</div>
+                                <div class="report-meta">Accomplishment reports will appear here once submitted by supervisors.</div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="schedule-item">
-                        <div class="schedule-time">1:00 PM</div>
-                        <div class="schedule-icon blue"><i class="bi bi-file-earmark-text"></i></div>
-                        <div class="schedule-info">
-                            <div class="schedule-title">Accomplishment Review</div>
-                            <div class="schedule-loc">Riverside Phase 2</div>
-                        </div>
-                    </div>
+                    @endforelse
                 </div>
             </div>
-            
+
         </div>
     </div>
 

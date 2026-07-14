@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="text-muted small mb-0 mt-1">Provide the foundational details needed to deploy a monitoring profile.</p>
                 </div>
                 <div class="card-body pt-3">
-                    <form action="{{ route('admin.projects.store') }}" method="POST">
+                    <form action="{{ route('admin.projects.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mb-3">
@@ -257,6 +257,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
 
                             <input type="hidden" name="status" value="planning">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="project_image" class="form-label fw-bold text-dark small">Project Cover Image</label>
+                            <input type="file"
+                                   class="form-control form-control-sm @error('project_image') is-invalid @enderror"
+                                   id="project_image"
+                                   name="project_image"
+                                   accept="image/png,image/jpeg,image/jpg,image/webp">
+                            <div class="form-text small text-muted mt-1">Optional. Upload a photo of the project site (JPG, PNG or WEBP, max 5MB).</div>
+                            @error('project_image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-4">

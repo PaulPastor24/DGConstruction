@@ -401,16 +401,24 @@ class ReportController extends Controller
                 "Report submitted for phase '{$phase->phase_name}' in project '{$project->project_name}'"
             );
 
-            // Notify project engineer / managers - find project engineer
-            if ($project->engineer) {
-                NotificationService::notifySupervisor($project->engineer->user_id ?? $project->engineer->user_id, [
+            // Notify admin(s) so the report shows up in the admin notifications panel
+            try {
+                NotificationService::notifyAdmins([
                     'type' => 'report',
                     'title' => 'New Report Submitted',
                     'message' => "A new report has been submitted for project '{$project->project_name}' by {$report->submittedBy->name}",
-                    'data' => ['module' => 'admin.reports', 'report_id' => $report->report_id],
+                    'data' => [
+                        'module' => 'admin.reports',
+                        'report_id' => $report->report_id,
+                        'project_id' => $project->project_id,
+                        'project_name' => $project->project_name,
+                        'recipient' => 'Admin',
+                    ],
                     'related_id' => $report->report_id,
                     'related_type' => 'report',
                 ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify admin on report submission: ' . $e->getMessage());
             }
 
             // Notify the submitting supervisor
