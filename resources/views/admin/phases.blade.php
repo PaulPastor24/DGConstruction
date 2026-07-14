@@ -442,6 +442,136 @@
         outline: none;
     }
 
+    /* Searchable phase dropdown */
+    .phase-searchable-select {
+        position: relative;
+        width: 100%;
+    }
+    .phase-searchable-control {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        background: #f8fafc;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .phase-searchable-select.is-open .phase-searchable-control,
+    .phase-searchable-control:focus-within {
+        background: #ffffff;
+        border-color: rgba(4, 90, 51, 0.28);
+        box-shadow: 0 0 0 3px rgba(4, 90, 51, 0.10);
+    }
+    .phase-searchable-control .phase-search-icon {
+        position: absolute;
+        left: 0.9rem;
+        z-index: 2;
+        color: #94a3b8;
+        pointer-events: none;
+    }
+    .phase-searchable-input {
+        width: 100%;
+        min-height: 38px;
+        padding: 0.5rem 4.6rem 0.5rem 2.55rem;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #334155;
+        font-size: 13px;
+    }
+    .phase-searchable-input::placeholder {
+        color: #64748b;
+    }
+    .phase-searchable-clear {
+        position: absolute;
+        right: 2.05rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+    }
+    .phase-searchable-clear.is-visible {
+        display: inline-flex;
+    }
+    .phase-searchable-clear:hover {
+        background: #e2e8f0;
+        color: #334155;
+    }
+    .phase-search-chevron {
+        position: absolute;
+        right: 0.8rem;
+        color: #64748b;
+        pointer-events: none;
+        transition: transform 0.2s ease;
+    }
+    .phase-searchable-select.is-open .phase-search-chevron {
+        transform: rotate(180deg);
+    }
+    .phase-searchable-dropdown {
+        position: absolute;
+        top: calc(100% + 0.45rem);
+        left: 0;
+        right: 0;
+        z-index: 1055;
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        padding: 0.4rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+    }
+    .phase-searchable-select.is-open .phase-searchable-dropdown {
+        display: block;
+    }
+    .phase-search-option {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 0.75rem;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #334155;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+    }
+    .phase-search-option:hover,
+    .phase-search-option.is-active {
+        background: rgba(4, 90, 51, 0.08);
+        color: #045a33;
+    }
+    .phase-search-option .option-order {
+        display: inline-flex;
+        flex: 0 0 26px;
+        width: 26px;
+        height: 26px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(4, 90, 51, 0.08);
+        color: #045a33;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .phase-search-empty {
+        padding: 0.8rem;
+        color: #94a3b8;
+        font-size: 12px;
+        text-align: center;
+    }
+
     body {
         overflow-y: auto !important;
     }
@@ -571,9 +701,28 @@
 
             <div class="card border-0 shadow-sm p-3 mb-0 rounded-3 bg-white">
                 <div class="row g-2 align-items-center">
-                    <div class="col-12 col-md-4 position-relative">
-                        <i class="bi bi-search text-muted position-absolute top-50 start-0 translate-middle-y ms-3"></i>
-                        <input id="phaseSearchInput" type="text" class="form-control ps-5 rounded-2 bg-light border-0 py-2 text-muted" placeholder="Search phase name..." style="font-size: 13px;">
+                    <div class="col-12 col-md-4">
+                        <div class="phase-searchable-select" id="phaseSearchableSelect">
+                            <div class="phase-searchable-control">
+                                <i class="bi bi-search phase-search-icon"></i>
+                                <input
+                                    id="phaseSearchInput"
+                                    type="text"
+                                    class="phase-searchable-input"
+                                    placeholder="Select or search a phase..."
+                                    autocomplete="off"
+                                    role="combobox"
+                                    aria-expanded="false"
+                                    aria-controls="phaseSearchDropdown"
+                                    aria-autocomplete="list"
+                                >
+                                <button id="phaseSearchClearBtn" class="phase-searchable-clear" type="button" aria-label="Clear phase search">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                                <i class="bi bi-chevron-down phase-search-chevron"></i>
+                            </div>
+                            <div id="phaseSearchDropdown" class="phase-searchable-dropdown" role="listbox"></div>
+                        </div>
                     </div>
                     <div class="col-6 col-sm-4 col-md-2">
                         <select id="phaseStatusFilter" class="form-select rounded-2 bg-light border-0 py-2 text-muted" style="font-size: 13px;">
@@ -797,6 +946,24 @@
                             </div>
                             
                             <div class="row g-3">
+                                <div class="col-12" id="phaseTemplateColumn">
+                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Quick Phase Choice</label>
+                                    <select id="phaseTemplateSelect" class="form-select px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                        <option value="">Custom phase / type manually</option>
+                                        <option value="mobilization">Site Preparation / Mobilization</option>
+                                        <option value="excavation">Excavation and Foundation Works</option>
+                                        <option value="structural">Structural Works</option>
+                                        <option value="masonry">Masonry and Wall Works</option>
+                                        <option value="roofing">Roofing Works</option>
+                                        <option value="plumbing">Plumbing Works</option>
+                                        <option value="electrical">Electrical Works</option>
+                                        <option value="doors_windows">Doors and Windows Installation</option>
+                                        <option value="ceiling_finishing">Ceiling and Finishing Works</option>
+                                        <option value="painting">Painting Works</option>
+                                        <option value="final_turnover">Final Inspection and Turnover</option>
+                                    </select>
+                                    <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Select a ready-made draft phase to auto-fill the name and suggested order. You can still edit it before saving.</div>
+                                </div>
                                 <div class="col-12 col-md-7">
                                     <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Phase Name <span class="text-danger">*</span></label>
                                     <input name="phase_name" id="phaseNameInput" class="form-control px-3 shadow-none bg-white border" placeholder="Enter phase name" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" required>
@@ -924,12 +1091,16 @@
         const detailsSidebarCard = document.getElementById('phaseDetailsSidebarCard');
         const detailsPanel = document.getElementById('phaseDetailContent');
         const searchInput = document.getElementById('phaseSearchInput');
+        const searchableSelect = document.getElementById('phaseSearchableSelect');
+        const searchDropdown = document.getElementById('phaseSearchDropdown');
+        const searchClearBtn = document.getElementById('phaseSearchClearBtn');
         const statusFilter = document.getElementById('phaseStatusFilter');
         const progressFilter = document.getElementById('phaseProgressFilter');
         const sortSelect = document.getElementById('phaseSortSelect');
-        const phaseRows = Array.from(document.querySelectorAll('#phaseTableBody > tr[data-phase-row="true"]'));
         const phaseTableBody = document.getElementById('phaseTableBody');
-        const emptyStateRow = document.getElementById('phaseTableEmptyState');
+        const allPhaseRows = phaseTableBody ? Array.from(phaseTableBody.querySelectorAll('tr[data-phase-row="true"]')) : [];
+        const getPhaseRows = () => allPhaseRows;
+        let emptyStateRow = document.getElementById('phaseTableEmptyState');
         const resultsCount = document.getElementById('phaseResultsCount');
 
         if (!workspaceLayout || !detailsSidebarCard || !detailsPanel) {
@@ -974,13 +1145,33 @@
             detailsPanel.innerHTML = FALLBACK_MARKUP;
         }
 
+        function getOrCreateEmptyStateRow() {
+            if (!phaseTableBody) {
+                return null;
+            }
+
+            if (!emptyStateRow) {
+                emptyStateRow = document.createElement('tr');
+                emptyStateRow.id = 'phaseTableEmptyState';
+
+                const cell = document.createElement('td');
+                cell.colSpan = 7;
+                cell.className = 'text-center py-5 text-muted';
+
+                emptyStateRow.appendChild(cell);
+            }
+
+            return emptyStateRow;
+        }
+
         function applyPhaseFilters() {
             const searchTerm = (searchInput?.value || '').trim().toLowerCase();
             const statusValue = statusFilter?.value || 'all';
             const progressValue = progressFilter?.value || 'all';
             const sortValue = sortSelect?.value || 'order_asc';
+            const allRows = getPhaseRows();
 
-            let visibleRows = phaseRows.filter((row) => {
+            let visibleRows = allRows.filter((row) => {
                 const name = (row.dataset.phaseName || '').toLowerCase();
                 const title = (row.dataset.phaseTitle || '').toLowerCase();
                 const status = row.dataset.phaseStatus || '';
@@ -1010,17 +1201,36 @@
 
             if (phaseTableBody) {
                 const fragment = document.createDocumentFragment();
+                const visibleRowSet = new Set(visibleRows);
+                const hiddenRows = allRows.filter((row) => !visibleRowSet.has(row));
+
                 visibleRows.forEach((row) => {
                     row.style.display = '';
                     fragment.appendChild(row);
                 });
 
-                if (emptyStateRow) {
-                    emptyStateRow.style.display = visibleRows.length > 0 ? 'none' : '';
+                const currentEmptyStateRow = getOrCreateEmptyStateRow();
+
+                if (currentEmptyStateRow) {
+                    const emptyCell = currentEmptyStateRow.querySelector('td');
+
+                    if (emptyCell) {
+                        emptyCell.textContent = allRows.length === 0
+                            ? 'No phases found for this project yet.'
+                            : 'No matching phases found. Try clearing the search or filters.';
+                    }
+
+                    currentEmptyStateRow.style.display = visibleRows.length > 0 ? 'none' : '';
+
                     if (visibleRows.length === 0) {
-                        fragment.appendChild(emptyStateRow);
+                        fragment.appendChild(currentEmptyStateRow);
                     }
                 }
+
+                hiddenRows.forEach((row) => {
+                    row.style.display = 'none';
+                    fragment.appendChild(row);
+                });
 
                 phaseTableBody.replaceChildren(fragment);
             }
@@ -1029,6 +1239,158 @@
                 const projectName = '{{ optional($selectedProject)->project_name ?? "this project" }}';
                 resultsCount.textContent = `Showing ${visibleRows.length} phase(s) for ${projectName}`;
             }
+        }
+
+
+        let activeSearchOptionIndex = -1;
+
+        function setPhaseSearchDropdownOpen(isOpen) {
+            if (!searchableSelect || !searchInput) return;
+            searchableSelect.classList.toggle('is-open', isOpen);
+            searchInput.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (!isOpen) activeSearchOptionIndex = -1;
+        }
+
+        function updateSearchClearButton() {
+            if (!searchClearBtn || !searchInput) return;
+            searchClearBtn.classList.toggle('is-visible', searchInput.value.trim().length > 0);
+        }
+
+        function renderPhaseSearchOptions() {
+            if (!searchDropdown || !searchInput) return;
+
+            const term = searchInput.value.trim().toLowerCase();
+            const uniquePhases = new Map();
+
+            getPhaseRows().forEach((row) => {
+                const label = row.querySelector('.phase-name-title')?.textContent?.trim() || '';
+                const value = (row.dataset.phaseName || label).trim().toLowerCase();
+                const order = row.dataset.phaseOrder || '';
+                if (label && !uniquePhases.has(value)) {
+                    uniquePhases.set(value, { label, value, order });
+                }
+            });
+
+            const matches = Array.from(uniquePhases.values())
+                .filter((phase) => !term || phase.label.toLowerCase().includes(term))
+                .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+
+            const allOption = `
+                <button type="button" class="phase-search-option" data-phase-search-option data-input-value="" role="option">
+                    <span class="option-order"><i class="bi bi-layers"></i></span>
+                    <span>All Phases</span>
+                </button>
+            `;
+
+            const optionMarkup = matches.map((phase) => `
+                <button
+                    type="button"
+                    class="phase-search-option"
+                    data-phase-search-option
+                    data-input-value="${escapeHtml(phase.label)}"
+                    role="option"
+                >
+                    <span class="option-order">${escapeHtml(phase.order || '—')}</span>
+                    <span>${escapeHtml(phase.label)}</span>
+                </button>
+            `).join('');
+
+            searchDropdown.innerHTML = allOption + (optionMarkup || '<div class="phase-search-empty">No similar phase found.</div>');
+            activeSearchOptionIndex = -1;
+        }
+
+        function selectPhaseSearchOption(option) {
+            if (!option || !searchInput) return;
+
+            const selectedValue = option.dataset.inputValue || '';
+            searchInput.value = selectedValue;
+
+            if (selectedValue === '') {
+                if (statusFilter) statusFilter.value = 'all';
+                if (progressFilter) progressFilter.value = 'all';
+                if (sortSelect) sortSelect.value = 'order_asc';
+            }
+
+            updateSearchClearButton();
+            setPhaseSearchDropdownOpen(false);
+            applyPhaseFilters();
+        }
+
+        function getVisibleSearchOptions() {
+            if (!searchDropdown) return [];
+            return Array.from(searchDropdown.querySelectorAll('[data-phase-search-option]'));
+        }
+
+        function highlightSearchOption(index) {
+            const options = getVisibleSearchOptions();
+            options.forEach((option) => option.classList.remove('is-active'));
+            if (!options.length) {
+                activeSearchOptionIndex = -1;
+                return;
+            }
+            activeSearchOptionIndex = Math.max(0, Math.min(index, options.length - 1));
+            options[activeSearchOptionIndex].classList.add('is-active');
+            options[activeSearchOptionIndex].scrollIntoView({ block: 'nearest' });
+        }
+
+        if (searchableSelect && searchInput && searchDropdown) {
+            searchInput.addEventListener('focus', function () {
+                renderPhaseSearchOptions();
+                setPhaseSearchDropdownOpen(true);
+            });
+
+            searchInput.addEventListener('click', function () {
+                renderPhaseSearchOptions();
+                setPhaseSearchDropdownOpen(true);
+            });
+
+            searchInput.addEventListener('input', function () {
+                renderPhaseSearchOptions();
+                setPhaseSearchDropdownOpen(true);
+                updateSearchClearButton();
+                applyPhaseFilters();
+            });
+
+            searchInput.addEventListener('keydown', function (event) {
+                const options = getVisibleSearchOptions();
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    setPhaseSearchDropdownOpen(true);
+                    highlightSearchOption(activeSearchOptionIndex + 1);
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    setPhaseSearchDropdownOpen(true);
+                    highlightSearchOption(activeSearchOptionIndex <= 0 ? options.length - 1 : activeSearchOptionIndex - 1);
+                } else if (event.key === 'Enter' && activeSearchOptionIndex >= 0 && options[activeSearchOptionIndex]) {
+                    event.preventDefault();
+                    selectPhaseSearchOption(options[activeSearchOptionIndex]);
+                } else if (event.key === 'Escape') {
+                    setPhaseSearchDropdownOpen(false);
+                }
+            });
+
+            searchDropdown.addEventListener('click', function (event) {
+                const option = event.target.closest('[data-phase-search-option]');
+                if (option) selectPhaseSearchOption(option);
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!searchableSelect.contains(event.target)) {
+                    setPhaseSearchDropdownOpen(false);
+                }
+            });
+        }
+
+        if (searchClearBtn && searchInput) {
+            searchClearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                updateSearchClearButton();
+                renderPhaseSearchOptions();
+                setPhaseSearchDropdownOpen(true);
+                searchInput.focus();
+                applyPhaseFilters();
+            });
         }
 
         function renderPhaseDetails(payload) {
@@ -1141,6 +1503,65 @@
         const completionVisibleRow = document.getElementById('completionVisibleRow');
         const completionPercentageBar = document.getElementById('completionPercentageBar');
         const completionPercentageLabel = document.getElementById('completionPercentageLabel');
+        const phaseTemplateColumn = document.getElementById('phaseTemplateColumn');
+        const phaseTemplateSelect = document.getElementById('phaseTemplateSelect');
+        const PHASE_TEMPLATES = {
+            mobilization: {
+                name: 'Site Preparation / Mobilization',
+                order: 1,
+                durationDays: 7,
+            },
+            excavation: {
+                name: 'Excavation and Foundation Works',
+                order: 2,
+                durationDays: 14,
+            },
+            structural: {
+                name: 'Structural Works',
+                order: 3,
+                durationDays: 30,
+            },
+            masonry: {
+                name: 'Masonry and Wall Works',
+                order: 4,
+                durationDays: 21,
+            },
+            roofing: {
+                name: 'Roofing Works',
+                order: 5,
+                durationDays: 14,
+            },
+            plumbing: {
+                name: 'Plumbing Works',
+                order: 6,
+                durationDays: 14,
+            },
+            electrical: {
+                name: 'Electrical Works',
+                order: 7,
+                durationDays: 14,
+            },
+            doors_windows: {
+                name: 'Doors and Windows Installation',
+                order: 8,
+                durationDays: 10,
+            },
+            ceiling_finishing: {
+                name: 'Ceiling and Finishing Works',
+                order: 9,
+                durationDays: 14,
+            },
+            painting: {
+                name: 'Painting Works',
+                order: 10,
+                durationDays: 10,
+            },
+            final_turnover: {
+                name: 'Final Inspection and Turnover',
+                order: 11,
+                durationDays: 5,
+            },
+        };
         let previousStatusValue = null;
         let currentPhaseStatus = null;
         let activeCompletionValue = 0;
@@ -1169,6 +1590,74 @@
                 if (control) {
                     control.classList.add('is-invalid');
                 }
+            });
+        }
+
+        function getExistingPhaseOrders() {
+            return getPhaseRows()
+                .map((row) => Number(row.dataset.phaseOrder || 0))
+                .filter((order) => order > 0);
+        }
+
+        function getNextPhaseOrder() {
+            const orders = getExistingPhaseOrders();
+            if (!orders.length) {
+                return 1;
+            }
+
+            return Math.max(...orders) + 1;
+        }
+
+        function getSuggestedPhaseOrder(templateOrder) {
+            const order = Number(templateOrder || 0);
+            const usedOrders = getExistingPhaseOrders();
+
+            if (order > 0 && !usedOrders.includes(order)) {
+                return order;
+            }
+
+            return getNextPhaseOrder();
+        }
+
+        function addDaysToDate(dateValue, days) {
+            if (!dateValue || !days) {
+                return '';
+            }
+
+            const date = new Date(`${dateValue}T00:00:00`);
+            if (Number.isNaN(date.getTime())) {
+                return '';
+            }
+
+            date.setDate(date.getDate() + Number(days));
+            return date.toISOString().slice(0, 10);
+        }
+
+        function applyPhaseTemplate(templateKey) {
+            const template = PHASE_TEMPLATES[templateKey];
+            if (!template) {
+                return;
+            }
+
+            if (phaseNameInput) {
+                phaseNameInput.value = template.name;
+            }
+
+            if (phaseOrderInput) {
+                phaseOrderInput.value = getSuggestedPhaseOrder(template.order);
+            }
+
+            if (plannedStartDateInput?.value && plannedEndDateInput && !plannedEndDateInput.value) {
+                plannedEndDateInput.value = addDaysToDate(plannedStartDateInput.value, template.durationDays);
+            }
+
+            calculateDuration();
+            clearPhaseFormErrors();
+        }
+
+        if (phaseTemplateSelect) {
+            phaseTemplateSelect.addEventListener('change', function () {
+                applyPhaseTemplate(this.value);
             });
         }
 
@@ -1246,6 +1735,14 @@
             const isEdit = mode === 'edit';
             phaseForm.reset();
 
+            if (phaseTemplateSelect) {
+                phaseTemplateSelect.value = '';
+                phaseTemplateSelect.disabled = isEdit;
+            }
+            if (phaseTemplateColumn) {
+                phaseTemplateColumn.style.display = isEdit ? 'none' : 'block';
+            }
+
             const projectIdForAction = (payload?.project_id || selectedProjectId || '').toString();
             document.getElementById('projectIdInput').value = projectIdForAction;
             
@@ -1268,7 +1765,7 @@
             
             phaseIdInput.value = payload?.phase_id || '';
             phaseNameInput.value = payload?.phase_name || '';
-            phaseOrderInput.value = payload?.phase_order || '';
+            phaseOrderInput.value = isEdit ? (payload?.phase_order || '') : getNextPhaseOrder();
             phaseStatusInput.value = payload?.status || 'not_started';
             currentPhaseStatus = payload?.status || null;
             plannedStartDateInput.value = payload?.planned_start_date_raw || '';
@@ -1336,7 +1833,15 @@
             displayField.value = '0 days';
         }
 
-        plannedStartDateInput.addEventListener('change', calculateDuration);
+        plannedStartDateInput.addEventListener('change', function () {
+            if (phaseTemplateSelect?.value && plannedStartDateInput.value && !plannedEndDateInput.value) {
+                const template = PHASE_TEMPLATES[phaseTemplateSelect.value];
+                if (template) {
+                    plannedEndDateInput.value = addDaysToDate(plannedStartDateInput.value, template.durationDays);
+                }
+            }
+            calculateDuration();
+        });
         plannedEndDateInput.addEventListener('change', calculateDuration);
 
         function updateCompletionDisplay(value) {
@@ -1606,7 +2111,7 @@
             }
         }
 
-        [searchInput, statusFilter, progressFilter, sortSelect].forEach((control) => {
+        [statusFilter, progressFilter, sortSelect].forEach((control) => {
             if (control) {
                 control.addEventListener('input', applyPhaseFilters);
                 control.addEventListener('change', applyPhaseFilters);
@@ -1630,6 +2135,8 @@
         });
 
         closeDetailsPanel();
+        updateSearchClearButton();
+        renderPhaseSearchOptions();
         applyPhaseFilters();
     });
 </script>
