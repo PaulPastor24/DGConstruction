@@ -428,6 +428,51 @@
             gap: 6px;
             color: #475569;
         }
+
+        /* Image Lightbox */
+        .image-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .image-lightbox.is-open {
+            display: flex;
+        }
+
+        .image-lightbox img {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .image-lightbox-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .image-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 @endpush
 
@@ -606,7 +651,7 @@
                                     if (!$path) {
                                         return null;
                                     }
-                                    return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                                    return asset('storage/' . ltrim($path, '/'));
                                 })
                                 ->filter()
                                 ->values();
@@ -694,9 +739,9 @@
                                                     @else
                                                         <div class="d-flex flex-wrap gap-2 mb-4">
                                                             @foreach($siteImageUrls->take(4) as $imageUrl)
-                                                                <a href="{{ $imageUrl }}" target="_blank" rel="noopener" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                                <button type="button" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
                                                                     <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                                </a>
+                                                                </button>
                                                             @endforeach
                                                             @if($siteImageUrls->count() > 4)
                                                                 <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ $siteImageUrls->count() - 4 }} more</div>
@@ -790,7 +835,7 @@
                             <select name="phase_id" id="modal_phase_id" class="form-select cms-form-control" required>
                                 <option value="" selected disabled>{{ $projectPhases->isEmpty() ? 'Select project first...' : 'Select construction phase...' }}</option>
                                 @foreach($projectPhases as $phase)
-                                    <option value="{{ $phase->phase_id }}">{{ $phase->phase_name }}</option>
+                                    <option value="{{ $phase->phase_id }}" data-completion-percentage="{{ $phase->completion_percentage ?? 0 }}">{{ $phase->phase_name }}</option>
                                 @endforeach
                             </select>
                             @if($projectPhases->isEmpty())
@@ -804,6 +849,29 @@
                         <div class="col-12 col-md-6 cms-form-group">
                             <label for="modal_report_text" class="cms-form-label">Accomplishment Summary <span class="text-danger">*</span></label>
                             <textarea name="report_text" id="modal_report_text" rows="4" class="cms-form-control" placeholder="Enter the accomplishment report text for this project and phase." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="cms-form-section-header">Progress Context</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                                <div class="fw-semibold text-muted mb-1">Current Phase Progress</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold text-dark" id="currentPhaseProgressDisplay">0%</span>
+                                    <span class="text-muted small" id="currentPhaseProgressContext">Select a phase to view current progress.</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px; background-color: #e5e7eb; border-radius: 999px;">
+                                    <div class="progress-bar" id="currentPhaseProgressBar" style="width: 0%; background: linear-gradient(90deg, #4DA078, #82DB72);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                                <label for="modal_accomplishment_percentage" class="cms-form-label">Supervisor Suggested Progress (%) <span class="text-danger">*</span></label>
+                                <input type="number" name="accomplishment_percentage" id="modal_accomplishment_percentage" class="cms-form-control" min="0" max="100" step="0.01" placeholder="e.g. 45" required data-current-progress="">
+                                <div class="text-muted small mt-1">Adjust based on work accomplished since the last report.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -833,6 +901,13 @@
         </div>
     </div>
 </div>
+
+{{-- Image Lightbox Modal --}}
+<div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+    <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
+    <img src="" alt="Site image preview" id="lightboxImage">
+</div>
+
 @endsection
 
 @push('scripts')
@@ -870,15 +945,18 @@
             if (!phases || phases.length === 0) {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
+                updateCurrentPhaseProgress(null);
                 return;
             }
             phases.forEach(phase => {
                 const option = document.createElement('option');
                 option.value = phase.phase_id;
                 option.textContent = phase.phase_name;
+                option.dataset.completionPercentage = phase.completion_percentage ?? 0;
                 modalPhaseSelect.appendChild(option);
             });
             enablePhaseSelect();
+            updateCurrentPhaseProgress(phases[0] ?? null);
         }
 
         function loadProjectPhases(projectId) {
@@ -918,6 +996,34 @@
             } else {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
+                updateCurrentPhaseProgress(null);
+            }
+        }
+
+        function updateCurrentPhaseProgress(phase) {
+            const progressDisplay = document.getElementById('currentPhaseProgressDisplay');
+            const progressContext = document.getElementById('currentPhaseProgressContext');
+            const progressBar = document.getElementById('currentPhaseProgressBar');
+            const suggestedInput = document.getElementById('modal_accomplishment_percentage');
+
+            if (!phase || !phase.completion_percentage) {
+                if (progressDisplay) progressDisplay.textContent = '0%';
+                if (progressContext) progressContext.textContent = 'Select a phase to view current progress.';
+                if (progressBar) progressBar.style.width = '0%';
+                if (suggestedInput) {
+                    suggestedInput.value = '';
+                    suggestedInput.dataset.currentProgress = '0';
+                }
+                return;
+            }
+
+            const percentage = Math.min(100, Math.max(0, parseFloat(phase.completion_percentage) || 0)).toFixed(2);
+            if (progressDisplay) progressDisplay.textContent = percentage + '%';
+            if (progressContext) progressContext.textContent = `Current official progress for ${phase.phase_name || 'this phase'}.`;
+            if (progressBar) progressBar.style.width = percentage + '%';
+            if (suggestedInput) {
+                suggestedInput.value = percentage;
+                suggestedInput.dataset.currentProgress = percentage;
             }
         }
 
@@ -925,11 +1031,18 @@
             modalProjectSelect.addEventListener('change', function() {
                 const projectId = this.value;
                 if (!projectId) {
-                    modalPhaseSelect.innerHTML = emptyPlaceholder;
-                    enablePhaseSelect();
+                    disablePhaseSelect();
                     return;
                 }
                 loadProjectPhases(projectId);
+            });
+        }
+
+        if (modalPhaseSelect) {
+            modalPhaseSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const completionPercentage = selectedOption?.dataset?.completionPercentage ?? 0;
+                updateCurrentPhaseProgress({ completion_percentage: completionPercentage, phase_name: selectedOption?.textContent || 'this phase' });
             });
         }
 
@@ -1073,6 +1186,30 @@
                         return;
                     }
 
+                    const suggestedProgressInput = document.getElementById('modal_accomplishment_percentage');
+                    const currentProgress = parseFloat(suggestedProgressInput?.dataset?.currentProgress ?? suggestedProgressInput?.value ?? 0);
+                    const suggestedProgress = parseFloat(suggestedProgressInput?.value ?? 0);
+
+                    if (isNaN(currentProgress) || isNaN(suggestedProgress)) {
+                        Swal.fire({
+                            title: 'Invalid Progress',
+                            text: 'Please enter a valid progress percentage.',
+                            icon: 'warning',
+                            confirmButtonColor: '#166534',
+                        });
+                        return;
+                    }
+
+                    if (suggestedProgress < currentProgress) {
+                        Swal.fire({
+                            title: 'Progress Cannot Downgrade',
+                            text: `Supervisor Suggested Progress cannot be less than the current phase progress (${currentProgress}%). Please enter a value equal to or greater than ${currentProgress}%.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#166534',
+                        });
+                        return;
+                    }
+
                     const formData = new FormData(createReportForm);
                     Swal.fire({
                         title: 'Submitting report...',
@@ -1135,6 +1272,50 @@
                 });
             });
         }
+
+        // Image lightbox for report details modal
+        const lightbox = document.getElementById('reportImageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+
+        function openLightbox(imageUrl) {
+            if (!lightbox || !lightboxImage) return;
+            lightboxImage.src = imageUrl;
+            lightbox.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            if (!lightbox) return;
+            lightbox.classList.remove('is-open');
+            document.body.style.overflow = '';
+            if (lightboxImage) {
+                setTimeout(() => { lightboxImage.src = ''; }, 200);
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const trigger = e.target.closest('.lightbox-trigger');
+            if (trigger) {
+                const fullImage = trigger.dataset.fullImage || trigger.querySelector('img')?.src;
+                if (fullImage) {
+                    openLightbox(fullImage);
+                }
+            }
+        });
+
+        lightboxCloseBtn?.addEventListener('click', closeLightbox);
+        lightbox?.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
+                closeLightbox();
+            }
+        });
     });
 </script>
 @endpush

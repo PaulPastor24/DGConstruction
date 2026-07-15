@@ -3,10 +3,7 @@
         <button class="menu-button" id="sidebarToggle" aria-label="Toggle navigation">
             <i class="bi bi-list"></i>
         </button>
-        <div>
-            <div class="eyebrow">Admin</div>
-            <div class="topbar-breadcrumb">@yield('page_title', 'Management Dashboard')</div>
-        </div>
+        <div class="topbar-breadcrumb">@yield('page_title', 'Management Dashboard')</div>
     </div>
 
     <div class="topbar-right ms-auto d-flex align-items-center gap-3">

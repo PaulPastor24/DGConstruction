@@ -183,8 +183,8 @@
                             <td class="date-cell-text">{{ $formatDate($phase->planned_start_date) }}</td>
                             <td class="date-cell-text">{{ $formatDate($phase->planned_end_date) }}</td>
                             <td style="text-align: center;">
-                                <button class="action-view-row-btn view-phase-details" data-phase-id="{{ $phase->phase_id }}" title="Edit phase" aria-label="Edit phase">
-                                    <i class="bi bi-pencil-square"></i>
+                                <button class="action-view-row-btn view-phase-details" data-phase-id="{{ $phase->phase_id }}" title="View phase" aria-label="View phase">
+                                    <i class="bi bi-eye"></i>
                                 </button>
                             </td>
                         </tr>

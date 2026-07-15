@@ -447,13 +447,19 @@
                                 </div>
 
                                 <div class="drawer-section-title">Site Images</div>
-                                @if(is_array($report->site_images) && count($report->site_images) > 0)
+                                @php $siteImages = is_array($report->site_images) ? $report->site_images : []; @endphp
+                                @if(!empty($siteImages))
                                     <div class="d-flex gap-2 flex-wrap">
-                                        @foreach(array_slice($report->site_images, 0, 3) as $image)
-                                            <img src="{{ asset('storage/' . $image) }}" class="img-thumbnail-grid" alt="Site Image">
+                                        @foreach(array_slice($siteImages, 0, 3) as $image)
+                                            @php $imageUrl = is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : ''; @endphp
+                                            @if($imageUrl)
+                                                <button type="button" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
+                                                    <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
+                                                </button>
+                                            @endif
                                         @endforeach
-                                        @if(count($report->site_images) > 3)
-                                            <div class="more-images-badge">+{{ count($report->site_images) - 3 }} more</div>
+                                        @if(count($siteImages) > 3)
+                                            <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($siteImages) - 3 }} more</div>
                                         @endif
                                     </div>
                                 @else

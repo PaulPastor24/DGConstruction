@@ -1872,21 +1872,27 @@ MOBILE SIDEBAR SCROLL FIX
    ========================================================================== */
 
 .eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #ffffff;
     text-transform: uppercase;
+    background: var(--brand-dark);
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    line-height: 1;
 }
 
 .topbar-breadcrumb {
     font-family: 'Syne', sans-serif;
-    font-size: 0.95rem;
+    font-size: 1.45rem;
     font-weight: 700;
     color: var(--brand-dark);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -0.01em;
 }
 
 .topbar-date {

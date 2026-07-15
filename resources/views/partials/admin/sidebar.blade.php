@@ -18,7 +18,7 @@
         </a>
         <div class="nav-section-label">Monitoring & Progress</div>
         <a class="nav-item {{ request()->routeIs('admin.timeline') ? 'active' : '' }}" href="{{ route('admin.timeline') }}">
-            <i class="bi bi-bar-chart-steps"></i><span>Project Timeline</span>
+            <i class="bi bi-bar-chart-steps"></i><span>Project Milestones</span>
         </a>
         <a class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
             <i class="bi bi-file-earmark-text"></i><span>Progress Report</span>

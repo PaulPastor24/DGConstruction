@@ -590,10 +590,6 @@
 
 @section('content')
 <div id="pg-phases">
-    <div class="reports-header">
-        <h4>Phase Management</h4>
-        <p>Create, organize, and monitor construction phases for each project.</p>
-    </div>
 
     <div class="card border-0 shadow-sm p-3 mb-4 rounded-3 bg-white">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
@@ -613,9 +609,6 @@
                 </div>
             </div>
             <div class="d-flex gap-2 justify-content-end">
-                <a href="{{ route('admin.phases.export.pdf', ['project_id' => $selectedProject?->project_id]) }}" class="btn btn-light bg-white border text-secondary px-3 d-flex align-items-center gap-2 fw-medium btn-sm rounded-2">
-                    <i class="bi bi-download"></i> Export PDF
-                </a>
                 <button id="openPhaseModalBtn" class="btn btn-forest-green px-3 d-flex align-items-center gap-2 fw-medium btn-sm rounded-2" type="button">
                     <i class="bi bi-plus-lg"></i> Add New Phase
                 </button>

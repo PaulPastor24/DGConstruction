@@ -36,20 +36,6 @@
 
 <div class="attendance-page">
 
-    <div class="attendance-hero">
-        <div class="attendance-title-wrap">
-            <div class="attendance-eyebrow">
-                <i class="bi bi-clipboard-data"></i>
-                Admin Workforce Monitoring
-            </div>
-
-            <h1 class="attendance-title">Worker Attendance</h1>
-
-            <p class="attendance-subtitle">
-                Review daily worker attendance, late records, absences, break logs, biometric verification, and supervisor-submitted entries.
-            </p>
-        </div>
-    </div>
 
     <section class="attendance-filter-card">
         <form method="GET" action="{{ route('admin.attendance') }}" class="attendance-filter-form">

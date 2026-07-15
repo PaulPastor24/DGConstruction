@@ -995,24 +995,7 @@
     
     <!-- Left Main Content Area Grid -->
     <div class="left-dashboard-content">
-        
-        <!-- Header Top Info Line[cite: 3] -->
-        <div class="dashboard-header-row">
-            <div class="dashboard-title-area">
-                <h2>Project Management</h2>
-                <p>Create, manage, and monitor all construction projects.</p>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-dg-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#addProjectModal" style="min-width: 180px; transition: all 0.2s ease-in-out;">
-                    <i class="bi bi-plus"></i> New Project
-                </button>
-                <button type="button" class="btn btn-dg-primary px-4 py-2" style="min-width: 180px; border: 1px solid #c8e6c9; color:#166534; background:#f6fff7; box-shadow: none; transition: all 0.2s ease-in-out;" data-bs-toggle="modal" data-bs-target="#projectArchivesModal">
-                    <i class="bi bi-archive"></i> Project Archives
-                </button>
-            </div>
-        </div>
 
-        <!-- System Total Metrics Highlight Panels Row[cite: 3] -->
         <div class="metrics-row-grid">
             <div class="metric-card-box total">
                 <div class="metric-icon-wrapper"><i class="bi bi-briefcase"></i></div>
@@ -1083,13 +1066,20 @@
                     @endforeach
                 </select>
 
+                <select name="sort_by" class="form-select filter-dropdown-select form-select-sm" aria-label="Sort projects">
+                    <option value="newest" {{ request('sort_by') == 'newest' ? 'selected' : '' }}>Newest</option>
+                    <option value="oldest" {{ request('sort_by') == 'oldest' ? 'selected' : '' }}>Oldest</option>
+                    <option value="name_asc" {{ request('sort_by') == 'name_asc' ? 'selected' : '' }}>Title A-Z</option>
+                    <option value="name_desc" {{ request('sort_by') == 'name_desc' ? 'selected' : '' }}>Title Z-A</option>
+                </select>
+
                 <div class="filter-actions-right">
-                    <select name="sort_by" class="form-select filter-dropdown-select form-select-sm" aria-label="Sort projects">
-                        <option value="newest" {{ request('sort_by') == 'newest' ? 'selected' : '' }}>Newest</option>
-                        <option value="oldest" {{ request('sort_by') == 'oldest' ? 'selected' : '' }}>Oldest</option>
-                        <option value="name_asc" {{ request('sort_by') == 'name_asc' ? 'selected' : '' }}>Title A-Z</option>
-                        <option value="name_desc" {{ request('sort_by') == 'name_desc' ? 'selected' : '' }}>Title Z-A</option>
-                    </select>
+                    <button type="button" class="btn btn-dg-primary px-3 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addProjectModal" style="min-width: 140px; transition: all 0.2s ease-in-out; font-size: 13px;">
+                        <i class="bi bi-plus"></i> New Project
+                    </button>
+                    <button type="button" class="btn px-3 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#projectArchivesModal" style="min-width: 140px; border: 1px solid #c8e6c9; color:#166534; background:#f6fff7; box-shadow: none; transition: all 0.2s ease-in-out; font-size: 13px;">
+                        <i class="bi bi-archive"></i> Project Archives
+                    </button>
                 </div>
             </form>
         </div>
