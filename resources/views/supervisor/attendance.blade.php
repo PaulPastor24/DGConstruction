@@ -97,6 +97,119 @@
             animation: attendancePulse 0.8s ease;
         }
 
+        .status-log-stack {
+            display: flex;
+            width: 100%;
+            min-width: 150px;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 0.42rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            border: 1px solid transparent;
+        }
+
+        .status-pill-present {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .status-pill-late {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .status-pill-absent {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .status-pill-default {
+            background: #f1f5f9;
+            color: #475569;
+            border-color: #e2e8f0;
+        }
+
+        .status-action-grid {
+            display: grid;
+            width: 100%;
+            max-width: 220px;
+            gap: 0.5rem;
+        }
+
+        .status-action-btn {
+            width: 100%;
+            min-height: 38px;
+            border-radius: 12px !important;
+            font-size: 0.84rem;
+            font-weight: 800;
+            line-height: 1.1;
+            padding: 0.55rem 0.75rem !important;
+            box-shadow: none !important;
+        }
+
+        .status-action-btn i {
+            font-size: 0.92rem;
+        }
+
+        .status-action-break-out {
+            color: #1d4ed8 !important;
+            border-color: #bfdbfe !important;
+            background: #eff6ff !important;
+        }
+
+        .status-action-break-out:hover {
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
+            background: #1d4ed8 !important;
+        }
+
+        .status-action-break-in {
+            color: #b45309 !important;
+            border-color: #fde68a !important;
+            background: #fffbeb !important;
+        }
+
+        .status-action-break-in:hover {
+            color: #ffffff !important;
+            border-color: #b45309 !important;
+            background: #b45309 !important;
+        }
+
+        .status-action-time-out {
+            color: #111827 !important;
+            border-color: #d1d5db !important;
+            background: #f9fafb !important;
+        }
+
+        .status-action-time-out:hover {
+            color: #ffffff !important;
+            border-color: #111827 !important;
+            background: #111827 !important;
+        }
+
+        .status-action-disabled {
+            cursor: not-allowed !important;
+            color: #94a3b8 !important;
+            border-color: #e2e8f0 !important;
+            background: #f8fafc !important;
+            opacity: 1 !important;
+        }
+
         @keyframes attendanceFadeIn {
             from {
                 opacity: 0;
@@ -240,6 +353,31 @@
                 margin-bottom: 0.5rem;
             }
 
+            #attendanceLogTableBody td:last-child .status-log-stack {
+                width: 100%;
+                align-items: stretch !important;
+                gap: 0.75rem;
+            }
+
+            #attendanceLogTableBody td:last-child .status-pill {
+                width: fit-content;
+                min-width: 110px;
+            }
+
+            #attendanceLogTableBody td:last-child .status-action-grid {
+                width: 100%;
+                max-width: none;
+                grid-template-columns: 1fr;
+                gap: 0.55rem;
+            }
+
+            #attendanceLogTableBody td:last-child .status-action-btn {
+                width: 100%;
+                min-height: 44px;
+                font-size: 0.92rem;
+                justify-content: center;
+            }
+
             #attendanceLogTableBody td:last-child .d-flex {
                 align-items: flex-start !important;
             }
@@ -272,6 +410,11 @@
                     <button type="button" class="btn btn-outline-secondary fw-semibold btn-sm px-3 py-2"
                             data-bs-toggle="modal" data-bs-target="#viewWorkersModal">
                         <i class="bi bi-people-fill"></i> View Enrolled Workers
+                    </button>
+
+                    <button type="button" class="btn btn-outline-dark fw-semibold btn-sm px-3 py-2"
+                            data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+                        <i class="bi bi-pencil-square"></i> Manual Attendance
                     </button>
 
                     <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2"
@@ -455,6 +598,69 @@
         </div>
     </div>
 </div>
+
+<!-- MANUAL ATTENDANCE MODAL -->
+<div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square text-dark"></i> Manual Attendance Log
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Use this only when the biometric reader is unavailable or not working.
+                    </p>
+                </div>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <div id="manualAttendanceStatus" class="alert alert-light border text-muted small py-2 mb-3">
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    Select a worker and attendance action.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Worker</label>
+                    <select id="manualWorkerSelect" class="form-select" required>
+                        <option value="">Loading workers...</option>
+                    </select>
+                    <div class="form-text">
+                        The worker must already be enrolled in the system.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted">Attendance Action</label>
+                    <select id="manualActionSelect" class="form-select" required>
+                        <option value="time_in">Time In</option>
+                        <option value="break_out">Break Out</option>
+                        <option value="break_in">Break In</option>
+                        <option value="time_out">Time Out</option>
+                    </select>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label small fw-semibold text-muted">Reason / Remarks</label>
+                    <textarea id="manualReasonInput" class="form-control" rows="3"
+                              placeholder="Example: Biometric reader not working / fingerprint scan failed."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light fw-medium btn-sm" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button" class="btn btn-dark fw-semibold btn-sm" id="btnSaveManualAttendance">
+                    <i class="bi bi-save"></i> Save Manual Log
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -470,6 +676,12 @@
         const formSubmitContainer = document.getElementById('formSubmitContainer');
         const scannedCountBadge = document.getElementById('scannedCount');
         const viewWorkersModal = document.getElementById('viewWorkersModal');
+        const manualAttendanceModal = document.getElementById('manualAttendanceModal');
+        const manualWorkerSelect = document.getElementById('manualWorkerSelect');
+        const manualActionSelect = document.getElementById('manualActionSelect');
+        const manualReasonInput = document.getElementById('manualReasonInput');
+        const manualAttendanceStatus = document.getElementById('manualAttendanceStatus');
+        const btnSaveManualAttendance = document.getElementById('btnSaveManualAttendance');
 
         const btnRegisterFingerprint = document.getElementById('btnRegisterWorkerFingerprint');
         const btnSaveWorker = document.getElementById('btnSaveWorkerRecord');
@@ -482,6 +694,7 @@
         let capturedPasskeyCredential = null;
         let currentPage = 1;
         let scannedWorkerIds = new Set();
+        let manualWorkersCache = [];
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -520,13 +733,19 @@
             return `${h}:${minute} ${ampm}`;
         }
 
+        function localTodayDateString() {
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 10);
+        }
+
         function selectedDateValue() {
-            return attendanceDateInput?.value || new Date().toISOString().slice(0, 10);
+            return attendanceDateInput?.value || localTodayDateString();
         }
 
         function isFivePmOrLaterForSelectedDate() {
             const selected = selectedDateValue();
-            const today = new Date().toISOString().slice(0, 10);
+            const today = localTodayDateString();
 
             if (selected < today) {
                 return true;
@@ -568,18 +787,18 @@
             const value = String(status || 'present').toLowerCase();
 
             if (value === 'present') {
-                return '<span class="badge bg-success rounded-pill">Present</span>';
+                return '<span class="status-pill status-pill-present"><i class="bi bi-check-circle me-1"></i>Present</span>';
             }
 
             if (value === 'late') {
-                return '<span class="badge bg-warning text-dark rounded-pill">Late</span>';
+                return '<span class="status-pill status-pill-late"><i class="bi bi-clock-history me-1"></i>Late</span>';
             }
 
             if (value === 'absent') {
-                return '<span class="badge bg-danger rounded-pill">Absent</span>';
+                return '<span class="status-pill status-pill-absent"><i class="bi bi-x-circle me-1"></i>Absent</span>';
             }
 
-            return `<span class="badge bg-secondary rounded-pill">${escapeHtml(value || 'Not Logged')}</span>`;
+            return `<span class="status-pill status-pill-default">${escapeHtml(value || 'Not Logged')}</span>`;
         }
 
         function getActionButtons(record) {
@@ -592,10 +811,10 @@
             if (record.time_in && !record.break_out) {
                 buttons += `
                     <button type="button"
-                            class="btn btn-sm btn-outline-primary attendance-action-btn"
+                            class="btn btn-sm status-action-btn status-action-break-out attendance-action-btn"
                             data-worker-id="${escapeHtml(record.worker_id)}"
                             data-action="break_out">
-                        Break Out
+                        <i class="bi bi-cup-hot me-1"></i> Break Out
                     </button>
                 `;
             }
@@ -603,10 +822,10 @@
             if (record.break_out && !record.break_in) {
                 buttons += `
                     <button type="button"
-                            class="btn btn-sm btn-outline-warning attendance-action-btn"
+                            class="btn btn-sm status-action-btn status-action-break-in attendance-action-btn"
                             data-worker-id="${escapeHtml(record.worker_id)}"
                             data-action="break_in">
-                        Break In
+                        <i class="bi bi-arrow-return-left me-1"></i> Break In
                     </button>
                 `;
             }
@@ -615,18 +834,18 @@
                 if (isFivePmOrLaterForSelectedDate()) {
                     buttons += `
                         <button type="button"
-                                class="btn btn-sm btn-outline-dark attendance-action-btn"
+                                class="btn btn-sm status-action-btn status-action-time-out attendance-action-btn"
                                 data-worker-id="${escapeHtml(record.worker_id)}"
                                 data-action="time_out">
-                            Time Out
+                            <i class="bi bi-box-arrow-right me-1"></i> Time Out
                         </button>
                     `;
                 } else {
                     buttons += `
                         <button type="button"
-                                class="btn btn-sm btn-outline-secondary"
+                                class="btn btn-sm status-action-btn status-action-disabled"
                                 disabled>
-                            Time Out 5PM
+                            <i class="bi bi-lock me-1"></i> Time Out 5PM
                         </button>
                     `;
                 }
@@ -647,7 +866,7 @@
                     data-active-log="1">
                     <td class="py-3" data-label="Personnel Name">
                         <div class="fw-semibold text-dark">${fullName}</div>
-                        <input type="hidden" name="biometric_verified[${workerKey}]" value="1">
+                        <input type="hidden" name="biometric_verified[${workerKey}]" value="${record.biometric_matched === false || record.biometric_matched === 0 || String(record.biometric_matched) === '0' ? '0' : '1'}">
                     </td>
 
                     <td class="py-3 text-muted" data-label="Trade">
@@ -671,10 +890,10 @@
                     </td>
 
                     <td class="py-3 text-center" data-label="Status Log">
-                        <div class="d-flex flex-column align-items-center gap-2">
+                        <div class="status-log-stack">
                             ${getStatusBadge(record.status)}
 
-                            <div class="d-flex justify-content-center flex-wrap gap-1">
+                            <div class="status-action-grid">
                                 ${getActionButtons(record)}
                             </div>
                         </div>
@@ -729,10 +948,73 @@
             updateActiveLogCount();
         }
 
-        function removeMissingRows(latestRecords) {
+        function normalizeAttendanceRecord(rawRecord) {
+            const record = rawRecord || {};
+            const worker = record.worker || record.display_worker || record.displayWorker || record.personnel || record.employee || {};
+            const deploymentWorker = record.deployment && record.deployment.worker ? record.deployment.worker : {};
+
+            const resolvedWorkerId = record.worker_id
+                || record.workerId
+                || worker.worker_id
+                || worker.id
+                || deploymentWorker.worker_id
+                || deploymentWorker.id
+                || null;
+
+            return {
+                worker_id: resolvedWorkerId,
+                first_name: record.first_name || worker.first_name || deploymentWorker.first_name || '',
+                last_name: record.last_name || worker.last_name || deploymentWorker.last_name || '',
+                trade: record.trade || worker.trade || worker.position || worker.job_title || deploymentWorker.trade || 'General',
+                time_in: record.time_in || null,
+                break_out: record.break_out || null,
+                break_in: record.break_in || null,
+                time_out: record.time_out || null,
+                status: record.status || 'present',
+                biometric_matched: record.biometric_matched ?? record.biometric_verified ?? true,
+                remarks: record.remarks || ''
+            };
+        }
+
+        function extractAttendanceRecords(payload) {
+            if (Array.isArray(payload)) {
+                return payload.map(normalizeAttendanceRecord).filter(record => record.worker_id);
+            }
+
+            const possibleRecords = payload?.data
+                || payload?.records
+                || payload?.logs
+                || payload?.attendance_logs
+                || [];
+
+            if (!Array.isArray(possibleRecords)) {
+                return [];
+            }
+
+            return possibleRecords
+                .map(normalizeAttendanceRecord)
+                .filter(record => record.worker_id);
+        }
+
+        function removeMissingRows(latestRecords, options = {}) {
+            const allowClear = options.allowClear ?? false;
+            const validRecords = Array.isArray(latestRecords)
+                ? latestRecords.filter(record => record && record.worker_id)
+                : [];
+
             const latestIds = new Set(
-                latestRecords.map(record => String(record.worker_id))
+                validRecords.map(record => String(record.worker_id))
             );
+
+            if (latestIds.size === 0) {
+                if (allowClear) {
+                    scannedWorkerIds.clear();
+                    renderEmptyAttendanceRow();
+                }
+
+                updateActiveLogCount();
+                return;
+            }
 
             attendanceLogTableBody
                 .querySelectorAll('tr[data-worker-id]')
@@ -741,11 +1023,6 @@
                         row.remove();
                     }
                 });
-
-            if (latestIds.size === 0) {
-                scannedWorkerIds.clear();
-                renderEmptyAttendanceRow();
-            }
 
             updateActiveLogCount();
         }
@@ -763,10 +1040,12 @@
             isAttendanceFetching = true;
 
             try {
-                const response = await fetch(`/supervisor/attendance/today?date=${selectedDateValue()}`, {
+                const response = await fetch(`/supervisor/attendance/today?date=${encodeURIComponent(selectedDateValue())}`, {
                     headers: {
-                        'Accept': 'application/json'
-                    }
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    cache: 'no-store'
                 });
 
                 const result = await response.json().catch(() => ({}));
@@ -775,11 +1054,21 @@
                     throw new Error(result.message || 'Failed to load attendance.');
                 }
 
-                const records = result.data || [];
+                const records = extractAttendanceRecords(result);
+                const hasExistingRows = attendanceLogTableBody.querySelectorAll('tr[data-worker-id]').length > 0;
 
+                /*
+                    Important fix:
+                    During silent polling, do not wipe the table when the endpoint returns
+                    an empty or malformed response. This prevents scanned/manual attendance
+                    from disappearing while the page is checking for updates.
+                */
                 if (records.length === 0) {
-                    scannedWorkerIds.clear();
-                    renderEmptyAttendanceRow();
+                    if (!silent || !hasExistingRows) {
+                        scannedWorkerIds.clear();
+                        renderEmptyAttendanceRow();
+                    }
+
                     updateActiveLogCount();
                     isFirstAttendanceLoad = false;
                     return;
@@ -793,7 +1082,9 @@
                     upsertAttendanceRecord(record, !isFirstAttendanceLoad);
                 });
 
-                removeMissingRows(records);
+                removeMissingRows(records, {
+                    allowClear: !silent
+                });
 
                 isFirstAttendanceLoad = false;
             } catch (error) {
@@ -860,6 +1151,208 @@
             }
 
             upsertAttendanceRecord(result.attendance, true);
+        }
+
+        async function fetchWorkersPage(page = 1) {
+            const response = await fetch(`/supervisor/workers/list?page=${page}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Unable to load workers.');
+            }
+
+            return data;
+        }
+
+        async function loadManualWorkers() {
+            if (!manualWorkerSelect) {
+                return;
+            }
+
+            manualWorkerSelect.innerHTML = '<option value="">Loading workers...</option>';
+            btnSaveManualAttendance.disabled = true;
+
+            manualAttendanceStatus.className = 'alert alert-light border text-muted small py-2 mb-3';
+            manualAttendanceStatus.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Loading enrolled workers...
+            `;
+
+            try {
+                const firstPage = await fetchWorkersPage(1);
+
+                const allWorkers = [];
+                const firstPageWorkers = Array.isArray(firstPage)
+                    ? firstPage
+                    : (firstPage.data || firstPage.workers || []);
+
+                firstPageWorkers.forEach(item => allWorkers.push(normalizeWorker(item)));
+
+                const lastPage = Number(firstPage.last_page || 1);
+
+                if (!Array.isArray(firstPage) && lastPage > 1) {
+                    for (let page = 2; page <= lastPage; page++) {
+                        const nextPage = await fetchWorkersPage(page);
+                        const nextWorkers = nextPage.data || nextPage.workers || [];
+                        nextWorkers.forEach(item => allWorkers.push(normalizeWorker(item)));
+                    }
+                }
+
+                manualWorkersCache = allWorkers.filter(worker => worker.worker_id);
+
+                if (!manualWorkersCache.length) {
+                    manualWorkerSelect.innerHTML = '<option value="">No enrolled workers found</option>';
+
+                    manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                    manualAttendanceStatus.innerHTML = `
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        No enrolled workers available for manual attendance.
+                    `;
+
+                    return;
+                }
+
+                manualWorkerSelect.innerHTML = `
+                    <option value="">Select worker...</option>
+                    ${manualWorkersCache.map(worker => {
+                        const fullName = `${escapeHtml(worker.first_name)} ${escapeHtml(worker.last_name)}`.trim();
+                        const trade = escapeHtml(worker.trade || 'General');
+
+                        return `
+                            <option value="${escapeHtml(worker.worker_id)}">
+                                ${fullName} — ${trade}
+                            </option>
+                        `;
+                    }).join('')}
+                `;
+
+                btnSaveManualAttendance.disabled = false;
+
+                manualAttendanceStatus.className = 'alert alert-light border text-muted small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    Select a worker and attendance action.
+                `;
+            } catch (error) {
+                console.error(error);
+
+                manualWorkerSelect.innerHTML = '<option value="">Unable to load workers</option>';
+
+                manualAttendanceStatus.className = 'alert alert-danger border text-danger small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${escapeHtml(error.message || 'Unable to load workers.')}
+                `;
+            }
+        }
+
+        async function saveManualAttendance() {
+            if (!manualWorkerSelect || !manualActionSelect) {
+                return;
+            }
+
+            const workerId = manualWorkerSelect.value;
+            const action = manualActionSelect.value || 'time_in';
+            const reason = manualReasonInput?.value.trim()
+                || 'Manual attendance log because biometric reader is unavailable.';
+
+            if (!workerId) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Please select a worker first.
+                `;
+
+                return;
+            }
+
+            btnSaveManualAttendance.disabled = true;
+            btnSaveManualAttendance.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Saving...
+            `;
+
+            manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+            manualAttendanceStatus.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Saving manual attendance...
+            `;
+
+            try {
+                const response = await fetch('/supervisor/attendance/log-worker', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        worker_id: workerId,
+                        log_date: selectedDateValue(),
+                        action: action,
+                        manual: true,
+                        biometric_matched: false,
+                        remarks: reason
+                    })
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to save manual attendance.');
+                }
+
+                if (result.attendance) {
+                    upsertAttendanceRecord(result.attendance, true);
+                } else {
+                    await loadTodayAttendance();
+                }
+
+                manualAttendanceStatus.className = 'alert alert-success border text-success small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    Manual attendance saved successfully.
+                `;
+
+                const selectedWorker = manualWorkersCache.find(worker => String(worker.worker_id) === String(workerId));
+
+                globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    Manual ${escapeHtml(action.replace('_', ' '))} saved
+                    ${selectedWorker ? `for <strong>${escapeHtml(selectedWorker.first_name)} ${escapeHtml(selectedWorker.last_name)}</strong>` : ''}.
+                `;
+
+                manualActionSelect.value = 'time_in';
+                if (manualReasonInput) {
+                    manualReasonInput.value = '';
+                }
+
+                setTimeout(() => {
+                    const modalInstance = bootstrap.Modal.getInstance(manualAttendanceModal)
+                        || bootstrap.Modal.getOrCreateInstance(manualAttendanceModal);
+
+                    modalInstance.hide();
+                }, 700);
+            } catch (error) {
+                console.error(error);
+
+                manualAttendanceStatus.className = 'alert alert-danger border text-danger small py-2 mb-3';
+                manualAttendanceStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${escapeHtml(error.message || 'Failed to save manual attendance.')}
+                `;
+            } finally {
+                btnSaveManualAttendance.disabled = false;
+                btnSaveManualAttendance.innerHTML = `
+                    <i class="bi bi-save"></i> Save Manual Log
+                `;
+            }
         }
 
         async function loadWorkers(page = 1) {
@@ -941,6 +1434,12 @@
         viewWorkersModal?.addEventListener('show.bs.modal', function () {
             loadWorkers(1);
         });
+
+        manualAttendanceModal?.addEventListener('show.bs.modal', function () {
+            loadManualWorkers();
+        });
+
+        btnSaveManualAttendance?.addEventListener('click', saveManualAttendance);
 
         prevPageBtn?.addEventListener('click', function () {
             if (currentPage > 1) {
@@ -1207,8 +1706,9 @@
             attendanceRefreshTimer = setInterval(function () {
                 const registerModalOpen = document.getElementById('registerWorkerModal')?.classList.contains('show');
                 const workersModalOpen = document.getElementById('viewWorkersModal')?.classList.contains('show');
+                const manualModalOpen = document.getElementById('manualAttendanceModal')?.classList.contains('show');
 
-                if (!registerModalOpen && !workersModalOpen) {
+                if (!registerModalOpen && !workersModalOpen && !manualModalOpen) {
                     loadTodayAttendance({ silent: true });
                 }
             }, 4000);
