@@ -3,7 +3,7 @@
         $projectItem = $summary['project'];
         $percent = max(0, min(100, (float) ($summary['completion'] ?? 0)));
         $phaseName = optional($summary['current_phase'])->phase_name ?? $projectItem->current_phase ?? 'Planning & Design';
-        $projectImage = 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=900&q=80';
+        $projectImage = $projectItem->image_url ?: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=900&q=80';
         
         $statusLabel = match ($projectItem->status) {
             'completed' => 'Completed',
@@ -34,11 +34,15 @@
         $projectManager = optional($projectItem->engineer)->name ?? 'Unassigned';
         $siteSupervisor = optional($projectItem->activeSupervisor)->name ?? 'Not assigned';
         
-        $latestUpdate = match (true) {
-            $projectItem->status === 'completed' => 'Structural works have been completed and the project is now moving into final closeout and client handover.',
-            $projectItem->status === 'on_hold' => 'Project activities are temporarily paused while the team addresses site constraints and realigns the next milestone plan.',
-            default => "{$phaseName} is progressing according to schedule. Structural works remain on track and the next milestone is expected to be delivered as planned.",
-        };
+        $latestReport = $projectItem->relationLoaded('reports')
+            ? $projectItem->reports->sortByDesc('report_date')->first()
+            : null;
+        $latestUpdate = $latestReport && ! empty($latestReport->report_text)
+            ? Str::limit($latestReport->report_text, 180)
+            : 'No recent report updates have been submitted for this project yet.';
+        $latestUpdateMeta = $latestReport && $latestReport->report_date
+            ? 'Updated '.$latestReport->report_date->diffForHumans()
+            : 'No updates yet';
     @endphp
 
     <article class="project-dashboard-tile" data-project-card data-bs-toggle="modal" data-bs-target="#projectDetailModal-{{ $projectItem->project_id }}" tabindex="0" role="button" aria-label="Open details for {{ $projectItem->project_name }}">
@@ -258,7 +262,7 @@
                             <div class="project-command-update-copy">
                                 <span class="project-command-update-header-title">Latest Update</span>
                                 <p class="project-command-update-text-paragraph">{{ $latestUpdate }}</p>
-                                <span class="project-command-update-meta">Updated 2 days ago</span>
+                                <span class="project-command-update-meta">{{ $latestUpdateMeta }}</span>
                             </div>
                         </div>
                     </section>

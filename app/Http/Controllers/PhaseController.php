@@ -363,24 +363,44 @@ class PhaseController extends Controller
                         Log::error('Failed to notify admin on phase delay: ' . $e->getMessage());
                     }
                 }
+
+                if ($phase->status === 'completed' && $oldStatus !== 'completed') {
+                    try {
+                        if ($project && $project->client_id) {
+                            NotificationService::notifyClient($project->client_id, [
+                                'type' => 'phase',
+                                'title' => 'Construction Phase Completed',
+                                'message' => "The '{$phase->phase_name}' phase has been completed for project '{$project->project_name}'.",
+                                'data' => ['module' => 'client.timeline', 'phase_id' => $phase->phase_id, 'project_id' => $project->project_id],
+                                'related_id' => $phase->phase_id,
+                                'related_type' => 'phase',
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to notify client on phase completion: ' . $e->getMessage());
+                    }
+                }
             }
 
             if ($oldCompletion !== $phase->completion_percentage) {
                 $this->logAction('Phase Completion Updated', "Phase '{$phase->phase_name}' completion changed from {$oldCompletion}% to {$phase->completion_percentage}%");
 
-                try {
-                    if ($project && $project->client_id) {
+                $oldMilestone = floor((float) $oldCompletion / 10);
+                $newMilestone = floor((float) $phase->completion_percentage / 10);
+
+                if ($newMilestone > $oldMilestone && $project && $project->client_id) {
+                    try {
                         NotificationService::notifyClient($project->client_id, [
                             'type' => 'phase',
                             'title' => 'Project Progress Updated',
-                            'message' => "{$phase->phase_name} progress changed to {$phase->completion_percentage}%.",
+                            'message' => "{$phase->phase_name} progress reached {$phase->completion_percentage}%.",
                             'data' => ['module' => 'client.reports', 'phase_id' => $phase->phase_id, 'project_id' => $project->project_id],
                             'related_id' => $phase->phase_id,
                             'related_type' => 'phase',
                         ]);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to notify client on phase completion update: ' . $e->getMessage());
                     }
-                } catch (\Throwable $e) {
-                    Log::error('Failed to notify client on phase completion update: ' . $e->getMessage());
                 }
             }
 

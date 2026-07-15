@@ -534,7 +534,7 @@
         }
 
         .content {
-            padding: 1.35rem 2.25rem 2.25rem 2.25rem;
+            padding: 1.35rem 2.25rem 5.5rem 2.25rem;
         }
 
         .topbar {
@@ -733,9 +733,98 @@
             backdrop-filter: blur(2px);
         }
 
+        /* ===== MOBILE NAV TITLE (top bar, app-style) ===== */
+        .mobile-nav-title {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            font-family: var(--font-brand);
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--brand-green);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 0.5rem;
+        }
+        #sidebarToggle { margin-right: 0.25rem; }
+        #mobileNotificationBell { margin-left: 0.25rem; }
+
+        /* ===== MOBILE BOTTOM TAB BAR (app-style primary navigation) ===== */
+        .client-mobile-tabbar {
+            display: none;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1048;
+            background: var(--surface-card);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.07);
+            padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+            justify-content: space-around;
+            align-items: stretch;
+        }
+        .tabbar-item {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            padding: 0.3rem 0.15rem;
+            position: relative;
+            border-radius: 14px;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+        .tabbar-item i {
+            font-size: 1.3rem;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+        .tabbar-item:active { background: var(--brand-mint); }
+        .tabbar-item.active {
+            color: var(--brand-green);
+        }
+        .tabbar-item.active i {
+            transform: translateY(-1px);
+        }
+        .tabbar-badge {
+            position: absolute;
+            top: 0.1rem;
+            left: calc(50% + 0.55rem);
+            min-width: 16px;
+            height: 16px;
+            padding: 0 0.3rem;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            line-height: 16px;
+            text-align: center;
+            box-shadow: 0 0 0 2px var(--surface-card);
+        }
         @media (max-width: 991.98px) {
+            .client-mobile-tabbar { display: flex; }
+            .content { padding-bottom: 5.75rem; }
+            .dg-assist-fab {
+                bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+                right: 1rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
             .global-mobile-nav {
                 display: flex;
+            }
+            .dashboard-page-heading {
+                display: none;
             }
             .content {
                 padding: 1rem 1.1rem 1.25rem 1.1rem;
@@ -765,7 +854,7 @@
 
         @media (max-width: 767.98px) {
             .content {
-                padding: 0 1rem 1rem 1rem;
+                padding: 0 1rem 5.75rem 1rem;
             }
             .page-header-title,
             .dashboard-page-title {
@@ -822,7 +911,197 @@
             .topbar-actions-left { flex: 1; }
             .topbar-action-icons { justify-content: flex-end; }
             .notification-popup { width: calc(100vw - 3rem); right: 0.75rem; }
-            .content { padding: 0 1rem 1rem 1rem; }
+            .content { padding: 0 1rem 5.75rem 1rem; }
+        }
+
+        /* ===== GLOBAL "NEED ASSISTANCE" FAB + PLATFORM PANEL (all client pages) ===== */
+        .dg-assist-fab {
+            position: fixed;
+            right: 1.5rem;
+            bottom: 1.5rem;
+            z-index: 1040;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.15rem 0.7rem 0.7rem;
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 14px 30px rgba(22, 163, 74, 0.28);
+            color: #ffffff;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dg-assist-fab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 38px rgba(22, 163, 74, 0.36);
+        }
+        .dg-assist-fab:focus-visible {
+            outline: 3px solid rgba(22, 163, 74, 0.45);
+            outline-offset: 3px;
+        }
+        .dg-assist-fab-icon {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 1.35rem;
+            line-height: 1;
+        }
+        .dg-assist-fab-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            white-space: nowrap;
+            padding-right: 0.2rem;
+        }
+
+        .dg-assist-panel {
+            position: fixed;
+            right: 1.5rem;
+            bottom: 5.6rem;
+            width: 330px;
+            max-width: calc(100vw - 3rem);
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.20);
+            z-index: 1042;
+            overflow: hidden;
+            transform: translateY(18px) scale(0.94);
+            opacity: 0;
+            visibility: hidden;
+            transform-origin: bottom right;
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, visibility 0.22s ease;
+        }
+        .dg-assist-panel.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        .dg-assist-panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1.1rem 1.15rem;
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.06), rgba(143, 174, 133, 0.12));
+            border-bottom: 1px solid rgba(42, 64, 40, 0.08);
+        }
+        .dg-assist-panel-head h6 {
+            margin: 0 0 0.25rem;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: var(--font-brand);
+        }
+        .dg-assist-panel-head p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+        .dg-assist-close {
+            border: none;
+            background: rgba(15, 23, 42, 0.05);
+            color: var(--text-muted);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.25rem;
+            line-height: 1;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            transform: translateY(-2%);
+        }
+        .dg-assist-close:hover {
+            background: rgba(15, 23, 42, 0.1);
+            color: #ef4444;
+        }
+        .dg-assist-platforms {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .dg-assist-platform {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.7rem 0.85rem;
+            border-radius: 14px;
+            text-decoration: none;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            background: #ffffff;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .dg-assist-platform:hover {
+            transform: translateX(3px);
+            border-color: var(--pc, #16a34a);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+        }
+        .dg-assist-pf-icon {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #ffffff;
+            background: var(--pc, #16a34a);
+        }
+        .dg-assist-pf-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .dg-assist-pf-text strong {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .dg-assist-pf-text small {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+        .dg-assist-panel.show .dg-assist-platform {
+            animation: dg-plat-in 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .dg-assist-panel.show .dg-assist-platform:nth-child(1) { animation-delay: 0.04s; }
+        .dg-assist-panel.show .dg-assist-platform:nth-child(2) { animation-delay: 0.09s; }
+        .dg-assist-panel.show .dg-assist-platform:nth-child(3) { animation-delay: 0.14s; }
+        .dg-assist-panel.show .dg-assist-platform:nth-child(4) { animation-delay: 0.19s; }
+        .dg-assist-panel.show .dg-assist-platform:nth-child(5) { animation-delay: 0.24s; }
+        @keyframes dg-plat-in {
+            from { opacity: 0; transform: translateX(16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            .dg-assist-fab {
+                right: 1rem;
+                bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+                padding: 0.55rem;
+            }
+            .dg-assist-fab-label { display: none; }
+            .dg-assist-fab-icon {
+                width: 54px;
+                height: 54px;
+                font-size: 1.5rem;
+            }
+            .dg-assist-panel {
+                right: 1rem;
+                bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 64px);
+                width: calc(100vw - 2rem);
+            }
         }
     </style>
     @stack('styles')
@@ -883,6 +1162,7 @@
             <button id="sidebarToggle" type="button" class="global-mobile-toggle" aria-label="Open sidebar navigation">
                 <i class="bi bi-list"></i>
             </button>
+            <div class="mobile-nav-title">@yield('mobileTitle', 'D&amp;G Construction')</div>
             <button id="mobileNotificationBell" type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
                 <i class="bi bi-bell"></i>
                 @if(($clientUnreadCount ?? 0) > 0)
@@ -897,6 +1177,33 @@
         </div>
     </div>
 </div>
+
+<!-- ===== MOBILE BOTTOM TAB BAR (app-style primary navigation, mobile only) ===== -->
+<nav class="client-mobile-tabbar" aria-label="Primary">
+    <a href="{{ route('client.dashboard') }}" class="tabbar-item {{ Request::routeIs('client.dashboard') ? 'active' : '' }}">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ route('client.myprojects') }}" class="tabbar-item {{ Request::routeIs('client.myprojects') ? 'active' : '' }}">
+        <i class="bi bi-folder-fill"></i>
+        <span>Projects</span>
+    </a>
+    <a href="{{ route('client.timeline') }}" class="tabbar-item {{ Request::routeIs('client.timeline') ? 'active' : '' }}">
+        <i class="bi bi-calendar3-event-fill"></i>
+        <span>Timeline</span>
+    </a>
+    <a href="{{ route('client.reports') }}" class="tabbar-item {{ Request::routeIs('client.reports') || Request::routeIs('client.updates') ? 'active' : '' }}">
+        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+        <span>Reports</span>
+    </a>
+    <a href="{{ route('client.notifications') }}" class="tabbar-item {{ Request::routeIs('client.notifications') ? 'active' : '' }}">
+        <i class="bi bi-bell"></i>
+        <span>Alerts</span>
+        @if(($clientUnreadCount ?? 0) > 0)
+            <span class="tabbar-badge" aria-label="{{ $clientUnreadCount ?? 0 }} unread">{{ $clientUnreadCount ?? 0 }}</span>
+        @endif
+    </a>
+</nav>
 
 <div id="notificationPopup" class="notification-popup" role="dialog" aria-label="Client notifications">
     <div class="notification-popup-header">
@@ -941,6 +1248,44 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ===== GLOBAL "NEED ASSISTANCE" WIDGET (visible on every client page) ===== -->
+    <div class="dg-assist-fab" id="dgAssistFab" role="button" tabindex="0" aria-label="Need assistance? Contact our team" aria-expanded="false">
+        <span class="dg-assist-fab-icon"><i class="bi bi-headset"></i></span>
+        <span class="dg-assist-fab-label">Need assistance?</span>
+    </div>
+
+    <div class="dg-assist-panel" id="dgAssistPanel" role="dialog" aria-modal="false" aria-label="Choose how to reach us" aria-hidden="true">
+        <div class="dg-assist-panel-head">
+            <div>
+                <h6>Need assistance?</h6>
+                <p>Reach our team &mdash; admin, supervisor or support &mdash; through any channel below.</p>
+            </div>
+            <button type="button" class="dg-assist-close" id="dgAssistClose" aria-label="Close contact panel">&times;</button>
+        </div>
+        <div class="dg-assist-platforms">
+            <a class="dg-assist-platform" href="https://www.facebook.com/dgconphil" target="_blank" rel="noopener" style="--pc: #1877F2;">
+                <span class="dg-assist-pf-icon"><i class="bi bi-facebook"></i></span>
+                <span class="dg-assist-pf-text"><strong>Facebook</strong><small>Message our page</small></span>
+            </a>
+            <a class="dg-assist-platform" href="https://www.instagram.com/dgcon.phil?utm_source=ig_web_button_share_sheet&amp;igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" style="--pc: #E4405F;">
+                <span class="dg-assist-pf-icon"><i class="bi bi-instagram"></i></span>
+                <span class="dg-assist-pf-text"><strong>Instagram</strong><small>DM us on IG</small></span>
+            </a>
+            <a class="dg-assist-platform" href="https://www.tiktok.com/@dgconphil?is_from_webapp=1&amp;sender_device=pc" target="_blank" rel="noopener" style="--pc: #010101;">
+                <span class="dg-assist-pf-icon"><i class="bi bi-tiktok"></i></span>
+                <span class="dg-assist-pf-text"><strong>TikTok</strong><small>Visit @dgconphil</small></span>
+            </a>
+            <a class="dg-assist-platform" href="mailto:dgconphil@gmail.com" style="--pc: #EA4335;">
+                <span class="dg-assist-pf-icon"><i class="bi bi-envelope-fill"></i></span>
+                <span class="dg-assist-pf-text"><strong>Gmail</strong><small>support@dgconstruction.com</small></span>
+            </a>
+            <a class="dg-assist-platform" href="tel:+639605734065" style="--pc: #16A34A;">
+                <span class="dg-assist-pf-icon"><i class="bi bi-telephone-fill"></i></span>
+                <span class="dg-assist-pf-text"><strong>Phone</strong><small>0960 573 4065</small></span>
+            </a>
+        </div>
+    </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('appSidebar');
@@ -1191,6 +1536,58 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(silentReloadContent, SILENT_RELOAD_INTERVAL);
 });
 </script>
-@stack('scripts')
+    @stack('scripts')
+
+    <script>
+        // --- Global "Need assistance?" platform picker (client portal, every page) ---
+        (function () {
+            const fab = document.getElementById('dgAssistFab');
+            const panel = document.getElementById('dgAssistPanel');
+            const closeBtn = document.getElementById('dgAssistClose');
+
+            function toggleAssist(force) {
+                if (!panel) {
+                    return;
+                }
+                const willShow = typeof force === 'boolean' ? force : !panel.classList.contains('show');
+                panel.classList.toggle('show', willShow);
+                panel.setAttribute('aria-hidden', willShow ? 'false' : 'true');
+                fab?.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+            }
+
+            fab?.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggleAssist();
+            });
+
+            fab?.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleAssist();
+                }
+            });
+
+            closeBtn?.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggleAssist(false);
+            });
+
+            document.addEventListener('click', function (event) {
+                if (
+                    panel && panel.classList.contains('show') &&
+                    !panel.contains(event.target) &&
+                    !fab?.contains(event.target)
+                ) {
+                    toggleAssist(false);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    toggleAssist(false);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

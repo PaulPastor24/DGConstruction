@@ -125,6 +125,8 @@ class ReportController extends Controller
             if ($computedProgress !== null) {
                 $phase = $report->phase;
                 if ($phase) {
+                    $oldCompletion = (float) ($phase->completion_percentage ?? 0);
+                    $oldPhaseStatus = (string) $phase->status;
                     $phase->completion_percentage = round(min(100, max(0, (float) $computedProgress)), 2);
                     $phase->status = $this->resolvePhaseStatusForProgress($phase);
 
@@ -146,20 +148,43 @@ class ReportController extends Controller
 
                     $phase->save();
 
-                    try {
-                        $clientId = optional($report->project)->client_id;
-                        if ($clientId) {
-                            NotificationService::notifyClient($clientId, [
-                                'type' => 'phase',
-                                'title' => 'Project Progress Updated',
-                                'message' => "{$phase->phase_name} progress updated to {$phase->completion_percentage}%.",
-                                'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
-                                'related_id' => $phase->phase_id,
-                                'related_type' => 'phase',
-                            ]);
+                    $oldMilestone = floor($oldCompletion / 10);
+                    $newMilestone = floor((float) $phase->completion_percentage / 10);
+
+                    if ($newMilestone > $oldMilestone) {
+                        try {
+                            $clientId = optional($report->project)->client_id;
+                            if ($clientId) {
+                                NotificationService::notifyClient($clientId, [
+                                    'type' => 'phase',
+                                    'title' => 'Project Progress Updated',
+                                    'message' => "{$phase->phase_name} progress reached {$phase->completion_percentage}%.",
+                                    'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                                    'related_id' => $phase->phase_id,
+                                    'related_type' => 'phase',
+                                ]);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
                         }
-                    } catch (\Throwable $e) {
-                        Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
+                    }
+
+                    if ($phase->status === 'completed' && $oldPhaseStatus !== 'completed') {
+                        try {
+                            $clientId = optional($report->project)->client_id;
+                            if ($clientId) {
+                                NotificationService::notifyClient($clientId, [
+                                    'type' => 'phase',
+                                    'title' => 'Construction Phase Completed',
+                                    'message' => "The '{$phase->phase_name}' phase has been completed for project '{$report->project->project_name}'.",
+                                    'data' => ['module' => 'client.timeline', 'phase_id' => $phase->phase_id, 'project_id' => $report->project_id],
+                                    'related_id' => $phase->phase_id,
+                                    'related_type' => 'phase',
+                                ]);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to notify client on phase completion via report approval: ' . $e->getMessage());
+                        }
                     }
                 }
             }
@@ -188,7 +213,7 @@ class ReportController extends Controller
                 if ($clientId) {
                     NotificationService::notifyClient($clientId, [
                         'type' => 'report',
-                        'title' => 'Report Approved',
+                        'title' => 'New Approved Progress Report',
                         'message' => "A report for project '{$report->project->project_name}' was approved.",
                         'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
                         'related_id' => $report->report_id,

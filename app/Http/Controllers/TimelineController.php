@@ -65,16 +65,13 @@ class TimelineController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $selectedProjectId = $request->query('project_id');
-        $selectedProject = null;
+        // Honour an explicit ?project_id (e.g. carried over from the Dashboard) but
+        // always RENDER every assigned project so the timeline's project dropdown can
+        // switch between them. Previously we filtered the collection to a single
+        // project, which made every other project vanish from the selector.
+        $selectedProjectId = $request->query('project_id') ?? session('client_selected_project_id');
 
-        if ($selectedProjectId) {
-            $selectedProject = $allProjects->firstWhere('project_id', $selectedProjectId);
-        }
-
-        $projects = $selectedProject ? collect([$selectedProject]) : $allProjects;
-
-        $projectsWithStats = $projects->map(function ($project) {
+        $projectsWithStats = $allProjects->map(function ($project) {
             return $this->enrichProjectData($project);
         });
 
@@ -136,6 +133,22 @@ class TimelineController extends Controller
             return $phase;
         });
 
+        $projectStart = $project->start_date ? Carbon::parse($project->start_date) : null;
+        $projectEnd = $project->target_end_date ? Carbon::parse($project->target_end_date) : null;
+
+        // The Workflow Progress bar is a single project-wide timeline, so flags are
+        // positioned against the project's start -> target-end span. If those top-level
+        // dates are missing, fall back to the earliest phase start / latest phase end
+        // so the milestones still land on a meaningful timeline.
+        if (!$projectStart || !$projectEnd || !$projectEnd->gt($projectStart)) {
+            $phaseStarts = $phases->pluck('planned_start_date')->filter();
+            $phaseEnds = $phases->pluck('planned_end_date')->filter();
+            if ($phaseStarts->isNotEmpty() && $phaseEnds->isNotEmpty()) {
+                $projectStart = Carbon::parse($phaseStarts->min());
+                $projectEnd = Carbon::parse($phaseEnds->max());
+            }
+        }
+
         $milestones = $phases->flatMap(function ($phase) {
             return $phase->milestones->map(function ($milestone) use ($phase) {
                 return [
@@ -156,6 +169,25 @@ class TimelineController extends Controller
                 ];
             });
         })->values();
+
+        // Position every milestone as a flag along the overall Workflow Progress bar.
+        // The percent is date-driven: how far the milestone's planned start sits between
+        // the project's start and target end dates - mirroring the supervisor timeline's
+        // phase-progress flag approach, but scoped to the whole project instead of a phase.
+        $milestones = $milestones->map(function ($milestone) use ($projectStart, $projectEnd) {
+            $markerPercent = 0;
+            $milestoneDate = !empty($milestone['start_date']) ? Carbon::parse($milestone['start_date']) : null;
+
+            if ($projectStart && $projectEnd && $milestoneDate && $projectEnd->gt($projectStart)) {
+                $totalDays = max(1, $projectStart->diffInDays($projectEnd, false));
+                $elapsedDays = $projectStart->diffInDays($milestoneDate, false);
+                $markerPercent = max(0, min(100, round(($elapsedDays / $totalDays) * 100, 1)));
+            }
+
+            $milestone['marker_percent'] = $markerPercent;
+
+            return $milestone;
+        });
 
         return [
             'id' => $project->project_id,

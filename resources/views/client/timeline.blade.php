@@ -1,6 +1,7 @@
 @extends('layouts.client')
 
 @section('title', 'Project Timeline - Client View')
+@section('mobileTitle', 'Timeline')
 
 @section('content')
 <div class="container-fluid p-0">
@@ -10,28 +11,24 @@
         'description' => 'Monitor milestone timelines and project phase evolution across your active sites.',
     ])
 
-    @if(isset($allProjects) && $allProjects->isNotEmpty())
-        <div class="timeline-filter-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-            <div>
-                <h5 class="mb-0 text-muted">Filter timeline by project</h5>
-                <p class="mb-0 small text-muted">Select a contract to view its milestone progress.</p>
-            </div>
-            <form method="GET" class="d-flex align-items-center gap-2 mb-0">
-                <label for="project_id" class="visually-hidden">Project</label>
-                <select id="project_id" name="project_id" class="form-select form-select-sm" style="min-width: 240px;" onchange="this.form.submit()">
-                    <option value=""{{ empty($selectedProjectId) ? ' selected' : '' }}>All Projects</option>
-                    @foreach($allProjects as $projectOption)
-                        <option value="{{ data_get($projectOption, 'project_id') }}"{{ (string) data_get($projectOption, 'project_id') === (string) ($selectedProjectId ?? '') ? ' selected' : '' }}>
-                            {{ data_get($projectOption, 'project_name') }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
-        </div>
-    @endif
-
     @if(isset($projectsWithStats) && count($projectsWithStats) > 0)
-        <div class="timeline-summary-panel-row mb-4">
+        <div class="timeline-toolbar-row gap-3 mb-4">
+            <!-- LEFT: Project selection dropdown, equal with the summary cards -->
+            <div class="timeline-project-dropdown-card d-flex flex-column justify-content-center">
+                <label for="clientTimelineProjectSelect" class="tpd-label"><i class="bi bi-building me-1"></i>Project</label>
+                <div class="tpd-select-wrap">
+                    <select id="clientTimelineProjectSelect" class="tpd-select" onchange="switchClientTimeline(this.value)">
+                        @foreach($projectsWithStats as $project)
+                            @php
+                                $ddId = data_get($project, 'id');
+                                $ddActive = (string) $ddId === (string) ($selectedProjectId ?? data_get($projectsWithStats->first(), 'id'));
+                            @endphp
+                            <option value="{{ $ddId }}"{{ $ddActive ? ' selected' : '' }}>{{ data_get($project, 'name', 'Project') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
             <div class="summary-metric-card">
                 <div class="summary-icon-box bg-emerald-light">
                     <i class="bi bi-folder-fill text-emerald-dg"></i>
@@ -57,7 +54,11 @@
             <div class="col-12">
                 <div class="d-flex flex-column gap-4 timeline-feed-container">
                     @foreach($projectsWithStats as $project)
-                        <article class="timeline-project-card-wrapper" id="project-timeline-{{ data_get($project, 'id') }}">
+                        @php
+                            $cardId = data_get($project, 'id');
+                            $cardActive = (string) $cardId === (string) ($selectedProjectId ?? data_get($projectsWithStats->first(), 'id'));
+                        @endphp
+                        <article class="timeline-project-card-wrapper client-timeline-panel {{ $cardActive ? '' : 'is-hidden' }}" id="project-timeline-{{ $cardId }}">
                             <header class="timeline-card-header-block">
                                 <div class="timeline-header-meta-group">
                                     <span class="timeline-eyebrow-badge">Project Scope</span>
@@ -106,8 +107,47 @@
                                     <span class="progress-lbl-context">Workflow Progress</span>
                                     <span class="progress-percentage-numeric text-emerald-dg">{{ round((float) data_get($project, 'progress', 0)) }}%</span>
                                 </div>
-                                <div class="progress-track-rail">
-                                    <span class="progress-fill-bar" style="width: {{ (float) data_get($project, 'progress', 0) }}%;"></span>
+                                <div class="workflow-progress-rail-wrap">
+                                    <div class="progress-track-rail">
+                                        <span class="progress-fill-bar" style="width: {{ (float) data_get($project, 'progress', 0) }}%;"></span>
+
+                                        @php
+                                            $railMilestones = collect(data_get($project, 'milestones', []))
+                                                ->filter(function ($milestone) {
+                                                    return !empty(data_get($milestone, 'milestone_name')) && data_get($milestone, 'marker_percent') !== null;
+                                                })
+                                                ->sortBy('marker_percent')
+                                                ->values();
+                                        @endphp
+                                        @if($railMilestones->isNotEmpty())
+                                            <div class="milestone-track">
+                                                @foreach($railMilestones as $milestone)
+                                                    @php
+                                                        $milestoneName = data_get($milestone, 'milestone_name', 'Milestone');
+                                                        $milestoneStartLabel = data_get($milestone, 'start_date') ? \Carbon\Carbon::parse(data_get($milestone, 'start_date'))->format('M d, Y') : 'TBD';
+                                                        $milestoneEndLabel = data_get($milestone, 'end_date') ? \Carbon\Carbon::parse(data_get($milestone, 'end_date'))->format('M d, Y') : 'TBD';
+                                                        $milestoneFlagClass = data_get($milestone, 'is_completed') ? 'phase-milestone-marker completed' : (data_get($milestone, 'is_delayed') ? 'phase-milestone-marker delayed' : 'phase-milestone-marker');
+                                                    @endphp
+                                                    <div class="milestone-marker-wrapper" style="left: {{ data_get($milestone, 'marker_percent') }}%;">
+                                                        <button type="button" class="{{ $milestoneFlagClass }}" aria-label="Milestone: {{ $milestoneName }}">
+                                                            <i class="bi bi-flag-fill"></i>
+                                                        </button>
+                                                        <div class="milestone-info-card" role="tooltip">
+                                                            <div class="milestone-info-title">{{ $milestoneName }}</div>
+                                                            <div class="milestone-info-row">
+                                                                <span>Start</span>
+                                                                <strong>{{ $milestoneStartLabel }}</strong>
+                                                            </div>
+                                                            <div class="milestone-info-row">
+                                                                <span>End</span>
+                                                                <strong>{{ $milestoneEndLabel }}</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
 
@@ -541,8 +581,224 @@
     }
     .empty-state-icon-canvas { font-size: 2.5rem; color: var(--dg-muted-gray); }
 
+    /* ==========================================================================
+       🆕 TIMELINE TOOLBAR ROW: PROJECT DROPDOWN + SUMMARY CARDS (EQUAL, ONE ROW)
+       ========================================================================== */
+    .timeline-toolbar-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+        align-items: stretch;
+    }
+    .timeline-toolbar-row > .summary-metric-card {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* Project selection dropdown card (sits on the left, equal to the summary cards) */
+    .timeline-project-dropdown-card {
+        background: #ffffff;
+        border: 1px solid var(--dg-border-color);
+        border-radius: var(--dg-radius-lg);
+        padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.01);
+        min-width: 0;
+    }
+    .tpd-label {
+        display: flex;
+        align-items: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--dg-muted-gray);
+        margin-bottom: 6px;
+    }
+    .tpd-select-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .tpd-select {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: #f1f5f9;
+        border: 1px solid rgba(22, 101, 52, 0.15);
+        color: #166534;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.5rem 2rem 0.5rem 0.9rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: inherit;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.7rem center;
+        background-size: 10px 12px;
+    }
+    .tpd-select:focus {
+        border-color: #166534;
+        box-shadow: 0 0 0 0.25rem rgba(22, 101, 52, 0.15);
+        background-color: #ffffff;
+        outline: none;
+    }
+
+    .client-timeline-panel.is-hidden {
+        display: none;
+    }
+
+    /* WORKFLOW PROGRESS BAR + MILESTONE FLAG MARKERS (mirrors supervisor timeline) */
+    .workflow-progress-rail-wrap {
+        position: relative;
+        margin-top: 6px;
+    }
+    .progress-track-rail {
+        position: relative;
+        height: 10px;
+        margin-top: 34px;
+        overflow: visible;
+    }
+    .milestone-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 100%;
+        height: 28px;
+        z-index: 3;
+        pointer-events: none;
+        overflow: visible;
+    }
+    .milestone-marker-wrapper {
+        position: absolute;
+        bottom: 0;
+        transform: translateX(-50%);
+        display: inline-flex;
+        align-items: flex-end;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 20;
+    }
+    .phase-milestone-marker {
+        position: relative;
+        transform: translateY(0);
+        min-width: 28px;
+        height: 24px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        color: #166534;
+        border: 1px solid rgba(22, 101, 52, 0.16);
+        box-shadow: 0 10px 20px rgba(34, 197, 94, 0.16);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .phase-milestone-marker:hover,
+    .phase-milestone-marker:focus-visible {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(34, 197, 94, 0.22);
+    }
+    .phase-milestone-marker i {
+        font-size: 0.74rem;
+        line-height: 1;
+    }
+    .phase-milestone-marker.completed {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #15803d;
+        border-color: rgba(21, 128, 61, 0.16);
+    }
+    .phase-milestone-marker.delayed {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #b91c1c;
+        border-color: rgba(185, 28, 28, 0.16);
+    }
+    .phase-milestone-marker::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #d1fae5;
+        opacity: 0.95;
+    }
+    .phase-milestone-marker.completed::after {
+        border-top-color: #bbf7d0;
+    }
+    .phase-milestone-marker.delayed::after {
+        border-top-color: #fecaca;
+    }
+    .milestone-info-card {
+        position: absolute;
+        bottom: calc(100% + 12px);
+        left: 50%;
+        transform: translateX(-50%) translateY(-2px);
+        min-width: 210px;
+        padding: 0.7rem 0.8rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fcf8 100%);
+        border: 1px solid rgba(22, 101, 52, 0.16);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 9999;
+        white-space: normal;
+    }
+    .milestone-marker-wrapper:hover .milestone-info-card,
+    .milestone-marker-wrapper:focus-within .milestone-info-card {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+    .milestone-info-card::before {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: #ffffff;
+        border-left: 1px solid rgba(22, 101, 52, 0.16);
+        border-bottom: 1px solid rgba(22, 101, 52, 0.16);
+        rotate: 45deg;
+    }
+    .milestone-info-title {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #166534;
+        margin-bottom: 0.4rem;
+    }
+    .milestone-info-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        font-size: 0.74rem;
+        color: #64748b;
+        margin-top: 0.2rem;
+    }
+    .milestone-info-row strong {
+        color: #0f172a;
+        font-weight: 700;
+        text-align: right;
+    }
+
     /* --- RESPONSIVE WORKSPACE SCALING --- */
     @media (max-width: 1199px) {
+        .timeline-toolbar-row {
+            grid-template-columns: 1fr 1fr;
+        }
+        .timeline-project-dropdown-card {
+            grid-column: 1 / -1;
+        }
         .timeline-metrics-subgrid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -567,7 +823,42 @@
         }
     }
 
+    @media (max-width: 991px) {
+        .timeline-toolbar-row {
+            grid-template-columns: 1fr 1fr;
+        }
+        .timeline-project-dropdown-card {
+            grid-column: 1 / -1;
+        }
+    }
+
     @media (max-width: 767px) {
+        .timeline-toolbar-row {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .timeline-project-dropdown-card {
+            grid-column: 1 / -1;
+            margin-bottom: 0;
+        }
+        .timeline-toolbar-row .summary-metric-card {
+            padding: 10px 12px;
+            gap: 10px;
+        }
+        .timeline-toolbar-row .summary-icon-box {
+            width: 38px;
+            height: 38px;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .timeline-toolbar-row .summary-card-label {
+            font-size: 0.68rem;
+            line-height: 1.2;
+        }
+        .timeline-toolbar-row .summary-card-value {
+            font-size: 1.15rem;
+            line-height: 1.1;
+        }
         .timeline-summary-panel-row {
             flex-direction: column;
             align-items: stretch;
@@ -596,4 +887,58 @@
         }
     }
 </style>
+
+@push('scripts')
+<script>
+    /**
+     * Switches the visible timeline panel when a project is chosen from the
+     * toolbar dropdown. All project panels are rendered up-front, so switching
+     * is instant (no page reload) - mirroring the supervisor timeline approach.
+     */
+    function switchClientTimeline(selectedProjectId) {
+        // Show only the timeline panel for the selected project (all panels are
+        // rendered up-front so the project dropdown can switch between them).
+        document.querySelectorAll('.client-timeline-panel').forEach(function (panel) {
+            panel.classList.add('is-hidden');
+        });
+        const target = document.getElementById('project-timeline-' + selectedProjectId);
+        if (target) {
+            target.classList.remove('is-hidden');
+        }
+
+        // Keep the selection reflected in the URL (so a reload keeps the same project)
+        // and in the session, matching the rest of the Client portal behaviour.
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('project_id', selectedProjectId);
+            window.history.replaceState({}, '', url.toString());
+        } catch (err) {
+            // Non-fatal - the active panel still switched on screen.
+        }
+
+        fetch("{{ route('client.dashboard.project.select', ['project' => '__ID__']) }}".replace('__ID__', encodeURIComponent(selectedProjectId)), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        }).catch(function () {
+            // Non-fatal - selection survives via URL/localStorage/session elsewhere.
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Keep the milestone flag tooltips working when triggered via keyboard focus.
+        document.querySelectorAll('.milestone-marker-wrapper').forEach(function (wrapper) {
+            wrapper.addEventListener('mouseenter', function () {
+                wrapper.classList.add('is-active');
+            });
+            wrapper.addEventListener('mouseleave', function () {
+                wrapper.classList.remove('is-active');
+            });
+        });
+    });
+</script>
+@endpush
 @endsection

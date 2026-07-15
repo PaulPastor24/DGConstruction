@@ -268,14 +268,32 @@ class ProjectController extends Controller
             // Notify client that a project was created for them
             try {
                 if ($project->client_id) {
-                    \App\Services\NotificationService::notifyClient($project->client_id, [
+                    $normalizedStatus = strtolower((string) ($request->filled('status') ? $request->input('status') : 'planning'));
+                    $notifications = [];
+
+                    $notifications[] = [
                         'type' => 'project',
                         'title' => 'Project Created',
                         'message' => "A new project '{$project->project_name}' has been created for you.",
                         'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id]],
                         'related_id' => $project->project_id,
                         'related_type' => 'project',
-                    ]);
+                    ];
+
+                    if (in_array($normalizedStatus, ['in_progress', 'inprogress', 'ongoing', 'active'], true)) {
+                        $notifications[] = [
+                            'type' => 'project',
+                            'title' => 'Project Started',
+                            'message' => "Project '{$project->project_name}' has started and is now in progress.",
+                            'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
+                            'related_id' => $project->project_id,
+                            'related_type' => 'project',
+                        ];
+                    }
+
+                    foreach ($notifications as $notificationData) {
+                        \App\Services\NotificationService::notifyClient($project->client_id, $notificationData);
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::error('Failed to notify client on project creation: ' . $e->getMessage());
@@ -536,14 +554,37 @@ class ProjectController extends Controller
             try {
                 // If project status changed
                 if ($oldStatus !== $status && $project->client_id) {
-                    \App\Services\NotificationService::notifyClient($project->client_id, [
-                        'type' => 'project',
-                        'title' => 'Project Status Updated',
-                        'message' => "Project '{$project->project_name}' status changed to {$project->status}.",
-                        'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
-                        'related_id' => $project->project_id,
-                        'related_type' => 'project',
-                    ]);
+                    $normalizedOld = strtolower((string) $oldStatus);
+                    $normalizedNew = strtolower((string) $status);
+
+                    if (in_array($normalizedNew, ['in_progress', 'inprogress', 'ongoing', 'active'], true) && !in_array($normalizedOld, ['in_progress', 'inprogress', 'ongoing', 'active', 'completed'], true)) {
+                        \App\Services\NotificationService::notifyClient($project->client_id, [
+                            'type' => 'project',
+                            'title' => 'Project Started',
+                            'message' => "Project '{$project->project_name}' has started and is now in progress.",
+                            'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
+                            'related_id' => $project->project_id,
+                            'related_type' => 'project',
+                        ]);
+                    } elseif ($normalizedNew === 'completed') {
+                        \App\Services\NotificationService::notifyClient($project->client_id, [
+                            'type' => 'project',
+                            'title' => 'Project Completed',
+                            'message' => "Project '{$project->project_name}' has been marked as completed.",
+                            'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
+                            'related_id' => $project->project_id,
+                            'related_type' => 'project',
+                        ]);
+                    } else {
+                        \App\Services\NotificationService::notifyClient($project->client_id, [
+                            'type' => 'project',
+                            'title' => 'Project Status Updated',
+                            'message' => "Project '{$project->project_name}' status changed to {$project->status}.",
+                            'data' => ['module' => 'client.project.show', 'params' => ['project' => $project->project_id], 'status' => $project->status],
+                            'related_id' => $project->project_id,
+                            'related_type' => 'project',
+                        ]);
+                    }
                 }
 
                 // If client assignment changed notify the new client

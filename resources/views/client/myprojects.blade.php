@@ -88,7 +88,7 @@
         <span class="text-muted text-sm" id="resultsSummary" style="font-size: 0.88rem; font-weight: 500;">Showing {{ $projects->firstItem() ?? 0 }} to {{ $projects->lastItem() ?? 0 }} of {{ $projects->total() }} active records</span>
     </div>
 
-    <div class="d-flex justify-content-center mt-4" id="projectPagination">
+    <div class="d-flex justify-content-end mt-4 flex-wrap gap-2 project-pagination" id="projectPagination">
         {{ $projects->links('pagination::bootstrap-5') }}
     </div>
 
@@ -936,5 +936,11 @@
     .empty-state-icon-canvas { font-size: 3rem; color: #94a3b8; }
     .context-empty-title-css { color: #334155; font-family: 'Plus Jakarta Sans', sans-serif; }
     .result-reporting-footer-bar { border-top: 1px solid #e2e8f0; padding-top: 18px; }
+    .project-pagination { display: flex; justify-content: flex-end; flex-wrap: wrap; }
+    .project-pagination .pagination { justify-content: flex-end; margin-top: 0; }
+    @media (max-width: 767px) {
+        .project-pagination { justify-content: center; }
+        .project-pagination .pagination { justify-content: center; }
+    }
 </style>
 @endsection

@@ -1,20 +1,20 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminDashboardController;
-use App\Http\Controllers\TimelineController;
-use App\Http\Controllers\SupervisorController;
+use App\Http\Controllers\BiometricController;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ReportController;
+use App\Http\Controllers\MilestoneController;
+use App\Http\Controllers\PhaseController;
 use App\Http\Controllers\PhasesExportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectArchiveController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SupervisorController;
+use App\Http\Controllers\TimelineController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ProjectArchiveController;
-use App\Http\Controllers\PhaseController;
-use App\Http\Controllers\MilestoneController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\BiometricController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -24,10 +24,10 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
 
     return match ($user->role) {
-        'engineer'        => redirect()->route('admin.dashboard'),
-        'supervisor'      => redirect()->route('supervisor.dashboard'),
-        'client'          => redirect()->route('client.dashboard'),
-        default           => abort(403, 'Unauthorized role assignment.'),
+        'engineer' => redirect()->route('admin.dashboard'),
+        'supervisor' => redirect()->route('supervisor.dashboard'),
+        'client' => redirect()->route('client.dashboard'),
+        default => abort(403, 'Unauthorized role assignment.'),
     };
 })->middleware(['auth'])->name('dashboard');
 
@@ -157,13 +157,13 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/workers/list', [BiometricController::class, 'listWorkers'])
         ->name('supervisor.workers.list');
-    
-        Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
-    ->name('supervisor.attendance.today');
+
+    Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
+        ->name('supervisor.attendance.today');
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
     Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
-    ->name('supervisor.attendance.today');
+        ->name('supervisor.attendance.today');
 
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
@@ -178,6 +178,8 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 // ==================== CLIENT GROUP ROUTING LAYER ====================
 Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/dashboard', [ClientController::class, 'index'])->name('client.dashboard');
+    Route::post('/client/dashboard/project/{project}/select', [ClientController::class, 'selectProject'])->name('client.dashboard.project.select');
+    Route::get('/client/dashboard/project/{project}/snapshot', [ClientController::class, 'dashboardProjectSnapshot'])->name('client.dashboard.project.snapshot');
     Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
     Route::get('/client/projects/{project}', [ClientController::class, 'projectDetails'])->name('client.project.show');
     Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
