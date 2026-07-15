@@ -1004,6 +1004,290 @@
         .attachment-thumbnail-grid { grid-template-columns: 1fr; }
         .reports-table tbody tr { padding: 0.75rem; }
     }
+
+
+    /* ======================================================================
+       SENIOR MOBILE REPORT CARD OVERRIDE
+       This intentionally DOES NOT use #pg-reports because the current Blade
+       content is not wrapped with that id. It overrides the older compact
+       mobile table conversion and makes each report row read like a clean
+       detail card, similar to the inventory expense cards.
+       ====================================================================== */
+    @media (max-width: 900px) {
+        .workspace-layout,
+        .workspace-left-col,
+        .table-container-card,
+        .table-responsive {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow: visible !important;
+        }
+
+        .table-container-card {
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            border: 1px solid #e3ece5 !important;
+            box-shadow: 0 12px 28px rgba(15, 32, 21, 0.06) !important;
+        }
+
+        .card-table-header {
+            padding: 16px 18px 14px !important;
+            background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%) !important;
+            border-bottom: 1px solid #e5eee7 !important;
+        }
+
+        .card-table-title {
+            color: #14532d !important;
+            font-family: 'Syne', 'Plus Jakarta Sans', sans-serif !important;
+            font-size: 15px !important;
+            line-height: 1.2 !important;
+        }
+
+        .reports-table,
+        .reports-table thead,
+        .reports-table tbody,
+        .reports-table tr,
+        .reports-table th,
+        .reports-table td {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .reports-table {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            table-layout: auto !important;
+            background: transparent !important;
+            margin: 0 !important;
+        }
+
+        .reports-table thead {
+            display: none !important;
+        }
+
+        .reports-table tbody {
+            display: grid !important;
+            gap: 14px !important;
+            padding: 12px !important;
+            background: #fbfdfb !important;
+        }
+
+        .reports-table tbody tr {
+            position: relative !important;
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 16px 16px 15px !important;
+            background: #ffffff !important;
+            border: 1px solid #e0eae3 !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 22px rgba(15, 32, 21, 0.045) !important;
+            overflow: hidden !important;
+        }
+
+        .reports-table tbody tr:hover {
+            transform: none !important;
+            box-shadow: 0 10px 22px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        .reports-table tbody td {
+            display: grid !important;
+            grid-template-columns: 88px minmax(0, 1fr) !important;
+            column-gap: 14px !important;
+            align-items: start !important;
+            justify-content: initial !important;
+            width: 100% !important;
+            padding: 7px 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            color: #243248 !important;
+            font-size: 12.5px !important;
+            line-height: 1.45 !important;
+            text-align: left !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+            white-space: normal !important;
+        }
+
+        .reports-table tbody td::before {
+            content: attr(data-label) !important;
+            display: block !important;
+            width: auto !important;
+            min-width: 0 !important;
+            color: #64748b !important;
+            font-size: 9.5px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.075em !important;
+            line-height: 1.25 !important;
+            text-transform: uppercase !important;
+            white-space: normal !important;
+        }
+
+        .reports-table tbody td > * {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            flex: initial !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        /* ID becomes a small chip, not a full row. */
+        .reports-table tbody td[data-label="ID"] {
+            position: absolute !important;
+            top: 14px !important;
+            right: 14px !important;
+            display: inline-flex !important;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            padding: 4px 9px !important;
+            background: #f0f7f1 !important;
+            border: 1px solid #dbeade !important;
+            border-radius: 999px !important;
+            color: #365233 !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+        }
+
+        .reports-table tbody td[data-label="ID"]::before {
+            display: none !important;
+        }
+
+        /* Title uses the full card width so it does not feel squeezed left. */
+        .reports-table tbody td[data-label="Report Title"] {
+            display: block !important;
+            padding: 0 48px 13px 0 !important;
+            margin: 0 0 8px !important;
+            border-bottom: 1px solid #edf3ef !important;
+        }
+
+        .reports-table tbody td[data-label="Report Title"]::before {
+            content: "Report" !important;
+            display: block !important;
+            margin-bottom: 6px !important;
+            color: #64748b !important;
+            font-size: 9.5px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.075em !important;
+            text-transform: uppercase !important;
+        }
+
+        .reports-table tbody td[data-label="Report Title"] .cell-bold,
+        .reports-table tbody td[data-label="Report Title"] span,
+        .reports-table tbody td[data-label="Report Title"] strong {
+            display: block !important;
+            color: #0f172a !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        .reports-table tbody td[data-label="Project"],
+        .reports-table tbody td[data-label="Phase"],
+        .reports-table tbody td[data-label="Supervisor"],
+        .reports-table tbody td[data-label="Date"] {
+            min-height: 34px !important;
+        }
+
+        .reports-table tbody td[data-label="Project"]::before,
+        .reports-table tbody td[data-label="Phase"]::before,
+        .reports-table tbody td[data-label="Supervisor"]::before,
+        .reports-table tbody td[data-label="Date"]::before {
+            padding-top: 2px !important;
+        }
+
+        .reports-table tbody td[data-label="Project"],
+        .reports-table tbody td[data-label="Phase"],
+        .reports-table tbody td[data-label="Supervisor"] {
+            color: #334155 !important;
+            font-weight: 600 !important;
+        }
+
+        .reports-table tbody td[data-label="Date"] .cell-bold,
+        .reports-table tbody td[data-label="Date"] span {
+            color: #111827 !important;
+            font-weight: 800 !important;
+        }
+
+        .reports-table .user-cell {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .reports-table tbody td[data-label="Status"] {
+            display: grid !important;
+            grid-template-columns: 88px minmax(0, 1fr) !important;
+            column-gap: 14px !important;
+            align-items: center !important;
+            padding-top: 13px !important;
+            margin-top: 7px !important;
+            border-top: 1px solid #edf3ef !important;
+        }
+
+        .reports-table .status-pill {
+            display: inline-flex !important;
+            width: fit-content !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 7px 10px !important;
+            border-radius: 999px !important;
+            white-space: normal !important;
+            text-align: center !important;
+            line-height: 1.15 !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+        }
+
+        .reports-table tbody td[data-label="Actions"] {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            padding: 10px 0 0 !important;
+        }
+
+        .reports-table tbody td[data-label="Actions"]::before {
+            display: none !important;
+        }
+
+        .reports-table .action-icons-group {
+            display: flex !important;
+            justify-content: flex-end !important;
+            width: 100% !important;
+        }
+
+        .reports-table .btn-icon-action {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
+            background: #f4fbf4 !important;
+            border-color: #dceee0 !important;
+            color: #234b2f !important;
+            box-shadow: none !important;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .reports-table tbody {
+            padding: 10px !important;
+            gap: 12px !important;
+        }
+
+        .reports-table tbody tr {
+            padding: 15px 14px !important;
+        }
+
+        .reports-table tbody td,
+        .reports-table tbody td[data-label="Status"] {
+            grid-template-columns: 78px minmax(0, 1fr) !important;
+            column-gap: 12px !important;
+        }
+    }
 </style>
 @endpush
 
@@ -1784,5 +2068,3 @@
         });
     </script>
 @endsection
-
- 

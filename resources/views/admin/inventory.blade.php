@@ -665,6 +665,175 @@
             justify-content: center;
         }
     }
+
+
+/* =======================================================================
+   MOBILE V2 INVENTORY / USAGE / EXPENSE CARD FIX
+   Makes materials, usage logs, and project-phase expenses readable on phones.
+   ======================================================================= */
+@media (max-width: 820px) {
+    .inventory-green-theme input,
+    .inventory-green-theme select,
+    .inventory-green-theme textarea,
+    .inventory-green-theme button,
+    .inventory-green-theme .form-control,
+    .inventory-green-theme .form-select {
+        font-size: 16px !important;
+    }
+
+    .inventory-green-theme .card-body,
+    .inventory-green-theme .mi-filter-card,
+    .inventory-green-theme .filter-toolbar-panel {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .inventory-green-theme .nav-tabs,
+    .inventory-green-theme .card-header .nav,
+    .inventory-green-theme .card-header .nav-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        padding-bottom: 4px !important;
+        scrollbar-width: none !important;
+    }
+
+    .inventory-green-theme .nav-tabs::-webkit-scrollbar,
+    .inventory-green-theme .card-header .nav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .inventory-green-theme .table-responsive {
+        overflow-x: hidden !important;
+        padding: 0 4px 10px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody,
+    .inventory-green-theme #usageLogsTableBody,
+    .inventory-green-theme #expensesTableBody {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody tr,
+    .inventory-green-theme #usageLogsTableBody tr,
+    .inventory-green-theme #expensesTableBody tr {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 0 12px !important;
+        padding: 14px !important;
+        border: 1px solid #e6eee8 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+        overflow: hidden !important;
+    }
+
+    .inventory-green-theme table,
+    .inventory-green-theme thead,
+    .inventory-green-theme tbody,
+    .inventory-green-theme tr,
+    .inventory-green-theme th,
+    .inventory-green-theme td {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .inventory-green-theme thead {
+        display: none !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td,
+    .inventory-green-theme #usageLogsTableBody td,
+    .inventory-green-theme #expensesTableBody td {
+        display: grid !important;
+        grid-template-columns: 112px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: start !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        text-align: left !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td::before,
+    .inventory-green-theme #usageLogsTableBody td::before,
+    .inventory-green-theme #expensesTableBody td::before {
+        display: block !important;
+        color: #5f6f66 !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(1)::before { content: 'Material' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(2)::before { content: 'Category' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(3)::before { content: 'Unit' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(4)::before { content: 'Current Stock' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(5)::before { content: 'Minimum Stock' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(6)::before { content: 'Status' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(7)::before { content: 'Actions' !important; }
+
+    .inventory-green-theme #usageLogsTableBody td:nth-child(1)::before { content: 'Date' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(2)::before { content: 'Project' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(3)::before { content: 'Phase' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(4)::before { content: 'Material' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(5)::before { content: 'Qty Used' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(6)::before { content: 'Unit' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(7)::before { content: 'Used By' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(8)::before { content: 'Details' !important; }
+
+    .inventory-green-theme #expensesTableBody td:nth-child(1)::before { content: 'Date' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(2)::before { content: 'Project' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(3)::before { content: 'Phase' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(4)::before { content: 'Material' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(5)::before { content: 'Qty Used' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(6)::before { content: 'Unit Cost' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(7)::before { content: 'Total Expense' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(8)::before { content: 'Used By' !important; }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td > *,
+    .inventory-green-theme #usageLogsTableBody td > *,
+    .inventory-green-theme #expensesTableBody td > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child,
+    .inventory-green-theme #usageLogsTableBody td:last-child {
+        align-items: center !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child .d-flex,
+    .inventory-green-theme #usageLogsTableBody td:last-child .d-flex {
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    .inventory-green-theme .badge,
+    .inventory-green-theme .badge-status-pill {
+        width: fit-content !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+}
+
 </style>
 @endpush
 

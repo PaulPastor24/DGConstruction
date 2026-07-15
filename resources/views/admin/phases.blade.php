@@ -585,6 +585,330 @@
     #pg-phases {
         padding-bottom: 2rem;
     }
+
+
+
+/* =======================================================================
+   Capacitor Mobile Phase Management Patch
+   ======================================================================= */
+@media (max-width: 576px) {
+    #pg-phases {
+        padding: 0 0 18px !important;
+        overflow-x: hidden !important;
+    }
+
+    #pg-phases .reports-header {
+        margin-bottom: 12px !important;
+    }
+
+    #pg-phases .reports-header h4 {
+        font-size: 1.45rem !important;
+        white-space: normal !important;
+        max-width: 100% !important;
+    }
+
+    #pg-phases .reports-header p {
+        font-size: 0.82rem !important;
+    }
+
+    #pg-phases .project-select {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    #pg-phases .card.p-3 > .d-flex,
+    #pg-phases .card.p-3 .d-flex.gap-2.justify-content-end {
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+
+    #pg-phases .card.p-3 .d-flex.gap-2.justify-content-end {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    #pg-phases .card.p-3 .d-flex.gap-2.justify-content-end .btn {
+        justify-content: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 12px !important;
+        white-space: normal !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 > .col {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    #pg-phases .metric-card {
+        padding: 12px !important;
+        min-height: 94px !important;
+    }
+
+    #pg-phases .metric-icon {
+        width: 36px !important;
+        height: 36px !important;
+        flex: 0 0 36px !important;
+    }
+
+    #pg-phases .metric-card h3 {
+        font-size: 1.25rem !important;
+    }
+
+    #pg-phases .phase-searchable-input,
+    #pg-phases .form-select {
+        font-size: 12px !important;
+    }
+
+    #pg-phases .table-responsive {
+        overflow-x: hidden !important;
+    }
+
+    #pg-phases .phase-table,
+    #pg-phases .phase-table thead,
+    #pg-phases .phase-table tbody,
+    #pg-phases .phase-table tr,
+    #pg-phases .phase-table td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    #pg-phases .phase-table {
+        min-width: 0 !important;
+        table-layout: auto !important;
+    }
+
+    #pg-phases .phase-table thead {
+        display: none !important;
+    }
+
+    #pg-phases .phase-table tbody tr[data-phase-row="true"] {
+        margin: 0 12px 12px !important;
+        padding: 13px !important;
+        border: 1px solid rgba(28, 107, 67, 0.12) !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 32, 21, 0.055) !important;
+    }
+
+    #pg-phases .phase-table tbody tr#phaseTableEmptyState {
+        display: block !important;
+        margin: 0 !important;
+        padding: 24px 12px !important;
+        background: #ffffff !important;
+    }
+
+    #pg-phases .phase-table tbody tr#phaseTableEmptyState td {
+        display: block !important;
+        text-align: center !important;
+    }
+
+    #pg-phases .phase-table td {
+        display: grid !important;
+        grid-template-columns: 104px minmax(0, 1fr) !important;
+        gap: 10px !important;
+        align-items: start !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        text-align: left !important;
+        font-size: 12px !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    #pg-phases .phase-table td::before {
+        color: #64748b !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.08em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+    }
+
+    #pg-phases .phase-table td:nth-child(1)::before { content: 'Order'; }
+    #pg-phases .phase-table td:nth-child(2)::before { content: 'Phase'; }
+    #pg-phases .phase-table td:nth-child(3)::before { content: 'Planned'; }
+    #pg-phases .phase-table td:nth-child(4)::before { content: 'Actual'; }
+    #pg-phases .phase-table td:nth-child(5)::before { content: 'Progress'; }
+    #pg-phases .phase-table td:nth-child(6)::before { content: 'Status'; }
+    #pg-phases .phase-table td:nth-child(7)::before { content: 'Actions'; }
+
+    #pg-phases .phase-table td:nth-child(2) {
+        display: block !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 6px !important;
+        border-bottom: 1px solid #eef2f7 !important;
+    }
+
+    #pg-phases .phase-table td:nth-child(2)::before {
+        display: none !important;
+    }
+
+    #pg-phases .phase-name-title {
+        font-size: 13.5px !important;
+        white-space: normal !important;
+    }
+
+    #pg-phases .phase-name-meta {
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+
+    #pg-phases .schedule-stack,
+    #pg-phases .progress-cell {
+        justify-content: flex-start !important;
+        text-align: left !important;
+        margin: 0 !important;
+    }
+
+    #pg-phases .progress-cell {
+        width: 100% !important;
+    }
+
+    #pg-phases .progress-cell .progress {
+        max-width: none !important;
+        min-width: 80px !important;
+    }
+
+    #pg-phases .action-cell {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+
+    #pg-phases .action-cell::before {
+        flex: 0 0 104px !important;
+    }
+
+    #pg-phases .table-pagination-strip {
+        align-items: flex-start !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        padding: 12px !important;
+    }
+
+    #pg-phases .pagination-bar {
+        width: 100% !important;
+        overflow-x: auto !important;
+        padding-bottom: 2px !important;
+    }
+}
+
+
+
+/* =======================================================================
+   MOBILE V2 PHASE TABLE + NO ZOOM FIX
+   ======================================================================= */
+@media (max-width: 820px) {
+    #pg-phases input,
+    #pg-phases select,
+    #pg-phases textarea,
+    #pg-phases button,
+    #pg-phases .form-control,
+    #pg-phases .form-select,
+    #pg-phases .project-select,
+    #pg-phases .phase-searchable-input {
+        font-size: 16px !important;
+    }
+
+    #pg-phases .table-responsive {
+        overflow-x: hidden !important;
+        padding: 0 8px 10px !important;
+    }
+
+    #pg-phases .phase-table,
+    #pg-phases .phase-table thead,
+    #pg-phases .phase-table tbody,
+    #pg-phases .phase-table tr,
+    #pg-phases .phase-table th,
+    #pg-phases .phase-table td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    #pg-phases .phase-table thead {
+        display: none !important;
+    }
+
+    #pg-phases .phase-table tbody tr {
+        margin: 0 0 12px !important;
+        padding: 14px !important;
+        border: 1px solid #e6eee8 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+        overflow: hidden !important;
+    }
+
+    #pg-phases .phase-table td {
+        display: grid !important;
+        grid-template-columns: 118px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: start !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        text-align: left !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    #pg-phases .phase-table td::before {
+        display: block !important;
+        color: #5f6f66 !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    #pg-phases .phase-table td:nth-child(1)::before { content: 'Order' !important; }
+    #pg-phases .phase-table td:nth-child(2)::before { content: 'Phase Name' !important; }
+    #pg-phases .phase-table td:nth-child(3)::before { content: 'Planned Schedule' !important; }
+    #pg-phases .phase-table td:nth-child(4)::before { content: 'Actual Schedule' !important; }
+    #pg-phases .phase-table td:nth-child(5)::before { content: 'Progress' !important; }
+    #pg-phases .phase-table td:nth-child(6)::before { content: 'Status' !important; }
+    #pg-phases .phase-table td:nth-child(7)::before { content: 'Actions' !important; }
+
+    #pg-phases .phase-table td > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    #pg-phases .phase-table .action-cell {
+        display: grid !important;
+        grid-template-columns: 118px minmax(0, 1fr) !important;
+        align-items: center !important;
+        justify-content: initial !important;
+    }
+}
+
 </style>
 @endpush
 

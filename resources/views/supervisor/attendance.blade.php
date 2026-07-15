@@ -97,6 +97,119 @@
             animation: attendancePulse 0.8s ease;
         }
 
+        .status-log-stack {
+            display: flex;
+            width: 100%;
+            min-width: 150px;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 0.42rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            border: 1px solid transparent;
+        }
+
+        .status-pill-present {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .status-pill-late {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .status-pill-absent {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .status-pill-default {
+            background: #f1f5f9;
+            color: #475569;
+            border-color: #e2e8f0;
+        }
+
+        .status-action-grid {
+            display: grid;
+            width: 100%;
+            max-width: 220px;
+            gap: 0.5rem;
+        }
+
+        .status-action-btn {
+            width: 100%;
+            min-height: 38px;
+            border-radius: 12px !important;
+            font-size: 0.84rem;
+            font-weight: 800;
+            line-height: 1.1;
+            padding: 0.55rem 0.75rem !important;
+            box-shadow: none !important;
+        }
+
+        .status-action-btn i {
+            font-size: 0.92rem;
+        }
+
+        .status-action-break-out {
+            color: #1d4ed8 !important;
+            border-color: #bfdbfe !important;
+            background: #eff6ff !important;
+        }
+
+        .status-action-break-out:hover {
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
+            background: #1d4ed8 !important;
+        }
+
+        .status-action-break-in {
+            color: #b45309 !important;
+            border-color: #fde68a !important;
+            background: #fffbeb !important;
+        }
+
+        .status-action-break-in:hover {
+            color: #ffffff !important;
+            border-color: #b45309 !important;
+            background: #b45309 !important;
+        }
+
+        .status-action-time-out {
+            color: #111827 !important;
+            border-color: #d1d5db !important;
+            background: #f9fafb !important;
+        }
+
+        .status-action-time-out:hover {
+            color: #ffffff !important;
+            border-color: #111827 !important;
+            background: #111827 !important;
+        }
+
+        .status-action-disabled {
+            cursor: not-allowed !important;
+            color: #94a3b8 !important;
+            border-color: #e2e8f0 !important;
+            background: #f8fafc !important;
+            opacity: 1 !important;
+        }
+
         @keyframes attendanceFadeIn {
             from {
                 opacity: 0;
@@ -258,46 +371,61 @@
 @endpush
 
 @section('content')
-<div class="container-fluid p-0">
+<div class="container-fluid p-0 attendance-page">
     <!-- Top Action Header -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body p-4">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-                <div>
-                    <h4 class="fw-bold mb-1">Daily Workforce Attendance</h4>
-                    <p class="text-muted mb-0 small">Scan a worker's fingerprint to automatically identify them and log their attendance.</p>
+    <div class="card attendance-control-card border-0 mb-4">
+        <div class="card-body">
+            <div class="attendance-control-layout">
+                <div class="attendance-control-copy">
+                    <h4 class="attendance-control-title">
+                        <span class="attendance-control-title-icon"><i class="bi bi-calendar2-check-fill"></i></span>
+                        Daily Workforce Attendance
+                    </h4>
+                    <p class="attendance-control-subtitle">
+                        Scan a worker’s fingerprint to identify them automatically. Use manual attendance only when the biometric reader is unavailable.
+                    </p>
                 </div>
 
-                <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <button type="button" class="btn btn-outline-secondary fw-semibold btn-sm px-3 py-2"
-                            data-bs-toggle="modal" data-bs-target="#viewWorkersModal">
-                        <i class="bi bi-people-fill"></i> View Enrolled Workers
-                    </button>
+                <div class="attendance-action-panel">
+                    <div class="attendance-date-field">
+                        <label class="attendance-date-label" for="attendanceDateInput">
+                            <i class="bi bi-calendar-event"></i> Attendance Date
+                        </label>
+                        <input id="attendanceDateInput" type="date" name="attendance_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                    </div>
 
-                    <button type="button" class="btn btn-outline-dark fw-semibold btn-sm px-3 py-2"
-                            data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
-                        <i class="bi bi-pencil-square"></i> Manual Attendance
-                    </button>
+                    <div class="attendance-action-grid">
+                        <button type="button" class="btn attendance-quick-btn attendance-btn-workers"
+                                data-bs-toggle="modal" data-bs-target="#viewWorkersModal">
+                            <i class="bi bi-people-fill"></i> Enrolled Workers
+                        </button>
 
-                    <button type="button" class="btn btn-primary fw-semibold btn-sm px-3 py-2"
-                            data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
-                        <i class="bi bi-person-plus-fill"></i> Register New Worker
-                    </button>
+                        <button type="button" class="btn attendance-quick-btn attendance-btn-manual"
+                                data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+                            <i class="bi bi-pencil-square"></i> Manual Log
+                        </button>
 
-                    <div style="max-width: 180px;">
-                        <input type="date" name="attendance_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                        <button type="button" class="btn attendance-quick-btn attendance-btn-register"
+                                data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
+                            <i class="bi bi-person-plus-fill"></i> Register Worker
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 attendance-main-grid">
         <!-- Center Scanning Interface Platform -->
         <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
-                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                    <h5 class="fw-bold text-dark mb-3">Biometric Identification</h5>
+            <div class="card attendance-biometric-card border-0 h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <div class="attendance-section-heading justify-content-center">
+                        <h5>
+                            <span class="attendance-section-icon"><i class="bi bi-fingerprint"></i></span>
+                            Biometric Identification
+                        </h5>
+                    </div>
 
                     <div class="scan-pulse-container p-5 mb-3">
                         <button type="button" id="btnGlobalScan" class="btn btn-primary fingerprint-trigger-btn mb-3">
@@ -320,11 +448,16 @@
             <form action="{{ route('supervisor.attendance.save') }}" method="POST" id="attendanceMainForm">
                 @csrf
 
-                <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold text-dark mb-0">Scanned Personnel Log</h5>
-                            <span class="badge bg-secondary rounded-pill" id="scannedCount">0 Active Logs</span>
+                <div class="card attendance-log-card border-0 h-100">
+                    <div class="card-body">
+                        <div class="attendance-section-heading">
+                            <h5>
+                                <span class="attendance-section-icon"><i class="bi bi-list-check"></i></span>
+                                Scanned Personnel Log
+                            </h5>
+                            <span class="badge attendance-log-count" id="scannedCount">
+                                <i class="bi bi-activity"></i> 0 Active Logs
+                            </span>
                         </div>
 
                         <div class="table-responsive">

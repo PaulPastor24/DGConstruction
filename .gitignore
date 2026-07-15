@@ -22,3 +22,12 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Capacitor and Node generated files
+dg-capacitor-app/node_modules/
+dg-capacitor-app/android/.gradle/
+dg-capacitor-app/android/.idea/
+dg-capacitor-app/android/build/
+dg-capacitor-app/android/app/build/
+dg-capacitor-app/android/capacitor-cordova-android-plugins/build/
+dg-capacitor-app/android/local.properties

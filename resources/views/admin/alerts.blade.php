@@ -158,6 +158,164 @@
         background-color: var(--ug-accent) !important;
         border-color: var(--ug-accent) !important;
     }
+
+
+
+/* =======================================================================
+   Capacitor Mobile Admin Alerts Patch
+   ======================================================================= */
+@media (max-width: 576px) {
+    #pg-alerts {
+        padding: 0 0 18px !important;
+        overflow-x: hidden !important;
+    }
+
+    #pg-alerts .dashboard-title-area h2,
+    #pg-alerts .dashboard-title-area h2 * {
+        max-width: 100% !important;
+        white-space: normal !important;
+        font-size: 1.45rem !important;
+    }
+
+    #pg-alerts .row.g-3.mb-4 {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    #pg-alerts .row.g-3.mb-4 > [class*="col-"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    #pg-alerts .card-body.d-flex.align-items-center.gap-3 {
+        align-items: flex-start !important;
+        gap: 10px !important;
+        padding: 13px !important;
+    }
+
+    #pg-alerts .notif-card-icon {
+        width: 36px !important;
+        height: 36px !important;
+        flex: 0 0 36px !important;
+        border-radius: 12px !important;
+    }
+
+    #pg-alerts .fs-2 {
+        font-size: 1.35rem !important;
+    }
+
+    #pg-alerts #notifFilterForm .card {
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    #pg-alerts #notifFilterForm .d-flex.flex-wrap.gap-2 {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 10px !important;
+    }
+
+    #pg-alerts #notifFilterForm .nav-tab-item {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    #pg-alerts .row.g-4 {
+        display: block !important;
+    }
+
+    #pg-alerts .row.g-4 > .col-xl-8,
+    #pg-alerts .row.g-4 > .col-xl-4 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #pg-alerts .row.g-4 > .col-xl-4 {
+        display: none !important;
+    }
+
+    #pg-alerts .table-responsive {
+        overflow-x: hidden !important;
+    }
+
+    #pg-alerts .custom-admin-table,
+    #pg-alerts .custom-admin-table thead,
+    #pg-alerts .custom-admin-table tbody,
+    #pg-alerts .custom-admin-table tr,
+    #pg-alerts .custom-admin-table td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    #pg-alerts .custom-admin-table thead {
+        display: none !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody tr.notif-row {
+        margin: 0 0 12px !important;
+        padding: 13px !important;
+        border: 1px solid #e5ece7 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td {
+        display: grid !important;
+        grid-template-columns: 88px minmax(0, 1fr) !important;
+        align-items: start !important;
+        gap: 10px !important;
+        padding: 7px 0 !important;
+        border: 0 !important;
+        text-align: left !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td::before {
+        color: #64748b !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.08em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td:nth-child(1)::before { content: 'Notification'; }
+    #pg-alerts .custom-admin-table tbody td:nth-child(2)::before { content: 'Type'; }
+    #pg-alerts .custom-admin-table tbody td:nth-child(3)::before { content: 'Project'; }
+    #pg-alerts .custom-admin-table tbody td:nth-child(4)::before { content: 'Status'; }
+    #pg-alerts .custom-admin-table tbody td:nth-child(5)::before { content: 'Date'; }
+    #pg-alerts .custom-admin-table tbody td:nth-child(6)::before { content: 'Actions'; }
+
+    #pg-alerts .custom-admin-table tbody td:nth-child(1) {
+        display: block !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 6px !important;
+        border-bottom: 1px solid #eef2f7 !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td:nth-child(1)::before {
+        display: none !important;
+    }
+
+    #pg-alerts .custom-admin-table .text-truncate {
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+
+    #pg-alerts .custom-admin-table td.text-end {
+        text-align: left !important;
+        padding-right: 0 !important;
+    }
+}
+
 </style>
 @endpush
 

@@ -190,24 +190,7 @@
             </table>
         </div>
 
-        <section id="reportDetailPanel" class="report-detail-panel-card mt-3" aria-live="polite">
-            <div class="report-detail-panel-header">
-                <div>
-                    <div class="report-detail-panel-eyebrow">Report Preview</div>
-                    <h5 id="reportDetailTitle" class="fw-bold mb-0">Select a report</h5>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="reportDetailCloseBtn">Close</button>
-            </div>
-            <div id="reportDetailBody" class="report-detail-panel-body">
-                <div class="report-detail-empty-state">
-                    <div class="avatar-pill avatar-pill-large">?</div>
-                    <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
-                    <div class="text-muted small">The selected record will open here with a smooth transition.</div>
-                </div>
-            </div>
-        </section>
-
-        <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
+<div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
             <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date']))->links('pagination::bootstrap-5') }}</div>
         </div>
@@ -504,6 +487,213 @@
     @media (max-width: 768px) {
         .report-drawer {
             width: 100% !important;
+        }
+    }
+
+
+    /* --- MOBILE: clean accomplishment report cards --- */
+    .report-mobile-list {
+        display: none;
+    }
+
+    @media (max-width: 767.98px) {
+        .report-filter-card {
+            margin-bottom: 0.9rem !important;
+        }
+
+        .report-main-panel {
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(42, 64, 40, 0.08);
+            background: #ffffff;
+        }
+
+        .report-main-panel > .table-responsive {
+            display: none !important;
+        }
+
+        .report-main-panel > .p-3.border-bottom {
+            padding: 1rem !important;
+            align-items: flex-start !important;
+        }
+
+        .report-main-panel h5 {
+            font-size: 1.05rem;
+            line-height: 1.2;
+        }
+
+        .report-mobile-list {
+            display: grid !important;
+            gap: 12px;
+            padding: 12px;
+            background: linear-gradient(180deg, #fbfdfb 0%, #ffffff 100%);
+        }
+
+        .report-mobile-card {
+            border: 1px solid #e2ebe4;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.045);
+            padding: 14px;
+            overflow: hidden;
+        }
+
+        .report-mobile-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eef3ef;
+        }
+
+        .report-mobile-date-block {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .report-mobile-label,
+        .report-mobile-info-item span {
+            display: block;
+            color: #60708a;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        .report-mobile-date-block strong {
+            margin-top: 4px;
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .report-mobile-date-block small,
+        .report-mobile-info-item small {
+            margin-top: 2px;
+            color: #718096;
+            font-size: 11.5px;
+            line-height: 1.25;
+        }
+
+        .report-mobile-card-header .status-pill {
+            flex: 0 0 auto;
+            max-width: 124px;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.15;
+        }
+
+        .report-mobile-title {
+            padding: 13px 0 11px;
+            color: #111827;
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.35;
+            word-break: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .report-mobile-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .report-mobile-info-item {
+            min-width: 0;
+            padding: 10px 11px;
+            border: 1px solid #edf3ee;
+            border-radius: 14px;
+            background: #fbfdfb;
+        }
+
+        .report-mobile-info-wide {
+            grid-column: 1 / -1;
+        }
+
+        .report-mobile-info-item strong {
+            display: block;
+            margin-top: 5px;
+            color: #10271b;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.35;
+            word-break: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .report-mobile-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 9px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eef3ef;
+        }
+
+        .report-mobile-view-btn,
+        .report-mobile-download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 42px;
+            border-radius: 13px;
+            font-size: 12px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .report-mobile-view-btn {
+            border: 1px solid #2a4028;
+            background: #2a4028;
+            color: #ffffff;
+        }
+
+        .report-mobile-view-btn:hover,
+        .report-mobile-view-btn:focus {
+            background: #223721;
+            color: #ffffff;
+        }
+
+        .report-mobile-download-btn {
+            min-width: 78px;
+            border: 1px solid #dce7df;
+            background: #f7fbf8;
+            color: #2a4028;
+        }
+
+        .report-mobile-download-btn:hover,
+        .report-mobile-download-btn:focus {
+            background: #edf7ef;
+            color: #2a4028;
+        }
+
+        .report-mobile-empty {
+            display: grid;
+            place-items: center;
+            gap: 4px;
+            min-height: 160px;
+            padding: 24px;
+            border: 1px dashed #dbe8df;
+            border-radius: 18px;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .report-mobile-empty i {
+            font-size: 1.8rem;
+            color: #8fae85;
+        }
+
+        .report-mobile-empty strong {
+            color: #10271b;
+            font-size: 0.95rem;
         }
     }
 </style>

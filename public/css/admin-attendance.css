@@ -966,3 +966,103 @@ RESPONSIVE
         min-width: 100%;
     }
 }
+
+/* =======================================================================
+   Capacitor Mobile Attendance Table Patch
+   Converts wide admin attendance records into readable cards.
+   ======================================================================= */
+@media (max-width: 576px) {
+    .attendance-table-wrapper {
+        overflow-x: hidden !important;
+        padding: 0 10px 12px !important;
+    }
+
+    .attendance-table,
+    .attendance-table thead,
+    .attendance-table tbody,
+    .attendance-table tr,
+    .attendance-table td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .attendance-table {
+        min-width: 0 !important;
+        border-collapse: separate !important;
+    }
+
+    .attendance-table thead {
+        display: none !important;
+    }
+
+    .attendance-table tbody tr[data-attendance-row="1"] {
+        margin: 0 0 12px !important;
+        padding: 13px !important;
+        border: 1px solid #e4ebe6 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(16, 39, 27, 0.06) !important;
+    }
+
+    .attendance-table tbody td {
+        display: grid !important;
+        grid-template-columns: 96px minmax(0, 1fr) !important;
+        align-items: start !important;
+        gap: 12px !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        color: #26382d !important;
+        font-size: 12px !important;
+        text-align: left !important;
+    }
+
+    .attendance-table tbody td::before {
+        content: attr(data-label) !important;
+        color: #64746a !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.08em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: normal !important;
+        word-break: normal !important;
+    }
+
+    .attendance-table tbody td[data-label="Worker"] {
+        display: block !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 6px !important;
+        border-bottom: 1px solid #edf2ee !important;
+    }
+
+    .attendance-table tbody td[data-label="Worker"]::before {
+        display: none !important;
+    }
+
+    .worker-info {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    .worker-name {
+        font-size: 13px !important;
+    }
+
+    .worker-secondary,
+    .project-name,
+    .recorded-by,
+    .remarks-cell {
+        display: block !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .attendance-status,
+    .biometric-state {
+        width: fit-content !important;
+        max-width: 100% !important;
+    }
+}

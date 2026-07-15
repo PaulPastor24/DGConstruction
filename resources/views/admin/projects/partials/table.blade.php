@@ -1,6 +1,6 @@
 <div class="table-container-card">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 dg-custom-table" style="font-size: 13px; min-width: 860px;">
+        <table class="table table-hover align-middle mb-0 dg-custom-table" style="font-size: 13px;">
             <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
                 <tr>
                     <th class="project-col">Project</th>

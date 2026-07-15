@@ -39,6 +39,183 @@
     }
 </script>
 
+<style>
+    /* Supervisor Material Tracking - compact mobile layout */
+    .material-stat-card,
+    .material-inventory-card,
+    .material-recent-card {
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .material-stat-card:hover,
+    .material-inventory-card:hover,
+    .material-recent-card:hover {
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 640px) {
+        .material-page-shell {
+            padding: 0.15rem 0 0.75rem !important;
+            background: transparent !important;
+        }
+
+        .material-metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .material-stat-card {
+            min-height: 112px !important;
+            padding: 0.85rem !important;
+            border-radius: 18px !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 0.65rem !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055) !important;
+        }
+
+        .material-stat-card .space-y-1 {
+            width: 100% !important;
+            order: 2 !important;
+        }
+
+        .material-stat-card dt {
+            font-size: 0.6rem !important;
+            line-height: 1.2 !important;
+            letter-spacing: 0.07em !important;
+        }
+
+        .material-stat-card dd {
+            margin-top: 0.16rem !important;
+            font-size: 1.48rem !important;
+            line-height: 1 !important;
+        }
+
+        .material-stat-card span {
+            margin-top: 0.18rem !important;
+            font-size: 0.66rem !important;
+            line-height: 1.25 !important;
+        }
+
+        .material-stat-icon {
+            width: 40px !important;
+            height: 40px !important;
+            padding: 0 !important;
+            border-radius: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            align-self: flex-end !important;
+            margin-bottom: -0.3rem !important;
+            order: 1 !important;
+        }
+
+        .material-stat-icon i {
+            font-size: 1.15rem !important;
+        }
+
+        .material-main-grid {
+            gap: 1rem !important;
+        }
+
+        .material-stack {
+            gap: 1rem !important;
+        }
+
+        .material-inventory-card,
+        .material-recent-card {
+            border-radius: 18px !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055) !important;
+        }
+
+        .material-filter-panel {
+            padding: 0.9rem !important;
+        }
+
+        .material-filter-form {
+            gap: 0.7rem !important;
+        }
+
+        .material-filter-search {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        .material-filter-search input {
+            height: 42px !important;
+            font-size: 0.82rem !important;
+            border-radius: 13px !important;
+            background: #ffffff !important;
+        }
+
+        .material-filter-controls {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.55rem !important;
+            width: 100% !important;
+        }
+
+        .material-filter-controls > .relative,
+        .material-filter-controls > button {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .material-filter-controls select,
+        .material-filter-controls button {
+            width: 100% !important;
+            min-height: 42px !important;
+            border-radius: 13px !important;
+            font-size: 0.76rem !important;
+        }
+
+        .material-filter-controls button {
+            grid-column: 1 / -1 !important;
+            justify-content: center !important;
+            font-size: 0.82rem !important;
+        }
+
+        .material-mobile-list > div {
+            padding: 1rem !important;
+        }
+
+        .material-mobile-list h4 {
+            font-size: 0.9rem !important;
+            line-height: 1.25 !important;
+        }
+
+        .material-mobile-list .grid {
+            gap: 0.45rem !important;
+            padding: 0.75rem !important;
+        }
+
+        .material-card-footer {
+            padding: 0.85rem !important;
+            gap: 0.65rem !important;
+        }
+
+        .material-card-footer .pagination {
+            justify-content: flex-start !important;
+        }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .material-metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .material-filter-search {
+            max-width: none !important;
+        }
+
+        .material-filter-controls {
+            width: 100% !important;
+        }
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const forms = [
@@ -71,74 +248,74 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#f8fafc] font-sans antialiased text-gray-900 p-2 sm:p-6 lg:p-8" x-data="{ openUsageModal: false, selectedMaterialId: null, selectedUnit: '', selectedPhaseId: null, previewUrl: '', previewImage(event) { const file = event.target.files && event.target.files[0]; if (!file) { this.previewUrl = ''; return; } const reader = new FileReader(); reader.onload = (e) => { this.previewUrl = e.target.result; }; reader.readAsDataURL(file); } }">
+<div class="material-page-shell min-h-screen bg-[#f8fafc] font-sans antialiased text-gray-900 p-1 sm:p-6 lg:p-8" x-data="{ openUsageModal: false, selectedMaterialId: null, selectedUnit: '', selectedPhaseId: null, previewUrl: '', previewImage(event) { const file = event.target.files && event.target.files[0]; if (!file) { this.previewUrl = ''; return; } const reader = new FileReader(); reader.onload = (e) => { this.previewUrl = e.target.result; }; reader.readAsDataURL(file); } }">
     
 
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div class="bg-white rounded-card p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+    <div class="material-metric-grid grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-5 sm:mb-8">
+        <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Total Materials</dt>
                 <dd class="text-3xl font-extrabold tracking-tight text-gray-900 font-heading">{{ $metrics['total_materials'] ?? '32' }}</dd>
                 <span class="text-xs text-gray-400 block">Registered items</span>
             </div>
-            <div class="p-4 bg-green-50 rounded-xl text-brand-dark">
+            <div class="material-stat-icon p-4 bg-green-50 rounded-xl text-brand-dark">
                 <i class="bi bi-box-seam text-2xl"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-card p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Materials Used</dt>
                 <dd class="text-3xl font-extrabold tracking-tight text-gray-900 font-heading">{{ $metrics['materials_used'] ?? '0' }}</dd>
                 <span class="text-xs text-gray-400 block">Active project allocation</span>
             </div>
-            <div class="p-4 bg-emerald-50 rounded-xl text-brand-accent">
+            <div class="material-stat-icon p-4 bg-emerald-50 rounded-xl text-brand-accent">
                 <i class="bi bi-truck text-2xl"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-card p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Low Stock</dt>
                 <dd class="text-3xl font-extrabold tracking-tight text-orange-600 font-heading">{{ $metrics['low_stock_alerts'] ?? '3' }}</dd>
                 <span class="text-xs text-gray-400 block">Requires attention</span>
             </div>
-            <div class="p-4 bg-orange-50 rounded-xl text-orange-600">
+            <div class="material-stat-icon p-4 bg-orange-50 rounded-xl text-orange-600">
                 <i class="bi bi-exclamation-triangle text-2xl"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-card p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+        <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Critical Materials</dt>
                 <dd class="text-3xl font-extrabold tracking-tight text-red-600 font-heading">{{ $metrics['critical_materials'] ?? '0' }}</dd>
                 <span class="text-xs text-gray-400 block">Urgent reorder required</span>
             </div>
-            <div class="p-4 bg-red-50 rounded-xl text-red-600">
+            <div class="material-stat-icon p-4 bg-red-50 rounded-xl text-red-600">
                 <i class="bi bi-patch-exclamation text-2xl"></i>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-1 gap-8 items-start">
+    <div class="material-main-grid grid grid-cols-1 lg:grid-cols-1 gap-5 lg:gap-8 items-start">
         
-        <div class="space-y-8">
+        <div class="material-stack space-y-5 lg:space-y-8">
             
-            <div class="bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden">
+            <div class="material-inventory-card bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden">
                 
-                <div class="p-6 border-b border-gray-200 bg-white">
-                    <form id="material-filters-form" method="GET" action="{{ route('supervisor.materials') }}" class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
+                <div class="material-filter-panel p-4 sm:p-6 border-b border-gray-200 bg-white">
+                    <form id="material-filters-form" method="GET" action="{{ route('supervisor.materials') }}" class="material-filter-form flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
                         <input type="hidden" name="project_id" value="{{ optional($selectedProject)->project_id }}">
                         <input type="hidden" name="phase_id" value="{{ optional($selectedPhase)->phase_id }}">
 
-                        <div class="relative flex-1 max-w-md">
+                        <div class="material-filter-search relative flex-1 max-w-md">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search materials..." class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-input bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-dark transition">
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3">
+                        <div class="material-filter-controls flex flex-wrap items-center gap-3">
                             <div class="relative">
                                 <select name="status" class="appearance-none bg-white pl-4 pr-10 py-2.5 text-sm text-gray-700 border border-gray-200 rounded-input shadow-saas focus:outline-none focus:ring-2 focus:ring-brand-dark transition">
                                     <option value="">All Statuses</option>
@@ -265,7 +442,7 @@
                     </table>
                 </div>
 
-                <div class="block md:hidden divide-y divide-gray-100">
+                <div class="material-mobile-list block md:hidden divide-y divide-gray-100">
                     @if(isset($inventory) && $inventory->count() > 0)
                         @foreach($inventory as $item)
                             <div class="p-5 bg-white space-y-4">
@@ -321,7 +498,7 @@
                     @endif
                 </div>
 
-                <div class="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="material-card-footer p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <span class="text-xs font-medium text-gray-500">
                         @if($inventory->total() > 0)
                             Showing {{ $inventory->firstItem() }} to {{ $inventory->lastItem() }} of {{ $inventory->total() }} entries
@@ -344,7 +521,7 @@
         </div>
 
         <div class="space-y-6">
-            <div class="bg-white rounded-card border border-gray-200 p-5 shadow-saas">
+            <div class="material-recent-card bg-white rounded-card border border-gray-200 p-4 sm:p-5 shadow-saas">
                 <div class="flex items-center justify-between gap-2 mb-4">
                     <div class="flex items-center gap-2 text-brand-dark">
                         <i class="bi bi-clock-history"></i>

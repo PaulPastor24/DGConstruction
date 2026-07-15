@@ -2419,6 +2419,208 @@
             width: 100%;
         }
     }
+
+
+
+/* =======================================================================
+   Capacitor Mobile Project Management Patch
+   ======================================================================= */
+@media (max-width: 576px) {
+    .mi-page.inventory-green-theme.main-dashboard-container {
+        display: block !important;
+        padding: 0 0 18px !important;
+        overflow-x: hidden !important;
+    }
+
+    .mi-page.inventory-green-theme .left-dashboard-content {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .mi-page.inventory-green-theme .dashboard-header-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .mi-page.inventory-green-theme .dashboard-title-area h2 {
+        max-width: 100% !important;
+        white-space: normal !important;
+        font-size: 1.7rem !important;
+        line-height: 1.08 !important;
+    }
+
+    .mi-page.inventory-green-theme .dashboard-header-row > .d-flex {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+    }
+
+    .mi-page.inventory-green-theme .dashboard-header-row .btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+    }
+
+    .mi-page.inventory-green-theme .metrics-row-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-top: 14px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .mi-page.inventory-green-theme .metric-card-box {
+        align-items: flex-start !important;
+        min-height: 108px !important;
+        padding: 13px !important;
+        gap: 10px !important;
+    }
+
+    .mi-page.inventory-green-theme .metric-icon-wrapper {
+        width: 38px !important;
+        height: 38px !important;
+        flex: 0 0 38px !important;
+        border-radius: 12px !important;
+    }
+
+    .mi-page.inventory-green-theme .metric-info-text .stat-lbl,
+    .mi-page.inventory-green-theme .metric-info-text .stat-sub {
+        font-size: 10px !important;
+        line-height: 1.35 !important;
+    }
+
+    .mi-page.inventory-green-theme .metric-info-text .stat-num {
+        font-size: 1.35rem !important;
+    }
+
+    .mi-page.inventory-green-theme .filter-toolbar-panel {
+        padding: 13px !important;
+        border-radius: 16px !important;
+    }
+
+    .mi-page.inventory-green-theme .filter-toolbar-panel .filter-form-row {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .mi-page.inventory-green-theme .search-input-container,
+    .mi-page.inventory-green-theme .filter-dropdown-select,
+    .mi-page.inventory-green-theme .filter-actions-right {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    .mi-page.inventory-green-theme .table-responsive {
+        overflow-x: hidden !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table,
+    .mi-page.inventory-green-theme .dg-custom-table thead,
+    .mi-page.inventory-green-theme .dg-custom-table tbody,
+    .mi-page.inventory-green-theme .dg-custom-table tr,
+    .mi-page.inventory-green-theme .dg-custom-table td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table {
+        min-width: 0 !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table thead {
+        display: none !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody tr {
+        margin: 0 0 12px !important;
+        padding: 13px !important;
+        border: 1px solid #e5ece7 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody td {
+        display: grid !important;
+        grid-template-columns: 86px minmax(0, 1fr) !important;
+        align-items: start !important;
+        gap: 10px !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        text-align: left !important;
+        font-size: 12px !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody td::before {
+        color: #64748b !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.08em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: nowrap !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(1)::before { content: 'Project'; }
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(2)::before { content: 'Supervisor'; }
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(3)::before { content: 'Status'; }
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(4)::before { content: 'Progress'; }
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(5)::before { content: 'Duration'; }
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:nth-child(6)::before { content: 'Actions'; }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:first-child {
+        display: block !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 6px !important;
+        border-bottom: 1px solid #eef2f7 !important;
+    }
+
+    .mi-page.inventory-green-theme .dg-custom-table tbody td:first-child::before {
+        display: none !important;
+    }
+
+    .mi-page.inventory-green-theme .project-title-bold,
+    .mi-page.inventory-green-theme .project-subtext-muted,
+    .mi-page.inventory-green-theme .project-date-badge {
+        white-space: normal !important;
+        max-width: 100% !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .mi-page.inventory-green-theme .supervisor-cell-info {
+        align-items: flex-start !important;
+    }
+
+    .mi-page.inventory-green-theme .custom-progress-container {
+        width: 100% !important;
+    }
+
+    .mi-page.inventory-green-theme .action-buttons-flex {
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    .mi-page.inventory-green-theme .table-pagination-footer-bar {
+        align-items: flex-start !important;
+        flex-direction: column !important;
+    }
+
+    .mi-page.inventory-green-theme .right-details-sidebar-panel,
+    .mi-page.inventory-green-theme .right-details-sidebar-panel.is-visible {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 16px !important;
+    }
+}
+
 </style>
 @endpush
 

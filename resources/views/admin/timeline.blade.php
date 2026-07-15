@@ -1173,6 +1173,877 @@
             overflow-x: auto;
         }
     }
+
+
+    /* ================================================================
+       SENIOR MOBILE TIMELINE FIX
+       Mobile should not depend on DHTMLX touch scrolling. On phones,
+       show a clean native mobile Gantt summary while keeping desktop
+       Gantt intact for tablet/web.
+    ================================================================ */
+    .mobile-gantt-view {
+        display: none;
+    }
+
+    .desktop-gantt-view {
+        display: block;
+    }
+
+    @media (max-width: 720px) {
+        #pg-timeline {
+            padding: 0 0 1.4rem !important;
+            overflow-x: hidden !important;
+        }
+
+
+        #pg-timeline .timeline-layout {
+            display: block !important;
+        }
+
+        #pg-timeline .page-header-card {
+            padding: 14px !important;
+            border-radius: 18px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #pg-timeline .page-title {
+            font-size: 18px !important;
+        }
+
+        #pg-timeline .page-subtitle {
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+        }
+
+        #pg-timeline .top-toolbar {
+            padding: 12px !important;
+            border-radius: 18px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #pg-timeline .toolbar-input,
+        #pg-timeline .toolbar-select {
+            min-height: 44px !important;
+            font-size: 16px !important;
+            touch-action: manipulation !important;
+        }
+
+        #pg-timeline .timeline-side-panel {
+            margin-top: 12px !important;
+        }
+
+        #pg-timeline .timeline-card {
+            padding: 12px !important;
+            border-radius: 18px !important;
+            border: 1px solid #e5ece7 !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055) !important;
+            background: #ffffff !important;
+        }
+
+        #pg-timeline .timeline-card-header {
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #pg-timeline .timeline-card-header-copy {
+            display: none !important;
+        }
+
+        #pg-timeline .gantt-toolbar-actions {
+            width: 100% !important;
+            display: grid !important;
+            gap: 10px !important;
+            justify-content: stretch !important;
+            overflow: visible !important;
+        }
+
+        #pg-timeline .gantt-mode-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 8px !important;
+        }
+
+        #pg-timeline .gantt-mode-actions .btn-ghost,
+        #pg-timeline .gantt-mode-actions .toolbar-select.compact-select {
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 40px !important;
+            padding: 0 8px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
+            text-align: center !important;
+            touch-action: manipulation !important;
+        }
+
+        #pg-timeline .view-toggle-group {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 4px !important;
+            padding: 5px !important;
+            border-radius: 999px !important;
+            background: #f2f6f3 !important;
+        }
+
+        #pg-timeline .view-toggle-btn {
+            min-height: 42px !important;
+            padding: 0 6px !important;
+            border-radius: 999px !important;
+            font-size: 12px !important;
+            line-height: 1.15 !important;
+            touch-action: manipulation !important;
+        }
+
+        #pg-timeline .desktop-gantt-view {
+            display: none !important;
+        }
+
+        #pg-timeline .mobile-gantt-view {
+            display: grid !important;
+            gap: 12px !important;
+        }
+
+        #pg-timeline .mobile-gantt-note {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 10px 12px !important;
+            border: 1px solid #dbeadd !important;
+            border-radius: 14px !important;
+            background: #f7fcf8 !important;
+            color: #365233 !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+        }
+
+        #pg-timeline .mobile-gantt-card {
+            padding: 14px !important;
+            border: 1px solid #e2ebe4 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        #pg-timeline .mobile-gantt-head {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 12px !important;
+            border-bottom: 1px solid #eef4ef !important;
+        }
+
+        #pg-timeline .mobile-gantt-title {
+            margin: 0 !important;
+            color: #10271b !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+        }
+
+        #pg-timeline .mobile-gantt-code {
+            display: block !important;
+            margin-top: 4px !important;
+            color: #64748b !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+        }
+
+        #pg-timeline .mobile-gantt-meta {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #pg-timeline .mobile-gantt-field {
+            padding: 10px 12px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+        }
+
+        #pg-timeline .mobile-gantt-label {
+            display: block !important;
+            margin-bottom: 4px !important;
+            color: #64748b !important;
+            font-size: 9.5px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase !important;
+        }
+
+        #pg-timeline .mobile-gantt-value {
+            display: block !important;
+            color: #0f172a !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+        }
+
+        #pg-timeline .mobile-gantt-progress-row {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        #pg-timeline .mobile-gantt-track {
+            height: 10px !important;
+            flex: 1 1 auto !important;
+            overflow: hidden !important;
+            border-radius: 999px !important;
+            background: #edf3ee !important;
+        }
+
+        #pg-timeline .mobile-gantt-fill {
+            display: block !important;
+            height: 100% !important;
+            border-radius: 999px !important;
+            background: #365233 !important;
+        }
+
+        #pg-timeline .mobile-gantt-percent {
+            min-width: 42px !important;
+            color: #10271b !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            text-align: right !important;
+        }
+
+        #pg-timeline .table-wrapper {
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        #pg-timeline .standard-data-table,
+        #pg-timeline .standard-data-table thead,
+        #pg-timeline .standard-data-table tbody,
+        #pg-timeline .standard-data-table tr,
+        #pg-timeline .standard-data-table th,
+        #pg-timeline .standard-data-table td {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .standard-data-table thead {
+            display: none !important;
+        }
+
+        #pg-timeline .standard-data-table tbody tr {
+            margin-bottom: 12px !important;
+            padding: 14px !important;
+            border: 1px solid #e2ebe4 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        #pg-timeline .standard-data-table td {
+            display: grid !important;
+            grid-template-columns: 105px minmax(0, 1fr) !important;
+            gap: 12px !important;
+            align-items: start !important;
+            padding: 8px 0 !important;
+            border: 0 !important;
+            color: #0f172a !important;
+            font-size: 13px !important;
+            line-height: 1.4 !important;
+            white-space: normal !important;
+            word-break: normal !important;
+        }
+
+        #pg-timeline .standard-data-table td::before {
+            content: attr(data-label) !important;
+            color: #64748b !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase !important;
+        }
+    }
+
+
+    /* ======================================================================
+       MOBILE SPACE MAXIMIZER FOR PHASES + TIMELINE TABS
+       Uses the full phone width by turning each table row into a compact
+       information card: title full-width, details in 2-column blocks.
+       ====================================================================== */
+    @media (max-width: 720px) {
+        #pg-timeline .timeline-card {
+            padding: 10px !important;
+            border-radius: 18px !important;
+        }
+
+        #pg-timeline .timeline-view-panel:not(.d-none) .table-wrapper {
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table,
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table thead,
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tbody,
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tr,
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table th,
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table td {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table thead {
+            display: none !important;
+        }
+
+        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tbody {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .timeline-phase-card,
+        #pg-timeline .timeline-milestone-card {
+            position: relative !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin: 0 !important;
+            padding: 14px !important;
+            padding-top: 42px !important;
+            border: 1px solid #e1ebe4 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td,
+        #pg-timeline .timeline-milestone-card > td {
+            min-width: 0 !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+            color: #0f172a !important;
+            font-size: 12.5px !important;
+            line-height: 1.35 !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td::before,
+        #pg-timeline .timeline-milestone-card > td::before {
+            content: attr(data-label) !important;
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1.15 !important;
+            text-transform: uppercase !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="#"],
+        #pg-timeline .timeline-milestone-card > td[data-label="#"] {
+            position: absolute !important;
+            top: 14px !important;
+            left: 14px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 26px !important;
+            height: 26px !important;
+            padding: 0 !important;
+            border: 1px solid #dcebe0 !important;
+            border-radius: 999px !important;
+            background: #f4faf5 !important;
+            color: #365233 !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="#"]::before,
+        #pg-timeline .timeline-milestone-card > td[data-label="#"]::before {
+            display: none !important;
+        }
+
+        #pg-timeline .timeline-phase-card .timeline-title-cell,
+        #pg-timeline .timeline-milestone-card .timeline-title-cell {
+            grid-column: 1 / -1 !important;
+            padding: 0 0 12px 34px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #eef4ef !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .timeline-phase-card .timeline-title-cell::before,
+        #pg-timeline .timeline-milestone-card .timeline-title-cell::before {
+            display: none !important;
+        }
+
+        #pg-timeline .timeline-title-row {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-title-cell strong {
+            display: block !important;
+            min-width: 0 !important;
+            color: #10271b !important;
+            font-size: 13.5px !important;
+            font-weight: 800 !important;
+            line-height: 1.32 !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        #pg-timeline .timeline-code-chip {
+            display: inline-flex !important;
+            flex: 0 0 auto !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 42px !important;
+            padding: 4px 8px !important;
+            border: 1px solid #dcebe0 !important;
+            border-radius: 999px !important;
+            background: #f4faf5 !important;
+            color: #60708a !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Start"],
+        #pg-timeline .timeline-phase-card > td[data-label="End"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Phase"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Start Planned Date"],
+        #pg-timeline .timeline-milestone-card > td[data-label="End Planned Date"] {
+            min-height: 58px !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Status"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            min-height: 58px !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Progress"] {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            min-height: 58px !important;
+            color: #10271b !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-milestone-card > td[data-label="Actions"] {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 9px 10px !important;
+        }
+
+        #pg-timeline .timeline-milestone-card > td[data-label="Actions"]::before {
+            margin: 0 !important;
+        }
+
+        #pg-timeline .timeline-milestone-card .action-icons-flex {
+            margin-left: auto !important;
+        }
+
+        #pg-timeline .status-pill-badge {
+            max-width: 100% !important;
+            padding: 6px 12px !important;
+            border-radius: 999px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            text-align: center !important;
+        }
+
+        #pg-timeline .btn-icon-table {
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 12px !important;
+        }
+
+        #pg-timeline .timeline-table-footer {
+            gap: 10px !important;
+            margin-top: 12px !important;
+            padding: 0 !important;
+        }
+    }
+
+
+
+    /* FINAL CONSISTENT MOBILE CARD HEADER FIX */
+    .timeline-number-chip {
+        display: none;
+    }
+
+    .timeline-title-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    @media (max-width: 720px) {
+        #pg-timeline .timeline-phase-card,
+        #pg-timeline .timeline-milestone-card {
+            position: relative !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin: 0 0 12px !important;
+            padding: 14px !important;
+            border: 1px solid #e0eae3 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
+            overflow: hidden !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="#"],
+        #pg-timeline .timeline-milestone-card > td[data-label="#"] {
+            display: none !important;
+        }
+
+        #pg-timeline .timeline-phase-card .timeline-title-cell,
+        #pg-timeline .timeline-milestone-card .timeline-title-cell {
+            display: block !important;
+            grid-column: 1 / -1 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 0 0 12px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #eef4ef !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .timeline-phase-card .timeline-title-cell::before,
+        #pg-timeline .timeline-milestone-card .timeline-title-cell::before {
+            display: none !important;
+        }
+
+        #pg-timeline .timeline-title-row {
+            display: grid !important;
+            grid-template-columns: 34px minmax(0, 1fr) auto !important;
+            align-items: start !important;
+            gap: 10px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-number-chip {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+            border: 1px solid #dcebe0 !important;
+            background: #f4faf5 !important;
+            color: #365233 !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+        }
+
+        #pg-timeline .timeline-title-copy {
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 5px !important;
+        }
+
+        #pg-timeline .timeline-title-cell strong {
+            display: block !important;
+            color: #10271b !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1.32 !important;
+            letter-spacing: -0.01em !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-code-chip {
+            display: inline-flex !important;
+            width: fit-content !important;
+            max-width: 100% !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px 8px !important;
+            border: 1px solid #dcebe0 !important;
+            border-radius: 999px !important;
+            background: #f4faf5 !important;
+            color: #60708a !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td,
+        #pg-timeline .timeline-milestone-card > td {
+            min-width: 0 !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+            color: #0f172a !important;
+            font-size: 12.5px !important;
+            line-height: 1.35 !important;
+            white-space: normal !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td::before,
+        #pg-timeline .timeline-milestone-card > td::before {
+            content: attr(data-label) !important;
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1.15 !important;
+            text-transform: uppercase !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Start"],
+        #pg-timeline .timeline-phase-card > td[data-label="End"],
+        #pg-timeline .timeline-phase-card > td[data-label="Status"],
+        #pg-timeline .timeline-phase-card > td[data-label="Progress"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Phase"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Start Planned Date"],
+        #pg-timeline .timeline-milestone-card > td[data-label="End Planned Date"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
+            min-height: 62px !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Status"],
+        #pg-timeline .timeline-phase-card > td[data-label="Progress"],
+        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+        }
+
+        #pg-timeline .timeline-phase-card > td[data-label="Progress"] {
+            color: #10271b !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-milestone-card > td[data-label="Actions"] {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 10px 11px !important;
+        }
+
+        #pg-timeline .timeline-milestone-card > td[data-label="Actions"]::before {
+            margin: 0 !important;
+        }
+    }
+
+
+    /* ================================================================
+       FINAL MOBILE CARD LAYOUT - PHASES + TIMELINE
+       Uses real mobile card components and hides the table only on phone.
+       This avoids inconsistent table-card rendering and maximizes space.
+    ================================================================ */
+    .mobile-timeline-list {
+        display: none;
+    }
+
+    @media (max-width: 720px) {
+        #pg-timeline .timeline-card {
+            padding: 10px !important;
+            border-radius: 18px !important;
+        }
+
+        #pg-timeline .table-wrapper {
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .table-wrapper > .standard-data-table {
+            display: none !important;
+        }
+
+        #pg-timeline .mobile-timeline-list {
+            display: grid !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-mobile-card {
+            width: 100% !important;
+            padding: 14px !important;
+            border: 1px solid #e1ebe4 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        #pg-timeline .timeline-mobile-head {
+            display: grid !important;
+            grid-template-columns: 30px minmax(0, 1fr) auto !important;
+            gap: 10px !important;
+            align-items: start !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid #edf3ee !important;
+        }
+
+        #pg-timeline .timeline-mobile-index {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+            border: 1px solid #dcebe0 !important;
+            background: #f4faf5 !important;
+            color: #365233 !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+        }
+
+        #pg-timeline .timeline-mobile-title {
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .timeline-mobile-title h4 {
+            margin: 0 !important;
+            color: #10271b !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+            letter-spacing: -0.01em !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-mobile-code {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 42px !important;
+            max-width: 88px !important;
+            padding: 5px 9px !important;
+            border: 1px solid #dcebe0 !important;
+            border-radius: 999px !important;
+            background: #f4faf5 !important;
+            color: #60708a !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.04em !important;
+            white-space: nowrap !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 9px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail {
+            min-width: 0 !important;
+            min-height: 62px !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail.full {
+            grid-column: 1 / -1 !important;
+        }
+
+        #pg-timeline .timeline-mobile-label {
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1.15 !important;
+            text-transform: uppercase !important;
+        }
+
+        #pg-timeline .timeline-mobile-value {
+            display: block !important;
+            min-width: 0 !important;
+            color: #0f172a !important;
+            font-size: 12.5px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail.progress .timeline-mobile-value {
+            color: #10271b !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail.status,
+        #pg-timeline .timeline-mobile-detail.progress {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
+
+        #pg-timeline .timeline-mobile-actions {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            min-height: 48px !important;
+        }
+
+        #pg-timeline .timeline-mobile-actions .btn-icon-table {
+            margin-left: auto !important;
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 12px !important;
+            flex: 0 0 auto !important;
+        }
+
+        #pg-timeline .timeline-table-footer {
+            margin-top: 12px !important;
+            padding: 0 !important;
+        }
+    }
+
 </style>
 @endpush
 
@@ -1545,6 +2416,154 @@
         window.initialGanttTasks = tasks;
     }
 
+
+
+    function buildMobileGanttChart(phases) {
+        const items = Array.isArray(phases) ? phases : [];
+
+        if (!items.length) {
+            return '<div class="timeline-empty-state">No Gantt data available for the selected filters.</div>';
+        }
+
+        const cards = items.map((phase) => {
+            const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
+            const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
+            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
+            const phaseCode = phase.phase_code || phase.code || 'Phase';
+            const start = formatDateFull(phase.planned_start_date || phase.start || phase.start_date || phase.begin);
+            const end = formatDateFull(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
+            const statusLabel = status.replace('-', ' ');
+
+            return `
+                <article class="mobile-gantt-card">
+                    <div class="mobile-gantt-head">
+                        <div>
+                            <h4 class="mobile-gantt-title">${escapeHtml(phaseName)}</h4>
+                            <span class="mobile-gantt-code">${escapeHtml(phaseCode)}</span>
+                        </div>
+                        <span class="status-pill-badge ${status}">${escapeHtml(statusLabel)}</span>
+                    </div>
+                    <div class="mobile-gantt-meta">
+                        <div class="mobile-gantt-field">
+                            <span class="mobile-gantt-label">Start</span>
+                            <span class="mobile-gantt-value">${escapeHtml(start)}</span>
+                        </div>
+                        <div class="mobile-gantt-field">
+                            <span class="mobile-gantt-label">End</span>
+                            <span class="mobile-gantt-value">${escapeHtml(end)}</span>
+                        </div>
+                    </div>
+                    <div class="mobile-gantt-progress-row">
+                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill" style="width:${percentage}%"></span></div>
+                        <span class="mobile-gantt-percent">${Math.round(percentage)}%</span>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        return `
+            <div class="mobile-gantt-note"><i class="bi bi-bar-chart-line-fill"></i> Mobile Gantt summary. Use the Phases or Timeline tab for detailed rows.</div>
+            ${cards}
+        `;
+    }
+
+
+    function buildMobilePhaseCards(phases, startIndex) {
+        const items = Array.isArray(phases) ? phases : [];
+        if (!items.length) {
+            return '<div class="timeline-empty-state">No phases match the current filters.</div>';
+        }
+
+        return items.map((phase, index) => {
+            const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
+            const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
+            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
+            const phaseCode = phase.phase_code || phase.code || 'Phase';
+            const start = formatDateFull(phase.planned_start_date || phase.start);
+            const end = formatDateFull(phase.planned_end_date || phase.end);
+            const number = startIndex + index;
+
+            return `
+                <article class="timeline-mobile-card">
+                    <div class="timeline-mobile-head">
+                        <span class="timeline-mobile-index">${number}</span>
+                        <div class="timeline-mobile-title">
+                            <h4>${escapeHtml(phaseName)}</h4>
+                        </div>
+                        <span class="timeline-mobile-code">${escapeHtml(phaseCode)}</span>
+                    </div>
+                    <div class="timeline-mobile-detail-grid">
+                        <div class="timeline-mobile-detail">
+                            <span class="timeline-mobile-label">Start</span>
+                            <span class="timeline-mobile-value">${escapeHtml(start)}</span>
+                        </div>
+                        <div class="timeline-mobile-detail">
+                            <span class="timeline-mobile-label">End</span>
+                            <span class="timeline-mobile-value">${escapeHtml(end)}</span>
+                        </div>
+                        <div class="timeline-mobile-detail status">
+                            <span class="timeline-mobile-label">Status</span>
+                            <span class="status-pill-badge ${status}">${escapeHtml(status.replace('-', ' '))}</span>
+                        </div>
+                        <div class="timeline-mobile-detail progress">
+                            <span class="timeline-mobile-label">Progress</span>
+                            <span class="timeline-mobile-value">${Math.round(percentage)}%</span>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function buildMobileMilestoneCards(milestones, startIndex) {
+        const items = Array.isArray(milestones) ? milestones : [];
+        if (!items.length) {
+            return '<div class="timeline-empty-state">No milestones match the current filters.</div>';
+        }
+
+        return items.map((milestone, index) => {
+            const status = getMilestoneStatus(milestone);
+            const number = startIndex + index;
+            const milestoneName = milestone.milestone_name || 'Unnamed milestone';
+            const phaseName = milestone.phase_name || 'Unnamed phase';
+            const start = formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start);
+            const end = formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end);
+
+            return `
+                <article class="timeline-mobile-card">
+                    <div class="timeline-mobile-head">
+                        <span class="timeline-mobile-index">${number}</span>
+                        <div class="timeline-mobile-title">
+                            <h4>${escapeHtml(milestoneName)}</h4>
+                        </div>
+                        <span class="status-pill-badge ${status}">${escapeHtml(status.replace('-', ' '))}</span>
+                    </div>
+                    <div class="timeline-mobile-detail-grid">
+                        <div class="timeline-mobile-detail full">
+                            <span class="timeline-mobile-label">Phase</span>
+                            <span class="timeline-mobile-value">${escapeHtml(phaseName)}</span>
+                        </div>
+                        <div class="timeline-mobile-detail">
+                            <span class="timeline-mobile-label">Start Planned Date</span>
+                            <span class="timeline-mobile-value">${escapeHtml(start)}</span>
+                        </div>
+                        <div class="timeline-mobile-detail">
+                            <span class="timeline-mobile-label">End Planned Date</span>
+                            <span class="timeline-mobile-value">${escapeHtml(end)}</span>
+                        </div>
+                        <div class="timeline-mobile-detail timeline-mobile-actions">
+                            <span>
+                                <span class="timeline-mobile-label">Action</span>
+                                <span class="timeline-mobile-value">Edit milestone</span>
+                            </span>
+                            <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" aria-label="Edit milestone"><i class="bi bi-pencil"></i></button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
     function renderTimeline(project) {
         const filteredPhases = getFilteredPhases(project);
         const filteredMilestones = getFilteredMilestones(project);
@@ -1606,7 +2625,10 @@
                         </div>
 
                         <div class="timeline-view-panel ${timelineViewMode === 'gantt' ? '' : 'd-none'}">
-                            <div class="gantt-shell">
+                            <div class="mobile-gantt-view">
+                                ${buildMobileGanttChart(filteredPhases)}
+                            </div>
+                            <div class="desktop-gantt-view gantt-shell">
                                 <div class="gantt-scroll-shell">
                                     <div id="dhtmlxGantt"></div>
                                 </div>
@@ -1615,6 +2637,9 @@
 
                         <div class="timeline-view-panel ${timelineViewMode === 'phases' ? '' : 'd-none'}">
                             <div class="table-wrapper">
+                                <div class="mobile-timeline-list">
+                                    ${buildMobilePhaseCards(paginatedPhases, phasesFrom)}
+                                </div>
                                 <table class="standard-data-table">
                                     <thead>
                                         <tr>
@@ -1633,9 +2658,17 @@
                                             const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
                                             const phaseCode = phase.phase_code || phase.code || 'Phase';
                                             return `
-                                                <tr>
+                                                <tr class="timeline-phase-card">
                                                     <td data-label="#">${phasesFrom + index}</td>
-                                                    <td data-label="Phase"><strong>${escapeHtml(phaseName)}</strong><div class="text-muted small">${escapeHtml(phaseCode)}</div></td>
+                                                    <td data-label="Phase" class="timeline-title-cell">
+                                                        <div class="timeline-title-row">
+                                                            <span class="timeline-number-chip">${phasesFrom + index}</span>
+                                                            <div class="timeline-title-copy">
+                                                                <strong>${escapeHtml(phaseName)}</strong>
+                                                                <span class="timeline-code-chip">${escapeHtml(phaseCode)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                     <td data-label="Start">${formatDateFull(phase.planned_start_date || phase.start)}</td>
                                                     <td data-label="End">${formatDateFull(phase.planned_end_date || phase.end)}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
@@ -1654,6 +2687,9 @@
 
                         <div class="timeline-view-panel ${timelineViewMode === 'timeline' ? '' : 'd-none'}">
                             <div class="table-wrapper">
+                                <div class="mobile-timeline-list">
+                                    ${buildMobileMilestoneCards(paginatedMilestones, timelineFrom)}
+                                </div>
                                 <table class="standard-data-table">
                                     <thead>
                                         <tr>
@@ -1670,9 +2706,16 @@
                                         ${paginatedMilestones.length ? paginatedMilestones.map((milestone, index) => {
                                             const status = getMilestoneStatus(milestone);
                                             return `
-                                                <tr>
+                                                <tr class="timeline-milestone-card">
                                                     <td data-label="#">${timelineFrom + index}</td>
-                                                    <td data-label="Milestone"><strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong></td>
+                                                    <td data-label="Milestone" class="timeline-title-cell">
+                                                        <div class="timeline-title-row">
+                                                            <span class="timeline-number-chip">${timelineFrom + index}</span>
+                                                            <div class="timeline-title-copy">
+                                                                <strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                     <td data-label="Phase">${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
                                                     <td data-label="Start Planned Date">${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
                                                     <td data-label="End Planned Date">${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>

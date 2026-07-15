@@ -428,6 +428,290 @@
             gap: 6px;
             color: #475569;
         }
+
+        /* ===== MOBILE SUPERVISOR REPORTS: compact filters, 2x2 metrics, readable cards ===== */
+        .supervisor-report-mobile-list {
+            display: none;
+        }
+
+        @media (max-width: 767.98px) {
+            .report-filter-card {
+                margin-bottom: 1rem !important;
+                padding: 0.9rem !important;
+                border-radius: 16px !important;
+            }
+
+            .report-filter-card .row {
+                --bs-gutter-y: 0.7rem;
+            }
+
+            .report-filter-card .form-label {
+                margin-bottom: 0.35rem;
+                font-size: 0.72rem;
+            }
+
+            .report-filter-card .form-select,
+            .report-filter-card .form-control {
+                min-height: 42px;
+                border-radius: 12px;
+                font-size: 0.86rem;
+            }
+
+            .metric-card {
+                min-height: 104px;
+                padding: 0.9rem !important;
+                border-radius: 16px !important;
+                align-items: flex-start !important;
+                gap: 0.75rem !important;
+            }
+
+            .metric-icon-wrapper {
+                width: 42px;
+                height: 42px;
+                font-size: 1rem;
+                flex: 0 0 42px;
+            }
+
+            .metric-card .text-muted.small.fw-bold {
+                font-size: 0.64rem;
+                line-height: 1.2;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+
+            .metric-card h4 {
+                font-size: 1.2rem;
+                line-height: 1.1;
+            }
+
+            .metric-card span {
+                font-size: 0.66rem !important;
+                line-height: 1.25;
+            }
+
+            .main-report-card {
+                border-radius: 18px !important;
+            }
+
+            .main-report-card > .border-bottom {
+                align-items: center !important;
+                gap: 0.9rem;
+                padding: 1rem !important;
+            }
+
+            .main-report-card > .border-bottom h5 {
+                font-size: 1.05rem;
+                line-height: 1.2;
+            }
+
+            .main-report-card > .border-bottom .btn {
+                min-width: 104px;
+                min-height: 44px;
+                border-radius: 12px;
+                font-weight: 800;
+            }
+
+            .supervisor-report-table-wrap {
+                display: none !important;
+            }
+
+            .supervisor-report-mobile-list {
+                display: grid;
+                gap: 0.9rem;
+                padding: 0.95rem;
+                background: #f8fafc;
+            }
+
+            .supervisor-report-mobile-card {
+                border: 1px solid rgba(42, 64, 40, 0.12);
+                border-radius: 18px;
+                background: #ffffff;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+                padding: 1rem;
+                overflow: hidden;
+            }
+
+            .report-mobile-card-top {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 0.8rem;
+                padding-bottom: 0.8rem;
+                margin-bottom: 0.9rem;
+                border-bottom: 1px solid rgba(42, 64, 40, 0.08);
+            }
+
+            .report-mobile-card-top > div {
+                display: grid;
+                gap: 0.12rem;
+                min-width: 0;
+            }
+
+            .report-mobile-label,
+            .report-mobile-detail span {
+                color: #64748b;
+                font-size: 0.64rem;
+                font-weight: 900;
+                line-height: 1.2;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .report-mobile-card-top strong {
+                color: #111827;
+                font-size: 0.98rem;
+                font-weight: 900;
+                line-height: 1.2;
+            }
+
+            .report-mobile-card-top small,
+            .report-mobile-detail small {
+                color: #64748b;
+                font-size: 0.76rem;
+                line-height: 1.25;
+            }
+
+            .report-mobile-card-top .status-pill {
+                flex-shrink: 0;
+                max-width: 132px;
+                text-align: center;
+                white-space: normal;
+                line-height: 1.15;
+                padding: 0.42rem 0.68rem;
+                border-radius: 999px;
+                font-size: 0.67rem;
+            }
+
+            .report-mobile-title {
+                color: #172033;
+                font-family: var(--font-brand, 'Syne', sans-serif);
+                font-size: 1rem;
+                font-weight: 800;
+                line-height: 1.28;
+                margin-bottom: 0.9rem;
+            }
+
+            .report-mobile-detail-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.7rem;
+            }
+
+            .report-mobile-detail {
+                display: grid;
+                gap: 0.22rem;
+                padding: 0.78rem 0.85rem;
+                border: 1px solid rgba(42, 64, 40, 0.08);
+                border-radius: 14px;
+                background: #fbfdfb;
+                min-width: 0;
+            }
+
+            .report-mobile-detail strong {
+                color: #111827;
+                font-size: 0.88rem;
+                font-weight: 800;
+                line-height: 1.35;
+                word-break: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .report-mobile-person {
+                display: flex;
+                align-items: center;
+                gap: 0.55rem;
+                min-width: 0;
+            }
+
+            .report-mobile-person .avatar-img {
+                flex: 0 0 32px;
+            }
+
+            .report-mobile-person > div:last-child {
+                display: grid;
+                gap: 0.08rem;
+                min-width: 0;
+            }
+
+            .report-mobile-actions {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 0.6rem;
+                margin-top: 0.95rem;
+                padding-top: 0.85rem;
+                border-top: 1px solid rgba(42, 64, 40, 0.08);
+            }
+
+            .report-mobile-action-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.45rem;
+                min-height: 42px;
+                border-radius: 12px;
+                border: 1px solid rgba(42, 64, 40, 0.16);
+                background: #2a4028;
+                color: #ffffff;
+                font-size: 0.82rem;
+                font-weight: 800;
+            }
+
+            .report-mobile-action-btn:hover,
+            .report-mobile-action-btn:focus {
+                background: #365233;
+                color: #ffffff;
+            }
+
+            .report-mobile-action-secondary {
+                min-width: 76px;
+                background: #f8fafc;
+                color: #2a4028;
+            }
+
+            .report-mobile-action-secondary:hover,
+            .report-mobile-action-secondary:focus {
+                background: #e8efe0;
+                color: #2a4028;
+            }
+
+            .supervisor-report-empty {
+                display: grid;
+                place-items: center;
+                gap: 0.5rem;
+                min-height: 150px;
+                color: #64748b;
+                border: 1px dashed rgba(42, 64, 40, 0.16);
+                border-radius: 16px;
+                background: #ffffff;
+                text-align: center;
+                font-size: 0.9rem;
+            }
+
+            .supervisor-report-empty i {
+                font-size: 1.7rem;
+                color: #94a3b8;
+            }
+
+            .main-report-card > .bg-light.border-top {
+                padding: 0.9rem !important;
+                background: #ffffff !important;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .supervisor-report-mobile-card {
+                padding: 0.9rem;
+            }
+
+            .report-mobile-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .report-mobile-action-secondary {
+                width: 100%;
+            }
+        }
+
     </style>
 @endpush
 
@@ -476,7 +760,7 @@
 </section>
 
 <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="metric-card p-3 d-flex align-items-center gap-3">
             <div class="metric-icon-wrapper bg-success-subtle text-success">
                 <i class="bi bi-file-earmark-text"></i>
@@ -488,7 +772,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="metric-card p-3 d-flex align-items-center gap-3">
             <div class="metric-icon-wrapper bg-warning-subtle text-warning">
                 <i class="bi bi-clock"></i>
@@ -500,7 +784,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="metric-card p-3 d-flex align-items-center gap-3">
             <div class="metric-icon-wrapper bg-success-subtle text-success">
                 <i class="bi bi-check-circle"></i>
@@ -512,7 +796,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-sm-6 col-xl-3">
         <div class="metric-card p-3 d-flex align-items-center gap-3">
             <div class="metric-icon-wrapper bg-danger-subtle text-danger">
                 <i class="bi bi-x-circle"></i>
@@ -534,7 +818,7 @@
         </button>
     </div>
 
-    <div class="table-responsive">
+    <div class="table-responsive supervisor-report-table-wrap">
         <table class="table table-report table-hover mb-0 align-middle">
             <thead>
                 <tr>
@@ -737,6 +1021,96 @@
             </tbody>
         </table>
     </div>
+
+    <div class="supervisor-report-mobile-list">
+        @if($reports->isEmpty())
+            <div class="supervisor-report-empty">
+                <i class="bi bi-file-earmark-x"></i>
+                <div>No reports match the current filters.</div>
+            </div>
+        @else
+            @foreach($reports as $report)
+                @php
+                    $status = $report->approval_status ?? 'pending';
+                    $pillClass = match ($status) {
+                        'approved' => 'status-pill status-pill-approved',
+                        'rejected' => 'status-pill status-pill-error',
+                        default => 'status-pill status-pill-pending',
+                    };
+                    $reportDate = optional($report->report_date)->format('M d, Y') ?? 'N/A';
+                    $reportTime = optional($report->report_date)->format('h:i A') ?? '';
+                    $projectName = optional($report->project)->project_name ?? 'Unknown';
+                    $phaseName = optional($report->phase)->phase_name ?? 'General Phase';
+                    $submittedName = optional($report->submittedBy)->name ?? 'Supervisor';
+                @endphp
+
+                <article class="supervisor-report-mobile-card">
+                    <div class="report-mobile-card-top">
+                        <div>
+                            <span class="report-mobile-label">Report Date</span>
+                            <strong>{{ $reportDate }}</strong>
+                            @if($reportTime)
+                                <small>{{ $reportTime }}</small>
+                            @endif
+                        </div>
+                        <span class="{{ $pillClass }}">{{ ucfirst($status) }}</span>
+                    </div>
+
+                    <div class="report-mobile-title">
+                        {{ $projectName }}
+                    </div>
+
+                    <div class="report-mobile-detail-grid">
+                        <div class="report-mobile-detail">
+                            <span>Project</span>
+                            <strong>{{ $projectName }}</strong>
+                            <small>Building Construction</small>
+                        </div>
+
+                        <div class="report-mobile-detail">
+                            <span>Phase</span>
+                            <strong>{{ $phaseName }}</strong>
+                        </div>
+
+                        <div class="report-mobile-detail">
+                            <span>Submitted By</span>
+                            <div class="report-mobile-person">
+                                <div class="avatar-img bg-secondary text-white d-flex align-items-center justify-content-center fw-bold small">
+                                    {{ strtoupper(substr($submittedName, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <strong>{{ $submittedName }}</strong>
+                                    <small>Supervisor</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-mobile-detail">
+                            <span>Report ID</span>
+                            <strong>RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="report-mobile-actions">
+                        <button class="btn report-mobile-action-btn"
+                                type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#reportDetailsModal-{{ $report->report_id }}">
+                            <i class="bi bi-eye"></i>
+                            View Details
+                        </button>
+                        <button class="btn report-mobile-action-btn report-mobile-action-secondary download-report-btn"
+                                type="button"
+                                data-report-id="{{ $report->report_id }}">
+                            <i class="bi bi-download"></i>
+                            PDF
+                        </button>
+                    </div>
+                </article>
+            @endforeach
+        @endif
+    </div>
+
 
     <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 border-top">
         <div class="small text-muted">
