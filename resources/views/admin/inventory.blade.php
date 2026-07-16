@@ -214,7 +214,7 @@
     }
 
     .modal-receive-stock .modal-body-custom {
-        padding: 0 1.5rem 1.5rem 1.5rem;
+        padding: 0 1.5rem 3rem 1.5rem;
     }
 
     .modal-receive-stock .modal-icon-container {
@@ -485,6 +485,7 @@
         justify-content: flex-end;
         gap: 0.75rem;
         margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
     }
 
     .modal-receive-stock .btn-action-cancel {
@@ -599,7 +600,7 @@
         }
 
         .modal-receive-stock .modal-body-custom {
-            padding: 0 1rem 1rem 1rem;
+            padding: 0 1rem 2rem 1rem;
         }
     }
 
@@ -1241,6 +1242,14 @@
                     text: '{{ addslashes(session('success')) }}',
                     icon: 'success',
                     confirmButtonColor: '#166534'
+                }).then(function() {
+                    var modals = document.querySelectorAll('.modal.show');
+                    modals.forEach(function(modal) {
+                        var modalInstance = bootstrap.Modal.getInstance(modal);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                    });
                 });
             });
         </script>
@@ -1320,8 +1329,14 @@
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
-                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral">
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addMaterialModal" title="Register a new material in the master catalog">
                                 <i class="bi bi-plus-lg me-1"></i> Add Material
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" title="Receive stock for a material">
+                                <i class="bi bi-envelope-open me-1"></i> Receive Stock
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#allocateMaterialModal" title="Allocate material to a project">
+                                <i class="bi bi-diagram-3 me-1"></i> Allocate
                             </button>
                         </div>
                     </form>
@@ -1371,13 +1386,12 @@
                                         <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $badgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $statusText }}</span></td>
                                         <td>
                                             <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}"><i class="bi bi-eye"></i></button>
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}"><i class="bi bi-pencil"></i></button>
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-warning bg-white" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" data-material-id="{{ $material->id }}" data-material-name="{{ $material->name }}" data-material-unit="{{ $material->unit }}"><i class="bi bi-envelope-open"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}" title="View details"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}" title="Edit material"><i class="bi bi-pencil"></i></button>
                                                 <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit"><i class="bi bi-trash"></i></button>
+                                                    <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete material"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             </div>
                                         </td>
@@ -1387,6 +1401,116 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="modal fade modal-receive-stock" id="allocateMaterialModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header-custom">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="modal-icon-container">
+                                            <i class="bi bi-diagram-3"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="modal-title-text mb-0">Allocate Material to Project</h4>
+                                            <p class="modal-subtitle mb-0">Assign warehouse stock to a specific project with planned quantity.</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="modal-body-custom">
+                                    <form id="allocateMaterialForm" method="POST" action="{{ route('admin.inventory.allocate') }}">
+                                        @csrf
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Material<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group select-caret-wrapper">
+                                                        <i class="bi bi-box-seam input-icon-left"></i>
+                                                        <select name="material_id" id="allocateMaterialSelect" class="control-field-input" required>
+                                                            <option value="">Select material</option>
+                                                            @foreach($materials as $materialOption)
+                                                                <option value="{{ $materialOption->id }}"
+                                                                    data-name="{{ $materialOption->name }}"
+                                                                    data-unit="{{ $materialOption->unit }}"
+                                                                    data-stock="{{ $materialOption->current_stock }}"
+                                                                    data-min="{{ $materialOption->minimum_stock_level }}">
+                                                                    {{ $materialOption->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-input-hint">Select a material from the catalog.</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Project<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group select-caret-wrapper">
+                                                        <i class="bi bi-building input-icon-left"></i>
+                                                        <select name="project_id" class="control-field-input" required>
+                                                            <option value="">Select project</option>
+                                                            @foreach($inventoryProjectOptions as $projectOption)
+                                                                @php
+                                                                    $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                                                    $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                                                @endphp
+                                                                <option value="{{ $projectOptionId }}">{{ $projectOptionName }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Planned Quantity<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group">
+                                                        <i class="bi bi-box input-icon-left"></i>
+                                                        <input type="number" step="0.01" min="0.01" name="planned_quantity" class="control-field-input" placeholder="Enter planned quantity" required>
+                                                    </div>
+                                                    <div class="form-input-hint">Total quantity allocated to this project.</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Unit</label>
+                                                    <div class="input-container-group">
+                                                        <i class="bi bi-rulers input-icon-left"></i>
+                                                        <input type="text" name="unit" id="allocateMaterialUnit" class="control-field-input" placeholder="e.g. Bags, Pieces">
+                                                    </div>
+                                                    <div class="form-input-hint">Unit of measurement for this allocation.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-12">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="issue_from_stock" id="issueFromStockCheck" value="1">
+                                                        <label class="form-check-label fw-semibold text-dark" for="issueFromStockCheck">
+                                                            Issue from warehouse stock
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-input-hint">Check this if you want to physically issue stock from the warehouse to this project. This will decrement the global stock.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="footer-action-row border-top pt-3 pb-2">
+                                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                            <i class="bi bi-X-lg"></i> Cancel
+                                        </button>
+                                        <button type="submit" class="btn-action-submit">
+                                            <i class="bi bi-check-circle"></i> Allocate Material
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Layout Footer Summary with Pagination Links -->
@@ -1892,7 +2016,7 @@
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div>
-                        <h4 class="modal-title-text mb-0">Add Material</h4>
+                        <h4 class="modal-title-text mb-0">Receive New Stock</h4>
                         <p class="modal-subtitle mb-0">Create a new material or receive stock to update inventory.</p>
                     </div>
                 </div>
@@ -1940,7 +2064,7 @@
                                         <div class="input-container-group select-caret-wrapper">
                                             <i class="bi bi-box-seam input-icon-left"></i>
                                             <select id="receiveStockMaterialSelect" name="material_id" class="control-field-input" required>
-                                                <option value="" {{ old('material_id') === null ? 'selected' : '' }}>Select material</option>
+                                                <option value="">Select material</option>
                                                 @foreach($materials as $material)
                                                     <option value="{{ $material->id }}"
                                                             data-name="{{ $material->name }}"
@@ -1952,11 +2076,9 @@
                                                         {{ $material->name }}
                                                     </option>
                                                 @endforeach
-                                                <option value="new" {{ old('material_id') === 'new' ? 'selected' : '' }}>Other (new material)</option>
                                             </select>
                                         </div>
-                                        <div class="form-input-hint">Select an existing material or choose Other to type a new material name.</div>
-                                        <input type="text" id="receiveStockMaterialInput" name="material_name" class="control-field-input mt-2 {{ old('material_id') === 'new' ? '' : 'd-none' }}" placeholder="Type new material name" autocomplete="off" value="{{ old('material_name') }}" {{ old('material_id') === 'new' ? 'required' : '' }}>
+                                        <div class="form-input-hint">Select an existing material to receive stock.</div>
                                     </div>
                                     </div>
 
@@ -2086,46 +2208,110 @@
     </div>
 </div>
 
-<div class="modal fade" id="addMaterialModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content rounded-4 border-0">
-            <form method="POST" action="{{ route('admin.inventory.materials.store') }}" class="inventory-form">
-                @csrf
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold text-dark">Add New Master Material</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Material Name</label>
-                        <input type="text" name="name" class="form-control" placeholder="e.g. Portland Cement" required>
+<div class="modal fade modal-receive-stock" id="addMaterialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-plus-circle"></i>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Category</label>
-                        <input type="text" name="category" class="form-control" placeholder="e.g. Masonry">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Unit Type</label>
-                        <input type="text" name="unit" class="form-control" placeholder="e.g. Bag" required>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small text-muted fw-semibold">Initial Stock Level</label>
-                            <input type="number" step="0.01" min="0" name="current_stock" class="form-control" value="0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small text-muted fw-semibold">Minimum Threshold Limit</label>
-                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="0" required>
-                        </div>
-                    </div>
-                    <div class="mb-3 mt-3">
-                        <label class="form-label small text-muted fw-semibold">Supplier Source Partner</label>
-                        <input type="text" name="supplier" class="form-control">
+                    <div>
+                        <h4 class="modal-title-text mb-0">Add New Master Material</h4>
+                        <p class="modal-subtitle mb-0">Register a new material in the master catalog before receiving stock.</p>
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4">Save Material Profile</button>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="{{ route('admin.inventory.materials.store') }}" class="inventory-form">
+                    @csrf
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Material Name<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-box-seam input-icon-left"></i>
+                                    <input type="text" name="name" class="control-field-input" placeholder="e.g. Portland Cement" required>
+                                </div>
+                                <div class="form-input-hint">Unique material name in the catalog.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Category</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-tags input-icon-left"></i>
+                                    <input type="text" name="category" class="control-field-input" placeholder="e.g. Masonry">
+                                </div>
+                                <div class="form-input-hint">Optional classification for grouping.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Unit Type<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-rulers input-icon-left"></i>
+                                    <input type="text" name="unit" class="control-field-input" placeholder="e.g. Bag, Piece, Meter" required>
+                                </div>
+                                <div class="form-input-hint">Standard unit of measurement.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Supplier Source Partner</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-person input-icon-left"></i>
+                                    <input type="text" name="supplier" class="control-field-input" placeholder="Enter supplier name">
+                                </div>
+                                <div class="form-input-hint">Primary vendor for this material.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Initial Stock Level</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-box input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="current_stock" class="control-field-input" value="0" required>
+                                </div>
+                                <div class="form-input-hint">Starting quantity in warehouse. Default is 0.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Minimum Threshold Limit</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-exclamation-triangle input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="minimum_stock_level" class="control-field-input" value="0" required>
+                                </div>
+                                <div class="form-input-hint">Alert threshold when stock falls below this level.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Description</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="description" class="control-field-input" rows="3" placeholder="Enter material description..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                                <div class="form-input-hint">Optional description or notes for this material.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-action-row border-top pt-3 pb-2">
+                    <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-X-lg"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-action-submit">
+                        <i class="bi bi-check-circle"></i> Save Material Profile
+                    </button>
                 </div>
             </form>
         </div>
@@ -2211,7 +2397,7 @@
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                    <button type="submit" class="btn btn-success px-4">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -2767,28 +2953,7 @@
         }
 
         function toggleNewMaterialInput() {
-            if (!receiveStockSelect || !receiveStockTextInput) {
-                return;
-            }
-
-            if (receiveStockSelect.value === 'new') {
-                receiveStockTextInput.classList.remove('d-none');
-                if (receiveStockCategoryInput) {
-                    receiveStockCategoryInput.removeAttribute('readonly');
-                    receiveStockCategoryInput.setAttribute('required', 'required');
-                }
-                receiveStockTextInput.setAttribute('required', 'required');
-                receiveStockTextInput.focus();
-            } else {
-                receiveStockTextInput.classList.add('d-none');
-                receiveStockTextInput.removeAttribute('required');
-                receiveStockTextInput.value = '';
-                if (receiveStockCategoryInput) {
-                    // for existing, keep category visible but not required and set readonly=false so user can change if desired
-                    receiveStockCategoryInput.removeAttribute('required');
-                    receiveStockCategoryInput.removeAttribute('readonly');
-                }
-            }
+            // No-op: new material creation was moved to Add Material modal
         }
 
         function updateMaterialSummaryFromSelection() {
@@ -2803,12 +2968,6 @@
                 return;
             }
 
-            if (receiveStockSelect.value === 'new') {
-                resetMaterialSummary();
-                toggleNewMaterialInput();
-                return;
-            }
-
             const mName = chosenOption.getAttribute('data-name') || chosenOption.textContent.trim();
             activeMaterialUnitText = chosenOption.getAttribute('data-unit') || "Bags";
             currentMaterialStockValue = parseFloat(chosenOption.getAttribute('data-stock')) || 0;
@@ -2816,7 +2975,6 @@
             const existingCategory = chosenOption.getAttribute('data-category') || '';
 
             if (receiveStockCategoryInput) {
-                // populate category input for existing materials but keep it hidden unless creating new
                 receiveStockCategoryInput.value = existingCategory;
             }
 
@@ -2883,12 +3041,20 @@
                             receiveStockSelect.value = matchingOption.value;
                         }
                     } else {
-                        receiveStockSelect.selectedIndex = 1;
+                        receiveStockSelect.selectedIndex = 0;
                     }
 
-                    toggleNewMaterialInput();
                     updateMaterialSummaryFromSelection();
                 }
+            });
+        }
+
+        const allocateMaterialModal = document.getElementById('allocateMaterialModal');
+        const allocateMaterialForm = document.getElementById('allocateMaterialForm');
+
+        if (allocateMaterialModal && allocateMaterialForm) {
+            allocateMaterialModal.addEventListener('show.bs.modal', function () {
+                allocateMaterialForm.reset();
             });
         }
 
@@ -2932,6 +3098,29 @@
                 });
             });
         });
+
+        function bindModalFormLoading(form) {
+            if (!form || form.dataset.loadingBound === '1') {
+                return;
+            }
+
+            form.dataset.loadingBound = '1';
+
+            form.addEventListener('submit', function () {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.dataset.originalText = originalText;
+                }
+            });
+        }
+
+        bindModalFormLoading(document.getElementById('receiveStockForm'));
+        bindModalFormLoading(document.getElementById('allocateMaterialForm'));
+        bindModalFormLoading(document.querySelector('#addMaterialModal form'));
+        bindModalFormLoading(document.querySelector('#editMaterialModal{{ $material->id }} form'));
 
         function attachModalPaginationHandlers() {
             document.querySelectorAll('.modal .pagination a').forEach(function (link) {

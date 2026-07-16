@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
@@ -11,16 +10,18 @@ use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\Report;
+use App\Models\SupervisorNotification;
 use App\Models\SystemLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\DB;
+use Mpdf\Mpdf;
 
 class SupervisorController extends Controller
 {
@@ -30,7 +31,7 @@ class SupervisorController extends Controller
     {
         $credentialId = $credential['id'] ?? $credential['rawId'] ?? null;
 
-        if (!$credentialId || is_array($credentialId)) {
+        if (! $credentialId || is_array($credentialId)) {
             return null;
         }
 
@@ -39,7 +40,7 @@ class SupervisorController extends Controller
 
     private function resolveAttendanceStatusFromTimeIn($timeIn): string
     {
-        if (!$timeIn) {
+        if (! $timeIn) {
             return 'absent';
         }
 
@@ -47,19 +48,19 @@ class SupervisorController extends Controller
             ? $timeIn->copy()
             : Carbon::parse($timeIn);
 
-        $presentCutoff = Carbon::parse($time->format('Y-m-d') . ' 08:30:59');
+        $presentCutoff = Carbon::parse($time->format('Y-m-d').' 08:30:59');
 
         return $time->lte($presentCutoff) ? 'present' : 'late';
     }
 
     private function computeTimeInStatus($timeIn): string
     {
-        if (!$timeIn) {
+        if (! $timeIn) {
             return 'absent';
         }
 
-        $time = \Carbon\Carbon::parse($timeIn);
-        $presentCutoff = \Carbon\Carbon::parse($time->format('Y-m-d') . ' 08:30:59');
+        $time = Carbon::parse($timeIn);
+        $presentCutoff = Carbon::parse($time->format('Y-m-d').' 08:30:59');
 
         return $time->lte($presentCutoff) ? 'present' : 'late';
     }
@@ -92,7 +93,7 @@ class SupervisorController extends Controller
             This tries to use the worker's project deployment.
             If none is found, it falls back to 1 to avoid breaking the page.
         */
-        if (!Schema::hasTable('project_workers') || !Schema::hasColumn('project_workers', 'deployment_id')) {
+        if (! Schema::hasTable('project_workers') || ! Schema::hasColumn('project_workers', 'deployment_id')) {
             return 1;
         }
 
@@ -203,7 +204,7 @@ class SupervisorController extends Controller
             ->where('is_active', 1)
             ->first();
 
-        if (!$worker) {
+        if (! $worker) {
             return response()->json([
                 'message' => 'Worker not found or inactive.',
             ], 404);
@@ -218,7 +219,7 @@ class SupervisorController extends Controller
             ->whereDate('log_date', $date)
             ->first();
 
-        if (!$existingLog) {
+        if (! $existingLog) {
             $status = $this->computeTimeInStatus($now);
 
             DB::table('attendance_logs')->insert([
@@ -241,7 +242,7 @@ class SupervisorController extends Controller
             $updates = [];
 
             if ($action === 'break_out') {
-                if (!$existingLog->time_in) {
+                if (! $existingLog->time_in) {
                     return response()->json([
                         'message' => 'Cannot break out without time in.',
                     ], 422);
@@ -254,11 +255,11 @@ class SupervisorController extends Controller
                 }
 
                 $updates['break_out'] = $now->format('H:i:s');
-                $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break out recorded.');
+                $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break out recorded.');
             }
 
             if ($action === 'break_in') {
-                if (!$existingLog->break_out) {
+                if (! $existingLog->break_out) {
                     return response()->json([
                         'message' => 'Cannot break in without break out.',
                     ], 422);
@@ -270,21 +271,21 @@ class SupervisorController extends Controller
                     ], 422);
                 }
 
-                $breakOutDateTime = \Carbon\Carbon::parse($date . ' ' . $existingLog->break_out);
+                $breakOutDateTime = Carbon::parse($date.' '.$existingLog->break_out);
                 $breakMinutes = $breakOutDateTime->diffInMinutes($now);
 
                 $updates['break_in'] = $now->format('H:i:s');
 
                 if ($breakMinutes > 60) {
                     $updates['status'] = 'late';
-                    $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break exceeded 1 hour.');
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break exceeded 1 hour.');
                 } else {
-                    $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Break completed within 1 hour.');
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break completed within 1 hour.');
                 }
             }
 
             if ($action === 'time_out') {
-                $timeOutAllowed = \Carbon\Carbon::parse($date . ' 17:00:00');
+                $timeOutAllowed = Carbon::parse($date.' 17:00:00');
 
                 if ($now->lt($timeOutAllowed)) {
                     return response()->json([
@@ -292,7 +293,7 @@ class SupervisorController extends Controller
                     ], 422);
                 }
 
-                if (!$existingLog->time_in) {
+                if (! $existingLog->time_in) {
                     return response()->json([
                         'message' => 'Cannot time out without time in.',
                     ], 422);
@@ -305,10 +306,10 @@ class SupervisorController extends Controller
                 }
 
                 $updates['time_out'] = $now->format('H:i:s');
-                $updates['remarks'] = trim(($existingLog->remarks ?? '') . ' Time out recorded.');
+                $updates['remarks'] = trim(($existingLog->remarks ?? '').' Time out recorded.');
             }
 
-            if (!empty($updates)) {
+            if (! empty($updates)) {
                 DB::table('attendance_logs')
                     ->where('log_id', $existingLog->log_id)
                     ->update($updates);
@@ -341,8 +342,6 @@ class SupervisorController extends Controller
             'attendance' => $this->formatAttendanceRecord($attendance),
         ]);
     }
-
-
 
     public function index(Request $request)
     {
@@ -454,6 +453,7 @@ class SupervisorController extends Controller
 
         $attendancePresentCount = $attendanceRecords->filter(function ($record) {
             $status = strtolower((string) ($record->status ?? ''));
+
             return in_array($status, ['present', 'checked_in', 'on_time', 'arrived', 'in'], true);
         })->count();
 
@@ -466,7 +466,7 @@ class SupervisorController extends Controller
 
         $stats = [
             'total_projects' => $totalProjects,
-            'active_projects' => $assignedProjects->filter(fn($p) => $p->status === 'ongoing')->count(),
+            'active_projects' => $assignedProjects->filter(fn ($p) => $p->status === 'ongoing')->count(),
             'current_phases' => $currentPhases->count(),
             'delayed_milestones' => $delayedMilestones->count(),
             'pending_reports' => $pendingReports->count(),
@@ -536,17 +536,17 @@ class SupervisorController extends Controller
             })->sortBy('start_date')->values();
 
             $activeMilestones = $allMilestones->filter(function ($milestone) {
-                return !$milestone['is_completed'] && !$milestone['is_delayed'] && $milestone['start_date'] && \Carbon\Carbon::parse($milestone['start_date'])->lte(now()->addDays(7));
+                return ! $milestone['is_completed'] && ! $milestone['is_delayed'] && $milestone['start_date'] && Carbon::parse($milestone['start_date'])->lte(now()->addDays(7));
             })->take(2)->values();
 
             if ($activeMilestones->isEmpty()) {
                 $activeMilestones = $allMilestones->filter(function ($milestone) {
-                    return !$milestone['is_completed'] && !$milestone['is_delayed'];
+                    return ! $milestone['is_completed'] && ! $milestone['is_delayed'];
                 })->take(2)->values();
             }
 
             $upcomingMilestones = $allMilestones->filter(function ($milestone) {
-                return !$milestone['is_completed'] && !$milestone['is_delayed'] && $milestone['start_date'] && \Carbon\Carbon::parse($milestone['start_date'])->gt(now());
+                return ! $milestone['is_completed'] && ! $milestone['is_delayed'] && $milestone['start_date'] && Carbon::parse($milestone['start_date'])->gt(now());
             })->take(2)->values();
 
             return [
@@ -557,7 +557,7 @@ class SupervisorController extends Controller
                 'supervisors' => $project->supervisors->map(function ($supervisor) {
                     return [
                         'id' => $supervisor->user_id,
-                        'name' => trim(($supervisor->first_name ?? '') . ' ' . ($supervisor->last_name ?? '')) ?: ($supervisor->name ?? 'Unknown Supervisor'),
+                        'name' => trim(($supervisor->first_name ?? '').' '.($supervisor->last_name ?? '')) ?: ($supervisor->name ?? 'Unknown Supervisor'),
                     ];
                 })->values()->all(),
                 'targetEndDate' => optional($project->target_end_date)->toDateString(),
@@ -651,7 +651,7 @@ class SupervisorController extends Controller
 
         // Apply search filter if provided
         if ($request->has('search') && $search = $request->input('search')) {
-            $query->where('phase_name', 'like', '%' . $search . '%');
+            $query->where('phase_name', 'like', '%'.$search.'%');
         }
 
         // Apply status filter if provided
@@ -719,8 +719,8 @@ class SupervisorController extends Controller
             $query->where('supervisor_id', $user->user_id);
         })->with(['projectWorkers.worker'])->get();
 
-        $deployments = $assignedProjects->flatMap(fn($project) => $project->projectWorkers)->unique('deployment_id')->values();
-        $workers = $deployments->map(fn($d) => $d->worker)->unique('worker_id')->values();
+        $deployments = $assignedProjects->flatMap(fn ($project) => $project->projectWorkers)->unique('deployment_id')->values();
+        $workers = $deployments->map(fn ($d) => $d->worker)->unique('worker_id')->values();
         $activeProject = $assignedProjects->first();
 
         $activeDeployments = $activeProject ? $activeProject->projectWorkers()->with('worker')->get() : collect();
@@ -743,7 +743,7 @@ class SupervisorController extends Controller
                 return $q->where('approval_status', 'pending');
             })->count();
 
-        $avgProjectCompletion = $assignedProjects->isEmpty() ? 0 : round($assignedProjects->flatMap(fn($p) => $p->phases)->avg('completion_percentage') ?? 0, 2);
+        $avgProjectCompletion = $assignedProjects->isEmpty() ? 0 : round($assignedProjects->flatMap(fn ($p) => $p->phases)->avg('completion_percentage') ?? 0, 2);
 
         $upcomingMilestone = null;
         if ($assignedProjects->isNotEmpty()) {
@@ -775,7 +775,7 @@ class SupervisorController extends Controller
         $user->fill($validated);
 
         if (Schema::hasColumn('users', 'name')) {
-            $user->name = trim(($validated['first_name'] ?? $user->first_name) . ' ' . ($validated['last_name'] ?? $user->last_name));
+            $user->name = trim(($validated['first_name'] ?? $user->first_name).' '.($validated['last_name'] ?? $user->last_name));
         }
 
         if ($user->isDirty('email')) {
@@ -796,7 +796,7 @@ class SupervisorController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check($request->input('current_password'), $user->password)) {
+        if (! Hash::check($request->input('current_password'), $user->password)) {
             return back()->withErrors(['current_password' => 'The current password is incorrect.']);
         }
 
@@ -816,10 +816,10 @@ class SupervisorController extends Controller
         $user = Auth::user();
 
         // If migration hasn't been run yet, avoid querying a missing table.
-        if (!\Illuminate\Support\Facades\Schema::hasTable('supervisor_notifications')) {
-            $notifications = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12, 1, [
+        if (! Schema::hasTable('supervisor_notifications')) {
+            $notifications = new LengthAwarePaginator([], 0, 12, 1, [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]);
 
             $totalNotifs = 0;
@@ -830,7 +830,7 @@ class SupervisorController extends Controller
             return view('supervisor.notifications', compact('user', 'notifications', 'totalNotifs', 'unreadCount', 'readCount', 'archivedCount'));
         }
 
-        $query = \App\Models\SupervisorNotification::query()
+        $query = SupervisorNotification::query()
             ->where('supervisor_id', $user->user_id)
             ->orderBy('created_at', 'desc');
 
@@ -861,9 +861,9 @@ class SupervisorController extends Controller
 
         $notifications = $query->paginate(12)->withQueryString();
 
-        $totalNotifs = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->count('*');
-        $unreadCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->count('*');
-        $readCount = \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', true)->count('*');
+        $totalNotifs = SupervisorNotification::query()->where('supervisor_id', $user->user_id)->count('*');
+        $unreadCount = SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->count('*');
+        $readCount = SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', true)->count('*');
         $archivedCount = 0;
 
         return view('supervisor.notifications', compact('user', 'notifications', 'totalNotifs', 'unreadCount', 'readCount', 'archivedCount'));
@@ -875,11 +875,12 @@ class SupervisorController extends Controller
     public function markNotificationRead($id)
     {
         $user = Auth::user();
-        $notif = \App\Models\SupervisorNotification::query()->where('id', $id)->where('supervisor_id', $user->user_id)->first();
-        if (!$notif) {
+        $notif = SupervisorNotification::query()->where('id', $id)->where('supervisor_id', $user->user_id)->first();
+        if (! $notif) {
             return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
         }
         $notif->update(['is_read' => true, 'read_at' => now()]);
+
         return response()->json(['success' => true]);
     }
 
@@ -889,7 +890,8 @@ class SupervisorController extends Controller
     public function markAllNotificationsRead()
     {
         $user = Auth::user();
-        \App\Models\SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
+        SupervisorNotification::query()->where('supervisor_id', $user->user_id)->where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
+
         return response()->json(['success' => true]);
     }
 
@@ -911,7 +913,7 @@ class SupervisorController extends Controller
             $selectedProject = $assignedProjects->firstWhere('project_id', (int) $selectedProjectId);
         }
 
-        if (!$selectedProject && $assignedProjects->isNotEmpty()) {
+        if (! $selectedProject && $assignedProjects->isNotEmpty()) {
             $selectedProject = $assignedProjects->first();
         }
 
@@ -924,14 +926,29 @@ class SupervisorController extends Controller
         $selectedPhaseId = trim((string) $request->query('phase_id', ''));
 
         $materialsQuery = Schema::hasTable('materials') ? Material::query() : null;
-        if ($materialsQuery) {
+        $materials_list = collect();
+
+        if ($materialsQuery && $selectedProject) {
+            $projectMaterialIds = ProjectMaterial::query()
+                ->where('project_id', $selectedProject->project_id)
+                ->pluck('material_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $materialsQuery->where(function ($q) use ($projectMaterialIds) {
+                $q->whereIn('id', $projectMaterialIds)
+                    ->orWhere('current_stock', '>', 0);
+            });
+
             if ($search !== '') {
-                $materialsQuery->where('name', 'like', '%' . $search . '%');
+                $materialsQuery->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('category', 'like', '%'.$search.'%');
+                });
             }
 
             $materials_list = $materialsQuery->orderBy('name', 'asc')->get();
-        } else {
-            $materials_list = collect();
         }
 
         $inventoryCollection = collect();
@@ -980,9 +997,9 @@ class SupervisorController extends Controller
                     ->get()
                     ->keyBy('id');
 
-                $inventoryCollection = $materialIds->map(function ($materialId) use ($materialRows, $projectMaterialRows, $usageRows, $selectedProject) {
+                $inventoryCollection = $materialIds->map(function ($materialId) use ($materialRows, $projectMaterialRows, $usageRows) {
                     $material = $materialRows->get($materialId);
-                    if (!$material) {
+                    if (! $material) {
                         return null;
                     }
 
@@ -1000,7 +1017,7 @@ class SupervisorController extends Controller
                     $planned = $plannedFromRow > 0 ? $plannedFromRow : max($used, $stockFallback);
                     $hasAnyActivity = $planned > 0 || $used > 0 || $stockFallback > 0;
 
-                    if (!$hasAnyActivity) {
+                    if (! $hasAnyActivity) {
                         return null;
                     }
 
@@ -1113,12 +1130,7 @@ class SupervisorController extends Controller
         $user = Auth::user();
 
         try {
-            $formType = $request->input('form_type');
-
-            if ($formType === 'delivery') {
-                return back()->withInput()->with('error', 'Material delivery logging is no longer available.');
-            }
-
+            $usageFlow = $formType = $request->input('form_type');
             $usageFlow = $formType === 'usage'
                 || $request->filled('quantity_used')
                 || $request->filled('usage_date')
@@ -1143,7 +1155,7 @@ class SupervisorController extends Controller
                     })
                     ->first();
 
-                if (!$project) {
+                if (! $project) {
                     return back()->withInput()->with('error', 'You are not authorized to record usage for this project.');
                 }
 
@@ -1152,36 +1164,36 @@ class SupervisorController extends Controller
                     ->where('project_id', $project->project_id)
                     ->first();
 
-                if (!$phase) {
+                if (! $phase) {
                     return back()->withInput()->with('error', 'The selected phase does not belong to this project.');
                 }
 
                 $material = Material::query()->where('id', $validated['material_id'])->first();
-                if (!$material) {
+                if (! $material) {
                     return back()->withInput()->with('error', 'The selected material could not be found.');
                 }
-
-                if ((float) $material->current_stock < (float) $validated['quantity_used']) {
-                    return back()->withInput()->with('error', 'Insufficient Stock. Only ' . (int) $material->current_stock . ' units available.');
-                }
-
-                $material->current_stock = (float) $material->current_stock - (float) $validated['quantity_used'];
-                $material->save();
 
                 $inventoryRow = ProjectMaterial::query()
                     ->where('project_id', $project->project_id)
                     ->where('material_id', $material->id)
                     ->first();
 
-                if (!$inventoryRow) {
-                    $inventoryRow = ProjectMaterial::create([
-                        'project_id' => $project->project_id,
-                        'material_id' => $material->id,
-                        'planned_quantity' => 0,
-                        'used_quantity' => 0,
-                        'unit' => $material->unit ?? null,
-                    ]);
+                if (! $inventoryRow) {
+                    return back()->withInput()->with('error', 'Material is not allocated to this project. Please contact admin to allocate materials first.');
                 }
+
+                $remainingAllocation = max(0.0, (float) ($inventoryRow->planned_quantity ?? 0) - (float) ($inventoryRow->used_quantity ?? 0));
+
+                if ($remainingAllocation < (float) $validated['quantity_used']) {
+                    return back()->withInput()->with('error', 'Insufficient project allocation. Remaining: '.number_format($remainingAllocation, 2).' '.($inventoryRow->unit ?? $material->unit).'. Requested: '.number_format($validated['quantity_used'], 2).'.');
+                }
+
+                if ((float) $material->current_stock < (float) $validated['quantity_used']) {
+                    return back()->withInput()->with('error', 'Insufficient warehouse stock. Available: '.(int) $material->current_stock.' '.$material->unit.'.');
+                }
+
+                $material->current_stock = max(0, (float) $material->current_stock - (float) $validated['quantity_used']);
+                $material->save();
 
                 $inventoryRow->used_quantity = (float) $inventoryRow->used_quantity + (float) $validated['quantity_used'];
                 $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
@@ -1207,51 +1219,9 @@ class SupervisorController extends Controller
                 return redirect()->route('supervisor.materials', ['project_id' => $project->project_id])->with('success', 'Material usage recorded successfully.');
             }
 
-            $validated = $request->validate([
-                'material_id' => ['required', 'integer', 'exists:materials,id'],
-                'quantity' => ['required', 'numeric', 'min:0.01'],
-                'unit' => ['required', 'string', 'max:50'],
-                'supplier_name' => ['nullable', 'string', 'max:255'],
-            ]);
-
-            $projectId = $request->input('project_id') ?: session('supervisor_selected_project_id');
-            if (!$projectId) {
-                return back()->withInput()->with('error', 'Please select a project before logging materials.');
-            }
-
-            $project = Project::query()
-                ->where('project_id', $projectId)
-                ->whereHas('supervisors', function ($q) use ($user) {
-                    $q->where('supervisor_id', $user->user_id);
-                })
-                ->first();
-
-            if (!$project) {
-                return back()->withInput()->with('error', 'You are not authorized to log materials for this project.');
-            }
-
-            $inventoryRow = ProjectMaterial::query()
-                ->where('project_id', $project->project_id)
-                ->where('material_id', $validated['material_id'])
-                ->first();
-
-            if (!$inventoryRow) {
-                $inventoryRow = ProjectMaterial::create([
-                    'project_id' => $project->project_id,
-                    'material_id' => $validated['material_id'],
-                    'planned_quantity' => 0,
-                    'used_quantity' => 0,
-                    'unit' => $validated['unit'],
-                ]);
-            }
-
-            $inventoryRow->planned_quantity = (float) $inventoryRow->planned_quantity + (float) $validated['quantity'];
-            $inventoryRow->unit = $validated['unit'];
-            $inventoryRow->save();
-
-            return redirect()->route('supervisor.materials', ['project_id' => $project->project_id])->with('success', 'Material delivery logged successfully.');
+            return back()->withInput()->with('error', 'Invalid material action. Please use the Record Usage form.');
         } catch (ValidationException $e) {
-            return back()->withInput()->withErrors($e->errors())->with('error', 'Please correct the highlighted fields and try again.');
+            return back()->withErrors($e->errors())->withInput()->with('error', 'Please correct the highlighted fields and try again.');
         } catch (\Throwable $e) {
             report($e);
 
@@ -1308,7 +1278,7 @@ class SupervisorController extends Controller
             ->where('phase_id', $phaseId)
             ->first();
 
-        if (!$phase) {
+        if (! $phase) {
             return response()->json(['error' => 'Phase not found'], 404);
         }
 
@@ -1319,7 +1289,7 @@ class SupervisorController extends Controller
             })
             ->exists();
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -1330,9 +1300,9 @@ class SupervisorController extends Controller
                 'id' => $phase->phase_id,
                 'name' => $phase->phase_name,
                 'order' => $phase->phase_order,
-                'description' => $phase->phase_name . ' - Phase ' . $phase->phase_order,
+                'description' => $phase->phase_name.' - Phase '.$phase->phase_order,
                 'status' => $phase->status,
-                'completion_percentage' => (float)($phase->completion_percentage ?? 0),
+                'completion_percentage' => (float) ($phase->completion_percentage ?? 0),
                 'planned_start_date' => $phase->planned_start_date ? $phase->planned_start_date->format('M d, Y') : 'Pending',
                 'planned_end_date' => $phase->planned_end_date ? $phase->planned_end_date->format('M d, Y') : 'Pending',
                 'actual_start_date' => $phase->actual_start_date ? $phase->actual_start_date->format('M d, Y') : 'Not started',
@@ -1341,7 +1311,7 @@ class SupervisorController extends Controller
                 'milestones_count' => $phase->milestones->count(),
                 'completed_milestones' => $phase->milestones->where('is_completed', true)->count(),
                 'delayed_milestones' => $phase->milestones->where('is_delayed', true)->count(),
-            ]
+            ],
         ]);
     }
 
@@ -1384,7 +1354,7 @@ class SupervisorController extends Controller
             })
             ->first();
 
-        if (!$project) {
+        if (! $project) {
             return response()->json(['error' => 'Unauthorized or project not found'], 403);
         }
 
@@ -1397,7 +1367,7 @@ class SupervisorController extends Controller
         }
 
         if ($request->has('search') && $search = $request->input('search')) {
-            $query->where('phase_name', 'like', '%' . $search . '%');
+            $query->where('phase_name', 'like', '%'.$search.'%');
         }
 
         $phases = $query->get();
@@ -1423,23 +1393,25 @@ class SupervisorController extends Controller
         // Try to use mPDF if available, otherwise return the HTML as a downloadable file.
         try {
             if (class_exists('\\Mpdf\\Mpdf')) {
-                $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
+                $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
                 $mpdf->WriteHTML($html);
-                $fileName = 'phases_report_' . date('Y-m-d') . '.pdf';
+                $fileName = 'phases_report_'.date('Y-m-d').'.pdf';
+
                 return $mpdf->Output($fileName, 'D');
             }
         } catch (\Exception $e) {
             // If PDF generation fails, fall back to downloadable HTML.
         }
 
-        $fileName = 'phases_report_' . date('Y-m-d') . '.html';
+        $fileName = 'phases_report_'.date('Y-m-d').'.html';
+
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ]);
     }
 
-        public function registerWorkerBiometric(Request $request)
+    public function registerWorkerBiometric(Request $request)
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -1450,7 +1422,7 @@ class SupervisorController extends Controller
 
         $credentialId = $this->extractCredentialId($validated['credential']);
 
-        if (!$credentialId) {
+        if (! $credentialId) {
             return response()->json([
                 'message' => 'Credential ID was not received from the browser.',
             ], 422);

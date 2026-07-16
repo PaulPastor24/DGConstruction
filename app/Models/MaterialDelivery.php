@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class MaterialDelivery extends Model
 {
     protected $table = 'material_deliveries';
+
     protected $primaryKey = 'delivery_id';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -18,6 +20,7 @@ class MaterialDelivery extends Model
         'total_price',
         'supplier_name',
         'delivered_at',
+        'notes',
     ];
 
     public function material()

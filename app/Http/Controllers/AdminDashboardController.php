@@ -9,13 +9,17 @@ use App\Models\Material;
 use App\Models\MaterialDelivery;
 use App\Models\MaterialUsage;
 use App\Models\Project;
+use App\Models\ProjectMaterial;
 use App\Models\Report;
 use App\Models\User;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -56,14 +60,12 @@ class AdminDashboardController extends Controller
         $stats = [
             'active_projects' => $activeProjectsCount,
 
-            'projects_change_label' =>
-                $totalProjectsCount .
+            'projects_change_label' => $totalProjectsCount.
                 ' total registered projects',
 
             'on_track_projects' => $activeProjectsCount,
 
-            'completion_rate_label' =>
-                "↑ {$executionRate}% execution rate",
+            'completion_rate_label' => "↑ {$executionRate}% execution rate",
 
             'total_workforce' => Schema::hasTable('users')
                 ? DB::table('users')
@@ -125,36 +127,28 @@ class AdminDashboardController extends Controller
                 return (object) [
                     'id' => $project->project_id,
 
-                    'name' =>
-                        $project->project_name
+                    'name' => $project->project_name
                         ?? $project->name
                         ?? 'Unnamed Project',
 
-                    'location' =>
-                        $project->project_location
+                    'location' => $project->project_location
                         ?? $project->location
                         ?? 'No location',
 
-                    'status_label' =>
-                        ucfirst(
-                            $project->status ?? 'planning'
-                        ),
+                    'status_label' => ucfirst(
+                        $project->status ?? 'planning'
+                    ),
 
-                    'current_phase' =>
-                        $currentPhase->phase_name
+                    'current_phase' => $currentPhase->phase_name
                         ?? 'Phase 1: Mobilization',
 
-                    'image' =>
-                        $project->image_url,
+                    'image' => $project->image_url,
 
-                    'progress_percentage' =>
-                        $progressPercentage,
+                    'progress_percentage' => $progressPercentage,
 
-                    'progress_color_class' =>
-                        $color,
+                    'progress_color_class' => $color,
 
-                    'target_end_date' =>
-                        $project->target_end_date,
+                    'target_end_date' => $project->target_end_date,
                 ];
             });
 
@@ -364,93 +358,74 @@ class AdminDashboardController extends Controller
                         }
 
                         return (object) [
-                            'title' =>
-                                $phase->phase_name,
+                            'title' => $phase->phase_name,
 
-                            'start_date' =>
-                                $phase->start_date,
+                            'start_date' => $phase->start_date,
 
-                            'end_date' =>
-                                $phase->end_date,
+                            'end_date' => $phase->end_date,
 
-                            'color_code' =>
-                                $color,
+                            'color_code' => $color,
 
-                            'is_current' =>
-                                $phase->status
+                            'is_current' => $phase->status
                                 === 'in_progress',
 
-                            'status_note' =>
-                                $phase->description
+                            'status_note' => $phase->description
                                 ?? 'Phase operations verified',
 
-                            'progress_percentage' =>
-                                $phase->completion_percentage
+                            'progress_percentage' => $phase->completion_percentage
                                 ?? 0,
 
-                            'status_text' =>
-                                $statusText,
+                            'status_text' => $statusText,
                         ];
                     });
 
                 $stats = [
-                    'phases_done' =>
-                        $selectedProject->phases
-                            ->where(
-                                'status',
-                                'completed'
-                            )
-                            ->count(),
+                    'phases_done' => $selectedProject->phases
+                        ->where(
+                            'status',
+                            'completed'
+                        )
+                        ->count(),
 
-                    'phases_processing' =>
-                        $selectedProject->phases
-                            ->where(
-                                'status',
-                                'in_progress'
-                            )
-                            ->count(),
+                    'phases_processing' => $selectedProject->phases
+                        ->where(
+                            'status',
+                            'in_progress'
+                        )
+                        ->count(),
 
-                    'phases_upcoming' =>
-                        $selectedProject->phases
-                            ->where(
-                                'status',
-                                'pending'
-                            )
-                            ->count(),
+                    'phases_upcoming' => $selectedProject->phases
+                        ->where(
+                            'status',
+                            'pending'
+                        )
+                        ->count(),
                 ];
 
                 $milestones = collect([
                     (object) [
                         'type' => 'info',
 
-                        'type_label' =>
-                            'MOBILIZATION',
+                        'type_label' => 'MOBILIZATION',
 
-                        'title' =>
-                            'Site Operations Initialized',
+                        'title' => 'Site Operations Initialized',
 
-                        'description' =>
-                            'Equipment arrival and safety perimeter configurations cleared.',
+                        'description' => 'Equipment arrival and safety perimeter configurations cleared.',
 
-                        'logged_at' =>
-                            $selectedProject->start_date
+                        'logged_at' => $selectedProject->start_date
                             ?? Carbon::now(),
                     ],
 
                     (object) [
                         'type' => 'warning',
 
-                        'type_label' =>
-                            'TARGET DEADLINE',
+                        'type_label' => 'TARGET DEADLINE',
 
-                        'title' =>
-                            'Structural Hand-over Target',
+                        'title' => 'Structural Hand-over Target',
 
-                        'description' =>
-                            'Core shell completion targeted baseline estimation.',
+                        'description' => 'Core shell completion targeted baseline estimation.',
 
-                        'logged_at' =>
-                            $selectedProject->target_end_date
+                        'logged_at' => $selectedProject->target_end_date
                             ?? Carbon::now()
                                 ->addMonths(3),
                     ],
@@ -488,9 +463,9 @@ class AdminDashboardController extends Controller
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('category', 'like', '%' . $search . '%')
-                    ->orWhere('supplier', 'like', '%' . $search . '%');
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('category', 'like', '%'.$search.'%')
+                    ->orWhere('supplier', 'like', '%'.$search.'%');
             });
         }
 
@@ -500,11 +475,11 @@ class AdminDashboardController extends Controller
 
         if ($stockStatus !== '') {
             $query->where(function ($q) use ($stockStatus) {
-                    if ($stockStatus === 'low_stock') {
-                        $q->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
-                            ->where('current_stock', '>', 0);
-                    } elseif ($stockStatus === 'normal') {
-                        $q->whereColumn('current_stock', '>', 'minimum_stock_level', 'and');
+                if ($stockStatus === 'low_stock') {
+                    $q->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+                        ->where('current_stock', '>', 0);
+                } elseif ($stockStatus === 'normal') {
+                    $q->whereColumn('current_stock', '>', 'minimum_stock_level', 'and');
                 } elseif ($stockStatus === 'out_of_stock') {
                     $q->where('current_stock', '<=', 0);
                 }
@@ -543,36 +518,36 @@ class AdminDashboardController extends Controller
             $usageSearchValue = $search;
             $usageQuery->where(function ($q) use ($usageSearchValue, $canSearchUsers, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
                 $q->whereHas('material', function ($materialQuery) use ($usageSearchValue) {
-                    $materialQuery->where('name', 'like', '%' . $usageSearchValue . '%');
+                    $materialQuery->where('name', 'like', '%'.$usageSearchValue.'%');
                 })
-                ->orWhereHas('project', function ($projectQuery) use ($usageSearchValue) {
-                    $projectQuery->where('project_name', 'like', '%' . $usageSearchValue . '%');
-                })
-                ->when(Schema::hasTable('construction_phases'), function ($query) use ($usageSearchValue) {
-                    $query->orWhereHas('phase', function ($phaseQuery) use ($usageSearchValue) {
-                        $phaseQuery->where('phase_name', 'like', '%' . $usageSearchValue . '%');
-                    });
-                })
-                ->when($canSearchUsers, function ($query) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
-                    $query->orWhereHas('recorder', function ($userQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
-                        $userQuery->where(function ($nestedQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
-                            if ($hasUserNameColumn) {
-                                $nestedQuery->where('name', 'like', '%' . $usageSearchValue . '%');
-                            }
-
-                            if ($hasUserFirstNameColumn) {
-                                $nestedQuery->orWhere('first_name', 'like', '%' . $usageSearchValue . '%');
-                            }
-
-                            if ($hasUserLastNameColumn) {
-                                $nestedQuery->orWhere('last_name', 'like', '%' . $usageSearchValue . '%');
-                            }
+                    ->orWhereHas('project', function ($projectQuery) use ($usageSearchValue) {
+                        $projectQuery->where('project_name', 'like', '%'.$usageSearchValue.'%');
+                    })
+                    ->when(Schema::hasTable('construction_phases'), function ($query) use ($usageSearchValue) {
+                        $query->orWhereHas('phase', function ($phaseQuery) use ($usageSearchValue) {
+                            $phaseQuery->where('phase_name', 'like', '%'.$usageSearchValue.'%');
                         });
-                    });
-                })
-                ->orWhere('remarks', 'like', '%' . $usageSearchValue . '%')
-                ->orWhere('unit', 'like', '%' . $usageSearchValue . '%')
-                ->orWhere('quantity_used', 'like', '%' . $usageSearchValue . '%');
+                    })
+                    ->when($canSearchUsers, function ($query) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                        $query->orWhereHas('recorder', function ($userQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                            $userQuery->where(function ($nestedQuery) use ($usageSearchValue, $hasUserNameColumn, $hasUserFirstNameColumn, $hasUserLastNameColumn) {
+                                if ($hasUserNameColumn) {
+                                    $nestedQuery->where('name', 'like', '%'.$usageSearchValue.'%');
+                                }
+
+                                if ($hasUserFirstNameColumn) {
+                                    $nestedQuery->orWhere('first_name', 'like', '%'.$usageSearchValue.'%');
+                                }
+
+                                if ($hasUserLastNameColumn) {
+                                    $nestedQuery->orWhere('last_name', 'like', '%'.$usageSearchValue.'%');
+                                }
+                            });
+                        });
+                    })
+                    ->orWhere('remarks', 'like', '%'.$usageSearchValue.'%')
+                    ->orWhere('unit', 'like', '%'.$usageSearchValue.'%')
+                    ->orWhere('quantity_used', 'like', '%'.$usageSearchValue.'%');
             });
         }
 
@@ -590,8 +565,8 @@ class AdminDashboardController extends Controller
             'out_of_stock_percentage' => $totalMaterials > 0 ? round(($outOfStock / $totalMaterials) * 100, 1) : 0,
         ];
 
-          $lowStockMaterials = Material::query()
-              ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+        $lowStockMaterials = Material::query()
+            ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
             ->where('current_stock', '>', 0, 'and')
             ->orderBy('current_stock', 'asc')
             ->orderBy('name', 'asc')
@@ -599,7 +574,7 @@ class AdminDashboardController extends Controller
             ->get();
 
         $allLowStockMaterials = Material::query()
-              ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
+            ->whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')
             ->where('current_stock', '>', 0, 'and')
             ->orderBy('current_stock', 'asc')
             ->orderBy('name', 'asc')
@@ -624,7 +599,11 @@ class AdminDashboardController extends Controller
 
         $categories = Material::query()->distinct()->pluck('category')->filter()->sort()->values();
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials'));
+        $projects = Project::query()
+            ->orderBy('project_name', 'asc')
+            ->get(['project_id', 'project_name']);
+
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials'));
     }
 
     /**
@@ -634,7 +613,7 @@ class AdminDashboardController extends Controller
     {
         $hasReports = Schema::hasTable('accomplishment_reports');
 
-        if (!$hasReports) {
+        if (! $hasReports) {
             return view('admin.reports', [
                 'reports' => collect(),
                 'stats' => ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0],
@@ -660,7 +639,7 @@ class AdminDashboardController extends Controller
             ->orderBy('user_id', 'asc')
             ->select([
                 'user_id',
-                DB::raw("CONCAT_WS(' ', first_name, last_name) as name")
+                DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
             ])
             ->get();
         $selectedProject = $request->filled('project_id') ? Project::query()->find($request->input('project_id')) : null;
@@ -671,7 +650,7 @@ class AdminDashboardController extends Controller
     public function reportsData(Request $request)
     {
         $hasReports = Schema::hasTable('accomplishment_reports');
-        if (!$hasReports) {
+        if (! $hasReports) {
             return response()->json([
                 'reports' => [],
                 'stats' => ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0],
@@ -708,7 +687,7 @@ class AdminDashboardController extends Controller
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                     'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                     'site_images' => array_values(array_filter(array_map(function ($image) {
-                        return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                     }, (array) ($report->site_images ?? [])))),
                     'site_images_count' => count(array_filter((array) ($report->site_images ?? []))),
                 ];
@@ -726,7 +705,7 @@ class AdminDashboardController extends Controller
                 ->orderBy('user_id')
                 ->select([
                     'user_id',
-                    DB::raw("CONCAT_WS(' ', first_name, last_name) as name")
+                    DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
                 ])
                 ->get(),
             'pagination' => [
@@ -785,7 +764,7 @@ class AdminDashboardController extends Controller
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                 'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
                 'material_usage' => $materialUsage,
                 'attendance_summary' => $attendanceSummary,
@@ -800,7 +779,7 @@ class AdminDashboardController extends Controller
 
         return response($pdfContents, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="report-' . $report->report_id . '.pdf"',
+            'Content-Disposition' => 'attachment; filename="report-'.$report->report_id.'.pdf"',
         ]);
     }
 
@@ -916,22 +895,22 @@ class AdminDashboardController extends Controller
             'D&G Construction Management System',
             'Accomplishment Report',
             '',
-            'Report ID: ' . $report->report_identifier,
-            'Project: ' . optional($report->project)->project_name,
-            'Construction Phase: ' . optional($report->phase)->phase_name,
-            'Supervisor: ' . optional($report->submittedBy)->name,
-            'Report Date: ' . optional($report->report_date)->format('M d, Y'),
+            'Report ID: '.$report->report_identifier,
+            'Project: '.optional($report->project)->project_name,
+            'Construction Phase: '.optional($report->phase)->phase_name,
+            'Supervisor: '.optional($report->submittedBy)->name,
+            'Report Date: '.optional($report->report_date)->format('M d, Y'),
             '',
             'Work Summary',
             Str::limit(strip_tags($report->report_text), 4000),
             '',
-            'Progress: ' . (optional($report->phase)->completion_percentage ?? 0) . '%',
-            'Status: ' . $report->status_label,
-            'Approved By: ' . optional($report->approvedBy)->name,
-            'Approval Date: ' . optional($report->approved_at)->format('M d, Y h:i A'),
+            'Progress: '.(optional($report->phase)->completion_percentage ?? 0).'%',
+            'Status: '.$report->status_label,
+            'Approved By: '.optional($report->approvedBy)->name,
+            'Approval Date: '.optional($report->approved_at)->format('M d, Y h:i A'),
             '',
-            'Generated: ' . now()->format('M d, Y h:i A'),
-            'Generated By: ' . Auth::user()->name ?? 'System',
+            'Generated: '.now()->format('M d, Y h:i A'),
+            'Generated By: '.Auth::user()->name ?? 'System',
         ];
 
         $text = implode("\n", $lines);
@@ -942,7 +921,7 @@ class AdminDashboardController extends Controller
         $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
         $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
         $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
-        $objects[] = "4 0 obj\n<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream\nendobj\n";
+        $objects[] = "4 0 obj\n<< /Length ".strlen($stream)." >>\nstream\n".$stream."\nendstream\nendobj\n";
         $objects[] = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
 
         $pdf = "%PDF-1.4\n";
@@ -953,14 +932,14 @@ class AdminDashboardController extends Controller
         }
 
         $startXref = strlen($pdf);
-        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+        $pdf .= "xref\n0 ".(count($objects) + 1)."\n";
         $pdf .= "0000000000 65535 f \n";
         foreach (array_slice($offsets, 1) as $offset) {
             $pdf .= sprintf("%010d 00000 n \n", $offset);
         }
 
-        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
-        $pdf .= "startxref\n" . $startXref . "\n%%EOF\n";
+        $pdf .= "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
+        $pdf .= "startxref\n".$startXref."\n%%EOF\n";
 
         return $pdf;
     }
@@ -982,7 +961,7 @@ class AdminDashboardController extends Controller
             'search' => $request->input('search'),
         ];
 
-        if (!Schema::hasTable('attendance_logs')) {
+        if (! Schema::hasTable('attendance_logs')) {
             $logs = collect();
 
             $stats = [
@@ -1011,17 +990,17 @@ class AdminDashboardController extends Controller
                 'recordedBy',
             ]);
 
-        if (!empty($filters['date'])) {
+        if (! empty($filters['date'])) {
             $query->whereDate('log_date', $filters['date']);
         }
 
-        if (!empty($filters['project_id'])) {
+        if (! empty($filters['project_id'])) {
             $query->whereHas('deployment', function ($deploymentQuery) use ($filters) {
                 $deploymentQuery->where('project_id', $filters['project_id']);
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             if ($filters['status'] === 'late') {
                 $query->whereIn('status', ['late', 'half_day', 'half day']);
             } else {
@@ -1041,8 +1020,8 @@ class AdminDashboardController extends Controller
             });
         }
 
-        if (!empty($filters['search'])) {
-            $keyword = '%' . $filters['search'] . '%';
+        if (! empty($filters['search'])) {
+            $keyword = '%'.$filters['search'].'%';
 
             $query->where(function ($searchQuery) use ($keyword) {
                 $searchQuery
@@ -1081,7 +1060,7 @@ class AdminDashboardController extends Controller
             ->get();
 
         $breakExceeded = function ($log) {
-            if (!$log->break_out || !$log->break_in) {
+            if (! $log->break_out || ! $log->break_in) {
                 return false;
             }
 
@@ -1090,8 +1069,8 @@ class AdminDashboardController extends Controller
                     ? Carbon::parse($log->log_date)->toDateString()
                     : Carbon::today()->toDateString();
 
-                $breakOut = Carbon::parse($date . ' ' . $log->break_out);
-                $breakIn = Carbon::parse($date . ' ' . $log->break_in);
+                $breakOut = Carbon::parse($date.' '.$log->break_out);
+                $breakIn = Carbon::parse($date.' '.$log->break_in);
 
                 return $breakOut->diffInMinutes($breakIn, false) > 60;
             } catch (\Throwable $error) {
@@ -1119,7 +1098,7 @@ class AdminDashboardController extends Controller
                     $status = strtolower($log->status ?? '');
 
                     return $log->time_in
-                        && !$log->time_out
+                        && ! $log->time_out
                         && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
                 })
                 ->count(),
@@ -1139,8 +1118,8 @@ class AdminDashboardController extends Controller
 
                 $isLate = in_array($status, ['late', 'half_day', 'half day'], true);
                 $isAbsent = $status === 'absent';
-                $missingTimeout = $log->time_in && !$log->time_out && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
-                $notVerified = !$log->biometric_matched;
+                $missingTimeout = $log->time_in && ! $log->time_out && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
+                $notVerified = ! $log->biometric_matched;
 
                 return $isLate || $isAbsent || $missingTimeout || $breakExceeded($log) || $notVerified;
             })
@@ -1161,8 +1140,8 @@ class AdminDashboardController extends Controller
         $user = Auth::user();
 
         // Avoid querying a missing table if the migration hasn't run yet.
-        if (!Schema::hasTable('admin_notifications')) {
-            $notifications = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10, 1, [
+        if (! Schema::hasTable('admin_notifications')) {
+            $notifications = new LengthAwarePaginator([], 0, 10, 1, [
                 'path' => $request->url(),
                 'query' => $request->query(),
             ]);
@@ -1260,7 +1239,7 @@ class AdminDashboardController extends Controller
             ->where('admin_id', $user->user_id)
             ->first();
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
         }
 
@@ -1296,7 +1275,7 @@ class AdminDashboardController extends Controller
             ->where('admin_id', $user->user_id)
             ->first();
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
         }
 
@@ -1393,9 +1372,7 @@ class AdminDashboardController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'material_id' => ['nullable'],
-                'material_name' => ['nullable', 'string', 'max:255'],
-                'category' => ['nullable', 'string', 'max:255'],
+                'material_id' => ['required', 'integer', 'exists:materials,id'],
                 'quantity_received' => ['required', 'numeric', 'min:0.01', 'max:1000000000'],
                 'received_date' => ['required', 'date'],
                 'supplier' => ['nullable', 'string', 'max:255'],
@@ -1406,75 +1383,25 @@ class AdminDashboardController extends Controller
                 'quantity_received.min' => 'Received quantity must be greater than zero.',
                 'received_date.required' => 'Please select a received date.',
                 'received_date.date' => 'Please enter a valid date.',
+                'material_id.required' => 'Please select a material.',
+                'material_id.exists' => 'The selected material does not exist.',
             ]);
-
-            $validator->after(function ($validator) use ($request, $material) {
-                if ($material instanceof Material) {
-                    return;
-                }
-
-                $selectedMaterialId = $request->input('material_id');
-                $materialName = trim((string) $request->input('material_name'));
-
-                if ((empty($selectedMaterialId) || $selectedMaterialId === 'new') && $materialName === '') {
-                    $validator->errors()->add('material_name', 'Please select a material or enter a new material name.');
-                }
-
-                // When creating a new material, category should be provided
-                $categoryValue = trim((string) $request->input('category', ''));
-                if (($selectedMaterialId === 'new' || empty($selectedMaterialId)) && $materialName !== '' && $categoryValue === '') {
-                    $validator->errors()->add('category', 'Please enter a category for the new material.');
-                }
-
-                if (is_numeric($selectedMaterialId) && (int) $selectedMaterialId > 0 && !Material::query()->where('id', (int) $selectedMaterialId)->exists()) {
-                    $validator->errors()->add('material_id', 'The selected material does not exist.');
-                }
-            });
 
             $validated = $validator->validate();
 
-            $materialName = trim((string) ($validated['material_name'] ?? ''));
-            $selectedMaterialId = $request->input('material_id');
-
             if ($material instanceof Material) {
                 $materialRecord = $material;
-            } elseif (is_numeric($selectedMaterialId) && (int) $selectedMaterialId > 0) {
-                $materialRecord = Material::query()->find((int) $selectedMaterialId);
-
-                if (!$materialRecord) {
-                    throw new \InvalidArgumentException('Selected material was not found.');
-                }
-            } elseif ($materialName !== '') {
-
-                $materialRecord = Material::query()->whereRaw('LOWER(name) = ?', [Str::lower($materialName)], 'and')->first();
-                if (!$materialRecord) {
-                    $materialRecord = Material::create([
-                        'name' => $materialName,
-                        'category' => trim((string) ($validated['category'] ?? '')) ?: null,
-                        'unit' => 'Unit',
-                        'current_stock' => 0,
-                        'minimum_stock_level' => 0,
-                        'supplier' => trim((string) ($validated['supplier'] ?? '')) ?: null,
-                        'description' => null,
-                    ]);
-                }
             } else {
-                throw new \InvalidArgumentException('Material is required.');
-            }
-
-            // Update category if provided (for existing material the user may update category here)
-            if (!empty($validated['category'])) {
-                $materialRecord->category = trim((string) $validated['category']);
+                $materialRecord = Material::query()->findOrFail((int) $validated['material_id']);
             }
 
             $materialRecord->current_stock = max(0, (float) $materialRecord->current_stock + (float) $validated['quantity_received']);
             $materialRecord->supplier = trim((string) ($validated['supplier'] ?? '')) ?: $materialRecord->supplier;
             $materialRecord->save();
 
-            // If stock is at or below minimum after receiving (possible when receiving negative adjustments), notify admins
             try {
                 if ($materialRecord->minimum_stock_level !== null && $materialRecord->current_stock <= $materialRecord->minimum_stock_level) {
-                    \App\Services\NotificationService::notifyAdmins([
+                    NotificationService::notifyAdmins([
                         'type' => 'material',
                         'title' => 'Low Material Stock',
                         'message' => "Material '{$materialRecord->name}' stock is low (current: {$materialRecord->current_stock}).",
@@ -1484,7 +1411,7 @@ class AdminDashboardController extends Controller
                     ]);
                 }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to notify admins on low stock: ' . $e->getMessage());
+                Log::error('Failed to notify admins on low stock: '.$e->getMessage());
             }
 
             if (Schema::hasTable('material_deliveries')) {
@@ -1506,7 +1433,7 @@ class AdminDashboardController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\InvalidArgumentException $e) {
-            return redirect()->back()->withErrors(['material_name' => $e->getMessage()])->withInput();
+            return redirect()->back()->withErrors(['material_id' => $e->getMessage()])->withInput();
         } catch (\Throwable $e) {
             report($e);
 
@@ -1534,6 +1461,72 @@ class AdminDashboardController extends Controller
         }
     }
 
+    public function allocateMaterial(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'material_id' => ['required', 'integer', 'exists:materials,id'],
+                'project_id' => ['required', 'integer', 'exists:projects,project_id'],
+                'planned_quantity' => ['required', 'numeric', 'min:0.01'],
+                'unit' => ['nullable', 'string', 'max:50'],
+                'issue_from_stock' => ['nullable', 'boolean'],
+            ]);
+
+            $material = Material::query()->findOrFail($validated['material_id']);
+            $project = Project::query()->findOrFail($validated['project_id']);
+            $issueFromStock = (bool) ($validated['issue_from_stock'] ?? false);
+            $plannedQuantity = (float) $validated['planned_quantity'];
+
+            if ($issueFromStock) {
+                if ((float) $material->current_stock < $plannedQuantity) {
+                    return back()->withInput()->with('error', 'Insufficient warehouse stock. Available: '.(int) $material->current_stock.' '.($material->unit ?? 'unit').'.');
+                }
+
+                $material->current_stock = max(0, (float) $material->current_stock - $plannedQuantity);
+                $material->save();
+            }
+
+            $inventoryRow = ProjectMaterial::query()
+                ->where('project_id', $project->project_id)
+                ->where('material_id', $material->id)
+                ->first();
+
+            if (! $inventoryRow) {
+                $inventoryRow = ProjectMaterial::create([
+                    'project_id' => $project->project_id,
+                    'material_id' => $material->id,
+                    'planned_quantity' => $plannedQuantity,
+                    'used_quantity' => 0,
+                    'unit' => $validated['unit'] ?? $material->unit ?? 'unit',
+                ]);
+            } else {
+                $inventoryRow->planned_quantity = (float) $inventoryRow->planned_quantity + $plannedQuantity;
+                $inventoryRow->unit = $inventoryRow->unit ?? $validated['unit'] ?? $material->unit ?? 'unit';
+                $inventoryRow->save();
+            }
+
+            if (Schema::hasTable('material_deliveries')) {
+                MaterialDelivery::create([
+                    'material_id' => $material->id,
+                    'project_id' => $project->project_id,
+                    'quantity' => $plannedQuantity,
+                    'unit' => $inventoryRow->unit,
+                    'total_price' => null,
+                    'supplier_name' => null,
+                    'delivered_at' => now()->toDateString(),
+                ]);
+            }
+
+            return back()->with('success', 'Material allocated to project successfully. Planned: '.number_format($plannedQuantity, 2).' '.$inventoryRow->unit.'.');
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'Unable to allocate material right now. Please try again. Details: '.$e->getMessage());
+        }
+    }
+
     public function profile()
     {
         $user = Auth::user();
@@ -1553,7 +1546,7 @@ class AdminDashboardController extends Controller
         ]);
 
         if (Schema::hasColumn('users', 'name')) {
-            $validated['name'] = trim(($validated['first_name'] ?? $user->first_name) . ' ' . ($validated['last_name'] ?? $user->last_name));
+            $validated['name'] = trim(($validated['first_name'] ?? $user->first_name).' '.($validated['last_name'] ?? $user->last_name));
         }
 
         $user->fill($validated);
@@ -1576,7 +1569,7 @@ class AdminDashboardController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check($request->input('current_password'), $user->password)) {
+        if (! Hash::check($request->input('current_password'), $user->password)) {
             return back()->withErrors(['current_password' => 'The current password is incorrect.']);
         }
 
