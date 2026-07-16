@@ -106,7 +106,6 @@
             </div>
             <div class="header-actions">
                 <a href="{{ route('supervisor.timeline') }}?project_id={{ $primaryProject?->project_id ?? '' }}" class="btn-action-outline"><i class="bi bi-calendar3"></i> View Timeline</a>
-                <button class="btn-action-solid" id="exportPdfBtn"><i class="bi bi-download"></i> Export PDF</button>
             </div>
         </div>
 
@@ -1577,97 +1576,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === phaseDetailsModal) {
             phaseDetailsModal.style.display = 'none';
         }
-    });
-
-    // Export PDF
-    const exportPdfBtn = document.getElementById('exportPdfBtn');
-    exportPdfBtn.addEventListener('click', () => {
-        Swal.fire({
-            title: 'Exporting PDF',
-            html: 'Generating construction phases report...',
-            didOpen: () => {
-                Swal.showLoading();
-            },
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        });
-
-        const projectId = new URLSearchParams(window.location.search).get('project_id') || 
-                         document.querySelector('[data-project-id]')?.dataset.projectId;
-
-        fetch('{{ route("supervisor.api.phases.exportPdf") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                project_id: projectId
-            })
-        })
-        .then(response => {
-            const contentType = response.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                return response.json().then(data => ({ type: 'json', data }));
-            }
-            return response.blob().then(blob => ({
-                type: 'blob',
-                blob,
-                contentDisposition: response.headers.get('content-disposition') || ''
-            }));
-        })
-        .then(result => {
-            if (result.type === 'json') {
-                const data = result.data;
-                if (data.success) {
-                    if (data.html) {
-                        const blob = new Blob([data.html], { type: 'text/html' });
-                        const url = window.URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                    }
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Construction phases report exported successfully.',
-                        icon: 'success',
-                        confirmButtonColor: '#166534'
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Error',
-                        text: data.message || 'Failed to export phases report',
-                        icon: 'error',
-                        confirmButtonColor: '#166534'
-                    });
-                }
-            } else if (result.type === 'blob') {
-                const disposition = result.contentDisposition || '';
-                const fileNameMatch = disposition.match(/filename=\"?([^\";]+)\"?/);
-                const fileName = fileNameMatch ? fileNameMatch[1] : 'phases_report_' + new Date().toISOString().slice(0, 10) + '.html';
-                const blobUrl = window.URL.createObjectURL(result.blob);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = blobUrl;
-                downloadLink.download = fileName;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                downloadLink.remove();
-                window.URL.revokeObjectURL(blobUrl);
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Construction phases report downloaded successfully.',
-                    icon: 'success',
-                    confirmButtonColor: '#166534'
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'An error occurred while exporting PDF',
-                icon: 'error',
-                confirmButtonColor: '#166534'
-            });
-        });
     });
 
     // Search and Filter

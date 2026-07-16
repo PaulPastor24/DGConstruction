@@ -27,6 +27,26 @@
                     $currentPhaseProgress = (float) data_get($currentPhase, 'progress', 0);
                     $currentPhaseStart = data_get($currentPhase, 'start');
                     $currentPhaseEnd = data_get($currentPhase, 'end');
+                    $currentPhaseActualStart = data_get($currentPhase, 'actual_start');
+                    $currentPhaseActualEnd = data_get($currentPhase, 'actual_end');
+
+                    $estimatedRemaining = null;
+                    if ($currentPhaseActualStart && $currentPhaseEnd && $currentPhaseProgress > 0) {
+                        try {
+                            $actualStart = \Carbon\Carbon::parse($currentPhaseActualStart);
+                            $plannedEnd = \Carbon\Carbon::parse($currentPhaseEnd);
+                            $totalDays = $actualStart->diffInDays($plannedEnd, false);
+                            $estimatedRemaining = max(0, (int) round($totalDays * (1 - $currentPhaseProgress / 100)));
+                        } catch (\Exception $e) {
+                            $estimatedRemaining = null;
+                        }
+                    } elseif ($currentPhaseEnd) {
+                        try {
+                            $estimatedRemaining = max(0, (int) \Carbon\Carbon::parse($currentPhaseEnd)->diffInDays(now(), false));
+                        } catch (\Exception $e) {
+                            $estimatedRemaining = null;
+                        }
+                    }
                 @endphp
 
                 <div class="project-timeline-wrapper" id="project-panel-{{ $projectId }}" style="{{ $selectedProjectId == $projectId ? '' : 'display: none;' }}">
@@ -87,13 +107,13 @@
                             <div class="col-6 col-md-3">
                                 <div class="meta-metric-card">
                                     <div class="meta-card-label"><i class="bi bi-person-check me-1"></i> Actual Start</div>
-                                    <div class="meta-card-value">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</div>
+                                    <div class="meta-card-value">{{ $currentPhaseActualStart ? \Carbon\Carbon::parse($currentPhaseActualStart)->format('M d, Y') : 'Pending' }}</div>
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <div class="meta-metric-card">
                                     <div class="meta-card-label"><i class="bi bi-hourglass-split me-1"></i> Estimated Remaining</div>
-                                    <div class="meta-card-value">0 days</div>
+                                    <div class="meta-card-value">{{ $estimatedRemaining !== null ? $estimatedRemaining . ' days' : 'TBD' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -151,9 +171,8 @@
                         </div>
                         @php
                             $activeMilestoneCount = collect(data_get($project, 'activeMilestones', []))->count();
-                            $delayedMilestoneCount = collect(data_get($project, 'activeMilestones', []))->where('is_delayed', true)->count();
-                            $scheduleHealthLabel = $delayedMilestoneCount > 0 ? 'Delayed' : 'On Track';
-                            $scheduleHealthClass = $delayedMilestoneCount > 0 ? 'text-amber-deep' : 'text-success';
+                            $scheduleHealthLabel = data_get($project, 'scheduleHealth', 'On Track');
+                            $scheduleHealthClass = $scheduleHealthLabel === 'Delayed' ? 'text-amber-deep' : 'text-success';
                         @endphp
                         <div class="col-6 col-md-6 col-xl-2.4 custom-col-five">
                             <div class="kpi-panel-card">
@@ -304,13 +323,23 @@
                                     </div>
                                 @else
                                     @foreach($activeMilestones as $milestone)
-                                        @php
-                                            $plannedDate = data_get($milestone, 'start_date');
-                                            $daysRemaining = $plannedDate ? \Carbon\Carbon::parse($plannedDate)->diffInDays(now(), false) : null;
-                                            $statusText = data_get($milestone, 'is_delayed') ? 'Delayed' : (data_get($milestone, 'is_completed') ? 'Completed' : 'Upcoming');
-                                            $statusClass = data_get($milestone, 'is_delayed') ? 'border-warning-left' : 'border-primary-left';
-                                            $progressValue = data_get($milestone, 'progress', 0) ?: 0;
-                                        @endphp
+                                @php
+                                    $plannedDate = data_get($milestone, 'start_date');
+                                    $daysRemaining = 'TBD';
+                                    if ($plannedDate && is_string($plannedDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $plannedDate)) {
+                                        try {
+                                            $milestoneDate = \Carbon\Carbon::createFromFormat('Y-m-d', $plannedDate);
+                                            if ($milestoneDate->isValid()) {
+                                                $daysRemaining = (int) max(0, $milestoneDate->diffInDays(now(), false));
+                                            }
+                                        } catch (\Exception $e) {
+                                            $daysRemaining = 'TBD';
+                                        }
+                                    }
+                                    $statusText = data_get($milestone, 'is_delayed') ? 'Delayed' : (data_get($milestone, 'is_completed') ? 'Completed' : 'Upcoming');
+                                    $statusClass = data_get($milestone, 'is_delayed') ? 'border-warning-left' : 'border-primary-left';
+                                    $progressValue = data_get($milestone, 'progress', 0) ?: 0;
+                                @endphp
                                         <div class="col-12 col-sm-6">
                                             <div class="milestone-sub-card {{ $statusClass }}">
                                                 <div class="d-flex align-items-center gap-2 mb-2">
@@ -320,7 +349,7 @@
                                                 <div class="milestone-target-text mb-3">{{ data_get($milestone, 'phase_name') }} • {{ $plannedDate ? \Carbon\Carbon::parse($plannedDate)->format('M d, Y') : 'TBD' }}</div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <span class="text-muted small">Days Remaining</span>
-                                                    <span class="fw-bold text-dark small">{{ $daysRemaining !== null ? max(0, $daysRemaining) : 'TBD' }}</span>
+                                                    <span class="fw-bold text-dark small">{{ is_int($daysRemaining) ? $daysRemaining . ' days' : $daysRemaining }}</span>
                                                 </div>
                                                 <div class="progress mt-1" style="height: 5px; background-color: #f1f5f9; border-radius: 999px;">
                                                     <div class="progress-bar bg-success" style="width: {{ $progressValue }}%;" aria-valuenow="{{ $progressValue }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -360,12 +389,12 @@
                                                 <div>
                                                     <span class="dot-indicator blue-bg"></span>
                                                     <span class="date-label text-muted">Actual Start:</span>
-                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseStart ? \Carbon\Carbon::parse($currentPhaseStart)->format('M d, Y') : 'Pending' }}</span>
+                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseActualStart ? \Carbon\Carbon::parse($currentPhaseActualStart)->format('M d, Y') : 'Pending' }}</span>
                                                 </div>
                                                 <div>
                                                     <span class="dot-indicator blue-bg"></span>
                                                     <span class="date-label text-muted">Actual End:</span>
-                                                    <span class="date-val fw-bold text-muted ms-1">—</span>
+                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseActualEnd ? \Carbon\Carbon::parse($currentPhaseActualEnd)->format('M d, Y') : 'Pending' }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -378,21 +407,48 @@
                                             <h3 class="panel-section-title mb-1">Upcoming Milestone</h3>
                                             <span class="text-muted small d-block mb-3">Next deadline target tracking</span>
                                             
-                                            <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between">
-                                                <div>
-                                                    <h4 class="fw-bold text-dark small mb-1">{{ $projectName }} - Milestone 2</h4>
-                                                    <span class="text-muted small">In progress • Apr 25, 2026</span>
+                                            @php
+                                                $nextUpcoming = collect(data_get($project, 'upcomingMilestones', []))->first();
+                                            @endphp
+                                            @if($nextUpcoming)
+                                                <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between">
+                                                    <div>
+                                                        <h4 class="fw-bold text-dark small mb-1">{{ data_get($nextUpcoming, 'name') }}</h4>
+                                                        <span class="text-muted small">
+                                                            {{ data_get($nextUpcoming, 'is_completed') ? 'Completed' : (data_get($nextUpcoming, 'is_delayed') ? 'Delayed' : 'Upcoming') }}
+                                                            • {{ data_get($nextUpcoming, 'start_date') ? \Carbon\Carbon::parse(data_get($nextUpcoming, 'start_date'))->format('M d, Y') : 'TBD' }}
+                                                        </span>
+                                                    </div>
+                                                    <i class="bi bi-chevron-right text-muted"></i>
                                                 </div>
-                                                <i class="bi bi-chevron-right text-muted"></i>
-                                            </div>
+                                            @else
+                                                <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between" style="opacity: 0.7;">
+                                                    <div>
+                                                        <h4 class="fw-bold text-dark small mb-1">No upcoming milestones</h4>
+                                                        <span class="text-muted small">All milestones are on track</span>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
 
-                                        <div class="alert-countdown-banner p-3 rounded-3 mt-auto">
-                                            <div class="d-flex align-items-center gap-2 text-amber-deep fw-bold">
-                                                <i class="bi bi-exclamation-triangle-fill"></i>
-                                                <span>25 days left</span>
+                                        @php
+                                            $nextMilestoneDays = null;
+                                            if ($nextUpcoming && data_get($nextUpcoming, 'start_date')) {
+                                                try {
+                                                    $nextMilestoneDays = max(0, \Carbon\Carbon::parse(data_get($nextUpcoming, 'start_date'))->diffInDays(now(), false));
+                                                } catch (\Exception $e) {
+                                                    $nextMilestoneDays = null;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($nextMilestoneDays !== null)
+                                            <div class="alert-countdown-banner p-3 rounded-3 mt-auto">
+                                                <div class="d-flex align-items-center gap-2 text-amber-deep fw-bold">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                    <span>{{ $nextMilestoneDays }} days left</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -452,12 +508,28 @@
         transition: all 0.2s ease-in-out;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
         background-size: 10px 12px !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
     }
 
     .project-theme-select:focus {
         border-color: #166534 !important;
         box-shadow: 0 0 0 0.25rem rgba(22, 101, 52, 0.15) !important;
         background-color: #ffffff !important;
+        outline: none;
+    }
+
+    .project-theme-select:hover:not(:disabled) {
+        border-color: rgba(22, 101, 52, 0.35) !important;
+        background-color: #ffffff !important;
+    }
+
+    .project-theme-select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .panel-eyebrow {

@@ -11,6 +11,82 @@
         width: 100%;
     }
 
+    .supervisor-project-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .supervisor-project-selector-head {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+    }
+
+    .supervisor-project-selector-head i {
+        font-size: 0.85rem;
+        color: #166534;
+    }
+
+    .supervisor-select-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-width: 220px;
+    }
+
+    .supervisor-select-icon {
+        position: absolute;
+        left: 12px;
+        color: #166534;
+        pointer-events: none;
+        z-index: 2;
+        font-size: 0.9rem;
+    }
+
+    .supervisor-project-select {
+        width: 100%;
+        padding: 0.6rem 2.2rem 0.6rem 2.4rem !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        color: #166534 !important;
+        background-color: #F1F5F9 !important;
+        border: 1px solid rgba(22, 101, 52, 0.15) !important;
+        border-radius: 12px !important;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23166534' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-size: 10px 12px !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+    }
+
+    .supervisor-project-select:focus {
+        border-color: #166534 !important;
+        box-shadow: 0 0 0 0.2rem rgba(22, 101, 52, 0.12) !important;
+        background-color: #ffffff !important;
+        outline: none;
+    }
+
+    .supervisor-project-select:hover:not(:disabled) {
+        border-color: rgba(22, 101, 52, 0.35) !important;
+        background-color: #ffffff !important;
+    }
+
+    .supervisor-project-select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f1f5f9 !important;
+    }
+
     @media (max-width: 820px) {
         .supervisor-dashboard-page {
             gap: 14px !important;
@@ -244,23 +320,34 @@
                             <h1 class="page-title mb-2">Today&apos;s Site Priorities</h1>
                             <p class="page-subtitle mb-0">Operational summary for your assigned construction project.</p>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <form id="projectSelectorForm" method="GET" action="{{ route('supervisor.dashboard') }}" class="d-flex align-items-center gap-2 mb-0">
-                                <label for="dashboardProjectId" class="visually-hidden">Project</label>
-                                <select id="dashboardProjectId" name="project_id" class="form-select form-select-sm" onchange="this.form.submit()" {{ $assignedProjects->isEmpty() ? 'disabled' : '' }}>
-                                    @if($assignedProjects->isEmpty())
-                                        <option value="" selected>No assigned projects</option>
-                                    @else
-                                        @foreach($assignedProjects as $project)
-                                            <option value="{{ $project->project_id }}" {{ optional($primaryProject)->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </form>
-                            <span class="badge rounded-pill badge-soft text-muted fw-semibold">
-                                <i class="bi bi-calendar3 me-2"></i>{{ now()->format('M d, Y') }}
-                            </span>
-                        </div>
+						<div class="d-flex align-items-center gap-3 flex-wrap">
+							<div class="supervisor-project-selector">
+								<div class="supervisor-project-selector-head">
+									<i class="bi bi-building"></i>
+									<span>Active Project</span>
+								</div>
+								<div class="supervisor-project-selector-field">
+									<form id="projectSelectorForm" method="GET" action="{{ route('supervisor.dashboard') }}" class="mb-0 w-100">
+										<label for="dashboardProjectId" class="visually-hidden">Project</label>
+										<div class="supervisor-select-wrapper">
+											<i class="bi bi-building supervisor-select-icon"></i>
+											<select id="dashboardProjectId" name="project_id" class="form-select supervisor-project-select" onchange="this.form.submit()" {{ $assignedProjects->isEmpty() ? 'disabled' : '' }}>
+												@if($assignedProjects->isEmpty())
+													<option value="" selected>No assigned projects</option>
+												@else
+													@foreach($assignedProjects as $project)
+														<option value="{{ $project->project_id }}" {{ optional($primaryProject)->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+													@endforeach
+												@endif
+											</select>
+										</div>
+									</form>
+								</div>
+							</div>
+							<span class="badge rounded-pill badge-soft text-muted fw-semibold">
+								<i class="bi bi-calendar3 me-2"></i>{{ now()->format('M d, Y') }}
+							</span>
+						</div>
                     </div>
             <div class="row g-3 mt-1">
                 <div class="col-12 col-xl-3">
@@ -320,8 +407,9 @@
         $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject->phases->first())->phase_name ?? 'Mobilization';
         $projectTargetDate = optional($primaryProject->target_end_date);
         $daysRemaining = $projectTargetDate ? max(0, $projectTargetDate->diffInDays(now(), false)) : null;
-        $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not available';
-        $projectLocation = $primaryProject?->project_location ?? 'Not available';
+        $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not specified';
+        $projectLocation = $primaryProject?->location ?? $primaryProject?->project_location ?? 'Not specified';
+        $projectEngineer = $primaryProject?->engineer?->name ?? 'Not specified';
         $activeWorkforce = $primaryProject ? max(0, $primaryProject->workers()->count()) : 0;
         $phaseProgress = $primaryPhase ? (float) ($primaryPhase->completion_percentage ?? 0) : (float) ($projectProgress ?? 0);
         $phaseStatus = $primaryPhase?->status ?? 'not_started';

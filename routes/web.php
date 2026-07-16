@@ -119,10 +119,6 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/api/phases/{id}/update-status', [SupervisorController::class, 'updatePhaseStatus'])->name('supervisor.api.phases.updateStatus');
     Route::post('/supervisor/api/phases/export-pdf', [SupervisorController::class, 'exportPhasesPdf'])->name('supervisor.api.phases.exportPdf');
 
-    // Export routes for phases
-    Route::get('/supervisor/phases/export/csv', [PhasesExportController::class, 'exportCsv'])->name('supervisor.phases.export.csv');
-    Route::get('/supervisor/phases/export/pdf', [PhasesExportController::class, 'exportPdf'])->name('supervisor.phases.export.pdf');
-
     Route::get('/supervisor/attendance', [SupervisorController::class, 'attendance'])->name('supervisor.attendance');
     Route::post('/supervisor/attendance', [SupervisorController::class, 'saveAttendance'])->name('supervisor.attendance.save');
 
