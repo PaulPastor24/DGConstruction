@@ -96,9 +96,14 @@ class ReportController extends Controller
             abort(403, 'Only engineers can approve reports');
         }
 
+        if ($report->approval_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'This report has already been reviewed.']);
+        }
+
         try {
             $validated = $request->validate([
                 'approval_remarks' => 'nullable|string|max:1000',
+                'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             ]);
         } catch (ValidationException $e) {
             if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
@@ -111,6 +116,10 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
+            $approvedProgress = $request->filled('accomplishment_percentage')
+                ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
+                : ($report->accomplishment_percentage ?? 0.0);
+
             $report->update([
                 'approval_status' => 'approved',
                 'reviewed_by' => auth('web')->user()->user_id,
@@ -118,48 +127,71 @@ class ReportController extends Controller
                 'approved_by' => auth('web')->user()->user_id,
                 'approved_at' => now(),
                 'approval_remarks' => $validated['approval_remarks'],
+                'accomplishment_percentage' => $approvedProgress,
             ]);
 
-            $computedProgress = $this->resolveComputedProgressForApproval($report);
             $autoCompleted = false;
-            if ($computedProgress !== null) {
-                $phase = $report->phase;
-                if ($phase) {
-                    $phase->completion_percentage = round(min(100, max(0, (float) $computedProgress)), 2);
-                    $phase->status = $this->resolvePhaseStatusForProgress($phase);
+            $phase = $report->phase;
+            if ($phase) {
+                $oldCompletion = (float) ($phase->completion_percentage ?? 0);
+                $oldPhaseStatus = (string) $phase->status;
+                $phase->completion_percentage = $approvedProgress;
+                $phase->status = $this->resolvePhaseStatusForProgress($phase);
 
-                    if ($phase->completion_percentage >= 100 && $phase->status !== 'completed') {
-                        $phase->status = 'completed';
-                    }
+                if ($phase->completion_percentage >= 100 && $phase->status !== 'completed') {
+                    $phase->status = 'completed';
+                }
 
-                    if ($phase->completion_percentage >= 100 && $phase->status === 'completed') {
-                        $autoCompleted = true;
-                    }
+                if ($phase->completion_percentage >= 100 && $phase->status === 'completed') {
+                    $autoCompleted = true;
+                }
 
-                    if ($phase->status === 'in_progress' && empty($phase->actual_start_date)) {
-                        $phase->actual_start_date = now()->toDateString();
-                    }
+                if ($phase->status === 'in_progress' && empty($phase->actual_start_date)) {
+                    $phase->actual_start_date = now()->toDateString();
+                }
 
-                    if ($phase->status === 'completed' && empty($phase->actual_end_date)) {
-                        $phase->actual_end_date = now()->toDateString();
-                    }
+                if ($phase->status === 'completed' && empty($phase->actual_end_date)) {
+                    $phase->actual_end_date = now()->toDateString();
+                }
 
-                    $phase->save();
+                $phase->save();
 
-                    try {
-                        $clientId = optional($report->project)->client_id;
-                        if ($clientId) {
-                            NotificationService::notifyClient($clientId, [
-                                'type' => 'phase',
-                                'title' => 'Project Progress Updated',
-                                'message' => "{$phase->phase_name} progress updated to {$phase->completion_percentage}%.",
-                                'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
-                                'related_id' => $phase->phase_id,
-                                'related_type' => 'phase',
-                            ]);
+                    $oldMilestone = floor($oldCompletion / 10);
+                    $newMilestone = floor((float) $phase->completion_percentage / 10);
+
+                    if ($newMilestone > $oldMilestone) {
+                        try {
+                            $clientId = optional($report->project)->client_id;
+                            if ($clientId) {
+                                NotificationService::notifyClient($clientId, [
+                                    'type' => 'phase',
+                                    'title' => 'Project Progress Updated',
+                                    'message' => "{$phase->phase_name} progress reached {$phase->completion_percentage}%.",
+                                    'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
+                                    'related_id' => $phase->phase_id,
+                                    'related_type' => 'phase',
+                                ]);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
                         }
-                    } catch (\Throwable $e) {
-                        Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
+                    }
+
+                    if ($phase->status === 'completed' && $oldPhaseStatus !== 'completed') {
+                        try {
+                            $clientId = optional($report->project)->client_id;
+                            if ($clientId) {
+                                NotificationService::notifyClient($clientId, [
+                                    'type' => 'phase',
+                                    'title' => 'Construction Phase Completed',
+                                    'message' => "The '{$phase->phase_name}' phase has been completed for project '{$report->project->project_name}'.",
+                                    'data' => ['module' => 'client.timeline', 'phase_id' => $phase->phase_id, 'project_id' => $report->project_id],
+                                    'related_id' => $phase->phase_id,
+                                    'related_type' => 'phase',
+                                ]);
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to notify client on phase completion via report approval: ' . $e->getMessage());
                     }
                 }
             }
@@ -188,7 +220,7 @@ class ReportController extends Controller
                 if ($clientId) {
                     NotificationService::notifyClient($clientId, [
                         'type' => 'report',
-                        'title' => 'Report Approved',
+                        'title' => 'New Approved Progress Report',
                         'message' => "A report for project '{$report->project->project_name}' was approved.",
                         'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
                         'related_id' => $report->report_id,
@@ -242,6 +274,10 @@ class ReportController extends Controller
         // Only engineers can reject
         if (auth('web')->user()->role !== 'engineer') {
             abort(403, 'Only engineers can reject reports');
+        }
+
+        if ($report->approval_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'This report has already been reviewed.']);
         }
 
         try {
@@ -353,6 +389,10 @@ class ReportController extends Controller
         $project = Project::findOrFail($validated['project_id']);
         $phase = ConstructionPhase::findOrFail($validated['phase_id']);
 
+        if ($phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100) {
+            return back()->withErrors(['phase_id' => 'This construction phase is already completed and cannot accept new reports.'])->withInput();
+        }
+
         // Verify supervisor is assigned to this project
         $this->authorizeSupervisor($project);
 
@@ -375,26 +415,10 @@ class ReportController extends Controller
                 'report_text' => $validated['report_text'],
                 'site_images' => $images,
                 'approval_status' => 'pending',
-                'ai_status' => 'pending',
+                'accomplishment_percentage' => $request->filled('accomplishment_percentage')
+                    ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
+                    : null,
             ]);
-
-            $computedProgress = $request->filled('accomplishment_percentage')
-                ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
-                : 0.0;
-
-            DB::table('ai_analysis_results')->updateOrInsert(
-                ['report_id' => $report->report_id],
-                [
-                    'report_id' => $report->report_id,
-                    'phase_id' => $validated['phase_id'],
-                    'computed_progress' => $computedProgress,
-                    'confidence_score' => 1.00,
-                    'raw_ai_output' => 'Supervisor submitted accomplishment percentage for approval workflow.',
-                    'processed_at' => now(),
-                ]
-            );
-
-            $report->update(['ai_status' => 'processed']);
 
             $this->logAction(
                 'Report Submitted',
@@ -459,32 +483,6 @@ class ReportController extends Controller
             Log::error('Report submission failed: ' . $e->getMessage());
             return back()->withErrors('Failed to submit report');
         }
-    }
-
-    private function resolveComputedProgressForApproval(Report $report): ?float
-    {
-        $alignedProgress = DB::table('ai_analysis_results')
-            ->join('accomplishment_reports', 'ai_analysis_results.report_id', '=', 'accomplishment_reports.report_id')
-            ->where('accomplishment_reports.phase_id', $report->phase_id)
-            ->where('accomplishment_reports.approval_status', 'approved')
-            ->pluck('ai_analysis_results.computed_progress')
-            ->filter(fn ($value) => $value !== null && $value !== '')
-            ->map(fn ($value) => (float) $value);
-
-        if ($alignedProgress->isNotEmpty()) {
-            return round($alignedProgress->avg(), 2);
-        }
-
-        $analysis = DB::table('ai_analysis_results')
-            ->where('report_id', $report->report_id)
-            ->latest('result_id')
-            ->first();
-
-        if ($analysis && isset($analysis->computed_progress)) {
-            return round((float) $analysis->computed_progress, 2);
-        }
-
-        return null;
     }
 
     private function resolvePhaseStatusForProgress(ConstructionPhase $phase): string
@@ -644,8 +642,15 @@ class ReportController extends Controller
             })->firstOrFail();
 
         $phases = ConstructionPhase::query()->where('project_id', $projectId)
+            ->where(function ($q) {
+                $q->where('status', '!=', 'completed')
+                    ->where(function ($q2) {
+                        $q2->whereNull('completion_percentage')
+                            ->orWhere('completion_percentage', '<', 100);
+                    });
+            })
             ->orderBy('phase_order', 'asc')
-            ->get(['phase_id', 'phase_name', 'phase_order', 'status']);
+            ->get(['phase_id', 'phase_name', 'phase_order', 'status', 'completion_percentage']);
 
         return response()->json(['success' => true, 'phases' => $phases]);
     }
@@ -680,7 +685,9 @@ class ReportController extends Controller
                 'approved_by' => $report->approvedBy->name ?? '-',
                 'approval_remarks' => $report->approval_remarks ?? 'No remarks',
                 'report_text' => $report->report_text,
-                'site_images' => $report->site_images ?? [],
+                'site_images' => array_values(array_filter(array_map(function ($image) {
+                    return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                }, (array) ($report->site_images ?? [])))),
                 'submitted_at' => $report->created_at->format('M d, Y'),
                 'reviewed_at' => $report->reviewed_at ? $report->reviewed_at->format('M d, Y') : '-',
                 'approved_at' => $report->approved_at ? $report->approved_at->format('M d, Y') : '-',

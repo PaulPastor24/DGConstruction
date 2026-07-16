@@ -353,6 +353,31 @@
                 margin-bottom: 0.5rem;
             }
 
+            #attendanceLogTableBody td:last-child .status-log-stack {
+                width: 100%;
+                align-items: stretch !important;
+                gap: 0.75rem;
+            }
+
+            #attendanceLogTableBody td:last-child .status-pill {
+                width: fit-content;
+                min-width: 110px;
+            }
+
+            #attendanceLogTableBody td:last-child .status-action-grid {
+                width: 100%;
+                max-width: none;
+                grid-template-columns: 1fr;
+                gap: 0.55rem;
+            }
+
+            #attendanceLogTableBody td:last-child .status-action-btn {
+                width: 100%;
+                min-height: 44px;
+                font-size: 0.92rem;
+                justify-content: center;
+            }
+
             #attendanceLogTableBody td:last-child .d-flex {
                 align-items: flex-start !important;
             }
@@ -1041,13 +1066,19 @@
             return `${h}:${minute} ${ampm}`;
         }
 
+        function localTodayDateString() {
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 10);
+        }
+
         function selectedDateValue() {
-            return attendanceDateInput?.value || new Date().toISOString().slice(0, 10);
+            return attendanceDateInput?.value || localTodayDateString();
         }
 
         function isFivePmOrLaterForSelectedDate() {
             const selected = selectedDateValue();
-            const today = new Date().toISOString().slice(0, 10);
+            const today = localTodayDateString();
 
             if (selected < today) {
                 return true;
@@ -1089,18 +1120,18 @@
             const value = String(status || 'present').toLowerCase();
 
             if (value === 'present') {
-                return '<span class="badge bg-success rounded-pill">Present</span>';
+                return '<span class="status-pill status-pill-present"><i class="bi bi-check-circle me-1"></i>Present</span>';
             }
 
             if (value === 'late') {
-                return '<span class="badge bg-warning text-dark rounded-pill">Late</span>';
+                return '<span class="status-pill status-pill-late"><i class="bi bi-clock-history me-1"></i>Late</span>';
             }
 
             if (value === 'absent') {
-                return '<span class="badge bg-danger rounded-pill">Absent</span>';
+                return '<span class="status-pill status-pill-absent"><i class="bi bi-x-circle me-1"></i>Absent</span>';
             }
 
-            return `<span class="badge bg-secondary rounded-pill">${escapeHtml(value || 'Not Logged')}</span>`;
+            return `<span class="status-pill status-pill-default">${escapeHtml(value || 'Not Logged')}</span>`;
         }
 
         function getActionButtons(record) {
@@ -1113,10 +1144,10 @@
             if (record.time_in && !record.break_out) {
                 buttons += `
                     <button type="button"
-                            class="btn btn-sm btn-outline-primary attendance-action-btn"
+                            class="btn btn-sm status-action-btn status-action-break-out attendance-action-btn"
                             data-worker-id="${escapeHtml(record.worker_id)}"
                             data-action="break_out">
-                        Break Out
+                        <i class="bi bi-cup-hot me-1"></i> Break Out
                     </button>
                 `;
             }
@@ -1124,10 +1155,10 @@
             if (record.break_out && !record.break_in) {
                 buttons += `
                     <button type="button"
-                            class="btn btn-sm btn-outline-warning attendance-action-btn"
+                            class="btn btn-sm status-action-btn status-action-break-in attendance-action-btn"
                             data-worker-id="${escapeHtml(record.worker_id)}"
                             data-action="break_in">
-                        Break In
+                        <i class="bi bi-arrow-return-left me-1"></i> Break In
                     </button>
                 `;
             }
@@ -1136,18 +1167,18 @@
                 if (isFivePmOrLaterForSelectedDate()) {
                     buttons += `
                         <button type="button"
-                                class="btn btn-sm btn-outline-dark attendance-action-btn"
+                                class="btn btn-sm status-action-btn status-action-time-out attendance-action-btn"
                                 data-worker-id="${escapeHtml(record.worker_id)}"
                                 data-action="time_out">
-                            Time Out
+                            <i class="bi bi-box-arrow-right me-1"></i> Time Out
                         </button>
                     `;
                 } else {
                     buttons += `
                         <button type="button"
-                                class="btn btn-sm btn-outline-secondary"
+                                class="btn btn-sm status-action-btn status-action-disabled"
                                 disabled>
-                            Time Out 5PM
+                            <i class="bi bi-lock me-1"></i> Time Out 5PM
                         </button>
                     `;
                 }
@@ -1168,7 +1199,7 @@
                     data-active-log="1">
                     <td class="py-3" data-label="Personnel Name">
                         <div class="fw-semibold text-dark">${fullName}</div>
-                        <input type="hidden" name="biometric_verified[${workerKey}]" value="1">
+                        <input type="hidden" name="biometric_verified[${workerKey}]" value="${record.biometric_matched === false || record.biometric_matched === 0 || String(record.biometric_matched) === '0' ? '0' : '1'}">
                     </td>
 
                     <td class="py-3 text-muted" data-label="Trade">
@@ -1192,10 +1223,10 @@
                     </td>
 
                     <td class="py-3 text-center" data-label="Status Log">
-                        <div class="d-flex flex-column align-items-center gap-2">
+                        <div class="status-log-stack">
                             ${getStatusBadge(record.status)}
 
-                            <div class="d-flex justify-content-center flex-wrap gap-1">
+                            <div class="status-action-grid">
                                 ${getActionButtons(record)}
                             </div>
                         </div>
@@ -1250,10 +1281,73 @@
             updateActiveLogCount();
         }
 
-        function removeMissingRows(latestRecords) {
+        function normalizeAttendanceRecord(rawRecord) {
+            const record = rawRecord || {};
+            const worker = record.worker || record.display_worker || record.displayWorker || record.personnel || record.employee || {};
+            const deploymentWorker = record.deployment && record.deployment.worker ? record.deployment.worker : {};
+
+            const resolvedWorkerId = record.worker_id
+                || record.workerId
+                || worker.worker_id
+                || worker.id
+                || deploymentWorker.worker_id
+                || deploymentWorker.id
+                || null;
+
+            return {
+                worker_id: resolvedWorkerId,
+                first_name: record.first_name || worker.first_name || deploymentWorker.first_name || '',
+                last_name: record.last_name || worker.last_name || deploymentWorker.last_name || '',
+                trade: record.trade || worker.trade || worker.position || worker.job_title || deploymentWorker.trade || 'General',
+                time_in: record.time_in || null,
+                break_out: record.break_out || null,
+                break_in: record.break_in || null,
+                time_out: record.time_out || null,
+                status: record.status || 'present',
+                biometric_matched: record.biometric_matched ?? record.biometric_verified ?? true,
+                remarks: record.remarks || ''
+            };
+        }
+
+        function extractAttendanceRecords(payload) {
+            if (Array.isArray(payload)) {
+                return payload.map(normalizeAttendanceRecord).filter(record => record.worker_id);
+            }
+
+            const possibleRecords = payload?.data
+                || payload?.records
+                || payload?.logs
+                || payload?.attendance_logs
+                || [];
+
+            if (!Array.isArray(possibleRecords)) {
+                return [];
+            }
+
+            return possibleRecords
+                .map(normalizeAttendanceRecord)
+                .filter(record => record.worker_id);
+        }
+
+        function removeMissingRows(latestRecords, options = {}) {
+            const allowClear = options.allowClear ?? false;
+            const validRecords = Array.isArray(latestRecords)
+                ? latestRecords.filter(record => record && record.worker_id)
+                : [];
+
             const latestIds = new Set(
-                latestRecords.map(record => String(record.worker_id))
+                validRecords.map(record => String(record.worker_id))
             );
+
+            if (latestIds.size === 0) {
+                if (allowClear) {
+                    scannedWorkerIds.clear();
+                    renderEmptyAttendanceRow();
+                }
+
+                updateActiveLogCount();
+                return;
+            }
 
             attendanceLogTableBody
                 .querySelectorAll('tr[data-worker-id]')
@@ -1262,11 +1356,6 @@
                         row.remove();
                     }
                 });
-
-            if (latestIds.size === 0) {
-                scannedWorkerIds.clear();
-                renderEmptyAttendanceRow();
-            }
 
             updateActiveLogCount();
         }
@@ -1284,10 +1373,12 @@
             isAttendanceFetching = true;
 
             try {
-                const response = await fetch(`/supervisor/attendance/today?date=${selectedDateValue()}`, {
+                const response = await fetch(`/supervisor/attendance/today?date=${encodeURIComponent(selectedDateValue())}`, {
                     headers: {
-                        'Accept': 'application/json'
-                    }
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    cache: 'no-store'
                 });
 
                 const result = await response.json().catch(() => ({}));
@@ -1296,11 +1387,21 @@
                     throw new Error(result.message || 'Failed to load attendance.');
                 }
 
-                const records = result.data || [];
+                const records = extractAttendanceRecords(result);
+                const hasExistingRows = attendanceLogTableBody.querySelectorAll('tr[data-worker-id]').length > 0;
 
+                /*
+                    Important fix:
+                    During silent polling, do not wipe the table when the endpoint returns
+                    an empty or malformed response. This prevents scanned/manual attendance
+                    from disappearing while the page is checking for updates.
+                */
                 if (records.length === 0) {
-                    scannedWorkerIds.clear();
-                    renderEmptyAttendanceRow();
+                    if (!silent || !hasExistingRows) {
+                        scannedWorkerIds.clear();
+                        renderEmptyAttendanceRow();
+                    }
+
                     updateActiveLogCount();
                     isFirstAttendanceLoad = false;
                     return;
@@ -1314,7 +1415,9 @@
                     upsertAttendanceRecord(record, !isFirstAttendanceLoad);
                 });
 
-                removeMissingRows(records);
+                removeMissingRows(records, {
+                    allowClear: !silent
+                });
 
                 isFirstAttendanceLoad = false;
             } catch (error) {

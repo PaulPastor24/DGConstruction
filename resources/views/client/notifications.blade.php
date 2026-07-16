@@ -1,6 +1,7 @@
 @extends('layouts.client')
 
 @section('title', 'Client Notifications')
+@section('mobileTitle', 'Notifications')
 
 @section('content')
 <div class="container-fluid px-0 py-2">
@@ -11,7 +12,7 @@
             <p class="dashboard-page-description">Review your latest project updates, reports, and milestone alerts.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('client.dashboard') }}" class="btn btn-outline-secondary btn-sm">Back to dashboard</a>
+            
             <button type="button" class="btn btn-success btn-sm" id="markAllClientNotifications">Mark all as read</button>
         </div>
     </div>
@@ -108,11 +109,11 @@
                     </div>
                 @endforeach
             </div>
-            <div class="card-footer bg-white d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <div class="card-footer bg-white d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <div class="small text-muted">Showing {{ $notifications->firstItem() }} to {{ $notifications->lastItem() }} of {{ $notifications->total() }}</div>
                 <div>
                     @if($notifications->hasPages())
-                        {{ $notifications->links('pagination::bootstrap-5') }}
+                        {{ $notifications->links('pagination::bootstrap-5-limited') }}
                     @else
                         <nav aria-label="Notification pagination" class="pagination">
                             <span class="page-item disabled">

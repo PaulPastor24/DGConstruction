@@ -185,6 +185,14 @@ class Project extends Model
         return $this->hasMany(ProjectMaterial::class, 'project_id', 'project_id');
     }
 
+    /**
+     * Relationship: Project has many material usage records
+     */
+    public function materialUsages()
+    {
+        return $this->hasMany(MaterialUsage::class, 'project_id', 'project_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes / Computed Attributes

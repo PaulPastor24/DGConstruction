@@ -1591,13 +1591,6 @@
 
 @section('content')
 <div id="pg-timeline">
-    <div class="page-header-card">
-        <div>
-            <p class="eyebrow">Construction Schedule</p>
-            <h2 class="page-title">Project Timeline</h2>
-            <p class="page-subtitle">Manage project schedules, milestones, and construction progress with live database data.</p>
-        </div>
-    </div>
 
     <div class="top-toolbar">
         <div class="toolbar-group search-group">
@@ -1646,7 +1639,7 @@
     <div class="milestone-modal-card" role="dialog" aria-modal="true" aria-labelledby="milestoneModalTitle">
         <div class="milestone-modal-header">
             <div>
-                <p class="milestone-modal-eyebrow">Project Timeline</p>
+                <p class="milestone-modal-eyebrow">Project Milestone</p>
                 <h3 id="milestoneModalTitle" class="milestone-modal-title">Create Milestone</h3>
                 <p id="milestoneModalSubtitle" class="milestone-modal-subtitle">Capture a new milestone for the selected construction phase.</p>
             </div>
@@ -2155,7 +2148,7 @@
                                 <div class="view-toggle-group">
                                     <button type="button" class="view-toggle-btn ${timelineViewMode === 'gantt' ? 'active' : ''}" data-view="gantt"><i class="bi bi-bar-chart-line-fill"></i> Gantt</button>
                                     <button type="button" class="view-toggle-btn ${timelineViewMode === 'phases' ? 'active' : ''}" data-view="phases"><i class="bi bi-diagram-3"></i> Phases</button>
-                                    <button type="button" class="view-toggle-btn ${timelineViewMode === 'timeline' ? 'active' : ''}" data-view="timeline"><i class="bi bi-signpost-split"></i> Timeline</button>
+                                    <button type="button" class="view-toggle-btn ${timelineViewMode === 'timeline' ? 'active' : ''}" data-view="timeline"><i class="bi bi-signpost-split"></i> Milestones</button>
                                 </div>
                             </div>
                         </div>
@@ -2346,12 +2339,6 @@
             if (window.gantt && typeof window.gantt.showDate === 'function') {
                 window.gantt.showDate(new Date());
             }
-        });
-
-        document.getElementById('timelineScaleSelector')?.addEventListener('change', function () {
-            const scale = this.value || 'month';
-            activeTimelineScale = scale;
-            window.setDhtmlxScale?.(scale);
         });
 
         document.getElementById('timelineZoomInBtn')?.addEventListener('click', () => window.setDhtmlxZoom?.('in'));

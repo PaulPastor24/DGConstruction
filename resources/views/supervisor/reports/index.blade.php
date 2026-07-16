@@ -429,289 +429,387 @@
             color: #475569;
         }
 
-        /* ===== MOBILE SUPERVISOR REPORTS: compact filters, 2x2 metrics, readable cards ===== */
+
+        /* ===== MOBILE FIX: hide desktop table and show clean report cards ===== */
         .supervisor-report-mobile-list {
             display: none;
         }
 
         @media (max-width: 767.98px) {
             .report-filter-card {
-                margin-bottom: 1rem !important;
-                padding: 0.9rem !important;
+                margin-bottom: 0.9rem !important;
+                padding: 0.85rem !important;
                 border-radius: 16px !important;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04) !important;
             }
 
             .report-filter-card .row {
+                --bs-gutter-x: 0.75rem;
                 --bs-gutter-y: 0.7rem;
             }
 
             .report-filter-card .form-label {
-                margin-bottom: 0.35rem;
-                font-size: 0.72rem;
+                margin-bottom: 0.35rem !important;
+                color: #475569 !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.03em !important;
+                text-transform: uppercase;
             }
 
             .report-filter-card .form-select,
             .report-filter-card .form-control {
-                min-height: 42px;
-                border-radius: 12px;
-                font-size: 0.86rem;
+                min-height: 42px !important;
+                border-radius: 12px !important;
+                border-color: #dce7df !important;
+                font-size: 0.84rem !important;
+                box-shadow: none !important;
             }
 
             .metric-card {
-                min-height: 104px;
-                padding: 0.9rem !important;
+                min-height: 104px !important;
+                padding: 0.85rem !important;
                 border-radius: 16px !important;
                 align-items: flex-start !important;
-                gap: 0.75rem !important;
+                gap: 0.72rem !important;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
             }
 
             .metric-icon-wrapper {
-                width: 42px;
-                height: 42px;
-                font-size: 1rem;
-                flex: 0 0 42px;
+                width: 40px !important;
+                height: 40px !important;
+                flex: 0 0 40px !important;
+                font-size: 0.98rem !important;
             }
 
             .metric-card .text-muted.small.fw-bold {
-                font-size: 0.64rem;
-                line-height: 1.2;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
+                font-size: 0.62rem !important;
+                line-height: 1.2 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.04em !important;
             }
 
             .metric-card h4 {
-                font-size: 1.2rem;
-                line-height: 1.1;
+                font-size: 1.18rem !important;
+                line-height: 1.05 !important;
+                margin-top: 0.2rem !important;
             }
 
             .metric-card span {
+                display: block;
                 font-size: 0.66rem !important;
-                line-height: 1.25;
+                line-height: 1.25 !important;
+                margin-top: 0.18rem !important;
             }
 
             .main-report-card {
                 border-radius: 18px !important;
+                overflow: hidden !important;
+                border: 1px solid rgba(42, 64, 40, 0.10) !important;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05) !important;
             }
 
             .main-report-card > .border-bottom {
+                padding: 0.95rem !important;
+                gap: 0.8rem !important;
                 align-items: center !important;
-                gap: 0.9rem;
-                padding: 1rem !important;
             }
 
             .main-report-card > .border-bottom h5 {
-                font-size: 1.05rem;
-                line-height: 1.2;
+                font-size: 1.02rem !important;
+                line-height: 1.2 !important;
             }
 
             .main-report-card > .border-bottom .btn {
-                min-width: 104px;
-                min-height: 44px;
-                border-radius: 12px;
-                font-weight: 800;
+                min-width: 106px !important;
+                min-height: 42px !important;
+                border-radius: 12px !important;
+                font-size: 0.78rem !important;
+                font-weight: 800 !important;
+                white-space: nowrap !important;
             }
 
-            .supervisor-report-table-wrap {
+            .supervisor-report-table-wrap,
+            .main-report-card .table-responsive.supervisor-report-table-wrap {
                 display: none !important;
             }
 
             .supervisor-report-mobile-list {
-                display: grid;
-                gap: 0.9rem;
-                padding: 0.95rem;
-                background: #f8fafc;
+                display: grid !important;
+                gap: 0.85rem !important;
+                padding: 0.9rem !important;
+                background: linear-gradient(180deg, #fbfdfb 0%, #ffffff 100%) !important;
             }
 
             .supervisor-report-mobile-card {
-                border: 1px solid rgba(42, 64, 40, 0.12);
-                border-radius: 18px;
-                background: #ffffff;
-                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
-                padding: 1rem;
-                overflow: hidden;
+                border: 1px solid rgba(42, 64, 40, 0.12) !important;
+                border-radius: 18px !important;
+                background: #ffffff !important;
+                box-shadow: 0 9px 23px rgba(15, 23, 42, 0.05) !important;
+                padding: 0.95rem !important;
+                overflow: hidden !important;
             }
 
             .report-mobile-card-top {
-                display: flex;
-                align-items: flex-start;
-                justify-content: space-between;
-                gap: 0.8rem;
-                padding-bottom: 0.8rem;
-                margin-bottom: 0.9rem;
-                border-bottom: 1px solid rgba(42, 64, 40, 0.08);
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: space-between !important;
+                gap: 0.75rem !important;
+                padding-bottom: 0.75rem !important;
+                margin-bottom: 0.8rem !important;
+                border-bottom: 1px solid rgba(42, 64, 40, 0.08) !important;
             }
 
             .report-mobile-card-top > div {
-                display: grid;
-                gap: 0.12rem;
-                min-width: 0;
+                display: grid !important;
+                gap: 0.12rem !important;
+                min-width: 0 !important;
             }
 
             .report-mobile-label,
             .report-mobile-detail span {
-                color: #64748b;
-                font-size: 0.64rem;
-                font-weight: 900;
-                line-height: 1.2;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
+                display: block !important;
+                color: #64748b !important;
+                font-size: 0.63rem !important;
+                font-weight: 900 !important;
+                line-height: 1.2 !important;
+                letter-spacing: 0.075em !important;
+                text-transform: uppercase !important;
             }
 
             .report-mobile-card-top strong {
-                color: #111827;
-                font-size: 0.98rem;
-                font-weight: 900;
-                line-height: 1.2;
+                color: #111827 !important;
+                font-size: 0.96rem !important;
+                font-weight: 900 !important;
+                line-height: 1.2 !important;
             }
 
             .report-mobile-card-top small,
             .report-mobile-detail small {
-                color: #64748b;
-                font-size: 0.76rem;
-                line-height: 1.25;
+                color: #64748b !important;
+                font-size: 0.74rem !important;
+                line-height: 1.25 !important;
             }
 
-            .report-mobile-card-top .status-pill {
-                flex-shrink: 0;
-                max-width: 132px;
-                text-align: center;
-                white-space: normal;
-                line-height: 1.15;
-                padding: 0.42rem 0.68rem;
-                border-radius: 999px;
-                font-size: 0.67rem;
+            .report-mobile-card-top .status-pill,
+            .report-mobile-card-top [class*="status-pill"] {
+                flex-shrink: 0 !important;
+                max-width: 126px !important;
+                text-align: center !important;
+                white-space: normal !important;
+                line-height: 1.15 !important;
+                padding: 0.42rem 0.66rem !important;
+                border-radius: 999px !important;
+                font-size: 0.66rem !important;
             }
 
             .report-mobile-title {
-                color: #172033;
-                font-family: var(--font-brand, 'Syne', sans-serif);
-                font-size: 1rem;
-                font-weight: 800;
-                line-height: 1.28;
-                margin-bottom: 0.9rem;
+                margin: 0 0 0.85rem !important;
+                color: #172033 !important;
+                font-family: var(--font-brand, 'Syne', sans-serif) !important;
+                font-size: 1rem !important;
+                font-weight: 800 !important;
+                line-height: 1.28 !important;
+                word-break: normal !important;
+                overflow-wrap: anywhere !important;
             }
 
             .report-mobile-detail-grid {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 0.7rem;
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.65rem !important;
             }
 
             .report-mobile-detail {
-                display: grid;
-                gap: 0.22rem;
-                padding: 0.78rem 0.85rem;
-                border: 1px solid rgba(42, 64, 40, 0.08);
-                border-radius: 14px;
-                background: #fbfdfb;
-                min-width: 0;
+                display: grid !important;
+                gap: 0.22rem !important;
+                min-width: 0 !important;
+                padding: 0.76rem 0.82rem !important;
+                border: 1px solid rgba(42, 64, 40, 0.08) !important;
+                border-radius: 14px !important;
+                background: #fbfdfb !important;
             }
 
             .report-mobile-detail strong {
-                color: #111827;
-                font-size: 0.88rem;
-                font-weight: 800;
-                line-height: 1.35;
-                word-break: normal;
-                overflow-wrap: anywhere;
+                color: #111827 !important;
+                font-size: 0.86rem !important;
+                font-weight: 800 !important;
+                line-height: 1.35 !important;
+                word-break: normal !important;
+                overflow-wrap: anywhere !important;
             }
 
             .report-mobile-person {
-                display: flex;
-                align-items: center;
-                gap: 0.55rem;
-                min-width: 0;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.55rem !important;
+                min-width: 0 !important;
             }
 
             .report-mobile-person .avatar-img {
-                flex: 0 0 32px;
+                flex: 0 0 32px !important;
+                width: 32px !important;
+                height: 32px !important;
             }
 
             .report-mobile-person > div:last-child {
-                display: grid;
-                gap: 0.08rem;
-                min-width: 0;
+                display: grid !important;
+                gap: 0.08rem !important;
+                min-width: 0 !important;
             }
 
             .report-mobile-actions {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) auto;
-                gap: 0.6rem;
-                margin-top: 0.95rem;
-                padding-top: 0.85rem;
-                border-top: 1px solid rgba(42, 64, 40, 0.08);
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) 78px !important;
+                gap: 0.6rem !important;
+                margin-top: 0.9rem !important;
+                padding-top: 0.82rem !important;
+                border-top: 1px solid rgba(42, 64, 40, 0.08) !important;
             }
 
             .report-mobile-action-btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.45rem;
-                min-height: 42px;
-                border-radius: 12px;
-                border: 1px solid rgba(42, 64, 40, 0.16);
-                background: #2a4028;
-                color: #ffffff;
-                font-size: 0.82rem;
-                font-weight: 800;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.42rem !important;
+                min-height: 42px !important;
+                border-radius: 12px !important;
+                border: 1px solid rgba(42, 64, 40, 0.16) !important;
+                background: #2a4028 !important;
+                color: #ffffff !important;
+                font-size: 0.8rem !important;
+                font-weight: 800 !important;
+                text-decoration: none !important;
             }
 
             .report-mobile-action-btn:hover,
             .report-mobile-action-btn:focus {
-                background: #365233;
-                color: #ffffff;
+                background: #365233 !important;
+                color: #ffffff !important;
             }
 
             .report-mobile-action-secondary {
-                min-width: 76px;
-                background: #f8fafc;
-                color: #2a4028;
+                min-width: 78px !important;
+                background: #f8fafc !important;
+                color: #2a4028 !important;
             }
 
             .report-mobile-action-secondary:hover,
             .report-mobile-action-secondary:focus {
-                background: #e8efe0;
-                color: #2a4028;
+                background: #e8efe0 !important;
+                color: #2a4028 !important;
             }
 
             .supervisor-report-empty {
-                display: grid;
-                place-items: center;
-                gap: 0.5rem;
-                min-height: 150px;
-                color: #64748b;
-                border: 1px dashed rgba(42, 64, 40, 0.16);
-                border-radius: 16px;
-                background: #ffffff;
-                text-align: center;
-                font-size: 0.9rem;
+                display: grid !important;
+                place-items: center !important;
+                gap: 0.5rem !important;
+                min-height: 150px !important;
+                padding: 1.5rem !important;
+                color: #64748b !important;
+                border: 1px dashed rgba(42, 64, 40, 0.16) !important;
+                border-radius: 16px !important;
+                background: #ffffff !important;
+                text-align: center !important;
+                font-size: 0.9rem !important;
             }
 
             .supervisor-report-empty i {
-                font-size: 1.7rem;
-                color: #94a3b8;
+                font-size: 1.7rem !important;
+                color: #94a3b8 !important;
             }
 
             .main-report-card > .bg-light.border-top {
-                padding: 0.9rem !important;
+                padding: 0.85rem !important;
                 background: #ffffff !important;
+            }
+
+            .main-report-card .pagination {
+                margin: 0.5rem 0 0 !important;
+            }
+
+            .report-details-modal .modal-dialog,
+            .cms-modal .modal-dialog {
+                margin: 0.5rem !important;
+            }
+
+            .report-details-modal .modal-content,
+            .cms-modal .modal-content {
+                border-radius: 18px !important;
+            }
+
+            .report-details-modal .modal-body,
+            .cms-modal .modal-body {
+                max-height: calc(100vh - 150px) !important;
+                overflow-y: auto !important;
+                padding: 1rem !important;
+            }
+
+            .report-detail-card,
+            .report-detail-sidebar {
+                padding: 1rem !important;
+                border-radius: 15px !important;
             }
         }
 
         @media (max-width: 390px) {
             .supervisor-report-mobile-card {
-                padding: 0.9rem;
+                padding: 0.85rem !important;
             }
 
             .report-mobile-actions {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
             }
 
             .report-mobile-action-secondary {
-                width: 100%;
+                width: 100% !important;
             }
         }
 
+
+        /* Image Lightbox */
+        .image-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .image-lightbox.is-open {
+            display: flex;
+        }
+
+        .image-lightbox img {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .image-lightbox-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .image-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 @endpush
 
@@ -890,7 +988,7 @@
                                     if (!$path) {
                                         return null;
                                     }
-                                    return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                                    return asset('storage/' . ltrim($path, '/'));
                                 })
                                 ->filter()
                                 ->values();
@@ -978,9 +1076,9 @@
                                                     @else
                                                         <div class="d-flex flex-wrap gap-2 mb-4">
                                                             @foreach($siteImageUrls->take(4) as $imageUrl)
-                                                                <a href="{{ $imageUrl }}" target="_blank" rel="noopener" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                                <button type="button" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
                                                                     <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                                </a>
+                                                                </button>
                                                             @endforeach
                                                             @if($siteImageUrls->count() > 4)
                                                                 <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ $siteImageUrls->count() - 4 }} more</div>
@@ -1164,7 +1262,7 @@
                             <select name="phase_id" id="modal_phase_id" class="form-select cms-form-control" required>
                                 <option value="" selected disabled>{{ $projectPhases->isEmpty() ? 'Select project first...' : 'Select construction phase...' }}</option>
                                 @foreach($projectPhases as $phase)
-                                    <option value="{{ $phase->phase_id }}">{{ $phase->phase_name }}</option>
+                                    <option value="{{ $phase->phase_id }}" data-completion-percentage="{{ $phase->completion_percentage ?? 0 }}">{{ $phase->phase_name }}</option>
                                 @endforeach
                             </select>
                             @if($projectPhases->isEmpty())
@@ -1178,6 +1276,29 @@
                         <div class="col-12 col-md-6 cms-form-group">
                             <label for="modal_report_text" class="cms-form-label">Accomplishment Summary <span class="text-danger">*</span></label>
                             <textarea name="report_text" id="modal_report_text" rows="4" class="cms-form-control" placeholder="Enter the accomplishment report text for this project and phase." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="cms-form-section-header">Progress Context</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                                <div class="fw-semibold text-muted mb-1">Current Phase Progress</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold text-dark" id="currentPhaseProgressDisplay">0%</span>
+                                    <span class="text-muted small" id="currentPhaseProgressContext">Select a phase to view current progress.</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px; background-color: #e5e7eb; border-radius: 999px;">
+                                    <div class="progress-bar" id="currentPhaseProgressBar" style="width: 0%; background: linear-gradient(90deg, #4DA078, #82DB72);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                                <label for="modal_accomplishment_percentage" class="cms-form-label">Supervisor Suggested Progress (%) <span class="text-danger">*</span></label>
+                                <input type="number" name="accomplishment_percentage" id="modal_accomplishment_percentage" class="cms-form-control" min="0" max="100" step="0.01" placeholder="e.g. 45" required data-current-progress="">
+                                <div class="text-muted small mt-1">Adjust based on work accomplished since the last report.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -1207,6 +1328,13 @@
         </div>
     </div>
 </div>
+
+{{-- Image Lightbox Modal --}}
+<div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+    <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
+    <img src="" alt="Site image preview" id="lightboxImage">
+</div>
+
 @endsection
 
 @push('scripts')
@@ -1244,15 +1372,18 @@
             if (!phases || phases.length === 0) {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
+                updateCurrentPhaseProgress(null);
                 return;
             }
             phases.forEach(phase => {
                 const option = document.createElement('option');
                 option.value = phase.phase_id;
                 option.textContent = phase.phase_name;
+                option.dataset.completionPercentage = phase.completion_percentage ?? 0;
                 modalPhaseSelect.appendChild(option);
             });
             enablePhaseSelect();
+            updateCurrentPhaseProgress(phases[0] ?? null);
         }
 
         function loadProjectPhases(projectId) {
@@ -1292,6 +1423,34 @@
             } else {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
+                updateCurrentPhaseProgress(null);
+            }
+        }
+
+        function updateCurrentPhaseProgress(phase) {
+            const progressDisplay = document.getElementById('currentPhaseProgressDisplay');
+            const progressContext = document.getElementById('currentPhaseProgressContext');
+            const progressBar = document.getElementById('currentPhaseProgressBar');
+            const suggestedInput = document.getElementById('modal_accomplishment_percentage');
+
+            if (!phase || !phase.completion_percentage) {
+                if (progressDisplay) progressDisplay.textContent = '0%';
+                if (progressContext) progressContext.textContent = 'Select a phase to view current progress.';
+                if (progressBar) progressBar.style.width = '0%';
+                if (suggestedInput) {
+                    suggestedInput.value = '';
+                    suggestedInput.dataset.currentProgress = '0';
+                }
+                return;
+            }
+
+            const percentage = Math.min(100, Math.max(0, parseFloat(phase.completion_percentage) || 0)).toFixed(2);
+            if (progressDisplay) progressDisplay.textContent = percentage + '%';
+            if (progressContext) progressContext.textContent = `Current official progress for ${phase.phase_name || 'this phase'}.`;
+            if (progressBar) progressBar.style.width = percentage + '%';
+            if (suggestedInput) {
+                suggestedInput.value = percentage;
+                suggestedInput.dataset.currentProgress = percentage;
             }
         }
 
@@ -1299,11 +1458,18 @@
             modalProjectSelect.addEventListener('change', function() {
                 const projectId = this.value;
                 if (!projectId) {
-                    modalPhaseSelect.innerHTML = emptyPlaceholder;
-                    enablePhaseSelect();
+                    disablePhaseSelect();
                     return;
                 }
                 loadProjectPhases(projectId);
+            });
+        }
+
+        if (modalPhaseSelect) {
+            modalPhaseSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const completionPercentage = selectedOption?.dataset?.completionPercentage ?? 0;
+                updateCurrentPhaseProgress({ completion_percentage: completionPercentage, phase_name: selectedOption?.textContent || 'this phase' });
             });
         }
 
@@ -1447,6 +1613,30 @@
                         return;
                     }
 
+                    const suggestedProgressInput = document.getElementById('modal_accomplishment_percentage');
+                    const currentProgress = parseFloat(suggestedProgressInput?.dataset?.currentProgress ?? suggestedProgressInput?.value ?? 0);
+                    const suggestedProgress = parseFloat(suggestedProgressInput?.value ?? 0);
+
+                    if (isNaN(currentProgress) || isNaN(suggestedProgress)) {
+                        Swal.fire({
+                            title: 'Invalid Progress',
+                            text: 'Please enter a valid progress percentage.',
+                            icon: 'warning',
+                            confirmButtonColor: '#166534',
+                        });
+                        return;
+                    }
+
+                    if (suggestedProgress < currentProgress) {
+                        Swal.fire({
+                            title: 'Progress Cannot Downgrade',
+                            text: `Supervisor Suggested Progress cannot be less than the current phase progress (${currentProgress}%). Please enter a value equal to or greater than ${currentProgress}%.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#166534',
+                        });
+                        return;
+                    }
+
                     const formData = new FormData(createReportForm);
                     Swal.fire({
                         title: 'Submitting report...',
@@ -1509,6 +1699,50 @@
                 });
             });
         }
+
+        // Image lightbox for report details modal
+        const lightbox = document.getElementById('reportImageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+
+        function openLightbox(imageUrl) {
+            if (!lightbox || !lightboxImage) return;
+            lightboxImage.src = imageUrl;
+            lightbox.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            if (!lightbox) return;
+            lightbox.classList.remove('is-open');
+            document.body.style.overflow = '';
+            if (lightboxImage) {
+                setTimeout(() => { lightboxImage.src = ''; }, 200);
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const trigger = e.target.closest('.lightbox-trigger');
+            if (trigger) {
+                const fullImage = trigger.dataset.fullImage || trigger.querySelector('img')?.src;
+                if (fullImage) {
+                    openLightbox(fullImage);
+                }
+            }
+        });
+
+        lightboxCloseBtn?.addEventListener('click', closeLightbox);
+        lightbox?.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
+                closeLightbox();
+            }
+        });
     });
 </script>
 @endpush

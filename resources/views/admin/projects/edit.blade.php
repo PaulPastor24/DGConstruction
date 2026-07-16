@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Project Timeline</h6>
+                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Project Milestones</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-2">

@@ -300,9 +300,7 @@
         @include('partials.supervisor.topbar')
         <main class="content-shell">
             <div class="page-frame">
-                <div id="silentReloadContent">
-                    @yield('content')
-                </div>
+                @yield('content')
             </div>
         </main>
     </div>
@@ -322,11 +320,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const logoutButtonTopbar = document.getElementById('logoutButtonTopbar');
     const logoutFormTopbar = document.getElementById('logout-form-topbar');
-
-    const SILENT_RELOAD_INTERVAL = 15000; // 15 seconds
-    const CONTENT_SELECTOR = '#silentReloadContent';
-
-    let isSilentReloading = false;
 
     function updateToggleVisibility() {
         if (window.innerWidth <= 1024) {
@@ -368,149 +361,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleProfileMenu() {
         profileMenu?.classList.toggle('show');
-    }
-
-    function initializeBootstrapComponents(root = document) {
-        if (!window.bootstrap) {
-            return;
-        }
-
-        root.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (element) {
-            if (!bootstrap.Popover.getInstance(element)) {
-                new bootstrap.Popover(element);
-            }
-        });
-
-        root.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
-            if (!bootstrap.Tooltip.getInstance(element)) {
-                new bootstrap.Tooltip(element);
-            }
-        });
-    }
-
-    function captureInitialFormValues(root = document) {
-        root.querySelectorAll('input, textarea, select').forEach(function (field) {
-            if (field.type === 'checkbox' || field.type === 'radio') {
-                field.dataset.initialChecked = field.checked ? '1' : '0';
-            } else {
-                field.dataset.initialValue = field.value ?? '';
-            }
-        });
-    }
-
-    function userIsTyping() {
-        const active = document.activeElement;
-
-        if (!active) {
-            return false;
-        }
-
-        return (
-            active.tagName === 'INPUT' ||
-            active.tagName === 'TEXTAREA' ||
-            active.tagName === 'SELECT' ||
-            active.isContentEditable
-        );
-    }
-
-    function modalIsOpen() {
-        return document.querySelector('.modal.show') !== null;
-    }
-
-    function hasDirtyFormInput() {
-        const fields = document.querySelectorAll('input, textarea, select');
-
-        for (const field of fields) {
-            if (
-                field.type === 'hidden' ||
-                field.type === 'submit' ||
-                field.type === 'button' ||
-                field.type === 'reset'
-            ) {
-                continue;
-            }
-
-            if (field.type === 'checkbox' || field.type === 'radio') {
-                const initialChecked = field.dataset.initialChecked ?? (field.defaultChecked ? '1' : '0');
-                const currentChecked = field.checked ? '1' : '0';
-
-                if (initialChecked !== currentChecked) {
-                    return true;
-                }
-            } else {
-                const initialValue = field.dataset.initialValue ?? field.defaultValue ?? '';
-                const currentValue = field.value ?? '';
-
-                if (initialValue !== currentValue) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    async function silentReloadContent() {
-        const currentContent = document.querySelector(CONTENT_SELECTOR);
-
-        if (!currentContent) {
-            return;
-        }
-
-        if (
-            isSilentReloading ||
-            document.hidden ||
-            userIsTyping() ||
-            modalIsOpen() ||
-            hasDirtyFormInput()
-        ) {
-            return;
-        }
-
-        try {
-            isSilentReloading = true;
-
-            const currentScrollY = window.scrollY;
-
-            const response = await fetch(window.location.href, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-Silent-Reload': 'true'
-                },
-                cache: 'no-store',
-                credentials: 'same-origin'
-            });
-
-            if (!response.ok) {
-                return;
-            }
-
-            const html = await response.text();
-            const parser = new DOMParser();
-            const newDocument = parser.parseFromString(html, 'text/html');
-            const newContent = newDocument.querySelector(CONTENT_SELECTOR);
-
-            if (!newContent) {
-                return;
-            }
-
-            currentContent.innerHTML = newContent.innerHTML;
-
-            captureInitialFormValues(currentContent);
-            initializeBootstrapComponents(currentContent);
-
-            window.scrollTo({
-                top: currentScrollY,
-                behavior: 'instant'
-            });
-
-            document.dispatchEvent(new CustomEvent('silentReloadComplete'));
-        } catch (error) {
-            console.warn('Silent reload skipped:', error);
-        } finally {
-            isSilentReloading = false;
-        }
     }
 
     updateToggleVisibility();
@@ -572,14 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-
-    initializeBootstrapComponents();
-    captureInitialFormValues();
-
-    setInterval(silentReloadContent, SILENT_RELOAD_INTERVAL);
 });
 </script>
 @stack('scripts')
 </body>
 </html>
-

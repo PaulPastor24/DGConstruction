@@ -1,6 +1,7 @@
 @extends('layouts.client')
 
 @section('title', 'Client Reports')
+@section('mobileTitle', 'Reports')
 
 @section('content')
 <div class="container-fluid p-0 client-reports-page">

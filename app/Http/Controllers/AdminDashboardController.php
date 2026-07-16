@@ -706,7 +706,7 @@ class AdminDashboardController extends Controller
                     'approval_remarks' => $report->approval_remarks,
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                    'completion_percentage' => round((float) optional($report->phase)->completion_percentage ?? 0, 2),
+                    'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                     'site_images' => array_values(array_filter(array_map(function ($image) {
                         return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                     }, (array) ($report->site_images ?? [])))),
@@ -783,7 +783,7 @@ class AdminDashboardController extends Controller
                 'approval_remarks' => $report->approval_remarks,
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                'completion_percentage' => round((float) optional($report->phase)->completion_percentage ?? 0, 2),
+                'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),

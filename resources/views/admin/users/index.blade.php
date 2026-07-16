@@ -648,7 +648,7 @@
         <div class="card-body p-3">
             <form id="filterForm" method="GET" action="{{ route('admin.users.index') }}">
                 <div class="row g-2 align-items-center">
-                    <div class="col-md-5 position-relative">
+                    <div class="col-md-4 position-relative">
                         <div class="input-group">
                             <span class="input-group-text bg-transparent border-end-0 text-muted">
                                 <i class="bi bi-search"></i>
@@ -662,7 +662,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <select name="role" id="roleFilter" class="form-select text-muted">
                             <option value="">All Roles</option>
                             <option value="engineer" {{ request('role') == 'engineer' ? 'selected' : '' }}>Engineer/Administrator</option>
@@ -686,6 +686,17 @@
                             <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 rows</option>
                             <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 rows</option>
                         </select>
+                    </div>
+
+                    <div class="col-md-auto ms-auto ps-3">
+                        <button type="button"
+                                class="btn btn-success d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
+                                style="background-color: var(--ug-accent) !important; border-color: var(--ug-accent) !important; white-space: nowrap;"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addUserModal">
+                            <i class="bi bi-person-plus-fill"></i>
+                            <span>Add New User</span>
+                        </button>
                     </div>
                 </div>
             </form>

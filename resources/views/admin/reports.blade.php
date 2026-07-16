@@ -912,6 +912,363 @@
         display: block;
     }
 
+    /* Report Details Modal */
+    #reportDetailsModal .modal-content {
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 32px 100px rgba(15, 32, 21, 0.12);
+        overflow: hidden;
+    }
+    #reportDetailsModal .modal-header {
+        background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%);
+        border-bottom: 2px solid var(--cms-green-dark);
+        padding: 1.5rem;
+    }
+    #reportDetailsModal .modal-body {
+        background: #ffffff;
+        padding: 1.75rem;
+    }
+    #reportDetailsModal .report-details-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+    #reportDetailsModal .modal-dialog {
+        max-width: 1100px;
+    }
+    #reportDetailsModal .modal-xl {
+        max-width: 1100px;
+    }
+
+    /* Enhanced Modal Cards */
+    .modal-detail-card {
+        background: #ffffff;
+        border: 1px solid #e8f0eb;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 30px rgba(15, 32, 21, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .modal-detail-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 36px rgba(15, 32, 21, 0.08);
+    }
+
+    .modal-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.85rem;
+    }
+    .modal-info-item {
+        background: linear-gradient(135deg, #f8faf9 0%, #f1f7f3 100%);
+        border: 1px solid #e8f0eb;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        transition: all 0.2s ease;
+    }
+    .modal-info-item:hover {
+        border-color: #c8dccf;
+        background: linear-gradient(135deg, #f1f7f3 0%, #e8f0eb 100%);
+    }
+    .modal-info-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #6b7c72;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.35rem;
+    }
+    .modal-info-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a2e23;
+        word-break: break-word;
+    }
+
+    .modal-section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--cms-green-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .modal-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #e8f0eb, transparent);
+    }
+
+    .modal-accomplishment-box {
+        background: linear-gradient(135deg, #f8fdf9 0%, #f1f7f3 100%);
+        border: 1px solid #d4e5d8;
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .modal-accomplishment-box::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #4DA078, #82DB72);
+        border-radius: 14px 0 0 14px;
+    }
+
+    .modal-sidebar-card {
+        background: #ffffff;
+        border: 1px solid #e8f0eb;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 6px 24px rgba(15, 32, 21, 0.05);
+    }
+
+    .modal-progress-card {
+        background: linear-gradient(135deg, #f8faf9 0%, #f1f7f3 100%);
+        border: 1px solid #e8f0eb;
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+    }
+    .modal-progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.6rem;
+    }
+    .modal-progress-title {
+        font-weight: 700;
+        color: #1a2e23;
+        font-size: 0.9rem;
+    }
+    .modal-progress-pct {
+        font-weight: 800;
+        color: var(--cms-green-dark);
+        font-size: 1.1rem;
+    }
+
+    .modal-image-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.6rem;
+    }
+    .modal-image-thumb {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid #e8f0eb;
+        background: #f8faf9;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .modal-image-thumb:hover {
+        border-color: #4DA078;
+        transform: scale(1.03);
+        box-shadow: 0 8px 20px rgba(15, 32, 21, 0.1);
+    }
+    .modal-image-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .modal-more-badge {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #6b7280;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    .modal-more-badge:hover {
+        background: #e8f0eb;
+        border-color: #4DA078;
+        color: var(--cms-green-dark);
+    }
+
+    .modal-timeline {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        position: relative;
+        padding: 0 0.25rem;
+        margin-top: 0.5rem;
+    }
+    .modal-timeline::before {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: 12%;
+        right: 12%;
+        height: 3px;
+        background: #d4e5d8;
+        border-radius: 999px;
+        z-index: 1;
+    }
+    .modal-timeline-step {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        min-width: 0;
+    }
+    .modal-timeline-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 3px solid #d4e5d8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        transition: all 0.3s ease;
+    }
+    .modal-timeline-step.active .modal-timeline-icon {
+        border-color: #4DA078;
+        background: linear-gradient(135deg, #4DA078, #82DB72);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(77, 160, 120, 0.3);
+    }
+    .modal-timeline-step.current .modal-timeline-icon {
+        border-color: #f59e0b;
+        background: #fff;
+        color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+    }
+    .modal-timeline-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .modal-timeline-step.active .modal-timeline-label {
+        color: var(--cms-green-dark);
+    }
+
+    .modal-action-row {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        padding-top: 1.25rem;
+        margin-top: 1.25rem;
+        border-top: 1px solid #e8f0eb;
+    }
+    .btn-modal {
+        padding: 0.65rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .btn-modal-approve {
+        background: linear-gradient(135deg, #4DA078, #2a8a5e);
+        color: #ffffff;
+        box-shadow: 0 6px 20px rgba(42, 138, 94, 0.25);
+    }
+    .btn-modal-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(42, 138, 94, 0.35);
+        background: linear-gradient(135deg, #3d8f68, #227a4f);
+    }
+    .btn-modal-reject {
+        background: #ffffff;
+        color: #b23a3a;
+        border: 1px solid #f5c2c7;
+        box-shadow: 0 4px 12px rgba(15, 32, 21, 0.05);
+    }
+    .btn-modal-reject:hover {
+        background: #fff5f5;
+        border-color: #ee4d4d;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(178, 58, 58, 0.12);
+    }
+    .btn-modal-download {
+        background: #ffffff;
+        color: var(--cms-green-dark);
+        border: 1px solid #d4e5d8;
+        box-shadow: 0 4px 12px rgba(15, 32, 21, 0.05);
+    }
+    .btn-modal-download:hover {
+        background: #f8fdf9;
+        border-color: #4DA078;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(77, 160, 120, 0.12);
+    }
+
+    .modal-status-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1rem;
+        background: #f8faf9;
+        border: 1px solid #e8f0eb;
+        border-radius: 12px;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-top: 1rem;
+    }
+    .modal-status-note i {
+        color: var(--cms-green-dark);
+        font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .modal-info-grid {
+            grid-template-columns: 1fr;
+        }
+        .modal-image-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .modal-timeline {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .modal-timeline::before {
+            display: none;
+        }
+        .modal-timeline-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-align: left;
+        }
+        .modal-timeline-icon {
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .modal-action-row {
+            flex-direction: column;
+        }
+        .btn-modal {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
     /* Responsive scaling fixes */
     @media (max-width: 1400px) {
         .workspace-layout {
@@ -1565,6 +1922,50 @@
         }
     }
 
+    /* Image Lightbox */
+    .image-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .image-lightbox.is-open {
+        display: flex;
+    }
+
+    .image-lightbox img {
+        max-width: 90%;
+        max-height: 85vh;
+        border-radius: 8px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .image-lightbox-close {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+
+    .image-lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
 </style>
 @endpush
 
@@ -1743,113 +2144,198 @@
         <!-- /.table-container-card -->
         </div>
         <!-- /.workspace-left-col -->
+    </div>
+    <!-- /.workspace-layout -->
 
-        <!-- Right Side: Sticky Report Details Context Sidebar Pane -->
-        <div class="details-sidebar-card" id="detailsSidebarCard" aria-hidden="true">
-            <div id="report-details-panel" class="report-details-panel">
-                @if($reports->isNotEmpty())
-                    @php $selectedReport = $reports->first(); @endphp
-                        <div class="sidebar-header">
-                        <div>
-                            <p class="sidebar-label">Report Details</p>
-                            <h2 class="sidebar-title">{{ $selectedReport->report_title }}</h2>
-                        </div>
-                        <button class="btn-close-sidebar" type="button"><i class="bi bi-x-lg"></i></button>
-                    </div>
-
-                    <div class="sidebar-meta-block">
-                        <div class="report-id-row">
-                            <span class="report-id-text">{{ $selectedReport->report_id }}</span>
-                            <span class="status-pill {{ $selectedReport->status_badge_class }}">{{ $selectedReport->status_label }}</span>
-                        </div>
-
-                        <div class="prop-list">
-                            <div class="prop-row">
-                                <span class="prop-label">Project</span>
-                                <span class="prop-val">{{ optional($selectedReport->project)->project_name ?? 'Unassigned Project' }}</span>
-                            </div>
-                            <div class="prop-row">
-                                <span class="prop-label">Construction Phase</span>
-                                <span class="prop-val">{{ optional($selectedReport->phase)->phase_name ?? 'Unassigned Phase' }}</span>
-                            </div>
-                            <div class="prop-row">
-                                <span class="prop-label">Supervisor</span>
-                                <span class="prop-val">{{ optional($selectedReport->submittedBy)->name ?? 'Unassigned Supervisor' }}</span>
-                            </div>
-                            <div class="prop-row">
-                                <span class="prop-label">Date Submitted</span>
-                                <span class="prop-val">{{ optional($selectedReport->report_date)->format('M d, Y') ?? $selectedReport->created_at->format('M d, Y') }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-section-divider"></div>
-
+    <!-- Report Details Modal -->
+    <div class="modal fade" id="reportDetailsModal" tabindex="-1" aria-labelledby="reportDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%); border-bottom: 2px solid var(--cms-green-dark);">
                     <div>
-                        <h4 class="section-subtitle">Work Summary</h4>
-                        <p class="cell-muted" style="margin-bottom:0.25rem; font-weight:600;">Accomplishments</p>
-                        <p class="section-p">{{ 
-                            \Illuminate\Support\Str::limit(strip_tags($selectedReport->report_text), 280) ?: 'No work summary provided.'
-                        }}</p>
-                        <p class="cell-muted" style="margin-bottom:0.25rem; font-weight:600;">Approval Remarks</p>
-                        <p class="section-p">{{ $selectedReport->approval_remarks ?: 'No remarks yet.' }}</p>
+                        <h5 class="modal-title fw-bold" id="reportDetailsModalLabel" style="color: var(--cms-green-dark);">Report Details</h5>
+                        <p class="text-muted small mb-0">Review report information and approve progress.</p>
                     </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div id="report-details-panel" class="report-details-panel">
+                        @if($reports->isNotEmpty())
+                            @php $selectedReport = $reports->first(); @endphp
+                            @php
+                                $reportStatus = $selectedReport->approval_status ?? 'pending';
+                                $reportStatusLabel = $selectedReport->status_label ?? 'Pending Review';
+                                $reportStatusClass = $selectedReport->status_badge_class ?? 'pending';
+                                $reportId = 'RPT-2026-' . str_pad($selectedReport->report_id, 4, '0', STR_PAD_LEFT);
+                                $completionPercentage = round((float) ($selectedReport->accomplishment_percentage ?? optional($selectedReport->phase)->completion_percentage ?? 0), 2);
+                            @endphp
+                            <div class="row gx-4 gy-4">
+                                <div class="col-12 col-xl-7">
+                                    <div class="modal-detail-card">
+                                        <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #ffffff; border: 1px solid #e8f0eb;">
+                                            <div>
+                                                <div class="modal-section-title mb-1" style="margin-top:0; border:none; padding-bottom:0;">Report ID</div>
+                                                <div class="fw-bold text-dark" style="font-size: 1.15rem; color: var(--cms-green-dark);">{{ $reportId }}</div>
+                                            </div>
+                                            <div class="text-sm-end">
+                                                <div class="modal-section-title mb-1" style="margin-top:0; border:none; padding-bottom:0;">Approval Status</div>
+                                                <span class="status-pill {{ $reportStatusClass }} p-2 mt-1 d-inline-block">{{ $reportStatusLabel }}</span>
+                                            </div>
+                                        </div>
 
-                    <div class="sidebar-section-divider"></div>
+                                        <div class="modal-section-title">Project Information</div>
+                                        <div class="modal-info-grid mb-4">
+                                            <div class="modal-info-item">
+                                                <div class="modal-info-label">Project</div>
+                                                <div class="modal-info-value">{{ optional($selectedReport->project)->project_name ?? 'N/A' }}</div>
+                                            </div>
+                                            <div class="modal-info-item">
+                                                <div class="modal-info-label">Construction Phase</div>
+                                                <div class="modal-info-value">{{ optional($selectedReport->phase)->phase_name ?? 'N/A' }}</div>
+                                            </div>
+                                            <div class="modal-info-item">
+                                                <div class="modal-info-label">Report Date</div>
+                                                <div class="modal-info-value">{{ optional($selectedReport->report_date)->format('M d, Y') ?? $selectedReport->created_at->format('M d, Y') }}</div>
+                                            </div>
+                                            <div class="modal-info-item">
+                                                <div class="modal-info-label">Submitted By</div>
+                                                <div class="modal-info-value">{{ optional($selectedReport->submittedBy)->name ?? 'Supervisor' }}</div>
+                                            </div>
+                                        </div>
 
-                    <div>
-                        <h4 class="section-subtitle">Progress</h4>
-                        <span class="cell-muted">Completion Percentage</span>
-                        <div class="progress-metric-container">
-                            <div class="progress-bar-track">
-                                <div class="progress-bar-fill" style="width: {{ optional($selectedReport->phase)->completion_percentage ?? 0 }}%;"></div>
-                            </div>
-                            <span class="progress-pct-label">{{ optional($selectedReport->phase)->completion_percentage ?? 0 }}%</span>
-                        </div>
-                    </div>
+                                        <div class="modal-section-title">Construction Accomplishment</div>
+                                        <div class="modal-accomplishment-box mb-4">
+                                            <p class="mb-0 text-dark small" style="white-space: pre-line; line-height: 1.7;">{{ $selectedReport->report_text ?? 'No description logs reported.' }}</p>
+                                        </div>
 
-                    <div class="sidebar-section-divider"></div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-12 col-md-6">
+                                                <div class="modal-info-item">
+                                                    <div class="modal-info-label">Reviewed By</div>
+                                                    <div class="modal-info-value">{{ optional($selectedReport->reviewedBy)->name ?? 'Pending review' }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <div class="modal-info-item">
+                                                    <div class="modal-info-label">Approved By</div>
+                                                    <div class="modal-info-value">{{ optional($selectedReport->approvedBy)->name ?? 'Pending approval' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                    <div>
-                        <h4 class="section-subtitle">Attachments ({{ count((array) ($selectedReport->site_images ?? [])) }})</h4>
-                        @php $images = (array) ($selectedReport->site_images ?? []); @endphp
-                        @if(!empty($images))
-                            <div class="attachment-thumbnail-grid">
-                                @foreach(array_slice($images, 0, 4) as $image)
-                                    <div class="img-thumb-container">
-                                        <img class="previewable-image" src="{{ is_string($image) ? asset('storage/' . ltrim($image, '/')) : '' }}" alt="Evidence attachment">
+                                        <div class="modal-info-item" style="background: #ffffff;">
+                                            <div class="modal-info-label">Approval Remarks</div>
+                                            <div class="modal-info-value">{{ $selectedReport->approval_remarks ?? 'No remarks' }}</div>
+                                        </div>
                                     </div>
-                                @endforeach
+                                </div>
+
+                                <div class="col-12 col-xl-5">
+                                    <div class="modal-sidebar-card mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="fw-bold" style="color: var(--cms-green-dark); font-size: 0.9rem;">Site Images</div>
+                                            <div class="small text-muted">{{ count((array) ($selectedReport->site_images ?? [])) }} uploaded</div>
+                                        </div>
+                                        @php $images = (array) ($selectedReport->site_images ?? []); @endphp
+                                        @if(!empty($images))
+                                            <div class="modal-image-grid mb-3">
+                                                @foreach(array_slice($images, 0, 4) as $image)
+                                                    @php $imageUrl = is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : ''; @endphp
+                                                    @if($imageUrl)
+                                                        <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
+                                                            <img src="{{ $imageUrl }}" alt="Site image">
+                                                        </button>
+                                                    @endif
+                                                @endforeach
+                                                @if(count($images) > 4)
+                                                    <div class="modal-more-badge">+{{ count($images) - 4 }}</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="text-muted small border rounded-3 p-3 mb-3" style="background: #f8faf9;">No site images were attached to this report.</div>
+                                        @endif
+
+                                        <div class="modal-section-title">Approval Timeline</div>
+                                        <div class="modal-timeline">
+                                            <div class="modal-timeline-step active">
+                                                <div class="modal-timeline-icon"><i class="bi bi-check"></i></div>
+                                                <div class="modal-timeline-label">Submitted</div>
+                                            </div>
+                                            <div class="modal-timeline-step {{ $reportStatus !== 'pending' ? 'active' : 'current' }}">
+                                                <div class="modal-timeline-icon"><i class="bi bi-clock"></i></div>
+                                                <div class="modal-timeline-label">Under Review</div>
+                                            </div>
+                                            <div class="modal-timeline-step {{ $reportStatus === 'approved' ? 'active' : '' }}">
+                                                <div class="modal-timeline-icon"><i class="bi bi-circle"></i></div>
+                                                <div class="modal-timeline-label">Approved</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-progress-card mb-3">
+                                        <div class="modal-progress-header">
+                                            <div>
+                                                <div class="modal-progress-title">Completion Percentage</div>
+                                                <div class="text-muted small">Official phase progress</div>
+                                            </div>
+                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
+                                        </div>
+                                        <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
+                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-progress-card mb-3">
+                                        <div class="modal-progress-header">
+                                            <div>
+                                                <div class="modal-progress-title">Progress Approval</div>
+                                                <div class="text-muted small">Supervisor suggested progress</div>
+                                            </div>
+                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
+                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
+                                        </div>
+                                        @if($selectedReport->status === 'pending')
+                                            <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
+                                            <input type="number" id="adminProgressOverride" class="form-control mt-1" value="{{ $completionPercentage }}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
+                                            <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
+                                        @endif
+                                    </div>
+
+                                    @if($selectedReport->status === 'pending')
+                                        <div class="modal-action-row">
+                                            <button type="button" class="btn-modal btn-modal-reject js-reject-report" data-report-id="{{ $selectedReport->report_id }}">
+                                                <i class="bi bi-x-lg"></i> Reject
+                                            </button>
+                                            <button type="button" class="btn-modal btn-modal-approve js-approve-report" data-report-id="{{ $selectedReport->report_id }}">
+                                                <i class="bi bi-check2"></i> Approve
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div class="modal-status-note">
+                                            <i class="bi bi-info-circle"></i>
+                                            This report has already been {{ $selectedReport->status === 'approved' ? 'approved' : 'rejected' }}.
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
-                                @else
-                            <p class="section-p">No attachments uploaded.</p>
+                        @else
+                            <div class="p-4 text-center text-muted">
+                                <i class="bi bi-file-earmark-text"></i>
+                                Select a report from the table queue to preview its core properties and verification parameters.
+                            </div>
                         @endif
                     </div>
-
-                    @if($selectedReport->status === 'pending')
-                        <div class="sidebar-actions-footer">
-                            <button type="button" class="btn-reject-action js-reject-report" data-report-id="{{ $selectedReport->report_id }}">
-                                <i class="bi bi-x-lg"></i> Reject
-                            </button>
-                            <button type="button" class="btn-approve-action js-approve-report" data-report-id="{{ $selectedReport->report_id }}">
-                                <i class="bi bi-check2"></i> Approve
-                            </button>
-                        </div>
-                    @else
-                        <div class="sidebar-actions-footer sidebar-status-note">
-                            <i class="bi bi-info-circle"></i>
-                            <span>This report has already been {{ $selectedReport->status === 'approved' ? 'approved' : 'rejected' }}.</span>
-                        </div>
-                    @endif
-                @else
-                    <div class="sidebar-fallback-state">
-                        <i class="bi bi-file-earmark-text"></i>
-                        Select a report from the table queue to preview its core properties and verification parameters.
-                    </div>
-                @endif
+                </div>
             </div>
         </div>
+    </div>
 
+    {{-- Image Lightbox Modal --}}
+    <div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+        <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
+        <img src="" alt="Site image preview" id="lightboxImage">
     </div>
 
     <div id="imagePreviewOverlay" class="image-preview-overlay" data-preview-overlay>
@@ -1869,8 +2355,8 @@
             const tableBody = document.getElementById('reportsTableBody');
             const heading = document.getElementById('reportsListHeading');
             const workspaceLayout = document.getElementById('reportsWorkspaceLayout');
-            const detailsSidebarCard = document.getElementById('detailsSidebarCard');
             const detailsPanel = document.getElementById('report-details-panel');
+            const reportDetailsModal = document.getElementById('reportDetailsModal');
             const summaryValues = document.querySelectorAll('.summary-card .value');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const reportsDataUrl = '{{ route('admin.reports.data') }}';
@@ -1879,6 +2365,20 @@
             const downloadBaseUrl = reportsBaseUrl;
             let activeReportId = null;
             let debounceTimer;
+
+            function pauseModalFocusTrap() {
+                const modal = bootstrap.Modal.getInstance(reportDetailsModal);
+                if (modal && modal._focustrap) {
+                    modal._focustrap.deactivate();
+                }
+            }
+
+            function resumeModalFocusTrap() {
+                const modal = bootstrap.Modal.getInstance(reportDetailsModal);
+                if (modal && modal._focustrap) {
+                    modal._focustrap.activate();
+                }
+            }
 
             function openImagePreview(imageUrl) {
                 const overlay = document.getElementById('imagePreviewOverlay');
@@ -1894,12 +2394,31 @@
                 previewImage.src = '';
             }
 
+            function openLightbox(imageUrl) {
+                const lightbox = document.getElementById('reportImageLightbox');
+                const lightboxImage = document.getElementById('lightboxImage');
+                if (!lightbox || !lightboxImage) return;
+                lightboxImage.src = imageUrl;
+                lightbox.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeLightbox() {
+                const lightbox = document.getElementById('reportImageLightbox');
+                if (!lightbox) return;
+                lightbox.classList.remove('is-open');
+                document.body.style.overflow = '';
+                const lightboxImage = document.getElementById('lightboxImage');
+                if (lightboxImage) {
+                    setTimeout(() => { lightboxImage.src = ''; }, 200);
+                }
+            }
+
             function setDetailsPanelOpen(isOpen) {
                 workspaceLayout?.classList.toggle('is-panel-open', isOpen);
-                detailsSidebarCard?.classList.toggle('is-open', isOpen);
-                detailsSidebarCard?.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-                if (isOpen && window.innerWidth < 1200) {
-                    detailsSidebarCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (isOpen && reportDetailsModal && !reportDetailsModal.classList.contains('show')) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(reportDetailsModal);
+                    modal.show();
                 }
             }
 
@@ -1917,7 +2436,8 @@
 
             function closeDetailsPanel() {
                 activeReportId = null;
-                setDetailsPanelOpen(false);
+                const modal = bootstrap.Modal.getOrCreateInstance(reportDetailsModal);
+                modal.hide();
                 detailsPanel.innerHTML = `
                     <div class="sidebar-fallback-state">
                         <i class="bi bi-file-earmark-text"></i>
@@ -1928,16 +2448,31 @@
 
             document.body.addEventListener('click', function (event) {
                 const target = event.target;
-                if (target.matches('.previewable-image')) {
-                    openImagePreview(target.src);
+                if (target.matches('.previewable-image') || target.closest('.lightbox-trigger')) {
+                    const imageUrl = target.matches('.previewable-image') ? target.src : (target.closest('.lightbox-trigger')?.dataset?.fullImage || target.closest('.lightbox-trigger')?.querySelector('img')?.src);
+                    if (imageUrl) {
+                        openLightbox(imageUrl);
+                    }
                     return;
                 }
-                if (target.closest('.btn-close-sidebar')) {
+                if (target.closest('.btn-close') && target.closest('#reportDetailsModal')) {
                     closeDetailsPanel();
                     return;
                 }
+                if (target.matches('.image-lightbox-close') || target.matches('#reportImageLightbox')) {
+                    closeLightbox();
+                }
                 if (target.matches('.image-preview-close') || target.matches('#imagePreviewOverlay')) {
                     closeImagePreview();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const lightbox = document.getElementById('reportImageLightbox');
+                    if (lightbox?.classList.contains('is-open')) {
+                        closeLightbox();
+                    }
                 }
             });
 
@@ -1985,7 +2520,7 @@
                             if (!shouldKeepCurrentSelection) {
                                 activeReportId = null;
                                 closeDetailsPanel();
-                            } else if (detailsSidebarCard?.classList.contains('is-open')) {
+                            } else if (reportDetailsModal?.classList.contains('show')) {
                                 loadReportDetails(activeReportId);
                             }
                         } else {
@@ -2118,74 +2653,151 @@
                 const attachmentImages = Array.isArray(report.site_images) ? report.site_images.filter(Boolean) : [];
                 const attachmentCount = attachmentImages.length;
                 const attachmentMarkup = attachmentCount ? `
-                    <div class="attachment-thumbnail-grid">
+                    <div class="modal-image-grid mb-3">
                         ${attachmentImages.slice(0, 4).map(image => `
-                            <div class="img-thumb-container">
-                                <img class="previewable-image" src="${image}" alt="Evidence attachment">
-                            </div>
+                            <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="${image}" aria-label="Preview site image">
+                                <img src="${image}" alt="Site image">
+                            </button>
                         `).join('')}
+                        ${attachmentCount > 4 ? `<div class="modal-more-badge">+${attachmentCount - 4}</div>` : ''}
                     </div>
-                ` : '<p class="section-p">No attachments uploaded.</p>';
+                ` : '<div class="text-muted small border rounded-3 p-3 mb-3" style="background: #f8faf9;">No site images were attached to this report.</div>';
 
                 detailsPanel.innerHTML = `
-                    <div class="sidebar-header">
-                        <div>
-                            <p class="sidebar-label">Report Details</p>
-                            <h2 class="sidebar-title">${report.report_title}</h2>
-                        </div>
-                        <button class="btn-close-sidebar" type="button"><i class="bi bi-x-lg"></i></button>
-                    </div>
-                    <div class="sidebar-meta-block">
-                        <div class="report-id-row">
-                            <span class="report-id-text">${report.report_id}</span>
-                            <span class="status-pill ${report.status === 'approved' ? 'approved' : report.status === 'rejected' ? 'rejected' : 'pending'}">${report.status_label}</span>
-                        </div>
-                        <div class="prop-list">
-                            <div class="prop-row"><span class="prop-label">Project</span><span class="prop-val">${report.project_name}</span></div>
-                            <div class="prop-row"><span class="prop-label">Construction Phase</span><span class="prop-val">${report.phase_name}</span></div>
-                            <div class="prop-row"><span class="prop-label">Supervisor</span><span class="prop-val">${report.supervisor_name}</span></div>
-                            <div class="prop-row"><span class="prop-label">Date Submitted</span><span class="prop-val">${report.submitted_at}</span></div>
-                        </div>
-                    </div>
-                    <div class="sidebar-section-divider"></div>
-                    <div>
-                        <h4 class="section-subtitle">Work Summary</h4>
-                        <p class="cell-muted" style="margin-bottom:0.25rem; font-weight:600;">Accomplishments</p>
-                        <p class="section-p">${report.report_text || 'No work summary provided.'}</p>
-                        <p class="cell-muted" style="margin-bottom:0.25rem; font-weight:600;">Approval Remarks</p>
-                        <p class="section-p">${report.approval_remarks || 'No remarks yet.'}</p>
-                    </div>
-                    <div class="sidebar-section-divider"></div>
-                    <div>
-                        <h4 class="section-subtitle">Progress</h4>
-                        <span class="cell-muted">Completion Percentage</span>
-                        <div class="progress-metric-container">
-                            <div class="progress-bar-track">
-                                <div class="progress-bar-fill" style="width: ${progressValue}%;"></div>
+                    <div class="row gx-4 gy-4">
+                        <div class="col-12 col-xl-7">
+                            <div class="modal-detail-card">
+                                <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #ffffff; border: 1px solid #e8f0eb;">
+                                    <div>
+                                        <div class="modal-section-title mb-1" style="margin-top:0; border:none; padding-bottom:0;">Report ID</div>
+                                        <div class="fw-bold text-dark" style="font-size: 1.15rem; color: var(--cms-green-dark);">${report.report_id}</div>
+                                    </div>
+                                    <div class="text-sm-end">
+                                        <div class="modal-section-title mb-1" style="margin-top:0; border:none; padding-bottom:0;">Approval Status</div>
+                                        <span class="status-pill ${report.status === 'approved' ? 'approved' : report.status === 'rejected' ? 'rejected' : 'pending'} p-2 mt-1 d-inline-block">${report.status_label || 'Pending Review'}</span>
+                                    </div>
+                                </div>
+
+                                <div class="modal-section-title">Project Information</div>
+                                <div class="modal-info-grid mb-4">
+                                    <div class="modal-info-item">
+                                        <div class="modal-info-label">Project</div>
+                                        <div class="modal-info-value">${report.project_name || 'N/A'}</div>
+                                    </div>
+                                    <div class="modal-info-item">
+                                        <div class="modal-info-label">Construction Phase</div>
+                                        <div class="modal-info-value">${report.phase_name || 'N/A'}</div>
+                                    </div>
+                                    <div class="modal-info-item">
+                                        <div class="modal-info-label">Report Date</div>
+                                        <div class="modal-info-value">${report.submitted_at || 'N/A'}</div>
+                                    </div>
+                                    <div class="modal-info-item">
+                                        <div class="modal-info-label">Submitted By</div>
+                                        <div class="modal-info-value">${report.supervisor_name || 'Supervisor'}</div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-section-title">Construction Accomplishment</div>
+                                <div class="modal-accomplishment-box mb-4">
+                                    <p class="mb-0 text-dark small" style="white-space: pre-line; line-height: 1.7;">${report.report_text || 'No description logs reported.'}</p>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-12 col-md-6">
+                                        <div class="modal-info-item">
+                                            <div class="modal-info-label">Reviewed By</div>
+                                            <div class="modal-info-value">${report.reviewed_by || 'Pending review'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="modal-info-item">
+                                            <div class="modal-info-label">Approved By</div>
+                                            <div class="modal-info-value">${report.approved_by || 'Pending approval'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-info-item" style="background: #ffffff;">
+                                    <div class="modal-info-label">Approval Remarks</div>
+                                    <div class="modal-info-value">${report.approval_remarks || 'No remarks'}</div>
+                                </div>
                             </div>
-                            <span class="progress-pct-label">${progressValue.toFixed(0)}%</span>
+                        </div>
+
+                        <div class="col-12 col-xl-5">
+                            <div class="modal-sidebar-card mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="fw-bold" style="color: var(--cms-green-dark); font-size: 0.9rem;">Site Images</div>
+                                    <div class="small text-muted">${attachmentCount} uploaded</div>
+                                </div>
+                                ${attachmentMarkup}
+
+                                <div class="modal-section-title">Approval Timeline</div>
+                                <div class="modal-timeline">
+                                    <div class="modal-timeline-step active">
+                                        <div class="modal-timeline-icon"><i class="bi bi-check"></i></div>
+                                        <div class="modal-timeline-label">Submitted</div>
+                                    </div>
+                                    <div class="modal-timeline-step ${report.status !== 'pending' ? 'active' : 'current' }">
+                                        <div class="modal-timeline-icon"><i class="bi bi-clock"></i></div>
+                                        <div class="modal-timeline-label">Under Review</div>
+                                    </div>
+                                    <div class="modal-timeline-step ${report.status === 'approved' ? 'active' : '' }">
+                                        <div class="modal-timeline-icon"><i class="bi bi-circle"></i></div>
+                                        <div class="modal-timeline-label">Approved</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-progress-card mb-3">
+                                <div class="modal-progress-header">
+                                    <div>
+                                        <div class="modal-progress-title">Completion Percentage</div>
+                                        <div class="text-muted small">Official phase progress</div>
+                                    </div>
+                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
+                                </div>
+                                <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
+                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
+                                </div>
+                            </div>
+
+                            <div class="modal-progress-card mb-3">
+                                <div class="modal-progress-header">
+                                    <div>
+                                        <div class="modal-progress-title">Progress Approval</div>
+                                        <div class="text-muted small">Supervisor suggested progress</div>
+                                    </div>
+                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
+                                </div>
+                                <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
+                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
+                                </div>
+                                ${report.status === 'pending' ? `
+                                    <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
+                                    <input type="number" id="adminProgressOverride" class="form-control mt-1" value="${progressValue}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
+                                    <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
+                                ` : ''}
+                            </div>
+
+                            ${report.status === 'pending' ? `
+                                <div class="modal-action-row">
+                                    <button type="button" class="btn-modal btn-modal-reject js-reject-report" data-report-id="${report.id}">
+                                        <i class="bi bi-x-lg"></i> Reject
+                                    </button>
+                                    <button type="button" class="btn-modal btn-modal-approve js-approve-report" data-report-id="${report.id}">
+                                        <i class="bi bi-check2"></i> Approve
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="modal-status-note">
+                                    <i class="bi bi-info-circle"></i>
+                                    This report has already been ${report.status === 'approved' ? 'approved' : 'rejected'}.
+                                </div>
+                            `}
                         </div>
                     </div>
-                    <div class="sidebar-section-divider"></div>
-                    <div>
-                        <h4 class="section-subtitle">Attachments (${attachmentCount})</h4>
-                        ${attachmentMarkup}
-                    </div>
-                    ${report.status === 'pending' ? `
-                        <div class="sidebar-actions-footer">
-                            <button type="button" class="btn-reject-action js-reject-report" data-report-id="${report.id}">
-                                <i class="bi bi-x-lg"></i> Reject
-                            </button>
-                            <button type="button" class="btn-approve-action js-approve-report" data-report-id="${report.id}">
-                                <i class="bi bi-check2"></i> Approve
-                            </button>
-                        </div>
-                    ` : `
-                        <div class="sidebar-actions-footer sidebar-status-note">
-                            <i class="bi bi-info-circle"></i>
-                            <span>This report has already been ${report.status === 'approved' ? 'approved' : 'rejected'}.</span>
-                        </div>
-                    `}
                 `;
 
                 detailsPanel.dataset.reportStatus = report.status || 'pending';
@@ -2207,6 +2819,9 @@
                     return Swal.fire({ title: 'Cannot Approve', text: 'This report has already been rejected.', icon: 'warning' });
                 }
 
+                const progressInput = document.getElementById('adminProgressOverride');
+                const approvedProgress = progressInput ? Math.min(100, Math.max(0, Number(progressInput.value) || 0)) : 0;
+
                 Swal.fire({
                     title: 'Approve Report?',
                     text: 'This will mark the report as approved and notify the supervisor.',
@@ -2215,9 +2830,13 @@
                     confirmButtonText: 'Approve',
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: '#1c6b43',
-                    cancelButtonColor: '#6c757d'
+                    cancelButtonColor: '#6c757d',
+                    didOpen: pauseModalFocusTrap
                 }).then((result) => {
-                    if (!result.isConfirmed) return;
+                    if (!result.isConfirmed) {
+                        resumeModalFocusTrap();
+                        return;
+                    }
                     Swal.fire({ title: 'Approving report...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
                     fetch(`${detailsBaseUrl}/${reportId}/approve`, {
                         method: 'POST',
@@ -2226,7 +2845,7 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ approval_remarks: '' })
+                        body: JSON.stringify({ approval_remarks: '', accomplishment_percentage: approvedProgress })
                     })
                         .then(async response => {
                             const payload = await response.json().catch(() => ({}));
@@ -2242,11 +2861,14 @@
                             } else {
                                 Swal.fire({ title: 'Report Approved', text: payload.message || 'The report has been approved.', icon: 'success', confirmButtonColor: '#1c6b43' });
                             }
+                            closeDetailsPanel();
                             loadReports();
+                            resumeModalFocusTrap();
                         })
                         .catch(error => {
                             Swal.close();
                             Swal.fire({ title: 'Approval Failed', text: error.message || 'Unable to complete approval.', icon: 'error' });
+                            resumeModalFocusTrap();
                         });
                 });
             }
@@ -2275,9 +2897,13 @@
                         if (!value || !value.trim()) {
                             Swal.showValidationMessage('Rejection remarks are required.');
                         }
-                    }
+                    },
+                    didOpen: pauseModalFocusTrap
                 }).then((result) => {
-                    if (!result.isConfirmed) return;
+                    if (!result.isConfirmed) {
+                        resumeModalFocusTrap();
+                        return;
+                    }
                     const remarks = result.value?.trim();
                     Swal.fire({ title: 'Rejecting report...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
                     fetch(`${detailsBaseUrl}/${reportId}/revise`, {
@@ -2299,11 +2925,14 @@
                         .then(payload => {
                             Swal.close();
                             Swal.fire({ title: 'Report Rejected', text: payload.message || 'The report has been rejected.', icon: 'success', confirmButtonColor: '#b23a3a' });
+                            closeDetailsPanel();
                             loadReports();
+                            resumeModalFocusTrap();
                         })
                         .catch(error => {
                             Swal.close();
                             Swal.fire({ title: 'Rejection Failed', text: error.message || 'Unable to complete rejection.', icon: 'error' });
+                            resumeModalFocusTrap();
                         });
                 });
             }
@@ -2343,6 +2972,24 @@
 
             // Automatically refresh the report list whenever a filter state exists.
             loadReports();
+
+            // Open report details modal when a report row or view button is clicked
+            tableBody.querySelectorAll('.js-view-report').forEach(button => {
+                button.addEventListener('click', function () {
+                    activeReportId = Number(this.dataset.reportId);
+                    loadReportDetails(activeReportId);
+                });
+            });
+
+            reportDetailsModal?.addEventListener('hidden.bs.modal', function () {
+                activeReportId = null;
+                detailsPanel.innerHTML = `
+                    <div class="sidebar-fallback-state">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Select a report from the table queue to preview its core properties and verification parameters.
+                    </div>
+                `;
+            });
         });
     </script>
 </div>

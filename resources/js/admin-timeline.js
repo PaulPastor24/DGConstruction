@@ -295,6 +295,12 @@ function applyScalePreset(scale) {
     gantt.config.subscales = preset.scales.slice(0, -1).map((scaleItem) => ({ unit: scaleItem.unit, step: scaleItem.step || 1, date: scaleItem.date })) || [];
     gantt.config.scale_height = preset.scale_height || 54;
     gantt.config.min_column_width = preset.min_column_width || 60;
+
+    if (initialized) {
+        gantt.render();
+        applyTaskStyling();
+        syncGanttHeight();
+    }
 }
 
 function syncGanttHeight() {

@@ -228,7 +228,7 @@
                     <div class="images-grid">
                         @foreach($report->site_images as $image)
                             <div class="image-item">
-                                <img src="{{ asset('storage/' . $image) }}" alt="Site Image">
+                                <img src="{{ asset('storage/' . ltrim($image, '/')) }}" alt="Site Image">
                             </div>
                         @endforeach
                     </div>

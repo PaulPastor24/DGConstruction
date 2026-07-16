@@ -322,16 +322,6 @@
 @section('content')
 <div class="container-fluid px-4 pb-3 pt-1 mi-page inventory-green-theme" id="pg-alerts">
 
-    <!-- Page Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3 dashboard-title-area">
-        <div>
-            <h2 style="font-family: 'Syne', 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 600; color: #111827; letter-spacing: -0.02em; margin-bottom: 6px;">Notifications</h2>
-            <p class="text-muted small mb-0">Manage, filter, and track system-wide construction alerts.</p>
-        </div>
-        <button type="button" class="btn btn-success btn-sm d-flex align-items-center gap-2" id="markAllAdminNotifications" style="background-color: var(--ug-accent); border-color: var(--ug-accent);">
-            <i class="bi bi-check2-all"></i> Mark all as read
-        </button>
-    </div>
 
     <!-- Top Metric Cards -->
     <div class="row g-3 mb-4">
@@ -431,7 +421,9 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-auto ms-auto d-flex gap-2">
-                    <!-- Removed Clear and Filter buttons: search is automatic and status select auto-applies -->
+                    <button type="button" class="btn btn-success btn-sm d-flex align-items-center gap-2" id="markAllAdminNotifications" style="background-color: var(--ug-accent); border-color: var(--ug-accent); white-space: nowrap;">
+                        <i class="bi bi-check2-all"></i> Mark all as read
+                    </button>
                 </div>
             </div>
         </div>

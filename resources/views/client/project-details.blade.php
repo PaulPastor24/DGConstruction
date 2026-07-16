@@ -1,10 +1,12 @@
 @extends('layouts.client')
 
 @section('title', $project->project_name . ' - Client Portal')
+@section('mobileTitle', $project->project_name)
 
 @section('content')
 @php
     $detailLocation = trim((string) ($project->project_location ?? $project->location ?? $project->location_address ?? ''));
+    $detailImage = $project->image_url ?: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80';
 @endphp
 <div class="container-fluid p-0">
     @include('client.partials.page-header', [
@@ -17,7 +19,7 @@
         <div class="row g-4">
             <div class="col-12 col-lg-7">
                 <div class="project-detail-banner">
-                    <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80" alt="Project overview image">
+                    <img src="{{ $detailImage }}" alt="{{ $project->project_name }} overview image">
                 </div>
             </div>
             <div class="col-12 col-lg-5">

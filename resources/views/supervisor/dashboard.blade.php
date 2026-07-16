@@ -310,7 +310,7 @@
                     <i class="bi bi-file-earmark-text me-2"></i>Submit Report
                 </a>
                 <a href="{{ route('supervisor.timeline', ['project_id' => optional($primaryProject)->project_id]) }}" class="btn btn-outline-soft px-4 py-2">
-                    <i class="bi bi-calendar3 me-2"></i>Project Timeline
+                    <i class="bi bi-calendar3 me-2"></i>Project Milestones
                 </a>
             </div>
         </div>

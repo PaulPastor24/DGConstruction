@@ -1325,7 +1325,7 @@ class SupervisorController extends Controller
 
         return response()->json([
             'success' => true,
-            'can_manage' => true,
+            'can_manage' => false,
             'phase' => [
                 'id' => $phase->phase_id,
                 'name' => $phase->phase_name,
@@ -1350,73 +1350,11 @@ class SupervisorController extends Controller
      */
     public function updatePhaseProgress(Request $request, $phaseId)
     {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'completion_percentage' => 'nullable|numeric|min:0|max:100'
-        ]);
-
-        $phase = ConstructionPhase::with('project')->where('phase_id', $phaseId)->first();
-        if (!$phase) {
-            return response()->json(['success' => false, 'message' => 'Phase not found'], 404);
-        }
-
-        // Verify supervisor has access to this project
-        $hasAccess = Project::query()->where('project_id', $phase->project_id)
-            ->whereHas('supervisors', function ($q) use ($user) {
-                $q->where('supervisor_id', $user->user_id);
-            })->exists();
-
-        if (!$hasAccess) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        try {
-            return response()->json([
-                'success' => false,
-                'message' => 'Progress is system-managed and can only be updated from approved accomplishment reports.',
-                'unchanged' => true,
-                'phase' => ['completion_percentage' => round((float)($phase->completion_percentage ?? 0), 2)],
-                'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
-            ], 422);
-
-            // Recalculate project overall progress
-            $overallProgress = ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0;
-            $overallProgress = round($overallProgress, 0);
-
-            // Log action
-            try {
-                $this->logAction('Phase Progress Updated', "{$phase->phase_name} progress updated to {$phase->completion_percentage}% for project {$phase->project->project_name}");
-            } catch (\Throwable $e) {
-                // ignore logging errors
-            }
-
-            // Create notification for supervisor
-            \App\Services\NotificationService::notifySupervisor($user->user_id, [
-                'type' => 'phase',
-                'title' => 'Phase Progress Updated',
-                'message' => "{$phase->phase_name} progress updated to {$phase->completion_percentage}%.",
-                'data' => ['module' => 'supervisor.phases', 'phase_id' => $phase->phase_id],
-                'related_id' => $phase->phase_id,
-                'related_type' => 'phase',
-            ]);
-
-            // Notify the client attached to the project
-            if ($phase->project && $phase->project->client_id) {
-                \App\Services\NotificationService::notifyClient($phase->project->client_id, [
-                    'type' => 'phase',
-                    'title' => 'Project Progress Updated',
-                    'message' => "{$phase->phase_name} progress was updated to {$phase->completion_percentage}%.",
-                    'data' => ['module' => 'client.reports', 'phase_id' => $phase->phase_id, 'project_id' => $phase->project_id],
-                    'related_id' => $phase->phase_id,
-                    'related_type' => 'phase',
-                ]);
-            }
-
-            return response()->json(['success' => true, 'phase' => ['completion_percentage' => $phase->completion_percentage], 'overallProgress' => $overallProgress]);
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to update progress'], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Direct phase progress updates are restricted. Submit an accomplishment report for admin review instead.',
+            'unchanged' => true,
+        ], 403);
     }
 
     /**
@@ -1424,81 +1362,11 @@ class SupervisorController extends Controller
      */
     public function updatePhaseStatus(Request $request, $phaseId)
     {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'status' => 'required|string|in:not_started,in_progress,completed'
-        ]);
-
-        $phase = ConstructionPhase::with('project')->where('phase_id', $phaseId)->first();
-        if (!$phase) {
-            return response()->json(['success' => false, 'message' => 'Phase not found'], 404);
-        }
-
-        // Verify supervisor has access to this project
-        $hasAccess = Project::query()->where('project_id', $phase->project_id)
-            ->whereHas('supervisors', function ($q) use ($user) {
-                $q->where('supervisor_id', $user->user_id);
-            })->exists();
-
-        if (!$hasAccess) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        // Business rules: Completed phases cannot revert
-        if ($phase->status === 'completed' && $validated['status'] !== 'completed') {
-            return response()->json(['success' => false, 'message' => 'Completed phases cannot be reverted'], 422);
-        }
-
-        try {
-            $previousStatus = $phase->status;
-            if ($phase->status === $validated['status']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No status change detected.',
-                    'unchanged' => true,
-                    'phase' => ['status' => $phase->status, 'completion_percentage' => $phase->completion_percentage],
-                    'overallProgress' => round(ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0, 0),
-                ], 422);
-            }
-
-            $phase->status = $validated['status'];
-
-            if ($validated['status'] === 'in_progress' && empty($phase->actual_start_date)) {
-                $phase->actual_start_date = now();
-            }
-            if ($validated['status'] === 'completed') {
-                $phase->actual_end_date = now();
-                $phase->completion_percentage = 100;
-            }
-
-            $phase->save();
-
-            // Recalculate overall progress
-            $overallProgress = ConstructionPhase::query()->where('project_id', $phase->project_id)->avg('completion_percentage') ?? 0;
-            $overallProgress = round($overallProgress, 0);
-
-            // Log action
-            try {
-                $this->logAction('Phase Status Changed', "{$phase->phase_name} status changed to {$phase->status} for project {$phase->project->project_name}");
-            } catch (\Throwable $e) {
-                // ignore
-            }
-
-            // Notify supervisor
-            \App\Services\NotificationService::notifySupervisor($user->user_id, [
-                'type' => 'phase',
-                'title' => 'Phase Status Changed',
-                'message' => "{$phase->phase_name} status changed to " . strtoupper(str_replace('_', ' ', $phase->status)) . ".",
-                'data' => ['module' => 'supervisor.phases', 'phase_id' => $phase->phase_id],
-                'related_id' => $phase->phase_id,
-                'related_type' => 'phase',
-            ]);
-
-            return response()->json(['success' => true, 'phase' => ['status' => $phase->status, 'completion_percentage' => $phase->completion_percentage], 'overallProgress' => $overallProgress]);
-        } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to update status'], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Direct phase status changes are restricted. Submit an accomplishment report for admin review instead.',
+            'unchanged' => true,
+        ], 403);
     }
 
     /**
