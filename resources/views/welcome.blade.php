@@ -9,8 +9,389 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/landingpage.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/landingpage.css') }}">
+
+    <style>
+        .button {
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .button-ghost-light {
+            border-color: rgba(23, 56, 36, 0.22);
+            background: #ffffff;
+            color: var(--forest, #173824);
+        }
+
+        .button-ghost-light:hover {
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--forest, #173824);
+            transform: translateY(-1px);
+        }
+
+        .cta-action-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .landing-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(10, 20, 14, 0.58);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .landing-modal-overlay.is-open {
+            display: flex;
+        }
+
+        .landing-modal-card {
+            width: min(760px, 100%);
+            max-height: min(88vh, 820px);
+            overflow: hidden;
+            border: 1px solid rgba(229, 236, 231, 0.85);
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at top right, rgba(23, 56, 36, 0.08), transparent 34%),
+                #ffffff;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+            animation: landingModalIn 180ms ease-out;
+        }
+
+        @keyframes landingModalIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .landing-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 24px 24px 18px;
+            border-bottom: 1px solid #eef3ef;
+        }
+
+        .landing-modal-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 8px;
+            color: var(--forest, #173824);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .landing-modal-title {
+            margin: 0 0 6px;
+            color: var(--text-dark, #10271b);
+            font-family: var(--font-heading, 'Syne', sans-serif);
+            font-size: clamp(1.35rem, 4vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+        }
+
+        .landing-modal-subtitle {
+            max-width: 560px;
+            margin: 0;
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.93rem;
+            line-height: 1.6;
+        }
+
+        .landing-modal-close {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            place-items: center;
+            border: 1px solid #e1e9e3;
+            border-radius: 50%;
+            background: #ffffff;
+            color: var(--forest, #173824);
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .landing-modal-close:hover {
+            background: var(--forest, #173824);
+            color: #ffffff;
+        }
+
+        .landing-modal-body {
+            max-height: calc(min(88vh, 820px) - 132px);
+            overflow-y: auto;
+            padding: 22px 24px 24px;
+        }
+
+        .landing-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .landing-form-field {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .landing-form-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .landing-form-field label {
+            color: #324338;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .landing-form-field input,
+        .landing-form-field select,
+        .landing-form-field textarea {
+            width: 100%;
+            border: 1px solid #dbe5df;
+            border-radius: 14px;
+            background: #fbfdfb;
+            color: var(--text-dark, #10271b);
+            font-size: 0.92rem;
+            outline: none;
+            padding: 13px 14px;
+            transition: all 0.2s ease;
+        }
+
+        .landing-form-field textarea {
+            min-height: 118px;
+            resize: vertical;
+        }
+
+        .landing-form-field input:focus,
+        .landing-form-field select:focus,
+        .landing-form-field textarea:focus {
+            border-color: var(--forest, #173824);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(23, 56, 36, 0.08);
+        }
+
+        .landing-form-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 16px 0 0;
+            padding: 13px 14px;
+            border: 1px solid #dfeae2;
+            border-radius: 16px;
+            background: #f7fbf8;
+            color: #516157;
+            font-size: 0.83rem;
+            line-height: 1.5;
+        }
+
+        .landing-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .landing-form-submit {
+            min-width: 180px;
+        }
+
+        .landing-form-cancel {
+            border-color: #dbe5df;
+            background: #ffffff;
+            color: var(--forest, #173824);
+        }
+
+        .landing-form-message {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .landing-form-message.is-visible {
+            display: block;
+        }
+
+        .landing-form-message.success {
+            border: 1px solid #bfefd0;
+            background: #effcf4;
+            color: #166534;
+        }
+
+        @media (max-width: 768px) {
+            .cta-action-row {
+                flex-direction: column;
+            }
+
+            .landing-modal-overlay {
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                min-height: 100dvh;
+                padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+                overflow: hidden;
+            }
+
+            .landing-modal-card {
+                display: flex;
+                width: 100%;
+                max-height: calc(100vh - 20px);
+                max-height: calc(100dvh - 20px);
+                flex-direction: column;
+                border-radius: 24px;
+                overflow: hidden;
+            }
+
+            .landing-modal-header {
+                flex: 0 0 auto;
+                padding: 18px 16px 12px;
+                gap: 12px;
+            }
+
+            .landing-modal-title {
+                font-size: 1.42rem;
+                line-height: 1.08;
+            }
+
+            .landing-modal-subtitle {
+                font-size: 0.84rem;
+                line-height: 1.48;
+            }
+
+            .landing-modal-close {
+                width: 40px;
+                height: 40px;
+                box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+            }
+
+            .landing-modal-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                max-height: none;
+                overflow-y: auto;
+                padding: 14px 16px 0;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .landing-form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .landing-form-field {
+                gap: 5px;
+            }
+
+            .landing-form-field label {
+                font-size: 0.75rem;
+            }
+
+            .landing-form-field input,
+            .landing-form-field select,
+            .landing-form-field textarea {
+                min-height: 46px;
+                border-radius: 13px;
+                font-size: 0.9rem;
+                padding: 11px 13px;
+            }
+
+            .landing-form-field textarea {
+                min-height: 92px;
+            }
+
+            .landing-form-note {
+                margin-top: 12px;
+                padding: 11px 12px;
+                border-radius: 14px;
+                font-size: 0.78rem;
+                line-height: 1.45;
+            }
+
+            .landing-form-actions {
+                position: sticky;
+                bottom: 0;
+                z-index: 20;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 9px;
+                margin: 14px -16px 0;
+                padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+                border-top: 1px solid #eef3ef;
+                background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, #ffffff 45%, #ffffff 100%);
+                box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.07);
+            }
+
+            .landing-form-actions .button {
+                width: 100%;
+                min-height: 46px;
+                border-radius: 14px;
+                font-size: 0.9rem;
+            }
+
+            .landing-form-submit {
+                order: 1;
+            }
+
+            .landing-form-cancel {
+                order: 2;
+            }
+
+            .landing-form-message {
+                margin-bottom: 8px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .landing-modal-overlay {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .landing-modal-header {
+                padding: 16px 14px 11px;
+            }
+
+            .landing-modal-body {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .landing-form-actions {
+                margin-left: -14px;
+                margin-right: -14px;
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+        }
+    </style>
 </head>
 <body class="landing-page">
 <div class="page-shell">
@@ -30,7 +411,7 @@
             <a href="#contact">Contact</a>
         </div>
 
-        <a class="nav-cta" href="{{ route('login') }}">Request a Quote <span class="arrow">→</span></a>
+        <a class="nav-cta" href="{{ route('login') }}">Login <span class="arrow">→</span></a>
     </nav>
 
     <main>
@@ -42,7 +423,7 @@
                     D&G Construction Inc. delivers quality craftsmanship and reliable construction solutions from concept to completion.
                 </p>
                 <div class="hero-actions">
-                    <a class="button button-primary" href="{{ route('login') }}">Get a Quote <span class="arrow">→</span></a>
+                    <button type="button" class="button button-primary js-open-landing-modal" data-target-modal="quoteModal">Get a Quote <span class="arrow">→</span></button>
                     <a class="button button-secondary" href="#projects">
                         View Our Work 
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -232,9 +613,12 @@
         <!-- CALL TO ACTION -->
         <section class="cta-section" id="contact">
             <div class="cta-container">
-                <h2>Let's Build Something Great Together</h2>
-                <p>From design to construction, we are ready to bring your vision to life. Get in touch with our team today.</p>
-                <a class="button button-light" href="{{ route('login') }}">Get In Touch <span class="arrow">→</span></a>
+                <h2>Ready to Start or Ask a Question?</h2>
+                <p>Request a project estimate or send a message to our team. We will review your concern and get back to you with the next steps.</p>
+                <div class="cta-action-row">
+                    <button type="button" class="button button-light js-open-landing-modal" data-target-modal="quoteModal">Get a Quote <span class="arrow">→</span></button>
+                    <button type="button" class="button button-ghost-light js-open-landing-modal" data-target-modal="contactModal">Get in Touch <span class="arrow">→</span></button>
+                </div>
             </div>
         </section>
     </main>
@@ -282,6 +666,155 @@
             </div>
         </div>
     </footer>
+
+    <!-- QUOTE REQUEST MODAL -->
+    <div class="landing-modal-overlay" id="quoteModal" aria-hidden="true">
+        <div class="landing-modal-card" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Estimate Request</span>
+                    <h2 class="landing-modal-title" id="quoteModalTitle">Tell us about your project</h2>
+                    <p class="landing-modal-subtitle">
+                        Use this form for quote requests. Share the basic project details so the team can review the scope before contacting you.
+                    </p>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close quote form">×</button>
+            </div>
+
+            <div class="landing-modal-body">
+                <form class="landing-contact-form" data-form-type="quote">
+                    <div class="landing-form-grid">
+                        <div class="landing-form-field">
+                            <label for="quoteName">Full Name</label>
+                            <input id="quoteName" name="Full Name" type="text" placeholder="Your name" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteEmail">Email Address</label>
+                            <input id="quoteEmail" name="Email" type="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quotePhone">Phone Number</label>
+                            <input id="quotePhone" name="Phone" type="tel" placeholder="09XX XXX XXXX">
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteProjectType">Project Type</label>
+                            <select id="quoteProjectType" name="Project Type" required>
+                                <option value="">Select project type</option>
+                                <option>Residential Construction</option>
+                                <option>Commercial Construction</option>
+                                <option>Renovation / Remodeling</option>
+                                <option>Project Management</option>
+                                <option>Other Construction Service</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteLocation">Project Location</label>
+                            <input id="quoteLocation" name="Location" type="text" placeholder="City / site location">
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteTimeline">Target Timeline</label>
+                            <select id="quoteTimeline" name="Target Timeline">
+                                <option value="">Select timeline</option>
+                                <option>As soon as possible</option>
+                                <option>Within 1 month</option>
+                                <option>Within 3 months</option>
+                                <option>Planning stage only</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field full">
+                            <label for="quoteMessage">Project Details</label>
+                            <textarea id="quoteMessage" name="Project Details" placeholder="Briefly describe the work needed, estimated size, preferred schedule, or special requirements." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="landing-form-note">
+                        <span>ℹ️</span>
+                        <span>This quote request will open your email app with the project details already prepared. You can review it before sending.</span>
+                    </div>
+
+                    <div class="landing-form-actions">
+                        <button type="button" class="button landing-form-cancel js-close-landing-modal">Cancel</button>
+                        <button type="submit" class="button button-primary landing-form-submit">Prepare Quote Request <span class="arrow">→</span></button>
+                    </div>
+
+                    <div class="landing-form-message success" role="status"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT / SUPPORT ASSISTANT MODAL -->
+    <div class="landing-modal-overlay" id="contactModal" aria-hidden="true">
+        <div class="landing-modal-card" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Support Assistant</span>
+                    <h2 class="landing-modal-title" id="contactModalTitle">How can we help?</h2>
+                    <p class="landing-modal-subtitle">
+                        Send a message to the D&G Construction team. Use this for general questions, project support, account access concerns, or follow-up requests.
+                    </p>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close contact form">×</button>
+            </div>
+
+            <div class="landing-modal-body">
+                <form class="landing-contact-form" data-form-type="contact">
+                    <div class="landing-form-grid">
+                        <div class="landing-form-field">
+                            <label for="contactName">Full Name</label>
+                            <input id="contactName" name="Full Name" type="text" placeholder="Your name" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactEmail">Email Address</label>
+                            <input id="contactEmail" name="Email" type="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactConcern">Concern Type</label>
+                            <select id="contactConcern" name="Concern Type" required>
+                                <option value="">Select concern</option>
+                                <option>General Inquiry</option>
+                                <option>Project Update Question</option>
+                                <option>Client Portal Access</option>
+                                <option>Report / Timeline Concern</option>
+                                <option>Other Support Request</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactProject">Project Name</label>
+                            <input id="contactProject" name="Project Name" type="text" placeholder="Optional">
+                        </div>
+
+                        <div class="landing-form-field full">
+                            <label for="contactMessage">Message</label>
+                            <textarea id="contactMessage" name="Message" placeholder="Write your question or concern here." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="landing-form-note">
+                        <span>💬</span>
+                        <span>This works like a simple support assistant: fill out the form, submit, then your email app will open with the message prepared.</span>
+                    </div>
+
+                    <div class="landing-form-actions">
+                        <button type="button" class="button landing-form-cancel js-close-landing-modal">Cancel</button>
+                        <button type="submit" class="button button-primary landing-form-submit">Prepare Message <span class="arrow">→</span></button>
+                    </div>
+
+                    <div class="landing-form-message success" role="status"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -395,5 +928,100 @@ document.addEventListener('DOMContentLoaded', () => {
     startAutoSlide();
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const companyEmail = 'info@dgconstruction.ca';
+
+    function getModalByButton(button) {
+        const targetId = button?.dataset?.targetModal;
+        return targetId ? document.getElementById(targetId) : null;
+    }
+
+    function openLandingModal(modal) {
+        if (!modal) return;
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        const closeButton = modal.querySelector('.landing-modal-close');
+        setTimeout(() => closeButton?.focus({ preventScroll: true }), 80);
+    }
+
+    function closeLandingModal(modal) {
+        if (!modal) return;
+
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+
+        modal.querySelectorAll('.landing-form-message').forEach(message => {
+            message.classList.remove('is-visible');
+            message.textContent = '';
+        });
+    }
+
+    document.querySelectorAll('.js-open-landing-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            openLandingModal(getModalByButton(button));
+        });
+    });
+
+    document.querySelectorAll('.js-close-landing-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            closeLandingModal(button.closest('.landing-modal-overlay'));
+        });
+    });
+
+    document.querySelectorAll('.landing-modal-overlay').forEach(modal => {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeLandingModal(modal);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.landing-modal-overlay.is-open').forEach(closeLandingModal);
+        }
+    });
+
+    document.querySelectorAll('.landing-contact-form').forEach(form => {
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const formType = form.dataset.formType || 'contact';
+            const formData = new FormData(form);
+            const messageBox = form.querySelector('.landing-form-message');
+
+            const subject = formType === 'quote'
+                ? 'D&G Construction Quote Request'
+                : 'D&G Construction Contact / Support Request';
+
+            const lines = [
+                subject,
+                '',
+                ...Array.from(formData.entries()).map(([key, value]) => `${key}: ${value || 'N/A'}`),
+                '',
+                'Sent from the D&G Construction landing page.'
+            ];
+
+            const mailtoUrl = `mailto:${companyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+
+            if (messageBox) {
+                messageBox.textContent = formType === 'quote'
+                    ? 'Quote request prepared. Your email app will open so you can send it.'
+                    : 'Message prepared. Your email app will open so you can send it.';
+                messageBox.classList.add('is-visible');
+            }
+
+            window.location.href = mailtoUrl;
+        });
+    });
+});
+</script>
+
 </body>
 </html>

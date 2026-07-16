@@ -1176,12 +1176,12 @@
 
 
     /* ================================================================
-       SENIOR MOBILE TIMELINE FIX
-       Mobile should not depend on DHTMLX touch scrolling. On phones,
-       show a clean native mobile Gantt summary while keeping desktop
-       Gantt intact for tablet/web.
+       FINAL CLEAN MOBILE TIMELINE UI
+       One mobile system only. This removes the old table-card behavior
+       that caused the green strip / missing title issue.
     ================================================================ */
-    .mobile-gantt-view {
+    .mobile-gantt-view,
+    .mobile-timeline-list {
         display: none;
     }
 
@@ -1195,24 +1195,14 @@
             overflow-x: hidden !important;
         }
 
+        #pg-timeline .page-header-card,
+        #pg-timeline .timeline-card-header-copy,
+        #pg-timeline .timeline-side-panel {
+            display: none !important;
+        }
 
         #pg-timeline .timeline-layout {
             display: block !important;
-        }
-
-        #pg-timeline .page-header-card {
-            padding: 14px !important;
-            border-radius: 18px !important;
-            margin-bottom: 12px !important;
-        }
-
-        #pg-timeline .page-title {
-            font-size: 18px !important;
-        }
-
-        #pg-timeline .page-subtitle {
-            font-size: 12px !important;
-            line-height: 1.4 !important;
         }
 
         #pg-timeline .top-toolbar {
@@ -1228,25 +1218,32 @@
             touch-action: manipulation !important;
         }
 
-        #pg-timeline .timeline-side-panel {
-            margin-top: 12px !important;
+        #pg-timeline .toolbar-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+        }
+
+        #pg-timeline .toolbar-actions .btn-ghost,
+        #pg-timeline .toolbar-actions .btn-primary {
+            width: 100% !important;
+            min-height: 44px !important;
+            border-radius: 14px !important;
+            justify-content: center !important;
         }
 
         #pg-timeline .timeline-card {
-            padding: 12px !important;
-            border-radius: 18px !important;
-            border: 1px solid #e5ece7 !important;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055) !important;
+            padding: 10px !important;
+            border-radius: 20px !important;
             background: #ffffff !important;
+            border: 1px solid #e4ece6 !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055) !important;
         }
 
         #pg-timeline .timeline-card-header {
-            gap: 10px !important;
             margin-bottom: 12px !important;
-        }
-
-        #pg-timeline .timeline-card-header-copy {
-            display: none !important;
+            gap: 10px !important;
         }
 
         #pg-timeline .gantt-toolbar-actions {
@@ -1280,7 +1277,7 @@
             width: 100% !important;
             display: grid !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 4px !important;
+            gap: 5px !important;
             padding: 5px !important;
             border-radius: 999px !important;
             background: #f2f6f3 !important;
@@ -1302,6 +1299,7 @@
         #pg-timeline .mobile-gantt-view {
             display: grid !important;
             gap: 12px !important;
+            width: 100% !important;
         }
 
         #pg-timeline .mobile-gantt-note {
@@ -1345,11 +1343,16 @@
         }
 
         #pg-timeline .mobile-gantt-code {
-            display: block !important;
-            margin-top: 4px !important;
+            display: inline-flex !important;
+            margin-top: 5px !important;
+            padding: 4px 8px !important;
+            border: 1px solid #dcebe0 !important;
+            border-radius: 999px !important;
+            background: #f4faf5 !important;
             color: #64748b !important;
-            font-size: 11px !important;
-            font-weight: 700 !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.04em !important;
         }
 
         #pg-timeline .mobile-gantt-meta {
@@ -1359,29 +1362,37 @@
             margin-bottom: 12px !important;
         }
 
-        #pg-timeline .mobile-gantt-field {
-            padding: 10px 12px !important;
+        #pg-timeline .mobile-gantt-field,
+        #pg-timeline .timeline-mobile-detail {
+            min-width: 0 !important;
+            padding: 10px 11px !important;
             border: 1px solid #edf3ee !important;
             border-radius: 14px !important;
             background: #fbfdfb !important;
         }
 
-        #pg-timeline .mobile-gantt-label {
+        #pg-timeline .mobile-gantt-label,
+        #pg-timeline .timeline-mobile-label {
             display: block !important;
-            margin-bottom: 4px !important;
-            color: #64748b !important;
-            font-size: 9.5px !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
             font-weight: 800 !important;
             letter-spacing: 0.08em !important;
+            line-height: 1.15 !important;
             text-transform: uppercase !important;
         }
 
-        #pg-timeline .mobile-gantt-value {
+        #pg-timeline .mobile-gantt-value,
+        #pg-timeline .timeline-mobile-value {
             display: block !important;
+            min-width: 0 !important;
             color: #0f172a !important;
-            font-size: 13px !important;
+            font-size: 12.5px !important;
             font-weight: 700 !important;
             line-height: 1.35 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
         }
 
         #pg-timeline .mobile-gantt-progress-row {
@@ -1417,476 +1428,6 @@
             overflow: visible !important;
             border: 0 !important;
             border-radius: 0 !important;
-        }
-
-        #pg-timeline .standard-data-table,
-        #pg-timeline .standard-data-table thead,
-        #pg-timeline .standard-data-table tbody,
-        #pg-timeline .standard-data-table tr,
-        #pg-timeline .standard-data-table th,
-        #pg-timeline .standard-data-table td {
-            display: block !important;
-            width: 100% !important;
-            min-width: 0 !important;
-        }
-
-        #pg-timeline .standard-data-table thead {
-            display: none !important;
-        }
-
-        #pg-timeline .standard-data-table tbody tr {
-            margin-bottom: 12px !important;
-            padding: 14px !important;
-            border: 1px solid #e2ebe4 !important;
-            border-radius: 18px !important;
-            background: #ffffff !important;
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
-        }
-
-        #pg-timeline .standard-data-table td {
-            display: grid !important;
-            grid-template-columns: 105px minmax(0, 1fr) !important;
-            gap: 12px !important;
-            align-items: start !important;
-            padding: 8px 0 !important;
-            border: 0 !important;
-            color: #0f172a !important;
-            font-size: 13px !important;
-            line-height: 1.4 !important;
-            white-space: normal !important;
-            word-break: normal !important;
-        }
-
-        #pg-timeline .standard-data-table td::before {
-            content: attr(data-label) !important;
-            color: #64748b !important;
-            font-size: 10px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.08em !important;
-            text-transform: uppercase !important;
-        }
-    }
-
-
-    /* ======================================================================
-       MOBILE SPACE MAXIMIZER FOR PHASES + TIMELINE TABS
-       Uses the full phone width by turning each table row into a compact
-       information card: title full-width, details in 2-column blocks.
-       ====================================================================== */
-    @media (max-width: 720px) {
-        #pg-timeline .timeline-card {
-            padding: 10px !important;
-            border-radius: 18px !important;
-        }
-
-        #pg-timeline .timeline-view-panel:not(.d-none) .table-wrapper {
-            overflow: visible !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-        }
-
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table,
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table thead,
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tbody,
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tr,
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table th,
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table td {
-            display: block !important;
-            width: 100% !important;
-            min-width: 0 !important;
-        }
-
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table thead {
-            display: none !important;
-        }
-
-        #pg-timeline .timeline-view-panel:not(.d-none) .standard-data-table tbody {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
-            background: transparent !important;
-        }
-
-        #pg-timeline .timeline-phase-card,
-        #pg-timeline .timeline-milestone-card {
-            position: relative !important;
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-            margin: 0 !important;
-            padding: 14px !important;
-            padding-top: 42px !important;
-            border: 1px solid #e1ebe4 !important;
-            border-radius: 18px !important;
-            background: #ffffff !important;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td,
-        #pg-timeline .timeline-milestone-card > td {
-            min-width: 0 !important;
-            padding: 10px 11px !important;
-            border: 1px solid #edf3ee !important;
-            border-radius: 14px !important;
-            background: #fbfdfb !important;
-            color: #0f172a !important;
-            font-size: 12.5px !important;
-            line-height: 1.35 !important;
-            white-space: normal !important;
-            word-break: normal !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td::before,
-        #pg-timeline .timeline-milestone-card > td::before {
-            content: attr(data-label) !important;
-            display: block !important;
-            margin-bottom: 5px !important;
-            color: #66768a !important;
-            font-size: 9px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.08em !important;
-            line-height: 1.15 !important;
-            text-transform: uppercase !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="#"],
-        #pg-timeline .timeline-milestone-card > td[data-label="#"] {
-            position: absolute !important;
-            top: 14px !important;
-            left: 14px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 26px !important;
-            height: 26px !important;
-            padding: 0 !important;
-            border: 1px solid #dcebe0 !important;
-            border-radius: 999px !important;
-            background: #f4faf5 !important;
-            color: #365233 !important;
-            font-size: 12px !important;
-            font-weight: 800 !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="#"]::before,
-        #pg-timeline .timeline-milestone-card > td[data-label="#"]::before {
-            display: none !important;
-        }
-
-        #pg-timeline .timeline-phase-card .timeline-title-cell,
-        #pg-timeline .timeline-milestone-card .timeline-title-cell {
-            grid-column: 1 / -1 !important;
-            padding: 0 0 12px 34px !important;
-            border: 0 !important;
-            border-bottom: 1px solid #eef4ef !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-        }
-
-        #pg-timeline .timeline-phase-card .timeline-title-cell::before,
-        #pg-timeline .timeline-milestone-card .timeline-title-cell::before {
-            display: none !important;
-        }
-
-        #pg-timeline .timeline-title-row {
-            display: flex !important;
-            align-items: flex-start !important;
-            justify-content: space-between !important;
-            gap: 10px !important;
-            width: 100% !important;
-        }
-
-        #pg-timeline .timeline-title-cell strong {
-            display: block !important;
-            min-width: 0 !important;
-            color: #10271b !important;
-            font-size: 13.5px !important;
-            font-weight: 800 !important;
-            line-height: 1.32 !important;
-            letter-spacing: -0.01em !important;
-        }
-
-        #pg-timeline .timeline-code-chip {
-            display: inline-flex !important;
-            flex: 0 0 auto !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 42px !important;
-            padding: 4px 8px !important;
-            border: 1px solid #dcebe0 !important;
-            border-radius: 999px !important;
-            background: #f4faf5 !important;
-            color: #60708a !important;
-            font-size: 10px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.04em !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Start"],
-        #pg-timeline .timeline-phase-card > td[data-label="End"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Phase"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Start Planned Date"],
-        #pg-timeline .timeline-milestone-card > td[data-label="End Planned Date"] {
-            min-height: 58px !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Status"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            justify-content: center !important;
-            min-height: 58px !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Progress"] {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            min-height: 58px !important;
-            color: #10271b !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-        }
-
-        #pg-timeline .timeline-milestone-card > td[data-label="Actions"] {
-            grid-column: 1 / -1 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 9px 10px !important;
-        }
-
-        #pg-timeline .timeline-milestone-card > td[data-label="Actions"]::before {
-            margin: 0 !important;
-        }
-
-        #pg-timeline .timeline-milestone-card .action-icons-flex {
-            margin-left: auto !important;
-        }
-
-        #pg-timeline .status-pill-badge {
-            max-width: 100% !important;
-            padding: 6px 12px !important;
-            border-radius: 999px !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-            line-height: 1.2 !important;
-            text-align: center !important;
-        }
-
-        #pg-timeline .btn-icon-table {
-            width: 38px !important;
-            height: 38px !important;
-            border-radius: 12px !important;
-        }
-
-        #pg-timeline .timeline-table-footer {
-            gap: 10px !important;
-            margin-top: 12px !important;
-            padding: 0 !important;
-        }
-    }
-
-
-
-    /* FINAL CONSISTENT MOBILE CARD HEADER FIX */
-    .timeline-number-chip {
-        display: none;
-    }
-
-    .timeline-title-copy {
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    @media (max-width: 720px) {
-        #pg-timeline .timeline-phase-card,
-        #pg-timeline .timeline-milestone-card {
-            position: relative !important;
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-            margin: 0 0 12px !important;
-            padding: 14px !important;
-            border: 1px solid #e0eae3 !important;
-            border-radius: 18px !important;
-            background: #ffffff !important;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
-            overflow: hidden !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="#"],
-        #pg-timeline .timeline-milestone-card > td[data-label="#"] {
-            display: none !important;
-        }
-
-        #pg-timeline .timeline-phase-card .timeline-title-cell,
-        #pg-timeline .timeline-milestone-card .timeline-title-cell {
-            display: block !important;
-            grid-column: 1 / -1 !important;
-            width: 100% !important;
-            min-width: 0 !important;
-            padding: 0 0 12px !important;
-            border: 0 !important;
-            border-bottom: 1px solid #eef4ef !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-        }
-
-        #pg-timeline .timeline-phase-card .timeline-title-cell::before,
-        #pg-timeline .timeline-milestone-card .timeline-title-cell::before {
-            display: none !important;
-        }
-
-        #pg-timeline .timeline-title-row {
-            display: grid !important;
-            grid-template-columns: 34px minmax(0, 1fr) auto !important;
-            align-items: start !important;
-            gap: 10px !important;
-            width: 100% !important;
-        }
-
-        #pg-timeline .timeline-number-chip {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 28px !important;
-            height: 28px !important;
-            border-radius: 999px !important;
-            border: 1px solid #dcebe0 !important;
-            background: #f4faf5 !important;
-            color: #365233 !important;
-            font-size: 12px !important;
-            font-weight: 800 !important;
-            line-height: 1 !important;
-        }
-
-        #pg-timeline .timeline-title-copy {
-            min-width: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 5px !important;
-        }
-
-        #pg-timeline .timeline-title-cell strong {
-            display: block !important;
-            color: #10271b !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            line-height: 1.32 !important;
-            letter-spacing: -0.01em !important;
-            word-break: normal !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        #pg-timeline .timeline-code-chip {
-            display: inline-flex !important;
-            width: fit-content !important;
-            max-width: 100% !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 4px 8px !important;
-            border: 1px solid #dcebe0 !important;
-            border-radius: 999px !important;
-            background: #f4faf5 !important;
-            color: #60708a !important;
-            font-size: 10px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.04em !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td,
-        #pg-timeline .timeline-milestone-card > td {
-            min-width: 0 !important;
-            padding: 10px 11px !important;
-            border: 1px solid #edf3ee !important;
-            border-radius: 14px !important;
-            background: #fbfdfb !important;
-            color: #0f172a !important;
-            font-size: 12.5px !important;
-            line-height: 1.35 !important;
-            white-space: normal !important;
-            word-break: normal !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td::before,
-        #pg-timeline .timeline-milestone-card > td::before {
-            content: attr(data-label) !important;
-            display: block !important;
-            margin-bottom: 5px !important;
-            color: #66768a !important;
-            font-size: 9px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.08em !important;
-            line-height: 1.15 !important;
-            text-transform: uppercase !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Start"],
-        #pg-timeline .timeline-phase-card > td[data-label="End"],
-        #pg-timeline .timeline-phase-card > td[data-label="Status"],
-        #pg-timeline .timeline-phase-card > td[data-label="Progress"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Phase"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Start Planned Date"],
-        #pg-timeline .timeline-milestone-card > td[data-label="End Planned Date"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
-            min-height: 62px !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Status"],
-        #pg-timeline .timeline-phase-card > td[data-label="Progress"],
-        #pg-timeline .timeline-milestone-card > td[data-label="Status"] {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: flex-start !important;
-        }
-
-        #pg-timeline .timeline-phase-card > td[data-label="Progress"] {
-            color: #10271b !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-        }
-
-        #pg-timeline .timeline-milestone-card > td[data-label="Actions"] {
-            grid-column: 1 / -1 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding: 10px 11px !important;
-        }
-
-        #pg-timeline .timeline-milestone-card > td[data-label="Actions"]::before {
-            margin: 0 !important;
-        }
-    }
-
-
-    /* ================================================================
-       FINAL MOBILE CARD LAYOUT - PHASES + TIMELINE
-       Uses real mobile card components and hides the table only on phone.
-       This avoids inconsistent table-card rendering and maximizes space.
-    ================================================================ */
-    .mobile-timeline-list {
-        display: none;
-    }
-
-    @media (max-width: 720px) {
-        #pg-timeline .timeline-card {
-            padding: 10px !important;
-            border-radius: 18px !important;
-        }
-
-        #pg-timeline .table-wrapper {
-            overflow: visible !important;
-            border: 0 !important;
-            border-radius: 0 !important;
             background: transparent !important;
         }
 
@@ -1896,6 +1437,7 @@
 
         #pg-timeline .mobile-timeline-list {
             display: grid !important;
+            grid-template-columns: 1fr !important;
             gap: 12px !important;
             width: 100% !important;
         }
@@ -1907,6 +1449,7 @@
             border-radius: 18px !important;
             background: #ffffff !important;
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
+            overflow: hidden !important;
         }
 
         #pg-timeline .timeline-mobile-head {
@@ -1974,38 +1517,11 @@
         }
 
         #pg-timeline .timeline-mobile-detail {
-            min-width: 0 !important;
             min-height: 62px !important;
-            padding: 10px 11px !important;
-            border: 1px solid #edf3ee !important;
-            border-radius: 14px !important;
-            background: #fbfdfb !important;
         }
 
         #pg-timeline .timeline-mobile-detail.full {
             grid-column: 1 / -1 !important;
-        }
-
-        #pg-timeline .timeline-mobile-label {
-            display: block !important;
-            margin-bottom: 5px !important;
-            color: #66768a !important;
-            font-size: 9px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.08em !important;
-            line-height: 1.15 !important;
-            text-transform: uppercase !important;
-        }
-
-        #pg-timeline .timeline-mobile-value {
-            display: block !important;
-            min-width: 0 !important;
-            color: #0f172a !important;
-            font-size: 12.5px !important;
-            font-weight: 700 !important;
-            line-height: 1.35 !important;
-            word-break: normal !important;
-            overflow-wrap: anywhere !important;
         }
 
         #pg-timeline .timeline-mobile-detail.progress .timeline-mobile-value {
@@ -2038,9 +1554,29 @@
             flex: 0 0 auto !important;
         }
 
+        #pg-timeline .status-pill-badge {
+            max-width: 100% !important;
+            padding: 6px 12px !important;
+            border-radius: 999px !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            text-align: center !important;
+            text-transform: capitalize !important;
+        }
+
         #pg-timeline .timeline-table-footer {
             margin-top: 12px !important;
             padding: 0 !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+
+        #pg-timeline .pagination-bar {
+            width: 100% !important;
+            overflow-x: auto !important;
+            padding-bottom: 2px !important;
         }
     }
 

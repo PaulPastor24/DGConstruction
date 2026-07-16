@@ -367,7 +367,320 @@
                 padding: 0.4rem 0.7rem;
             }
         }
-    </style>
+    
+        /* ======================================================================
+           SUPERVISOR ATTENDANCE MOBILE POLISH
+           Better action placement, tighter cards, and cleaner scan/log panels.
+           ====================================================================== */
+        .attendance-control-card,
+        .attendance-biometric-card,
+        .attendance-log-card {
+            border: 1px solid #e4ece6 !important;
+            border-radius: 22px !important;
+            background: #ffffff !important;
+            box-shadow: 0 14px 34px rgba(15, 32, 21, 0.06) !important;
+            overflow: hidden !important;
+        }
+
+        .attendance-control-card .card-body,
+        .attendance-biometric-card .card-body,
+        .attendance-log-card .card-body {
+            padding: 1.25rem !important;
+        }
+
+        .attendance-control-layout {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr) !important;
+            align-items: stretch !important;
+            gap: 1rem !important;
+        }
+
+        .attendance-control-copy {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            min-width: 0 !important;
+        }
+
+        .attendance-control-title {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.65rem !important;
+            margin: 0 0 0.45rem !important;
+            color: #101827 !important;
+            font-size: 1.35rem !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+        }
+
+        .attendance-control-title-icon,
+        .attendance-section-icon {
+            width: 34px !important;
+            height: 34px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 12px !important;
+            background: #eff8f0 !important;
+            color: #315c35 !important;
+            flex: 0 0 auto !important;
+        }
+
+        .attendance-control-subtitle {
+            max-width: 570px !important;
+            margin: 0 !important;
+            color: #64748b !important;
+            font-size: 0.92rem !important;
+            line-height: 1.55 !important;
+        }
+
+        .attendance-action-panel {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
+            min-width: 0 !important;
+        }
+
+        .attendance-date-field {
+            padding: 0.8rem !important;
+            border: 1px solid #e4ece6 !important;
+            border-radius: 16px !important;
+            background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%) !important;
+        }
+
+        .attendance-date-label {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.45rem !important;
+            margin-bottom: 0.45rem !important;
+            color: #4f6258 !important;
+            font-size: 0.76rem !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.065em !important;
+            text-transform: uppercase !important;
+        }
+
+        .attendance-date-field .form-control {
+            min-height: 42px !important;
+            border-radius: 13px !important;
+            border-color: #dce7df !important;
+            font-size: 16px !important;
+        }
+
+        .attendance-action-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 0.65rem !important;
+        }
+
+        .attendance-quick-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.45rem !important;
+            min-height: 46px !important;
+            padding: 0.65rem 0.75rem !important;
+            border-radius: 14px !important;
+            font-size: 0.86rem !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            white-space: normal !important;
+            border: 1px solid #dfece4 !important;
+            background: #ffffff !important;
+            color: #1f3529 !important;
+            box-shadow: 0 7px 16px rgba(15, 32, 21, 0.04) !important;
+        }
+
+        .attendance-btn-workers {
+            background: #f7fbf8 !important;
+        }
+
+        .attendance-btn-manual {
+            border-color: #f7d9a8 !important;
+            background: #fffaf0 !important;
+            color: #995c0a !important;
+        }
+
+        .attendance-btn-register {
+            border-color: #315c35 !important;
+            background: #315c35 !important;
+            color: #ffffff !important;
+        }
+
+        .attendance-main-grid {
+            align-items: stretch !important;
+        }
+
+        .attendance-section-heading {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .attendance-section-heading h5 {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.6rem !important;
+            margin: 0 !important;
+            color: #101827 !important;
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            line-height: 1.25 !important;
+        }
+
+        .attendance-log-count {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.35rem !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 999px !important;
+            background: #eef5ef !important;
+            color: #315c35 !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+        }
+
+        .scan-pulse-container {
+            border-color: #dfe7e1 !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+            box-shadow: inset 0 0 0 1px rgba(22, 101, 52, 0.02) !important;
+        }
+
+        .fingerprint-trigger-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #0d6efd 100%) !important;
+            border-color: transparent !important;
+        }
+
+        #globalScanStatus {
+            border-radius: 13px !important;
+        }
+
+        @media (max-width: 992px) {
+            .attendance-control-layout {
+                grid-template-columns: 1fr !important;
+            }
+
+            .attendance-action-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            }
+
+            .attendance-main-grid {
+                gap: 1rem !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .attendance-page {
+                padding: 0 !important;
+            }
+
+            .attendance-control-card,
+            .attendance-biometric-card,
+            .attendance-log-card {
+                border-radius: 18px !important;
+                box-shadow: 0 10px 24px rgba(15, 32, 21, 0.05) !important;
+            }
+
+            .attendance-control-card .card-body,
+            .attendance-biometric-card .card-body,
+            .attendance-log-card .card-body {
+                padding: 1rem !important;
+            }
+
+            .attendance-control-title {
+                font-size: 1.12rem !important;
+            }
+
+            .attendance-control-title-icon {
+                width: 32px !important;
+                height: 32px !important;
+            }
+
+            .attendance-control-subtitle {
+                font-size: 0.83rem !important;
+                line-height: 1.5 !important;
+            }
+
+            .attendance-action-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 0.55rem !important;
+            }
+
+            .attendance-btn-register {
+                grid-column: 1 / -1 !important;
+            }
+
+            .attendance-quick-btn {
+                min-height: 44px !important;
+                padding: 0.6rem 0.55rem !important;
+                font-size: 0.78rem !important;
+            }
+
+            .attendance-date-field {
+                padding: 0.7rem !important;
+            }
+
+            .attendance-section-heading {
+                align-items: flex-start !important;
+                flex-direction: column !important;
+                margin-bottom: 0.9rem !important;
+            }
+
+            .attendance-section-heading.justify-content-center {
+                align-items: center !important;
+                text-align: center !important;
+            }
+
+            .attendance-section-heading h5 {
+                font-size: 1.05rem !important;
+            }
+
+            .attendance-log-count {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+
+            .scan-pulse-container {
+                padding: 1.5rem 1rem !important;
+                border-radius: 18px !important;
+            }
+
+            .fingerprint-trigger-btn {
+                width: 94px !important;
+                height: 94px !important;
+                min-width: 94px !important;
+                min-height: 94px !important;
+            }
+
+            #emptyRowPlaceholder td {
+                padding: 2.25rem 1rem !important;
+            }
+
+            #attendanceLogTableBody tr {
+                border-radius: 18px !important;
+                padding: 1rem !important;
+                box-shadow: 0 10px 22px rgba(15, 32, 21, 0.045) !important;
+            }
+
+            .status-log-stack {
+                align-items: stretch !important;
+            }
+
+            .status-action-grid,
+            #attendanceLogTableBody td:last-child .d-flex {
+                width: 100% !important;
+            }
+
+            #attendanceLogTableBody td:last-child .d-flex {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.55rem !important;
+            }
+        }
+
+</style>
 @endpush
 
 @section('content')

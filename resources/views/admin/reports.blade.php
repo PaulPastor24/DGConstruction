@@ -1288,10 +1288,288 @@
             column-gap: 12px !important;
         }
     }
+
+
+    /* ======================================================================
+       FINAL MOBILE POLISH FOR CAPACITOR / PHONE WEBVIEW
+       Purpose: reduce tall white space, make summary cards 2x2, make filters
+       compact, and keep report rows readable like clean admin cards.
+       ====================================================================== */
+    @media (max-width: 920px) {
+        html,
+        body {
+            overflow-x: hidden !important;
+        }
+
+        #pg-reports {
+            padding: 0.95rem 0.8rem 1.35rem !important;
+            background:
+                radial-gradient(circle at top right, rgba(22, 101, 52, 0.055), transparent 34%),
+                var(--bg-light) !important;
+            overflow-x: hidden !important;
+        }
+
+        #pg-reports .reports-header {
+            margin-bottom: 0.9rem !important;
+            padding: 0 0.1rem !important;
+        }
+
+        #pg-reports .reports-header h1 {
+            font-size: 1.38rem !important;
+            line-height: 1.08 !important;
+            margin-bottom: 0.35rem !important;
+            letter-spacing: -0.03em !important;
+        }
+
+        #pg-reports .reports-header p {
+            max-width: 95% !important;
+            font-size: 0.78rem !important;
+            line-height: 1.45 !important;
+        }
+
+        #pg-reports .summary-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.72rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        #pg-reports .summary-card {
+            position: relative !important;
+            min-height: 96px !important;
+            padding: 0.82rem 0.8rem !important;
+            border-radius: 18px !important;
+            align-items: flex-start !important;
+            box-shadow: 0 12px 28px rgba(15, 32, 21, 0.065) !important;
+            border-left-width: 0 !important;
+            overflow: hidden !important;
+        }
+
+        #pg-reports .summary-card::before {
+            content: '' !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 4px !important;
+            background: #1f5c36 !important;
+            opacity: 0.95 !important;
+        }
+
+        #pg-reports .summary-card.pending::before {
+            background: #d99b24 !important;
+        }
+
+        #pg-reports .summary-card.approved::before {
+            background: #198754 !important;
+        }
+
+        #pg-reports .summary-card.rejected::before {
+            background: #d64545 !important;
+        }
+
+        #pg-reports .summary-info {
+            min-width: 0 !important;
+            width: 100% !important;
+            padding-right: 2.45rem !important;
+        }
+
+        #pg-reports .summary-info .label {
+            max-width: 100% !important;
+            margin-bottom: 0.38rem !important;
+            color: #506071 !important;
+            font-size: 0.62rem !important;
+            font-weight: 800 !important;
+            line-height: 1.18 !important;
+            letter-spacing: 0.055em !important;
+            white-space: normal !important;
+        }
+
+        #pg-reports .summary-info .value {
+            margin-bottom: 0.24rem !important;
+            color: #0f172a !important;
+            font-size: 1.42rem !important;
+            line-height: 1 !important;
+            letter-spacing: -0.03em !important;
+        }
+
+        #pg-reports .summary-info .subtext {
+            color: #748094 !important;
+            font-size: 0.66rem !important;
+            line-height: 1.28 !important;
+        }
+
+        #pg-reports .summary-icon {
+            position: absolute !important;
+            top: 0.78rem !important;
+            right: 0.78rem !important;
+            width: 34px !important;
+            height: 34px !important;
+            font-size: 0.88rem !important;
+            border-radius: 12px !important;
+            background: rgba(22, 101, 52, 0.075) !important;
+        }
+
+        #pg-reports .top-toolbar {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.62rem !important;
+            margin: 0 0 1rem !important;
+            padding: 0.78rem !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            border: 1px solid #e2ebe5 !important;
+            box-shadow: 0 12px 28px rgba(15, 32, 21, 0.055) !important;
+        }
+
+        #pg-reports .toolbar-group,
+        #pg-reports .toolbar-group.search-group {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            flex: initial !important;
+        }
+
+        #pg-reports .toolbar-group.search-group {
+            grid-column: 1 / -1 !important;
+        }
+
+        #pg-reports .toolbar-input,
+        #pg-reports .toolbar-select {
+            min-height: 43px !important;
+            height: 43px !important;
+            padding: 0.6rem 0.78rem !important;
+            border-radius: 13px !important;
+            border-color: #dfe8e2 !important;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            font-size: 16px !important;
+            line-height: 1.15 !important;
+            box-shadow: none !important;
+        }
+
+        #pg-reports .toolbar-input::placeholder {
+            color: #8a96a5 !important;
+            font-size: 0.82rem !important;
+        }
+
+        #pg-reports .workspace-layout,
+        #pg-reports .workspace-left-col {
+            gap: 0.9rem !important;
+        }
+
+        #pg-reports .table-container-card {
+            border-radius: 20px !important;
+            box-shadow: 0 14px 30px rgba(15, 32, 21, 0.06) !important;
+            overflow: hidden !important;
+        }
+
+        #pg-reports .card-table-header {
+            padding: 1rem 1rem 0.85rem !important;
+        }
+
+        #pg-reports .card-table-title {
+            font-size: 0.98rem !important;
+        }
+
+        #pg-reports .card-table-header p {
+            font-size: 0.74rem !important;
+            line-height: 1.25 !important;
+        }
+
+        #pg-reports .reports-table tbody {
+            padding: 0.82rem !important;
+            gap: 0.82rem !important;
+            background: #fbfdfb !important;
+        }
+
+        #pg-reports .reports-table tbody tr {
+            border-radius: 18px !important;
+            padding: 1rem !important;
+            box-shadow: 0 9px 22px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        #pg-reports .reports-table tbody td,
+        #pg-reports .reports-table tbody td[data-label="Status"] {
+            grid-template-columns: 84px minmax(0, 1fr) !important;
+            column-gap: 0.82rem !important;
+            padding: 0.42rem 0 !important;
+        }
+
+        #pg-reports .reports-table tbody td::before {
+            color: #62738a !important;
+            font-size: 0.6rem !important;
+            letter-spacing: 0.075em !important;
+        }
+
+        #pg-reports .reports-table tbody td[data-label="Report Title"] {
+            padding-right: 2.85rem !important;
+        }
+
+        #pg-reports .reports-table tbody td[data-label="Report Title"] .cell-bold {
+            font-size: 0.94rem !important;
+            line-height: 1.34 !important;
+        }
+
+        #pg-reports .status-pill {
+            min-width: 0 !important;
+            padding: 0.42rem 0.7rem !important;
+            font-size: 0.68rem !important;
+        }
+
+        #pg-reports .table-pagination-strip {
+            margin-top: 0 !important;
+            padding: 0.85rem 1rem 1rem !important;
+            background: #ffffff !important;
+        }
+
+        #pg-reports .pagination-summary {
+            font-size: 0.8rem !important;
+        }
+    }
+
+    @media (max-width: 380px) {
+        #pg-reports {
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+        }
+
+        #pg-reports .summary-grid {
+            gap: 0.58rem !important;
+        }
+
+        #pg-reports .summary-card {
+            padding: 0.75rem 0.68rem !important;
+            min-height: 92px !important;
+        }
+
+        #pg-reports .summary-info {
+            padding-right: 2rem !important;
+        }
+
+        #pg-reports .summary-icon {
+            width: 30px !important;
+            height: 30px !important;
+            right: 0.62rem !important;
+        }
+
+        #pg-reports .top-toolbar {
+            gap: 0.55rem !important;
+            padding: 0.68rem !important;
+        }
+
+        #pg-reports .toolbar-select,
+        #pg-reports .toolbar-input {
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+        }
+    }
+
 </style>
 @endpush
 
 @section('content')
+<div id="pg-reports" class="reports-mobile-admin-page">
     <!-- Title Header -->
     <div class="reports-header">
         <h1>Reports</h1>
@@ -2067,4 +2345,5 @@
             loadReports();
         });
     </script>
+</div>
 @endsection

@@ -3,7 +3,7 @@
 @section('title', 'Client Reports')
 
 @section('content')
-<div class="container-fluid p-0">
+<div class="container-fluid p-0 client-reports-page">
     @include('client.partials.page-header', [
         'eyebrow' => 'Project Documentation',
         'title' => 'Reports',
@@ -46,7 +46,7 @@
         </form>
     </section>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-2 g-md-3 mb-3 mb-md-4 report-summary-row">
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="report-summary-widget">
                 <div class="widget-icon bg-success-subtle text-success">
@@ -189,10 +189,110 @@
                 </tbody>
             </table>
         </div>
+        <div class="report-mobile-list">
+            @forelse($reports as $report)
+                @php
+                    $status = $report->approval_status ?? 'pending';
+                    $pillClass = match($status) {
+                        'approved' => 'bg-success-subtle text-success',
+                        'rejected' => 'bg-danger-subtle text-danger',
+                        default => 'bg-warning-subtle text-warning'
+                    };
+
+                    $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
+                    $detailPayload = [
+                        'id' => $report->report_id,
+                        'report_id' => 'RPT-2026-' . str_pad($report->report_id, 4, '0', STR_PAD_LEFT),
+                        'title' => $report->report_title ?? 'Report Details',
+                        'status' => $status,
+                        'status_label' => ucfirst($status),
+                        'project' => optional($report->project)->project_name ?? 'N/A',
+                        'phase' => optional($report->phase)->phase_name ?? 'N/A',
+                        'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
+                        'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
+                        'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                        'created_at' => optional($report->created_at)->format('M d, Y'),
+                        'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
+                        'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
+                        'report_text' => $report->report_text ?? 'No description was provided for this report.',
+                        'site_images' => array_map(fn ($image) => asset('storage/' . $image), $siteImages),
+                        'submitted_initial' => strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)),
+                        'status_class' => $pillClass,
+                    ];
+                @endphp
+
+                <article class="report-mobile-card">
+                    <div class="report-mobile-topline">
+                        <div class="report-mobile-date">
+                            <span>Report Date</span>
+                            <strong>{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</strong>
+                            <small>{{ optional($report->report_date)->format('h:i A') ?? '' }}</small>
+                        </div>
+                        <span class="status-pill {{ $pillClass }}">{{ $status === 'rejected' ? 'Returned' : $status }}</span>
+                    </div>
+
+                    <div class="report-mobile-main">
+                        <h3>{{ $report->report_title ?? optional($report->phase)->phase_name ?? 'Accomplishment Report' }}</h3>
+                        <p>{{ \Illuminate\Support\Str::limit(strip_tags($report->report_text ?? 'Latest accomplishment update submitted by the site supervisor.'), 90) }}</p>
+                    </div>
+
+                    <div class="report-mobile-details">
+                        <div class="report-mobile-detail-row">
+                            <span>Project</span>
+                            <strong>{{ optional($report->project)->project_name ?? 'Unknown Project' }}</strong>
+                        </div>
+                        <div class="report-mobile-detail-row">
+                            <span>Phase</span>
+                            <strong>{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</strong>
+                        </div>
+                        <div class="report-mobile-detail-row">
+                            <span>Submitted By</span>
+                            <strong>{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="report-mobile-actions">
+                        <button class="report-mobile-view js-report-view-btn" type="button" data-report-details='@json($detailPayload)'>
+                            <i class="bi bi-eye"></i>
+                            View Details
+                        </button>
+                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="report-mobile-download report-export-link">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </div>
+                </article>
+            @empty
+                <div class="report-mobile-empty">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <strong>No reports found</strong>
+                    <span>No accomplishment reports match the current filters.</span>
+                </div>
+            @endforelse
+        </div>
+
 
 <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
             <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date']))->links('pagination::bootstrap-5') }}</div>
+        </div>
+    </section>
+
+    <section id="reportDetailPanel" class="report-detail-panel-card mb-4" aria-live="polite">
+        <div class="report-detail-panel-header">
+            <div>
+                <div class="report-detail-panel-eyebrow">Report Preview</div>
+                <h5 id="reportDetailTitle" class="fw-bold mb-0">Select a report</h5>
+            </div>
+            <button type="button" id="reportDetailCloseBtn" class="btn btn-sm btn-light border rounded-circle" aria-label="Close report preview">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="reportDetailBody" class="report-detail-panel-body">
+            <div class="report-detail-empty-state">
+                <div class="avatar-pill avatar-pill-large">?</div>
+                <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
+                <div class="text-muted small">The selected record will open here with project, phase, report details, and approval timeline.</div>
+            </div>
         </div>
     </section>
 </div>
@@ -439,6 +539,24 @@
         max-height: 3000px;
         transform: translateY(0);
         pointer-events: auto;
+    }
+
+    .report-detail-panel-card.preview-focus {
+        border-color: rgba(42, 64, 40, 0.32);
+        box-shadow: 0 16px 38px rgba(42, 64, 40, 0.14);
+    }
+
+    .report-preview-scroll-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-top: 0.45rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: #eef8ef;
+        color: var(--brand-green);
+        font-size: 0.72rem;
+        font-weight: 700;
     }
 
     .report-detail-panel-card.is-switching .report-detail-panel-body {
@@ -696,6 +814,310 @@
             font-size: 0.95rem;
         }
     }
+
+    /* =====================================================================
+       POLISHED MOBILE CLIENT REPORTS UI
+       Fixes the missing Accomplishment Reports display on mobile by rendering
+       real mobile cards instead of hiding the table without a replacement.
+       ===================================================================== */
+    .client-reports-page {
+        --client-green: var(--brand-green, #2a4028);
+        --client-green-dark: var(--brand-green-dark, #1d321c);
+        --client-mint: var(--brand-mint, #f3faf4);
+        --client-border: rgba(42, 64, 40, 0.10);
+    }
+
+    .client-reports-page .report-filter-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fbfffb 100%);
+    }
+
+    .client-reports-page .report-summary-widget {
+        min-height: 92px;
+        background: linear-gradient(135deg, #ffffff 0%, #fbfffb 100%);
+    }
+
+    .client-reports-page .report-main-panel {
+        overflow: hidden;
+    }
+
+    .client-reports-page .report-mobile-list {
+        display: none;
+    }
+
+    @media (max-width: 767.98px) {
+        .client-reports-page {
+            padding: 0 0 18px !important;
+        }
+
+        .client-reports-page .report-filter-card {
+            padding: 13px !important;
+            margin-bottom: 12px !important;
+            border-radius: 18px !important;
+        }
+
+        .client-reports-page .report-filter-card form {
+            gap: 10px !important;
+        }
+
+        .client-reports-page .report-filter-card .form-label {
+            margin-bottom: 5px !important;
+            color: #334155 !important;
+            font-size: 11px !important;
+            letter-spacing: 0.01em !important;
+        }
+
+        .client-reports-page .report-filter-card .form-select,
+        .client-reports-page .report-filter-card .form-control {
+            min-height: 42px !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            border-color: #dfe8e2 !important;
+            box-shadow: none !important;
+        }
+
+        .client-reports-page .report-summary-row {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        .client-reports-page .report-summary-row > [class*="col-"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: none !important;
+            padding: 0 !important;
+        }
+
+        .client-reports-page .report-summary-widget {
+            min-height: 104px !important;
+            padding: 12px !important;
+            border-radius: 17px !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        .client-reports-page .widget-icon {
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 13px !important;
+            font-size: 1rem !important;
+        }
+
+        .client-reports-page .widget-label {
+            display: block !important;
+            font-size: 9.5px !important;
+            line-height: 1.25 !important;
+            letter-spacing: 0.06em !important;
+        }
+
+        .client-reports-page .report-summary-widget h3 {
+            font-size: 1.25rem !important;
+            line-height: 1 !important;
+            margin-top: 6px !important;
+        }
+
+        .client-reports-page .report-main-panel {
+            border-radius: 19px !important;
+            border: 1px solid #dfe9e2 !important;
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05) !important;
+            margin-bottom: 18px !important;
+            background: #ffffff !important;
+        }
+
+        .client-reports-page .report-main-panel > .p-3.border-bottom {
+            padding: 15px 14px !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            background: linear-gradient(135deg, #fbfffb 0%, #ffffff 100%) !important;
+        }
+
+        .client-reports-page .report-main-panel h5 {
+            font-size: 1.06rem !important;
+            line-height: 1.2 !important;
+            color: #143b25 !important;
+        }
+
+        .client-reports-page .report-main-panel .badge {
+            white-space: nowrap !important;
+            padding: 7px 10px !important;
+            font-size: 11px !important;
+        }
+
+        .client-reports-page .report-main-panel > .table-responsive {
+            display: none !important;
+        }
+
+        .client-reports-page .report-mobile-list {
+            display: grid !important;
+            gap: 12px !important;
+            padding: 12px !important;
+            background: #fbfdfb !important;
+        }
+
+        .client-reports-page .report-mobile-card {
+            padding: 14px !important;
+            border-radius: 18px !important;
+            border: 1px solid #dfeae3 !important;
+            background: #ffffff !important;
+            box-shadow: 0 9px 22px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        .client-reports-page .report-mobile-topline {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            padding-bottom: 11px !important;
+            border-bottom: 1px solid #edf3ef !important;
+        }
+
+        .client-reports-page .report-mobile-date span,
+        .client-reports-page .report-mobile-detail-row span {
+            display: block !important;
+            color: #64748b !important;
+            font-size: 9.5px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.075em !important;
+            line-height: 1.2 !important;
+            text-transform: uppercase !important;
+        }
+
+        .client-reports-page .report-mobile-date strong {
+            display: block !important;
+            margin-top: 5px !important;
+            color: #0f172a !important;
+            font-size: 14px !important;
+            line-height: 1.2 !important;
+        }
+
+        .client-reports-page .report-mobile-date small {
+            display: block !important;
+            margin-top: 2px !important;
+            color: #7b8794 !important;
+            font-size: 11.5px !important;
+        }
+
+        .client-reports-page .report-mobile-topline .status-pill {
+            max-width: 126px !important;
+            text-align: center !important;
+            white-space: normal !important;
+            line-height: 1.15 !important;
+        }
+
+        .client-reports-page .report-mobile-main {
+            padding: 12px 0 10px !important;
+        }
+
+        .client-reports-page .report-mobile-main h3 {
+            margin: 0 0 4px !important;
+            color: #111827 !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.3 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .client-reports-page .report-mobile-main p {
+            margin: 0 !important;
+            color: #64748b !important;
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+        }
+
+        .client-reports-page .report-mobile-details {
+            display: grid !important;
+            gap: 8px !important;
+        }
+
+        .client-reports-page .report-mobile-detail-row {
+            display: grid !important;
+            grid-template-columns: 92px minmax(0, 1fr) !important;
+            gap: 12px !important;
+            align-items: start !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ef !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+        }
+
+        .client-reports-page .report-mobile-detail-row strong {
+            color: #10271b !important;
+            font-size: 13px !important;
+            line-height: 1.35 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .client-reports-page .report-mobile-actions {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) 46px !important;
+            gap: 9px !important;
+            margin-top: 12px !important;
+            padding-top: 12px !important;
+            border-top: 1px solid #edf3ef !important;
+        }
+
+        .client-reports-page .report-mobile-view,
+        .client-reports-page .report-mobile-download {
+            min-height: 42px !important;
+            border-radius: 13px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 7px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+        }
+
+        .client-reports-page .report-mobile-view {
+            border: 1px solid var(--client-green) !important;
+            background: var(--client-green) !important;
+            color: #ffffff !important;
+        }
+
+        .client-reports-page .report-mobile-download {
+            border: 1px solid #dbe8df !important;
+            background: #f7fbf8 !important;
+            color: var(--client-green) !important;
+        }
+
+        .client-reports-page .report-mobile-empty {
+            display: grid !important;
+            place-items: center !important;
+            gap: 5px !important;
+            min-height: 150px !important;
+            padding: 24px !important;
+            border: 1px dashed #dbe8df !important;
+            border-radius: 18px !important;
+            color: #64748b !important;
+            text-align: center !important;
+        }
+
+        .client-reports-page .report-main-panel > .p-3.bg-light {
+            padding: 13px !important;
+            background: #ffffff !important;
+        }
+
+        .client-reports-page .pagination {
+            margin: 8px 0 0 !important;
+        }
+
+        .client-reports-page .pagination .page-item .page-link {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            padding: 0.45rem 0.65rem !important;
+            border-radius: 10px !important;
+            font-size: 12px !important;
+        }
+
+        .client-reports-page .report-detail-panel-card {
+            border-radius: 18px !important;
+        }
+    }
+
 </style>
 @endsection
 
@@ -819,6 +1241,31 @@
                 `;
             };
 
+            const scrollToReportPreview = () => {
+                if (!panel) {
+                    return;
+                }
+
+                panel.classList.add('preview-focus');
+
+                window.requestAnimationFrame(() => {
+                    panel.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                        inline: 'nearest'
+                    });
+
+                    setTimeout(() => {
+                        // Keeps the preview title visible below the sticky mobile topbar.
+                        window.scrollBy({ top: -76, left: 0, behavior: 'smooth' });
+                    }, 260);
+
+                    setTimeout(() => {
+                        panel.classList.remove('preview-focus');
+                    }, 1600);
+                });
+            };
+
             const openDetails = (payload) => {
                 if (!payload) {
                     return;
@@ -831,6 +1278,7 @@
                     renderDetails(payload);
                     panel.classList.add('is-open');
                     panel.classList.remove('is-switching');
+                    scrollToReportPreview();
                 }, 140);
             };
 

@@ -3,8 +3,239 @@
 @section('title', 'Supervisor Dashboard - Field Operations Command')
 @section('page_title', 'Supervisor Dashboard')
 
+
+@push('styles')
+<style>
+    /* Supervisor dashboard mobile polish */
+    .supervisor-dashboard-page {
+        width: 100%;
+    }
+
+    @media (max-width: 820px) {
+        .supervisor-dashboard-page {
+            gap: 14px !important;
+        }
+
+        .supervisor-dashboard-page .page-card,
+        .supervisor-dashboard-page .section-card {
+            border: 1px solid #e4ece6 !important;
+            border-radius: 20px !important;
+            background: #ffffff !important;
+            box-shadow: 0 12px 28px rgba(15, 32, 21, 0.055) !important;
+            overflow: hidden !important;
+        }
+
+        .supervisor-dashboard-page .page-hero {
+            padding: 16px !important;
+            border-radius: 20px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fcf8 100%) !important;
+        }
+
+        .supervisor-dashboard-page .eyebrow {
+            font-size: 10px !important;
+            letter-spacing: 0.14em !important;
+            color: #60708a !important;
+            margin-bottom: 4px !important;
+        }
+
+        .supervisor-dashboard-page .page-title {
+            font-size: 20px !important;
+            line-height: 1.15 !important;
+            letter-spacing: -0.02em !important;
+            margin-bottom: 6px !important;
+        }
+
+        .supervisor-dashboard-page .page-subtitle {
+            max-width: 270px !important;
+            font-size: 12.5px !important;
+            line-height: 1.45 !important;
+        }
+
+        .supervisor-dashboard-page #projectSelectorForm,
+        .supervisor-dashboard-page #projectSelectorForm select {
+            width: 100% !important;
+            max-width: 100% !important;
+            font-size: 16px !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex:first-child > .d-flex:last-child {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        .supervisor-dashboard-page .page-hero .row.g-3 {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin-top: 12px !important;
+        }
+
+        .supervisor-dashboard-page .page-hero .row.g-3 > [class*="col-"] {
+            width: auto !important;
+            max-width: none !important;
+            padding: 0 !important;
+        }
+
+        .supervisor-dashboard-page .stat-card {
+            min-height: 118px !important;
+            padding: 13px !important;
+            border: 1px solid #e5eee7 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 22px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        .supervisor-dashboard-page .stat-title {
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            line-height: 1.25 !important;
+            letter-spacing: 0.07em !important;
+            text-transform: uppercase !important;
+            color: #64748b !important;
+            margin-bottom: 8px !important;
+        }
+
+        .supervisor-dashboard-page .stat-value {
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            color: #101827 !important;
+            font-size: 18px !important;
+            line-height: 1.12 !important;
+            font-weight: 800 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .supervisor-dashboard-page .stat-meta,
+        .supervisor-dashboard-page .stat-card .small {
+            font-size: 11px !important;
+            line-height: 1.35 !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex.flex-wrap {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            margin-top: 12px !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex.flex-wrap .btn {
+            width: 100% !important;
+            min-height: 42px !important;
+            justify-content: center !important;
+            border-radius: 14px !important;
+            padding: 10px 8px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            white-space: normal !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex.flex-wrap .btn:first-child {
+            grid-column: 1 / -1 !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-card-grid {
+            gap: 14px !important;
+        }
+
+        .supervisor-dashboard-page .section-card-body {
+            padding: 16px !important;
+        }
+
+        .supervisor-dashboard-page .section-card h5 {
+            font-size: 17px !important;
+            line-height: 1.25 !important;
+            margin-bottom: 4px !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-key-value {
+            min-height: 58px !important;
+            padding: 11px !important;
+            border-radius: 15px !important;
+            background: #fbfefb !important;
+            border: 1px solid #e9f1eb !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-icon {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            border-radius: 12px !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-summary-highlight {
+            margin-top: 14px !important;
+            padding: 14px !important;
+            border: 1px solid #dfece3 !important;
+            border-radius: 18px !important;
+            background: linear-gradient(135deg, #f5fff7 0%, #ffffff 100%) !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-kpi {
+            font-size: 28px !important;
+            line-height: 1 !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-info-stack {
+            border-top: 1px solid #edf2ee !important;
+            margin-top: 12px !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-inline-item {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            gap: 12px !important;
+            align-items: center !important;
+            padding: 11px 0 !important;
+            border-bottom: 1px solid #eef3ef !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-inline-item span:last-child {
+            text-align: right !important;
+            max-width: 145px !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .supervisor-dashboard-page .dashboard-action-btn {
+            width: 100% !important;
+            min-height: 42px !important;
+            border-radius: 14px !important;
+            font-weight: 800 !important;
+            margin-top: 12px !important;
+        }
+
+        .supervisor-dashboard-page .activity-item,
+        .supervisor-dashboard-page .dashboard-surface {
+            border-radius: 16px !important;
+            border: 1px solid #e7efe9 !important;
+            background: #ffffff !important;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .supervisor-dashboard-page .page-hero .row.g-3 {
+            grid-template-columns: 1fr !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex.flex-wrap {
+            grid-template-columns: 1fr !important;
+        }
+
+        .supervisor-dashboard-page .page-hero > .d-flex.flex-wrap .btn {
+            grid-column: auto !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="d-flex flex-column gap-3">
+<div class="d-flex flex-column gap-3 supervisor-dashboard-page">
     <section class="page-card">
         <div class="page-hero">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3">

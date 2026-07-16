@@ -178,10 +178,15 @@
 
                     <div class="row g-4 align-items-stretch">
                         <div class="col-12 col-lg-6 d-flex">
-                            <div class="dashboard-panel w-100 d-flex flex-column">
-                                <div class="mb-3">
-                                    <h3 class="panel-section-title mb-0">Construction Progress Overview</h3>
+                            <div class="dashboard-panel w-100 d-flex flex-column construction-progress-panel">
+                                <div class="construction-progress-header mb-3">
+                                    <div>
+                                        <span class="construction-progress-eyebrow">Phase Roadmap</span>
+                                        <h3 class="panel-section-title mb-0">Construction Progress Overview</h3>
+                                    </div>
+                                    <span class="construction-progress-count">{{ count($phases) }} phases</span>
                                 </div>
+                                <p class="construction-progress-subtitle">Monitor each construction phase, milestone marker, status, and completion progress in one compact view.</p>
 
                                 <div class="d-flex flex-column flex-grow-1 justify-content-around py-2 dynamic-timeline-stepper">
                                     @foreach($phases as $phase)
@@ -766,6 +771,286 @@
     /* AMBER BANNERS */
     .alert-countdown-banner { background-color: #fff7ed; border: 1px dashed #ffedd5; }
     .alert-countdown-banner span { font-size: 0.88rem; }
+
+    /* ======================================================================
+       MOBILE POLISH: Construction Progress Overview
+       Makes the phase progress cards cleaner, less cramped, and more balanced
+       inside the Capacitor / phone view without changing the desktop layout.
+       ====================================================================== */
+
+    .construction-progress-panel {
+        overflow: visible;
+    }
+
+    .construction-progress-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .construction-progress-eyebrow {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #64748b;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .construction-progress-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: max-content;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: #f0f8f2;
+        border: 1px solid rgba(22, 101, 52, 0.14);
+        color: #166534;
+        font-size: 0.74rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .construction-progress-subtitle {
+        margin: -0.35rem 0 1rem;
+        color: #64748b;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 768px) {
+        .construction-progress-panel {
+            padding: 18px 14px !important;
+            border-radius: 20px !important;
+            background:
+                radial-gradient(circle at top right, rgba(22, 101, 52, 0.05), transparent 38%),
+                #ffffff !important;
+        }
+
+        .construction-progress-header {
+            align-items: center;
+            margin-bottom: 0.45rem !important;
+        }
+
+        .construction-progress-subtitle {
+            margin-bottom: 0.85rem;
+            font-size: 0.76rem;
+        }
+
+        .construction-progress-count {
+            padding: 0.32rem 0.68rem;
+            font-size: 0.68rem;
+        }
+
+        .dynamic-timeline-stepper {
+            gap: 0.75rem !important;
+            justify-content: flex-start !important;
+            padding: 0 !important;
+        }
+
+        .timeline-phase-card-item {
+            position: relative;
+            display: block !important;
+            width: 100%;
+            padding: 14px 14px 13px 16px !important;
+            border: 1px solid rgba(22, 101, 52, 0.12) !important;
+            border-left: 0 !important;
+            border-radius: 18px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%) !important;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.045);
+            overflow: visible;
+        }
+
+        .timeline-phase-card-item::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            bottom: 12px;
+            width: 4px;
+            border-radius: 0 999px 999px 0;
+            background: #cbd5e1;
+        }
+
+        .timeline-phase-completed::before {
+            background: #16a34a;
+        }
+
+        .timeline-phase-current::before {
+            background: #166534;
+        }
+
+        .timeline-phase-upcoming::before {
+            background: #cbd5e1;
+        }
+
+        .timeline-phase-card-item:hover {
+            transform: none !important;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        .timeline-phase-card-item > .w-100 > .d-flex.justify-content-between.align-items-start {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.75rem;
+            align-items: start !important;
+            margin-bottom: 0.55rem !important;
+        }
+
+        .timeline-phase-card-item > .w-100 > .d-flex.justify-content-between.align-items-start > div:first-child {
+            min-width: 0;
+        }
+
+        .timeline-phase-card-item > .w-100 > .d-flex.justify-content-between.align-items-start > div:last-child {
+            display: flex !important;
+            flex-direction: column;
+            align-items: flex-end !important;
+            justify-content: flex-start !important;
+            gap: 0.38rem !important;
+            min-width: 82px;
+        }
+
+        .stepper-phase-name {
+            margin: 0 0 0.28rem !important;
+            color: #0f172a;
+            font-size: 0.9rem !important;
+            font-weight: 800;
+            line-height: 1.22;
+            letter-spacing: -0.01em;
+        }
+
+        .stepper-phase-dates {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            max-width: 100%;
+            padding: 0.24rem 0.55rem;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid #e5edf0;
+            color: #64748b;
+            font-size: 0.68rem !important;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stepper-phase-dates i {
+            color: #166534;
+        }
+
+        .stepper-percentage {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            padding: 0.28rem 0.55rem;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid #e5edf0;
+            color: #0f172a !important;
+            font-size: 0.76rem !important;
+            font-weight: 900 !important;
+            line-height: 1;
+        }
+
+        .timeline-phase-card-item .badge-status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 86px;
+            padding: 0.35rem 0.55rem;
+            font-size: 0.66rem !important;
+            font-weight: 900;
+            line-height: 1.1;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .timeline-progress-shell {
+            margin-top: 0.3rem !important;
+            padding-top: 1.5rem !important;
+        }
+
+        .timeline-progress-shell .progress {
+            height: 7px !important;
+            border-radius: 999px !important;
+            background-color: #eef4f0 !important;
+            overflow: hidden;
+        }
+
+        .timeline-progress-shell .progress-bar {
+            border-radius: 999px !important;
+        }
+
+        .milestone-track {
+            height: 28px !important;
+        }
+
+        .milestone-marker-wrapper {
+            top: 0 !important;
+        }
+
+        .phase-milestone-marker {
+            min-width: 24px !important;
+            height: 22px !important;
+            padding: 0 6px !important;
+            border-radius: 999px !important;
+            box-shadow: 0 8px 16px rgba(34, 197, 94, 0.12) !important;
+        }
+
+        .phase-milestone-marker i {
+            font-size: 0.68rem !important;
+        }
+
+        .phase-milestone-marker::after {
+            bottom: -5px !important;
+            border-left-width: 5px !important;
+            border-right-width: 5px !important;
+            border-top-width: 5px !important;
+        }
+
+        .milestone-info-card {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .construction-progress-panel {
+            padding: 16px 12px !important;
+        }
+
+        .timeline-phase-card-item {
+            padding: 13px 12px 12px 15px !important;
+        }
+
+        .timeline-phase-card-item > .w-100 > .d-flex.justify-content-between.align-items-start {
+            grid-template-columns: minmax(0, 1fr) 76px;
+            gap: 0.55rem;
+        }
+
+        .timeline-phase-card-item > .w-100 > .d-flex.justify-content-between.align-items-start > div:last-child {
+            min-width: 76px;
+        }
+
+        .stepper-phase-name {
+            font-size: 0.84rem !important;
+        }
+
+        .stepper-phase-dates {
+            font-size: 0.64rem !important;
+            padding: 0.22rem 0.45rem;
+        }
+
+        .timeline-phase-card-item .badge-status-pill {
+            min-width: 76px;
+            padding-inline: 0.45rem;
+            font-size: 0.61rem !important;
+        }
+    }
+
 </style>
 
 @push('scripts')

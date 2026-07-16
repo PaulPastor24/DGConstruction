@@ -5,6 +5,147 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin-attendance.css') }}?v={{ time() }}">
+
+    <style>
+        /* Mobile alignment polish for Attendance Records empty state and toolbar */
+        @media (max-width: 768px) {
+            .attendance-page {
+                width: 100%;
+                max-width: 100%;
+                margin: 0 auto;
+            }
+
+            .attendance-panel,
+            .attendance-issues-panel {
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .attendance-toolbar {
+                align-items: stretch !important;
+                gap: 16px !important;
+            }
+
+            .attendance-toolbar-title {
+                display: grid !important;
+                grid-template-columns: 42px minmax(0, 1fr) !important;
+                align-items: center !important;
+                gap: 12px !important;
+                width: 100% !important;
+            }
+
+            .attendance-toolbar-title h2,
+            .attendance-toolbar-title p {
+                text-align: left !important;
+            }
+
+            .attendance-toolbar-icon {
+                width: 42px !important;
+                height: 42px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex: 0 0 42px !important;
+            }
+
+            .attendance-toolbar-actions {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+                width: 100% !important;
+            }
+
+            .attendance-search,
+            .btn-print {
+                width: 100% !important;
+            }
+
+            .attendance-table-wrapper {
+                width: 100% !important;
+                overflow-x: hidden !important;
+                border-radius: 0 0 18px 18px !important;
+            }
+
+            .attendance-table {
+                width: 100% !important;
+                min-width: 0 !important;
+                table-layout: fixed !important;
+            }
+
+            .attendance-table tbody {
+                width: 100% !important;
+            }
+
+            .attendance-table tbody tr:not([data-attendance-row]) {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .attendance-table tbody tr:not([data-attendance-row]) td {
+                display: block !important;
+                width: 100% !important;
+                padding: 0 !important;
+                border: 0 !important;
+            }
+
+            .attendance-empty {
+                min-height: 300px !important;
+                width: min(100%, 310px) !important;
+                margin: 0 auto !important;
+                padding: 42px 18px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+
+            .attendance-empty i {
+                width: 58px !important;
+                height: 58px !important;
+                margin: 0 auto 14px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 18px !important;
+            }
+
+            .attendance-empty strong,
+            .attendance-empty span {
+                display: block !important;
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            .issues-empty {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 10px !important;
+                width: 100% !important;
+                text-align: left !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .attendance-empty {
+                width: min(100%, 280px) !important;
+                min-height: 280px !important;
+                padding-inline: 12px !important;
+            }
+
+            .attendance-toolbar-title {
+                grid-template-columns: 38px minmax(0, 1fr) !important;
+                gap: 10px !important;
+            }
+
+            .attendance-toolbar-icon {
+                width: 38px !important;
+                height: 38px !important;
+                flex-basis: 38px !important;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')

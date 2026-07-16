@@ -997,3 +997,387 @@ MOBILE
         font-size: 0.92rem;
     }
 }
+
+
+/* ==========================================================================
+POLISHED LOGIN LANDING UPDATE
+- Replaces quote-style CTA behavior visually with a cleaner login/portal flow.
+- Keeps desktop layout intact while improving mobile spacing and readability.
+========================================================================== */
+
+.nav-cta,
+.button-primary,
+.button-light {
+    box-shadow: 0 12px 28px rgba(23, 56, 36, 0.16);
+}
+
+.nav-cta:focus-visible,
+.button:focus-visible,
+.carousel-btn:focus-visible {
+    outline: 3px solid rgba(23, 56, 36, 0.22);
+    outline-offset: 3px;
+}
+
+.hero-copy {
+    position: relative;
+}
+
+.hero-copy::before {
+    content: 'Client • Supervisor • Admin Portal';
+    display: inline-flex;
+    width: fit-content;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    border: 1px solid rgba(23, 56, 36, 0.12);
+    border-radius: 999px;
+    background: #f3f8f4;
+    color: var(--forest);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.button-secondary {
+    border-color: rgba(23, 56, 36, 0.18);
+}
+
+.button-secondary svg {
+    width: 15px;
+    height: 15px;
+}
+
+.metric-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::after {
+    content: '';
+    position: absolute;
+    right: -24px;
+    bottom: -34px;
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    background: rgba(23, 56, 36, 0.035);
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .page-shell {
+        padding: 0 14px;
+    }
+
+    .site-nav {
+        position: sticky !important;
+        top: 8px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 8px 0 14px;
+        padding: 10px;
+        border: 1px solid rgba(23, 56, 36, 0.08);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 12px 30px rgba(16, 39, 27, 0.08);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+    .brand {
+        max-width: calc(100% - 96px);
+        gap: 9px;
+    }
+
+    .brand img {
+        width: 42px;
+        height: 42px;
+    }
+
+    .brand-text {
+        font-size: 0.72rem;
+        line-height: 1.05;
+        letter-spacing: 0.04em;
+    }
+
+    .nav-cta {
+        flex: 0 0 auto;
+        width: auto !important;
+        min-width: 78px;
+        padding: 11px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        box-shadow: 0 10px 24px rgba(23, 56, 36, 0.16);
+    }
+
+    .hero {
+        gap: 18px;
+        padding: 8px 0 34px;
+    }
+
+    .hero-copy {
+        padding-top: 2px;
+    }
+
+    .hero-copy::before {
+        margin-bottom: 12px;
+        padding: 7px 10px;
+        font-size: 0.66rem;
+        letter-spacing: 0.035em;
+    }
+
+    .hero-copy h1 {
+        margin-bottom: 14px;
+        font-size: clamp(2.7rem, 14vw, 3.9rem);
+        line-height: 0.94;
+        letter-spacing: -0.055em;
+    }
+
+    .hero-lead {
+        max-width: 34rem;
+        margin-bottom: 20px;
+        font-size: 0.92rem;
+        line-height: 1.65;
+    }
+
+    .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .button {
+        min-height: 48px;
+        padding: 14px 16px;
+        border-radius: 15px;
+        font-size: 0.92rem;
+    }
+
+    .button-primary {
+        background: linear-gradient(135deg, #173824 0%, #245438 100%);
+    }
+
+    .hero-visual {
+        min-height: 240px;
+        border-radius: 24px;
+        box-shadow: 0 16px 36px rgba(16, 39, 27, 0.12);
+    }
+
+    .hero-visual img {
+        min-height: 240px;
+    }
+
+    .services-band {
+        margin-bottom: 36px;
+        padding: 16px;
+        border-radius: 24px;
+    }
+
+    .service-grid {
+        gap: 10px;
+    }
+
+    .service-card {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 6px 10px;
+        align-items: start;
+        padding: 13px;
+    }
+
+    .service-icon {
+        grid-row: span 2;
+        margin: 0;
+    }
+
+    .service-card h3 {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .service-card p {
+        margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+
+    .about-section {
+        gap: 24px;
+        margin-bottom: 44px;
+    }
+
+    .about-copy h2 {
+        font-size: clamp(2rem, 11vw, 3rem);
+        line-height: 1;
+    }
+
+    .about-copy p {
+        font-size: 0.91rem;
+        line-height: 1.68;
+    }
+
+    .about-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .metric-card {
+        min-height: 126px;
+        padding: 14px;
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(16, 39, 27, 0.06);
+    }
+
+    .metric-icon {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+
+    .metric-card strong {
+        font-size: 1.65rem;
+        line-height: 1.05;
+    }
+
+    .metric-card span {
+        font-size: 0.78rem;
+    }
+
+    .section-heading-row h2 {
+        font-size: 1.65rem;
+    }
+
+    .project-img-container {
+        aspect-ratio: 16 / 11;
+    }
+
+    .cta-section {
+        padding: 32px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-shell {
+        padding: 0 12px;
+    }
+
+    .site-nav {
+        top: 6px;
+        border-radius: 20px;
+    }
+
+    .brand {
+        max-width: calc(100% - 88px);
+    }
+
+    .brand img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .brand-text {
+        font-size: 0.68rem;
+    }
+
+    .nav-cta {
+        min-width: 72px;
+        padding: 10px 12px;
+        font-size: 0.74rem;
+    }
+
+    .hero-copy h1 {
+        font-size: clamp(2.55rem, 14.5vw, 3.55rem);
+    }
+
+    .hero-lead {
+        font-size: 0.9rem;
+    }
+
+    .hero-visual,
+    .hero-visual img {
+        min-height: 220px;
+    }
+
+    .about-metrics {
+        gap: 9px;
+    }
+
+    .metric-card {
+        min-height: 118px;
+        padding: 13px;
+    }
+
+    .metric-card strong {
+        font-size: 1.48rem;
+    }
+
+    .metric-card span {
+        font-size: 0.75rem;
+    }
+}
+
+
+
+/* ========================================================================== 
+MOBILE ABOUT METRICS 2x2 FIX
+Keeps the four achievement cards in a compact 2x2 grid on phones.
+This is intentionally placed at the bottom and uses !important because
+responsive.css is also loaded in the landing page.
+========================================================================== */
+@media (max-width: 768px) {
+    .about-section .about-metrics {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .about-section .about-metrics .metric-card {
+        display: flex !important;
+        min-width: 0 !important;
+        min-height: 124px !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        padding: 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .about-section .about-metrics .metric-icon {
+        margin-bottom: 8px !important;
+        font-size: 1.15rem !important;
+    }
+
+    .about-section .about-metrics .metric-card strong {
+        margin-bottom: 5px !important;
+        font-size: clamp(1.28rem, 6vw, 1.55rem) !important;
+        line-height: 1.05 !important;
+        letter-spacing: -0.04em !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .about-section .about-metrics .metric-card span {
+        font-size: 0.74rem !important;
+        line-height: 1.28 !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .about-section .about-metrics {
+        gap: 8px !important;
+    }
+
+    .about-section .about-metrics .metric-card {
+        min-height: 116px !important;
+        padding: 12px !important;
+    }
+
+    .about-section .about-metrics .metric-card strong {
+        font-size: clamp(1.14rem, 5.8vw, 1.36rem) !important;
+    }
+
+    .about-section .about-metrics .metric-card span {
+        font-size: 0.7rem !important;
+    }
+}

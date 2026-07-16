@@ -999,6 +999,357 @@
             width: 100%;
         }
     }
+
+    /* ======================================================================
+       SUPERVISOR PHASES MOBILE POLISH
+       Converts cramped tables into readable phase cards and reduces whitespace.
+       ====================================================================== */
+    @media (max-width: 820px) {
+        .phases-container {
+            gap: 14px !important;
+            padding: 0 !important;
+        }
+
+        .metrics-row {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        .metric-card {
+            min-height: 98px !important;
+            padding: 13px !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 24px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        .project-selector-card {
+            grid-column: 1 / -1 !important;
+        }
+
+        .metric-label {
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.07em !important;
+            text-transform: uppercase !important;
+            margin-bottom: 7px !important;
+        }
+
+        .project-name,
+        .metric-value-large,
+        .phase-title-text {
+            font-size: 17px !important;
+            line-height: 1.15 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .current-phase-highlight {
+            align-items: flex-start !important;
+        }
+
+        .phase-icon-wrapper {
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            border-radius: 12px !important;
+        }
+
+        .health-status-wrapper {
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        .health-text {
+            width: 100% !important;
+            text-align: center !important;
+            border-radius: 999px !important;
+            padding: 7px 10px !important;
+        }
+
+        .table-section-container {
+            border-radius: 20px !important;
+            overflow: hidden !important;
+            box-shadow: 0 12px 28px rgba(15, 32, 21, 0.055) !important;
+        }
+
+        .table-section-header {
+            padding: 16px !important;
+            gap: 12px !important;
+        }
+
+        .section-main-title {
+            font-size: 18px !important;
+            line-height: 1.2 !important;
+        }
+
+        .section-subtitle {
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+        }
+
+        .header-actions {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            width: 100% !important;
+            gap: 10px !important;
+        }
+
+        .btn-action-outline,
+        .btn-action-solid {
+            justify-content: center !important;
+            width: 100% !important;
+            min-height: 42px !important;
+            border-radius: 13px !important;
+            padding: 10px 8px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+        }
+
+        .filters-section {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            width: 100% !important;
+            max-width: none !important;
+            padding: 12px 16px !important;
+            gap: 10px !important;
+            border-top: 1px solid #edf2ee !important;
+            border-bottom: 1px solid #edf2ee !important;
+        }
+
+        .filter-input,
+        .filter-select {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            min-height: 42px !important;
+            border-radius: 13px !important;
+            font-size: 16px !important;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+            border: 0 !important;
+        }
+
+        .phases-data-table,
+        .phases-data-table thead,
+        .phases-data-table tbody,
+        .phases-data-table tr,
+        .phases-data-table th,
+        .phases-data-table td {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .phases-data-table thead {
+            display: none !important;
+        }
+
+        .phases-data-table tbody {
+            display: grid !important;
+            gap: 14px !important;
+            padding: 14px !important;
+            background: #fbfdfb !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] {
+            position: relative !important;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            padding: 16px !important;
+            border: 1px solid #dfece4 !important;
+            border-radius: 20px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 24px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        .phases-data-table tbody tr.row-active-highlight {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fff9 100%) !important;
+            border-color: #cfe4d3 !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td {
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            font-size: 13px !important;
+            line-height: 1.35 !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(1) {
+            position: absolute !important;
+            top: 16px !important;
+            left: 16px !important;
+            width: auto !important;
+            z-index: 2 !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(2) {
+            grid-column: 1 / -1 !important;
+            padding-left: 42px !important;
+            padding-right: 0 !important;
+            padding-bottom: 14px !important;
+            margin-bottom: 2px !important;
+            border-bottom: 1px solid #edf3ef !important;
+        }
+
+        .phases-data-table .phase-name-cell {
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+
+        .phases-data-table .phase-cell-icon {
+            display: none !important;
+        }
+
+        .phases-data-table .phase-name-string {
+            display: block !important;
+            color: #102015 !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.28 !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        .phases-data-table .current-inline-tag {
+            display: inline-block !important;
+            margin-left: 4px !important;
+            color: #166534 !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(3) {
+            display: none !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(4),
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(5),
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(6),
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(7) {
+            min-height: 74px !important;
+            padding: 11px !important;
+            border: 1px solid #e7efe9 !important;
+            border-radius: 16px !important;
+            background: #fbfefb !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(4)::before,
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(5)::before,
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(6)::before,
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(7)::before {
+            display: block !important;
+            margin-bottom: 7px !important;
+            color: #64748b !important;
+            font-size: 9.5px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.075em !important;
+            line-height: 1.2 !important;
+            text-transform: uppercase !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(4)::before { content: 'Progress'; }
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(5)::before { content: 'Status'; }
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(6)::before { content: 'Start'; }
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(7)::before { content: 'End'; }
+
+        .progress-cell-wrapper {
+            max-width: none !important;
+            gap: 7px !important;
+        }
+
+        .progress-percent-value {
+            font-size: 18px !important;
+            font-weight: 900 !important;
+        }
+
+        .table-progress-track {
+            height: 7px !important;
+        }
+
+        .status-badge {
+            max-width: 100% !important;
+            border-radius: 999px !important;
+            padding: 7px 10px !important;
+            white-space: normal !important;
+            font-size: 10.5px !important;
+            line-height: 1.1 !important;
+        }
+
+        .date-cell-text {
+            white-space: normal !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            color: #172033 !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] td:nth-child(8) {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            padding-top: 2px !important;
+        }
+
+        .action-view-row-btn {
+            width: 42px !important;
+            height: 42px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: 1px solid #dfece4 !important;
+            border-radius: 13px !important;
+            color: #365233 !important;
+            background: #ffffff !important;
+        }
+
+        .empty-table-state {
+            padding: 28px 16px !important;
+            text-align: center !important;
+            white-space: normal !important;
+        }
+
+        .table-footer-pagination {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            justify-items: center !important;
+            gap: 12px !important;
+            padding: 14px 16px !important;
+        }
+
+        .pagination-summary-text {
+            text-align: center !important;
+            font-size: 12px !important;
+        }
+
+        .modal-content {
+            width: calc(100vw - 24px) !important;
+            max-height: 84vh !important;
+            border-radius: 20px !important;
+        }
+
+        .detail-row {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 4px !important;
+        }
+    }
+
+    @media (max-width: 390px) {
+        .metrics-row,
+        .filters-section {
+            grid-template-columns: 1fr !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
 </style>
 
 {{-- Include SweetAlert2 --}}

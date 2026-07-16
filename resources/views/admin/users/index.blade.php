@@ -105,6 +105,417 @@
     #addUserModal .invalid-feedback.d-block {
         display: block !important;
     }
+
+
+    /* ================================================================
+       PROFESSIONAL MOBILE USER MANAGEMENT UI
+       - Prevents title/button compression
+       - Converts desktop user table to clean mobile cards
+       - Reduces excess spacing while keeping touch targets accessible
+    ================================================================ */
+    .ug-hero-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.05rem 1.15rem;
+        border: 1px solid rgba(22, 101, 52, 0.10);
+        border-radius: 18px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+    }
+
+    .ug-page-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.35rem;
+        color: var(--ug-accent);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+    }
+
+    .ug-add-user-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        min-height: 46px;
+        padding: 0.78rem 1.05rem;
+        border: 0;
+        border-radius: 14px;
+        background: var(--ug-accent);
+        color: #ffffff;
+        font-weight: 800;
+        line-height: 1.15;
+        box-shadow: 0 12px 22px rgba(22, 101, 52, 0.20);
+        transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .ug-add-user-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 28px rgba(22, 101, 52, 0.24);
+    }
+
+    .ug-add-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.14);
+        flex-shrink: 0;
+    }
+
+    .ug-mobile-user-list {
+        display: none;
+    }
+
+    .ug-filter-card .form-control,
+    .ug-filter-card .form-select {
+        min-height: 44px;
+        border-radius: 12px;
+    }
+
+    @media (max-width: 820px) {
+        .ug-page {
+            padding: 0 0 22px !important;
+        }
+
+        .ug-hero-card {
+            grid-template-columns: 1fr !important;
+            align-items: stretch !important;
+            gap: 0.85rem !important;
+            padding: 14px !important;
+            margin-bottom: 14px !important;
+        }
+
+        .ug-page .dashboard-title-area h2,
+        .ug-page .dashboard-title-area h2 * {
+            font-size: 23px !important;
+            line-height: 1.15 !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            margin-bottom: 5px !important;
+        }
+
+        .ug-page .dashboard-title-area p {
+            max-width: 100% !important;
+            font-size: 12.5px !important;
+            line-height: 1.45 !important;
+        }
+
+        .ug-page-kicker {
+            font-size: 10px !important;
+            letter-spacing: 0.12em !important;
+            margin-bottom: 4px !important;
+        }
+
+        .ug-add-user-btn {
+            width: 100% !important;
+            min-height: 46px !important;
+            border-radius: 14px !important;
+            font-size: 14px !important;
+        }
+
+        .ug-summary-grid {
+            --bs-gutter-x: 0.75rem !important;
+            --bs-gutter-y: 0.75rem !important;
+            margin-bottom: 14px !important;
+        }
+
+        .ug-summary-grid > [class*='col-'] {
+            width: 50% !important;
+            flex: 0 0 50% !important;
+            max-width: 50% !important;
+        }
+
+        .ug-summary-grid .card {
+            border-radius: 16px !important;
+        }
+
+        .ug-summary-grid .card-body {
+            min-height: 96px !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            padding: 12px !important;
+        }
+
+        .ug-summary-grid .user-card-icon {
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 12px !important;
+            font-size: 17px !important;
+            flex-shrink: 0 !important;
+        }
+
+        .ug-summary-grid .text-muted.small.fw-semibold {
+            font-size: 10px !important;
+            line-height: 1.25 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        .ug-summary-grid .fs-2 {
+            font-size: 24px !important;
+            line-height: 1 !important;
+            margin: 4px 0 !important;
+        }
+
+        .ug-summary-grid .text-muted[style*="font-size: 11px"] {
+            font-size: 10px !important;
+            line-height: 1.25 !important;
+        }
+
+        .ug-filter-card {
+            margin-bottom: 14px !important;
+            border-radius: 18px !important;
+        }
+
+        .ug-filter-card .card-body {
+            padding: 12px !important;
+        }
+
+        .ug-filter-card .row {
+            --bs-gutter-y: 0.55rem !important;
+        }
+
+        .ug-filter-card .col-md-5,
+        .ug-filter-card .col-md-3,
+        .ug-filter-card .col-md-2 {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        .ug-filter-card input,
+        .ug-filter-card select,
+        .ug-filter-card button {
+            font-size: 16px !important;
+        }
+
+        .ug-user-table-card {
+            border-radius: 18px !important;
+            overflow: visible !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: 0 !important;
+        }
+
+        .ug-desktop-user-table {
+            display: none !important;
+        }
+
+        .ug-mobile-user-list {
+            display: grid !important;
+            gap: 12px !important;
+        }
+
+        .ug-user-card {
+            padding: 14px !important;
+            border: 1px solid rgba(22, 101, 52, 0.12) !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045) !important;
+        }
+
+        .ug-user-card-head {
+            display: grid !important;
+            grid-template-columns: 42px minmax(0, 1fr) auto !important;
+            gap: 10px !important;
+            align-items: start !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 11px !important;
+            border-bottom: 1px solid #edf3ee !important;
+        }
+
+        .ug-user-avatar {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 12px !important;
+            box-shadow: none !important;
+        }
+
+        .ug-user-main {
+            min-width: 0 !important;
+        }
+
+        .ug-user-main h3 {
+            margin: 0 0 4px !important;
+            color: #0f172a !important;
+            font-size: 14.5px !important;
+            font-weight: 800 !important;
+            line-height: 1.25 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .ug-user-main p {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 5px !important;
+            margin: 0 !important;
+            color: #64748b !important;
+            font-size: 11.5px !important;
+            line-height: 1.35 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .ug-status-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            padding: 5px 8px !important;
+            border-radius: 999px !important;
+            border: 1px solid transparent !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+        }
+
+        .ug-status-pill.active {
+            background: #eaf7ef !important;
+            color: #166534 !important;
+            border-color: #d8ecde !important;
+        }
+
+        .ug-status-pill.inactive {
+            background: #fff7e0 !important;
+            color: #a16207 !important;
+            border-color: #fde8a8 !important;
+        }
+
+        .ug-user-detail-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 9px !important;
+        }
+
+        .ug-user-detail {
+            min-width: 0 !important;
+            min-height: 62px !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 14px !important;
+            background: #fbfdfb !important;
+        }
+
+        .ug-user-detail span {
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase !important;
+        }
+
+        .ug-user-detail strong {
+            display: block !important;
+            color: #0f172a !important;
+            font-size: 12.2px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        .ug-user-card-actions {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 9px !important;
+            margin-top: 12px !important;
+            padding-top: 12px !important;
+            border-top: 1px solid #edf3ee !important;
+        }
+
+        .ug-card-action {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            min-height: 40px !important;
+            border-radius: 12px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            border: 1px solid #dfe8e2 !important;
+            background: #ffffff !important;
+        }
+
+        .ug-card-action.edit {
+            color: #166534 !important;
+            background: #f4faf5 !important;
+            border-color: #d8ecde !important;
+        }
+
+        .ug-card-action.delete {
+            color: #dc2626 !important;
+            background: #fff7f7 !important;
+            border-color: #fee2e2 !important;
+        }
+
+        .ug-mobile-empty-state {
+            display: grid !important;
+            justify-items: center !important;
+            gap: 6px !important;
+            padding: 30px 18px !important;
+            border: 1px solid #e2ebe4 !important;
+            border-radius: 18px !important;
+            background: #ffffff !important;
+            color: #64748b !important;
+            text-align: center !important;
+        }
+
+        .ug-mobile-empty-state i {
+            display: grid !important;
+            place-items: center !important;
+            width: 46px !important;
+            height: 46px !important;
+            border-radius: 16px !important;
+            background: #f4faf5 !important;
+            color: #166534 !important;
+            font-size: 20px !important;
+        }
+
+        .ug-user-table-card .card-footer {
+            margin-top: 12px !important;
+            border: 1px solid #e2ebe4 !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+
+        .pagination-layout-wrapper {
+            width: 100% !important;
+            overflow-x: auto !important;
+        }
+
+        .pagination-layout-wrapper .pagination {
+            justify-content: center !important;
+            margin-bottom: 0 !important;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .ug-user-detail-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .ug-summary-grid > [class*='col-'] {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+    }
+
 </style>
 @endpush
 
@@ -126,25 +537,27 @@
         </div>
     @endif
 
-    <!-- Adjusted to target the exact title typography block layout structure -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Optimized responsive title/action header -->
+    <div class="ug-hero-card mb-4">
         <div class="dashboard-title-area">
+            <span class="ug-page-kicker">
+                <i class="bi bi-shield-lock"></i>
+                Account Administration
+            </span>
             <h2>User Management</h2>
-            <p class="text-muted small mb-0">Manage system users, roles, and account statuses from a single panel.</p>
+            <p class="text-muted small mb-0">Manage system users, roles, contact information, and account access in one organized workspace.</p>
         </div>
-        <div>
-            <button type="button"
-                    class="btn btn-success d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
-                    style="background-color: var(--ug-accent) !important; border-color: var(--ug-accent) !important;"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addUserModal">
-                <i class="bi bi-person-plus-fill"></i>
-                <span>Add New User</span>
-            </button>
-        </div>
+
+        <button type="button"
+                class="ug-add-user-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#addUserModal">
+            <span class="ug-add-icon"><i class="bi bi-person-plus-fill"></i></span>
+            <span>Add New User</span>
+        </button>
     </div>
 
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4 ug-summary-grid">
         <div class="col-lg-2 col-md-4 col-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -231,7 +644,7 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card border-0 shadow-sm rounded-4 mb-4 ug-filter-card">
         <div class="card-body p-3">
             <form id="filterForm" method="GET" action="{{ route('admin.users.index') }}">
                 <div class="row g-2 align-items-center">
@@ -279,8 +692,8 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="table-responsive">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden ug-user-table-card">
+        <div class="table-responsive ug-desktop-user-table">
             <table class="table table-hover align-middle mb-0 custom-admin-table">
                 <thead>
                     <tr>
@@ -295,10 +708,10 @@
                 <tbody>
                     @forelse($users as $index => $user)
                         <tr>
-                            <td class="ps-4 text-muted small fw-semibold">
+                            <td data-label="#" class="ps-4 text-muted small fw-semibold">
                                 {{ ($users->currentPage() - 1) * $users->perPage() + $index + 1 }}
                             </td>
-                            <td>
+                            <td data-label="User Account">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="avatar-circle-ui d-flex align-items-center justify-content-center fw-bold text-white uppercase shadow-sm">
                                         {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
@@ -312,7 +725,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Contact Number">
                                 @if($user->contact_number)
                                     <div class="fw-semibold text-secondary small d-flex align-items-center gap-1">
                                         <i class="bi bi-telephone" style="font-size:11px;"></i>
@@ -322,7 +735,7 @@
                                     <div class="text-muted small">Not provided</div>
                                 @endif
                             </td>
-                            <td>
+                            <td data-label="Assigned Role">
                                 @php
                                     $roleLabel = match(strtolower($user->role)) {
                                         'engineer' => 'Engineer/Administrator',
@@ -335,7 +748,7 @@
                                     {{ $roleLabel }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="System Access">
                                 @if($user->is_active == 1)
                                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1">
                                         <span class="pulse-indicator bg-success"></span> Active
@@ -346,7 +759,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="text-end pe-4">
+                            <td data-label="Actions" class="text-end pe-4">
                                 <div class="d-inline-flex gap-1">
                                     <button type="button"
                                             class="btn btn-sm btn-icon-only border rounded-3 bg-white shadow-sm text-secondary btn-edit-user"
@@ -385,7 +798,103 @@
                 </tbody>
             </table>
         </div>
-        
+
+        <div class="ug-mobile-user-list">
+            @forelse($users as $index => $user)
+                @php
+                    $mobileRoleLabel = match(strtolower($user->role)) {
+                        'engineer' => 'Engineer / Administrator',
+                        'supervisor' => 'Site Supervisor',
+                        'client' => 'Client',
+                        default => ucfirst($user->role)
+                    };
+
+                    $mobileInitials = strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1));
+                    if ($mobileInitials === '') {
+                        $mobileInitials = 'U';
+                    }
+                @endphp
+
+                <article class="ug-user-card">
+                    <div class="ug-user-card-head">
+                        <div class="avatar-circle-ui ug-user-avatar d-flex align-items-center justify-content-center fw-bold text-white uppercase">
+                            {{ $mobileInitials }}
+                        </div>
+
+                        <div class="ug-user-main">
+                            <h3>{{ $user->first_name }} {{ $user->last_name }}</h3>
+                            <p><i class="bi bi-envelope-open"></i> {{ $user->email }}</p>
+                        </div>
+
+                        @if($user->is_active == 1)
+                            <span class="ug-status-pill active">
+                                <span class="pulse-indicator bg-success"></span>
+                                Active
+                            </span>
+                        @else
+                            <span class="ug-status-pill inactive">
+                                <span class="pulse-indicator bg-warning"></span>
+                                Inactive
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="ug-user-detail-grid">
+                        <div class="ug-user-detail">
+                            <span>Role</span>
+                            <strong>{{ $mobileRoleLabel }}</strong>
+                        </div>
+
+                        <div class="ug-user-detail">
+                            <span>Contact</span>
+                            <strong>{{ $user->contact_number ?: 'Not provided' }}</strong>
+                        </div>
+
+                        <div class="ug-user-detail">
+                            <span>Record #</span>
+                            <strong>{{ ($users->currentPage() - 1) * $users->perPage() + $index + 1 }}</strong>
+                        </div>
+
+                        <div class="ug-user-detail">
+                            <span>System Access</span>
+                            <strong>{{ $user->is_active == 1 ? 'Enabled' : 'Disabled' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="ug-user-card-actions">
+                        <button type="button"
+                                class="ug-card-action edit btn-edit-user"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editUserModal"
+                                data-user-id="{{ $user->user_id }}"
+                                data-first-name="{{ $user->first_name }}"
+                                data-last-name="{{ $user->last_name }}"
+                                data-email="{{ $user->email }}"
+                                data-contact="{{ $user->contact_number }}"
+                                data-role="{{ $user->role }}"
+                                data-active="{{ $user->is_active ? 1 : 0 }}"
+                                data-update-url="{{ route('admin.users.update', $user) }}">
+                            <i class="bi bi-pencil-square"></i>
+                            Edit
+                        </button>
+
+                        <button type="button"
+                                class="ug-card-action delete"
+                                onclick="confirmUserDeletion('{{ $user->user_id }}', '{{ $user->first_name }} {{ $user->last_name }}')">
+                            <i class="bi bi-trash3-fill"></i>
+                            Delete
+                        </button>
+                    </div>
+                </article>
+            @empty
+                <div class="ug-mobile-empty-state">
+                    <i class="bi bi-person-exclamation"></i>
+                    <strong>No matches found</strong>
+                    <span>Try adjusting the search, role, or status filter.</span>
+                </div>
+            @endforelse
+        </div>
+
         @if($users->hasPages() || $users->total() > 0)
             <div class="card-footer bg-white border-top border-light-subtle d-flex flex-wrap align-items-center justify-content-between p-3 gap-2">
                 <div class="text-muted small fw-semibold">

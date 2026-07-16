@@ -834,6 +834,273 @@
     }
 }
 
+
+
+/* =======================================================================
+   ADMIN INVENTORY MOBILE POLISH
+   Compact metric grid, cleaner tabs, tighter material cards, and smaller
+   right-side widgets for phone / Capacitor WebView.
+   ======================================================================= */
+.mi-metric-card {
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mi-metric-card:hover {
+    transform: translateY(-1px);
+}
+
+.mi-metric-caption {
+    font-size: 11px;
+}
+
+.inventory-green-theme .nav-tabs .nav-link {
+    border-radius: 999px 999px 0 0;
+    color: #667085;
+}
+
+.inventory-green-theme .nav-tabs .nav-link.active {
+    background: #f7fcf8;
+}
+
+.inventory-green-theme .tab-short {
+    display: none;
+}
+
+.mi-side-widget {
+    overflow: hidden;
+}
+
+.mi-side-widget .btn-link {
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem !important;
+    background: #f7fcf8;
+}
+
+@media (max-width: 991.98px) {
+    .mi-metric-grid {
+        margin-bottom: 12px !important;
+    }
+
+    .mi-metric-card {
+        border-radius: 16px !important;
+        min-height: 108px;
+    }
+
+    .mi-metric-card .card-body {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        padding: 14px !important;
+    }
+
+    .mi-metric-card .inventory-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 17px;
+    }
+
+    .mi-metric-copy {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .mi-metric-card .small {
+        font-size: 10px !important;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .mi-metric-card .fs-2 {
+        font-size: 1.55rem !important;
+        margin: 3px 0 !important;
+    }
+
+    .mi-metric-caption {
+        display: block;
+        font-size: 10px !important;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .inventory-green-theme > .row.g-4 {
+        gap: 14px 0 !important;
+    }
+
+    .inventory-green-theme .card-header {
+        padding: 12px 12px 0 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-tabs {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        overflow: visible !important;
+        padding: 5px !important;
+        border-radius: 999px !important;
+        background: #f2f7f3 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-item {
+        min-width: 0 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link {
+        width: 100% !important;
+        min-height: 42px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 8px 5px !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        font-size: 11.5px !important;
+        line-height: 1.15 !important;
+        text-align: center !important;
+        white-space: normal !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link.active {
+        background: #2a4028 !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 16px rgba(42, 64, 40, 0.18) !important;
+    }
+
+    .inventory-green-theme .tab-full {
+        display: none !important;
+    }
+
+    .inventory-green-theme .tab-short {
+        display: inline !important;
+    }
+
+    .inventory-green-theme .card-body.pt-3 {
+        padding-top: 12px !important;
+    }
+
+    .inventory-green-theme #inventory-search-form,
+    .inventory-green-theme #usage-search-form,
+    .inventory-green-theme #expenses-filter-form {
+        gap: 8px 0 !important;
+        margin-bottom: 12px !important;
+    }
+
+    .inventory-green-theme #inventory-search-form .form-control,
+    .inventory-green-theme #inventory-search-form .form-select,
+    .inventory-green-theme #usage-search-form .form-control,
+    .inventory-green-theme #usage-search-form .form-select,
+    .inventory-green-theme #expenses-filter-form .form-control,
+    .inventory-green-theme #expenses-filter-form .form-select,
+    .inventory-green-theme #expenseClearFilterBtn {
+        min-height: 42px !important;
+        border-radius: 11px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody tr,
+    .inventory-green-theme #usageLogsTableBody tr,
+    .inventory-green-theme #expensesTableBody tr {
+        border-radius: 18px !important;
+        padding: 15px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:first-child {
+        display: block !important;
+        padding: 0 0 12px !important;
+        margin-bottom: 8px !important;
+        border-bottom: 1px solid #edf3ee !important;
+        color: #10271b !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:first-child::before {
+        content: 'Material' !important;
+        margin-bottom: 4px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child,
+    .inventory-green-theme #usageLogsTableBody td:last-child {
+        padding-top: 12px !important;
+        border-top: 1px solid #edf3ee !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child .btn,
+    .inventory-green-theme #usageLogsTableBody td:last-child .btn {
+        min-width: 38px !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 11px !important;
+    }
+
+    .inventory-green-theme .mi-expense-summary-card {
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    .inventory-green-theme .mi-expense-summary-icon {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 12px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget {
+        padding: 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget h6 {
+        margin-bottom: 10px !important;
+        font-size: 13px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget .d-flex.flex-column.gap-3 {
+        gap: 9px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget .btn-link {
+        margin-top: 10px !important;
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .mi-metric-grid {
+        --bs-gutter-x: 0.55rem;
+        --bs-gutter-y: 0.55rem;
+    }
+
+    .mi-metric-card {
+        min-height: 102px;
+    }
+
+    .mi-metric-card .card-body {
+        padding: 12px !important;
+    }
+
+    .mi-metric-card .fs-2 {
+        font-size: 1.42rem !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link {
+        font-size: 10.5px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td,
+    .inventory-green-theme #usageLogsTableBody td,
+    .inventory-green-theme #expensesTableBody td {
+        grid-template-columns: 102px minmax(0, 1fr) !important;
+        gap: 10px !important;
+    }
+}
+
 </style>
 @endpush
 
@@ -907,59 +1174,59 @@
     @endphp
     
     <!-- Top 4 Summary Cards Grid Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-lg-3 col-md-6 col-12">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+    <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="inventory-card-icon available">
                         <i class="bi bi-box-seam"></i>
                     </div>
-                    <div>
+                    <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Total Materials</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['total_materials'] }}</div>
-                        <div class="text-muted" style="font-size: 11px;">All registered materials</div>
+                        <div class="text-muted mi-metric-caption">All registered</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="inventory-card-icon available">
                         <i class="bi bi-check-circle"></i>
                     </div>
-                    <div>
-                        <div class="text-muted small fw-semibold">Available Materials</div>
+                    <div class="mi-metric-copy">
+                        <div class="text-muted small fw-semibold">Available</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['available_materials'] }}</div>
-                        <div class="text-muted" style="font-size: 11px;">With sufficient stock</div>
+                        <div class="text-muted mi-metric-caption">Sufficient stock</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="inventory-card-icon low-stock">
                         <i class="bi bi-exclamation-triangle"></i>
                     </div>
-                    <div>
+                    <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Low Stock</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['low_stock_alerts'] }}</div>
-                        <div class="text-muted" style="font-size: 11px;">Below minimum level</div>
+                        <div class="text-muted mi-metric-caption">Below minimum</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="inventory-card-icon out-of-stock">
                         <i class="bi bi-x-circle"></i>
                     </div>
-                    <div>
+                    <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Out of Stock</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['out_of_stock'] }}</div>
-                        <div class="text-muted" style="font-size: 11px;">No available stock</div>
+                        <div class="text-muted mi-metric-caption">No stock</div>
                     </div>
                 </div>
             </div>
@@ -1014,14 +1281,14 @@
                 <div class="card-header bg-white border-0 pt-3 pb-0">
                     <ul class="nav nav-tabs border-bottom-0">
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view">Inventory</a>
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view">Material Usage Logs</a>
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
                         </li>
                         <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
-                                Project / Phase Expenses
+                                <i class="bi bi-cash-stack me-1"></i><span class="tab-full">Project / Phase Expenses</span><span class="tab-short">Expenses</span>
                             </a>
                         </li>
                     </ul>
@@ -1443,7 +1710,7 @@
         <div class="col-lg-3 d-flex flex-column gap-3">
             
             <!-- Widget Component 1: Compact Low Stock Visual Tracking alerts -->
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Low Stock Alerts</h6>
                 <div class="d-flex flex-column gap-3">
                     @forelse($lowStockMaterials as $lowMat)
@@ -1462,7 +1729,7 @@
             </div>
 
             <!-- Widget Component 2: Dynamic Receivals Stream Log -->
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Recent Stock Received</h6>
                 <div class="d-flex flex-column gap-3">
                     @forelse($recentlyUpdatedMaterials as $recMat)
@@ -1481,7 +1748,7 @@
             </div>
 
             <!-- Widget Component 3: Clean Analytics Donut Graphic representation -->
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Inventory Summary</h6>
                 <div class="d-flex justify-content-center mb-3">
                     <div class="position-relative d-flex align-items-center justify-content-center" style="width: 115px; height: 115px; border-radius: 50%; background: conic-gradient(#10b981 0% {{ $metrics['available_percentage'] }}%, #f97316 {{ $metrics['available_percentage'] }}% {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}%, #ef4444 {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}% 100%);">
