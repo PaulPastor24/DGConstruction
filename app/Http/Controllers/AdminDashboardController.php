@@ -332,8 +332,25 @@ class AdminDashboardController extends Controller
             $selectedProject = Project::query()
                 ->with('phases')
                 ->find($request->input('project_id'));
+            
+            session(['admin_selected_project_id' => $request->input('project_id')]);
+        } elseif ($hasProjects) {
+            $sessionProjectId = session('admin_selected_project_id');
+            if ($sessionProjectId) {
+                $selectedProject = Project::query()
+                    ->with('phases')
+                    ->find($sessionProjectId);
+            }
+        }
 
+        if (! $selectedProject && $projects->isNotEmpty()) {
+            $selectedProject = $projects->first();
             if ($selectedProject) {
+                session(['admin_selected_project_id' => $selectedProject->project_id]);
+            }
+        }
+
+        if ($selectedProject) {
                 $selectedProject->id =
                     $selectedProject->project_id;
 
@@ -431,7 +448,7 @@ class AdminDashboardController extends Controller
                     ],
                 ]);
             }
-        }
+
 
         return view(
             'admin.timeline',
@@ -639,10 +656,17 @@ class AdminDashboardController extends Controller
             ->orderBy('user_id', 'asc')
             ->select([
                 'user_id',
-                DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
+                DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
             ])
             ->get();
-        $selectedProject = $request->filled('project_id') ? Project::query()->find($request->input('project_id')) : null;
+        
+        $projectId = $request->filled('project_id') ? $request->input('project_id') : session('admin_selected_project_id');
+        
+        if ($request->filled('project_id')) {
+            session(['admin_selected_project_id' => $request->input('project_id')]);
+        }
+        
+        $selectedProject = $projectId ? Project::query()->find($projectId) : null;
 
         return view('admin.reports', compact('reports', 'stats', 'projects', 'phases', 'supervisors', 'selectedProject'));
     }
@@ -705,7 +729,7 @@ class AdminDashboardController extends Controller
                 ->orderBy('user_id')
                 ->select([
                     'user_id',
-                    DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
+                    DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
                 ])
                 ->get(),
             'pagination' => [
@@ -815,7 +839,7 @@ class AdminDashboardController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('report_text', 'like', "%{$search}%")
                     ->orWhere('report_id', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(LPAD(report_id, 4, '0')) LIKE ?", ["%{$search}%"])
+                    ->orWhereRaw("LPAD(report_id::text, 4, '0') LIKE ?", ["%{$search}%"])
                     ->orWhereHas('project', function ($projectQuery) use ($search) {
                         $projectQuery->where('project_name', 'like', "%{$search}%");
                     })
@@ -854,7 +878,7 @@ class AdminDashboardController extends Controller
                                     }
 
                                     if (Schema::hasColumn('users', 'first_name') && Schema::hasColumn('users', 'last_name')) {
-                                        $userQuery->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+                                        $userQuery->orWhereRaw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') LIKE ?", ["%{$search}%"]);
                                     }
                                 }
                             });

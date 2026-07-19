@@ -24,7 +24,7 @@ return new class extends Migration
         // 2. CLIENTS TABLE
         Schema::create('clients', function (Blueprint $table) {
             $table->increments('client_id');
-            $table->unsignedBigInteger('user_id');
+            $table->bigInteger('user_id');
             $table->string('company_name', 200)->nullable();
             $table->text('address')->nullable();
             $table->timestamps();
@@ -36,12 +36,12 @@ return new class extends Migration
             $table->increments('project_id');
             $table->string('project_name', 200);
             $table->text('project_location');
-            $table->unsignedInteger('client_id');
-            $table->unsignedBigInteger('engineer_id');
+            $table->integer('client_id');
+            $table->bigInteger('engineer_id');
             $table->date('start_date');
             $table->date('target_end_date');
             $table->date('actual_end_date')->nullable();
-            $table->enum('status', ['planning', 'ongoing', 'completed', 'on_hold'])->default('planning');
+            $table->string('status')->default('planning');
             $table->text('description')->nullable();
             $table->timestamps();
             $table->foreign('client_id')->references('client_id')->on('clients')->onUpdate('cascade');
@@ -51,15 +51,13 @@ return new class extends Migration
         // 4. CONSTRUCTION PHASES TABLE
         Schema::create('construction_phases', function (Blueprint $table) {
             $table->increments('phase_id');
-            $table->unsignedInteger('project_id');
+            $table->integer('project_id');
             $table->string('phase_name', 200);
-            $table->unsignedInteger('phase_order');
+            $table->integer('phase_order');
             $table->date('planned_start_date');
             $table->date('planned_end_date');
-            $table->date('actual_start_date')->nullable();
-            $table->date('actual_end_date')->nullable();
             $table->decimal('completion_percentage', 5, 2)->default(0.00);
-            $table->enum('status', ['not_started', 'in_progress', 'completed', 'delayed'])->default('not_started');
+            $table->string('status')->default('not_started');
             $table->timestamps();
             $table->foreign('project_id')->references('project_id')->on('projects')->onDelete('cascade')->onUpdate('cascade');
         });
@@ -67,13 +65,13 @@ return new class extends Migration
         // 5. ACCOMPLISHMENT REPORTS TABLE
         Schema::create('accomplishment_reports', function (Blueprint $table) {
             $table->increments('report_id');
-            $table->unsignedInteger('project_id');
-            $table->unsignedInteger('phase_id');
-            $table->unsignedBigInteger('submitted_by');
+            $table->integer('project_id');
+            $table->integer('phase_id');
+            $table->bigInteger('submitted_by');
             $table->date('report_date');
             $table->longText('report_text');
             $table->json('site_images')->nullable();
-            $table->enum('ai_status', ['pending', 'processed', 'failed'])->default('pending');
+            $table->string('ai_status')->default('pending');
             $table->timestamps();
             $table->foreign('project_id')->references('project_id')->on('projects')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('phase_id')->references('phase_id')->on('construction_phases')->onDelete('cascade')->onUpdate('cascade');
@@ -83,8 +81,8 @@ return new class extends Migration
         // 6. AI ANALYSIS RESULTS TABLE
         Schema::create('ai_analysis_results', function (Blueprint $table) {
             $table->increments('result_id');
-            $table->unsignedInteger('report_id');
-            $table->unsignedInteger('phase_id');
+            $table->integer('report_id');
+            $table->integer('phase_id');
             $table->text('identified_activities')->nullable();
             $table->decimal('computed_progress', 5, 2)->default(0.00);
             $table->decimal('confidence_score', 5, 2)->nullable();
@@ -100,20 +98,20 @@ return new class extends Migration
             $table->string('full_name', 150);
             $table->string('trade', 100)->nullable();
             $table->string('contact_number', 20)->nullable();
-            $table->tinyInteger('is_active')->default(1);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
         // 8. ATTENDANCE LOGS TABLE
         Schema::create('attendance_logs', function (Blueprint $table) {
             $table->increments('log_id');
-            $table->unsignedInteger('project_id');
-            $table->unsignedInteger('worker_id');
-            $table->unsignedBigInteger('recorded_by');
+            $table->integer('project_id');
+            $table->integer('worker_id');
+            $table->bigInteger('recorded_by');
             $table->date('log_date');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
-            $table->enum('status', ['present', 'absent', 'half_day', 'on_leave'])->default('present');
+            $table->string('status')->default('present');
             $table->text('remarks')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->foreign('project_id')->references('project_id')->on('projects')->onDelete('cascade')->onUpdate('cascade');
@@ -124,10 +122,10 @@ return new class extends Migration
         // 9. PROJECT SUPERVISORS TABLE
         Schema::create('project_supervisors', function (Blueprint $table) {
             $table->increments('assignment_id');
-            $table->unsignedInteger('project_id');
-            $table->unsignedBigInteger('supervisor_id');
+            $table->integer('project_id');
+            $table->bigInteger('supervisor_id');
             $table->date('assigned_date');
-            $table->tinyInteger('is_active')->default(1);
+            $table->boolean('is_active')->default(true);
             $table->timestamp('created_at')->useCurrent();
             $table->foreign('project_id')->references('project_id')->on('projects')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('supervisor_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
@@ -136,10 +134,10 @@ return new class extends Migration
         // 10. PROJECT WORKERS TABLE
         Schema::create('project_workers', function (Blueprint $table) {
             $table->increments('deployment_id');
-            $table->unsignedInteger('project_id');
-            $table->unsignedInteger('worker_id');
+            $table->integer('project_id');
+            $table->integer('worker_id');
             $table->date('deployed_date');
-            $table->tinyInteger('is_active')->default(1);
+            $table->boolean('is_active')->default(true);
             $table->timestamp('created_at')->useCurrent();
             $table->foreign('project_id')->references('project_id')->on('projects')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('worker_id')->references('worker_id')->on('workers')->onDelete('cascade')->onUpdate('cascade');
@@ -148,12 +146,12 @@ return new class extends Migration
         // 11. TIMELINE MILESTONES TABLE
         Schema::create('timeline_milestones', function (Blueprint $table) {
             $table->increments('milestone_id');
-            $table->unsignedInteger('phase_id');
+            $table->integer('phase_id');
             $table->string('milestone_name', 200);
             $table->date('planned_date');
             $table->date('actual_date')->nullable();
-            $table->tinyInteger('is_completed')->default(0);
-            $table->tinyInteger('is_delayed')->default(0);
+            $table->boolean('is_completed')->default(false);
+            $table->boolean('is_delayed')->default(false);
             $table->timestamps();
             $table->foreign('phase_id')->references('phase_id')->on('construction_phases')->onDelete('cascade')->onUpdate('cascade');
         });
@@ -161,7 +159,7 @@ return new class extends Migration
         // 12. SYSTEM LOGS TABLE
         Schema::create('system_logs', function (Blueprint $table) {
             $table->increments('log_id');
-            $table->unsignedBigInteger('user_id')->nullable();
+            $table->bigInteger('user_id')->nullable();
             $table->string('action', 200);
             $table->text('description')->nullable();
             $table->string('ip_address', 45)->nullable();

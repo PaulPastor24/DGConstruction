@@ -1279,29 +1279,6 @@
                         </div>
                     </div>
 
-                    <div class="cms-form-section-header">Progress Context</div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-12 col-md-6">
-                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
-                                <div class="fw-semibold text-muted mb-1">Current Phase Progress</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="fw-bold text-dark" id="currentPhaseProgressDisplay">0%</span>
-                                    <span class="text-muted small" id="currentPhaseProgressContext">Select a phase to view current progress.</span>
-                                </div>
-                                <div class="progress mt-2" style="height: 8px; background-color: #e5e7eb; border-radius: 999px;">
-                                    <div class="progress-bar" id="currentPhaseProgressBar" style="width: 0%; background: linear-gradient(90deg, #4DA078, #82DB72);"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="p-3 rounded-3" style="background: #f9fafb; border: 1px solid #e5e7eb;">
-                                <label for="modal_accomplishment_percentage" class="cms-form-label">Supervisor Suggested Progress (%) <span class="text-danger">*</span></label>
-                                <input type="number" name="accomplishment_percentage" id="modal_accomplishment_percentage" class="cms-form-control" min="0" max="100" step="0.01" placeholder="e.g. 45" required data-current-progress="">
-                                <div class="text-muted small mt-1">Adjust based on work accomplished since the last report.</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="cms-form-section-header">Upload Site Images <span class="text-muted">(Optional)</span></div>
                     <div class="row">
                         <div class="col-12 cms-form-group">
@@ -1372,18 +1349,15 @@
             if (!phases || phases.length === 0) {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
-                updateCurrentPhaseProgress(null);
                 return;
             }
             phases.forEach(phase => {
                 const option = document.createElement('option');
                 option.value = phase.phase_id;
                 option.textContent = phase.phase_name;
-                option.dataset.completionPercentage = phase.completion_percentage ?? 0;
                 modalPhaseSelect.appendChild(option);
             });
             enablePhaseSelect();
-            updateCurrentPhaseProgress(phases[0] ?? null);
         }
 
         function loadProjectPhases(projectId) {
@@ -1423,34 +1397,6 @@
             } else {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
-                updateCurrentPhaseProgress(null);
-            }
-        }
-
-        function updateCurrentPhaseProgress(phase) {
-            const progressDisplay = document.getElementById('currentPhaseProgressDisplay');
-            const progressContext = document.getElementById('currentPhaseProgressContext');
-            const progressBar = document.getElementById('currentPhaseProgressBar');
-            const suggestedInput = document.getElementById('modal_accomplishment_percentage');
-
-            if (!phase || !phase.completion_percentage) {
-                if (progressDisplay) progressDisplay.textContent = '0%';
-                if (progressContext) progressContext.textContent = 'Select a phase to view current progress.';
-                if (progressBar) progressBar.style.width = '0%';
-                if (suggestedInput) {
-                    suggestedInput.value = '';
-                    suggestedInput.dataset.currentProgress = '0';
-                }
-                return;
-            }
-
-            const percentage = Math.min(100, Math.max(0, parseFloat(phase.completion_percentage) || 0)).toFixed(2);
-            if (progressDisplay) progressDisplay.textContent = percentage + '%';
-            if (progressContext) progressContext.textContent = `Current official progress for ${phase.phase_name || 'this phase'}.`;
-            if (progressBar) progressBar.style.width = percentage + '%';
-            if (suggestedInput) {
-                suggestedInput.value = percentage;
-                suggestedInput.dataset.currentProgress = percentage;
             }
         }
 
@@ -1610,30 +1556,6 @@
                     buttonsStyling: false,
                 }).then(result => {
                     if (!result.isConfirmed) {
-                        return;
-                    }
-
-                    const suggestedProgressInput = document.getElementById('modal_accomplishment_percentage');
-                    const currentProgress = parseFloat(suggestedProgressInput?.dataset?.currentProgress ?? suggestedProgressInput?.value ?? 0);
-                    const suggestedProgress = parseFloat(suggestedProgressInput?.value ?? 0);
-
-                    if (isNaN(currentProgress) || isNaN(suggestedProgress)) {
-                        Swal.fire({
-                            title: 'Invalid Progress',
-                            text: 'Please enter a valid progress percentage.',
-                            icon: 'warning',
-                            confirmButtonColor: '#166534',
-                        });
-                        return;
-                    }
-
-                    if (suggestedProgress < currentProgress) {
-                        Swal.fire({
-                            title: 'Progress Cannot Downgrade',
-                            text: `Supervisor Suggested Progress cannot be less than the current phase progress (${currentProgress}%). Please enter a value equal to or greater than ${currentProgress}%.`,
-                            icon: 'warning',
-                            confirmButtonColor: '#166534',
-                        });
                         return;
                     }
 

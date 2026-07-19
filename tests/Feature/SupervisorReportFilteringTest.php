@@ -36,7 +36,7 @@ class SupervisorReportFilteringTest extends TestCase
 
         Schema::create('construction_phases', function ($table) {
             $table->id('phase_id');
-            $table->unsignedBigInteger('project_id');
+            $table->bigInteger('project_id');
             $table->string('phase_name');
             $table->integer('phase_order')->default(1);
             $table->string('status')->default('in_progress');
@@ -45,16 +45,16 @@ class SupervisorReportFilteringTest extends TestCase
 
         Schema::create('project_supervisors', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('supervisor_id');
+            $table->bigInteger('project_id');
+            $table->bigInteger('supervisor_id');
             $table->timestamps();
         });
 
         Schema::create('accomplishment_reports', function ($table) {
             $table->id('report_id');
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('phase_id');
-            $table->unsignedBigInteger('submitted_by');
+            $table->bigInteger('project_id');
+            $table->bigInteger('phase_id');
+            $table->bigInteger('submitted_by');
             $table->date('report_date');
             $table->text('report_text')->nullable();
             $table->text('site_images')->nullable();

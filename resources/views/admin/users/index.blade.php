@@ -689,14 +689,6 @@
                     </div>
 
                     <div class="col-md-auto ms-auto ps-3">
-                        <button type="button"
-                                class="btn btn-success d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm"
-                                style="background-color: var(--ug-accent) !important; border-color: var(--ug-accent) !important; white-space: nowrap;"
-                                data-bs-toggle="modal"
-                                data-bs-target="#addUserModal">
-                            <i class="bi bi-person-plus-fill"></i>
-                            <span>Add New User</span>
-                        </button>
                     </div>
                 </div>
             </form>

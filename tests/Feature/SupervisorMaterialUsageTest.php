@@ -29,7 +29,7 @@ class SupervisorMaterialUsageTest extends TestCase
 
         Schema::create('attendance_logs', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
+            $table->bigInteger('user_id')->nullable();
             $table->timestamp('logged_at')->nullable();
             $table->timestamps();
         });
@@ -43,7 +43,7 @@ class SupervisorMaterialUsageTest extends TestCase
 
         Schema::create('construction_phases', function ($table) {
             $table->id('phase_id');
-            $table->unsignedBigInteger('project_id');
+            $table->bigInteger('project_id');
             $table->string('phase_name');
             $table->integer('phase_order')->default(1);
             $table->string('status')->default('in_progress');
@@ -53,14 +53,19 @@ class SupervisorMaterialUsageTest extends TestCase
         Schema::create('materials', function ($table) {
             $table->id();
             $table->string('name');
+            $table->string('category')->nullable();
             $table->string('unit')->nullable();
+            $table->decimal('current_stock', 12, 2)->default(0);
+            $table->decimal('minimum_stock_level', 12, 2)->default(0);
+            $table->string('supplier')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
 
         Schema::create('project_materials', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('material_id');
+            $table->bigInteger('project_id');
+            $table->bigInteger('material_id');
             $table->decimal('planned_quantity', 12, 2)->default(0);
             $table->decimal('used_quantity', 12, 2)->default(0);
             $table->string('unit')->nullable();
@@ -69,22 +74,22 @@ class SupervisorMaterialUsageTest extends TestCase
 
         Schema::create('material_usages', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('phase_id');
-            $table->unsignedBigInteger('material_id');
+            $table->bigInteger('project_id');
+            $table->bigInteger('phase_id');
+            $table->bigInteger('material_id');
             $table->decimal('quantity_used', 12, 2);
             $table->string('unit')->nullable();
             $table->date('usage_date');
             $table->text('remarks')->nullable();
-            $table->unsignedBigInteger('recorded_by')->nullable();
+            $table->bigInteger('recorded_by')->nullable();
             $table->string('site_photo_path')->nullable();
             $table->timestamps();
         });
 
         Schema::create('project_supervisors', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('supervisor_id');
+            $table->bigInteger('project_id');
+            $table->bigInteger('supervisor_id');
             $table->timestamps();
         });
     }

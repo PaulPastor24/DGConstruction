@@ -1304,7 +1304,7 @@
                 </div>
                 
                 <div class="card-body pt-3">
-                    <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
+                    <div id="inventory-view" class="inventory-view-panel {{ $activeView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
@@ -1447,6 +1447,18 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Unit</label>
+                                                    <div class="input-container-group">
+                                                        <i class="bi bi-rulers input-icon-left"></i>
+                                                        <input type="text" name="unit" id="allocateMaterialUnit" class="control-field-input" placeholder="e.g. Bags, Pieces" readonly>
+                                                    </div>
+                                                    <div class="form-input-hint">Auto-filled from selected material.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
                                                     <label class="form-label-custom">Project<span class="required-asterisk">*</span></label>
                                                     <div class="input-container-group select-caret-wrapper">
                                                         <i class="bi bi-building input-icon-left"></i>
@@ -1463,8 +1475,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="row g-3 mb-3">
                                             <div class="col-md-6">
                                                 <div class="form-group-wrapper mb-0">
                                                     <label class="form-label-custom">Planned Quantity<span class="required-asterisk">*</span></label>
@@ -1473,16 +1483,6 @@
                                                         <input type="number" step="0.01" min="0.01" name="planned_quantity" class="control-field-input" placeholder="Enter planned quantity" required>
                                                     </div>
                                                     <div class="form-input-hint">Total quantity allocated to this project.</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-group-wrapper mb-0">
-                                                    <label class="form-label-custom">Unit</label>
-                                                    <div class="input-container-group">
-                                                        <i class="bi bi-rulers input-icon-left"></i>
-                                                        <input type="text" name="unit" id="allocateMaterialUnit" class="control-field-input" placeholder="e.g. Bags, Pieces">
-                                                    </div>
-                                                    <div class="form-input-hint">Unit of measurement for this allocation.</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3055,6 +3055,13 @@
         if (allocateMaterialModal && allocateMaterialForm) {
             allocateMaterialModal.addEventListener('show.bs.modal', function () {
                 allocateMaterialForm.reset();
+                document.getElementById('allocateMaterialUnit').value = '';
+            });
+
+            document.getElementById('allocateMaterialSelect')?.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const unit = selectedOption?.getAttribute('data-unit') || '';
+                document.getElementById('allocateMaterialUnit').value = unit;
             });
         }
 

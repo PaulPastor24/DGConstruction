@@ -1449,5 +1449,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         })();
     </script>
+
+    @if(session('login_success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Welcome!',
+                text: 'You have successfully logged in.',
+                confirmButtonColor: '#198754'
+            });
+        </script>
+    @endif
+
 </body>
 </html>

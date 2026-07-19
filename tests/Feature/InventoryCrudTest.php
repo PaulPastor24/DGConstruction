@@ -42,8 +42,8 @@ class InventoryCrudTest extends TestCase
 
         Schema::create('material_usages', function ($table) {
             $table->id();
-            $table->unsignedBigInteger('material_id');
-            $table->unsignedBigInteger('project_id')->nullable();
+            $table->bigInteger('material_id');
+            $table->bigInteger('project_id')->nullable();
             $table->decimal('quantity_used', 12, 2)->default(0);
             $table->string('unit')->nullable();
             $table->date('usage_date')->nullable();
@@ -53,8 +53,8 @@ class InventoryCrudTest extends TestCase
 
         Schema::create('material_deliveries', function ($table) {
             $table->id('delivery_id');
-            $table->unsignedBigInteger('material_id');
-            $table->unsignedBigInteger('project_id')->nullable();
+            $table->bigInteger('material_id');
+            $table->bigInteger('project_id')->nullable();
             $table->decimal('quantity', 12, 2)->default(0);
             $table->string('unit')->nullable();
             $table->decimal('total_price', 12, 2)->nullable();

@@ -16,6 +16,7 @@ class Project extends Model
         'project_id',
         'project_name',
         'project_location',
+        'location',
         'client_id',
         'engineer_id',
         'start_date',
@@ -31,6 +32,8 @@ class Project extends Model
         'target_end_date' => 'date',
         'actual_end_date' => 'date',
     ];
+
+    protected $appends = ['location'];
 
     /**
      * Full public URL for the project cover image (or null when not set).

@@ -130,72 +130,6 @@ class ReportController extends Controller
                 'accomplishment_percentage' => $approvedProgress,
             ]);
 
-            $autoCompleted = false;
-            $phase = $report->phase;
-            if ($phase) {
-                $oldCompletion = (float) ($phase->completion_percentage ?? 0);
-                $oldPhaseStatus = (string) $phase->status;
-                $phase->completion_percentage = $approvedProgress;
-                $phase->status = $this->resolvePhaseStatusForProgress($phase);
-
-                if ($phase->completion_percentage >= 100 && $phase->status !== 'completed') {
-                    $phase->status = 'completed';
-                }
-
-                if ($phase->completion_percentage >= 100 && $phase->status === 'completed') {
-                    $autoCompleted = true;
-                }
-
-                if ($phase->status === 'in_progress' && empty($phase->actual_start_date)) {
-                    $phase->actual_start_date = now()->toDateString();
-                }
-
-                if ($phase->status === 'completed' && empty($phase->actual_end_date)) {
-                    $phase->actual_end_date = now()->toDateString();
-                }
-
-                $phase->save();
-
-                    $oldMilestone = floor($oldCompletion / 10);
-                    $newMilestone = floor((float) $phase->completion_percentage / 10);
-
-                    if ($newMilestone > $oldMilestone) {
-                        try {
-                            $clientId = optional($report->project)->client_id;
-                            if ($clientId) {
-                                NotificationService::notifyClient($clientId, [
-                                    'type' => 'phase',
-                                    'title' => 'Project Progress Updated',
-                                    'message' => "{$phase->phase_name} progress reached {$phase->completion_percentage}%.",
-                                    'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
-                                    'related_id' => $phase->phase_id,
-                                    'related_type' => 'phase',
-                                ]);
-                            }
-                        } catch (\Throwable $e) {
-                            Log::error('Failed to notify client after report approval phase update: ' . $e->getMessage());
-                        }
-                    }
-
-                    if ($phase->status === 'completed' && $oldPhaseStatus !== 'completed') {
-                        try {
-                            $clientId = optional($report->project)->client_id;
-                            if ($clientId) {
-                                NotificationService::notifyClient($clientId, [
-                                    'type' => 'phase',
-                                    'title' => 'Construction Phase Completed',
-                                    'message' => "The '{$phase->phase_name}' phase has been completed for project '{$report->project->project_name}'.",
-                                    'data' => ['module' => 'client.timeline', 'phase_id' => $phase->phase_id, 'project_id' => $report->project_id],
-                                    'related_id' => $phase->phase_id,
-                                    'related_type' => 'phase',
-                                ]);
-                            }
-                        } catch (\Throwable $e) {
-                            Log::error('Failed to notify client on phase completion via report approval: ' . $e->getMessage());
-                    }
-                }
-            }
-
             $this->logAction(
                 'Report Approved',
                 "Report #{$report->report_id} from project '{$report->project->project_name}' approved"
@@ -483,19 +417,6 @@ class ReportController extends Controller
             Log::error('Report submission failed: ' . $e->getMessage());
             return back()->withErrors('Failed to submit report');
         }
-    }
-
-    private function resolvePhaseStatusForProgress(ConstructionPhase $phase): string
-    {
-        if ($phase->completion_percentage >= 100 || $phase->status === 'completed') {
-            return 'completed';
-        }
-
-        if ($phase->completion_percentage > 0) {
-            return 'in_progress';
-        }
-
-        return $phase->status === 'completed' ? 'completed' : 'not_started';
     }
 
     /**

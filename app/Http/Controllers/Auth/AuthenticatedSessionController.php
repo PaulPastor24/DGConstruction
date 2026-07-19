@@ -22,11 +22,11 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
-        if ($user->role === 'engineer') return redirect()->intended(route('admin.dashboard'));
-        if ($user->role === 'supervisor') return redirect()->intended(route('supervisor.dashboard'));
-        if ($user->role === 'client') return redirect()->intended(route('client.dashboard'));
+        if ($user->role === 'engineer') return redirect()->intended(route('admin.dashboard'))->with('login_success', true);
+        if ($user->role === 'supervisor') return redirect()->intended(route('supervisor.dashboard'))->with('login_success', true);
+        if ($user->role === 'client') return redirect()->intended(route('client.dashboard'))->with('login_success', true);
 
-        return redirect()->intended(url('/'));
+        return redirect()->intended(url('/'))->with('login_success', true);
     }
 
     public function destroy(Request $request): RedirectResponse

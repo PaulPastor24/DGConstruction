@@ -2,23 +2,62 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\User;
 use App\Models\Project;
+use App\Models\ConstructionPhase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TimelineTest extends TestCase
 {
-    /**
-     * Test status mapping logic
-     */
-    public function test_phases_have_correct_database_status_values()
+    use RefreshDatabase;
+
+    protected function seedDatabase(): void
     {
-        // Get the first project from seeded data
+        $engineerId = User::factory()->create(['role' => 'engineer'])->user_id;
+        $supervisorId = User::factory()->create(['role' => 'supervisor'])->user_id;
+        $clientUserId = User::factory()->create(['role' => 'client'])->user_id;
+        $clientId = \App\Models\Client::create(['user_id' => $clientUserId])->client_id;
+
+        $project = Project::create([
+            'project_name' => 'Test Project',
+            'project_location' => 'Test Location',
+            'client_id' => $clientId,
+            'engineer_id' => $engineerId,
+            'start_date' => now()->subMonths(2),
+            'target_end_date' => now()->addMonths(6),
+            'status' => 'ongoing',
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('project_supervisors')->insert([
+            'project_id' => $project->project_id,
+            'supervisor_id' => $supervisorId,
+            'assigned_date' => now()->toDateString(),
+            'is_active' => true,
+            'created_at' => now(),
+        ]);
+
+        $statuses = ['completed', 'completed', 'in_progress', 'not_started', 'not_started'];
+        for ($i = 0; $i < 5; $i++) {
+            ConstructionPhase::create([
+                'project_id' => $project->project_id,
+                'phase_name' => "Phase " . ($i + 1),
+                'phase_order' => $i + 1,
+                'planned_start_date' => now()->addDays($i * 30),
+                'planned_end_date' => now()->addDays($i * 30 + 29),
+                'completion_percentage' => match($i) { 0 => 100, 1 => 100, 2 => 0, 3 => 0, 4 => 0, default => 0 },
+                'status' => $statuses[$i] ?? 'not_started',
+            ]);
+        }
+    }
+
+    public function test_phases_have_correct_database_status_values(): void
+    {
+        $this->seedDatabase();
         $project = Project::with('phases')->first();
         
         $this->assertNotNull($project, 'Should have at least one project');
         
-        // Check each phase has valid database status
         foreach ($project->phases as $phase) {
             $this->assertTrue(
                 in_array($phase->status, ['completed', 'in_progress', 'not_started', 'delayed']),
@@ -27,17 +66,13 @@ class TimelineTest extends TestCase
         }
     }
 
-    /**
-     * Test that we have the correct phase counts
-     */
-    public function test_project_has_expected_phases()
+    public function test_project_has_expected_phases(): void
     {
+        $this->seedDatabase();
         $project = Project::with('phases')->first();
         
-        // First project should have 5 phases
         $this->assertEquals(5, $project->phases->count(), 'Project 1 should have 5 phases');
         
-        // Verify phase statuses match expected counts
         $completedCount = $project->phases->where('status', 'completed')->count();
         $inProgressCount = $project->phases->where('status', 'in_progress')->count();
         $notStartedCount = $project->phases->where('status', 'not_started')->count();
@@ -47,12 +82,9 @@ class TimelineTest extends TestCase
         $this->assertEquals(2, $notStartedCount, 'Should have 2 not-started phases');
     }
 
-    /**
-     * Test status mapping transformation
-     */
-    public function test_status_mapping_transformation()
+    public function test_status_mapping_transformation(): void
     {
-        // Simulate the status mapping logic from controller
+        $this->seedDatabase();
         $statusMap = [
             'completed' => 'completed',
             'in_progress' => 'in-progress',
@@ -60,7 +92,6 @@ class TimelineTest extends TestCase
             'delayed' => 'planning',
         ];
         
-        // Get the actual phases and map them
         $project = Project::with('phases')->first();
         $mappedPhases = $project->phases->map(function ($phase) use ($statusMap) {
             return [
@@ -70,7 +101,6 @@ class TimelineTest extends TestCase
             ];
         });
         
-        // Verify all phases got mapped correctly
         foreach ($mappedPhases as $phase) {
             $this->assertTrue(
                 in_array($phase['display_status'], ['completed', 'in-progress', 'planning']),
@@ -78,7 +108,6 @@ class TimelineTest extends TestCase
             );
         }
         
-        // Count the display statuses
         $completedCount = $mappedPhases->where('display_status', 'completed')->count();
         $inProgressCount = $mappedPhases->where('display_status', 'in-progress')->count();
         $planningCount = $mappedPhases->where('display_status', 'planning')->count();

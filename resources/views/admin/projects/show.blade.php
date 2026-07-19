@@ -49,7 +49,7 @@
     <div class="ps-header-icon"><i class="bi bi-building"></i></div>
     <div class="ps-header-text">
         <h3 id="projectDetailsModalLabel">{{ $project->project_name ?? 'Project Details' }}</h3>
-        <p>ID: #{{ $project->project_id ?? 'N/A' }} &middot; {{ $project->project_location ?? 'Location not specified' }}</p>
+        <p>ID: #{{ $project->project_id ?? 'N/A' }} &middot; {{ $project->location ?? 'Location not specified' }}</p>
     </div>
     @if($isModal)
         <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -65,7 +65,7 @@
                     <div class="ps-overview-name">{{ $project->project_name }}</div>
                     <div class="ps-overview-id">Project ID: #{{ $project->project_id }}</div>
                     <div class="ps-overview-meta">
-                        <span class="ps-meta-pill"><i class="bi bi-geo-alt"></i> {{ $project->project_location ?? 'Location not specified' }}</span>
+                        <span class="ps-meta-pill"><i class="bi bi-geo-alt"></i> {{ $project->location ?? 'Location not specified' }}</span>
                         <span class="ps-meta-pill"><i class="bi bi-person-workspace"></i> {{ $pdActiveSupervisor?->name ?? 'Supervisor pending' }}</span>
                     </div>
                 </div>
@@ -217,11 +217,9 @@
             <i class="bi bi-arrow-left"></i> Back to List
         </a>
     @endif
-    @unless($isArchived)
-        <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
-            <i class="bi bi-pencil"></i> Edit Project
-        </a>
-    @endunless
+    <a href="{{ route('admin.projects.index') }}" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
+        <i class="bi bi-folder2-open"></i> Project Management
+    </a>
     @if($isArchived)
         <form action="{{ route('admin.projects.restore', $project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel">
             @csrf

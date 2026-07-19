@@ -2,26 +2,62 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Client;
+use App\Models\ConstructionPhase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TimelineViewsTest extends TestCase
 {
-    /**
-     * Test supervisor timeline view loads correctly
-     */
+    use RefreshDatabase;
+
+    protected function seedDatabase(): void
+    {
+        $engineerId = User::factory()->create(['role' => 'engineer'])->user_id;
+        $supervisorId = User::factory()->create(['role' => 'supervisor', 'name' => 'Jane Supervisor', 'email' => 'jane@example.com'])->user_id;
+        $clientUserId = User::factory()->create(['role' => 'client'])->user_id;
+        $clientId = \App\Models\Client::create(['user_id' => $clientUserId])->client_id;
+
+        $project = Project::create([
+            'project_name' => 'Test Project',
+            'project_location' => 'Test Location',
+            'client_id' => $clientId,
+            'engineer_id' => $engineerId,
+            'start_date' => now()->subMonths(2),
+            'target_end_date' => now()->addMonths(6),
+            'status' => 'ongoing',
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('project_supervisors')->insert([
+            'project_id' => $project->project_id,
+            'supervisor_id' => $supervisorId,
+            'assigned_date' => now()->toDateString(),
+            'is_active' => true,
+            'created_at' => now(),
+        ]);
+
+        ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Phase 1',
+            'phase_order' => 1,
+            'planned_start_date' => now()->subMonths(1),
+            'planned_end_date' => now()->addMonths(1),
+            'completion_percentage' => 50,
+            'status' => 'in_progress',
+        ]);
+    }
+
     public function test_supervisor_timeline_view_loads()
     {
-        // Get or create supervisor user
-        $supervisor = User::query()->where('role', 'site_supervisor')->first();
+        $this->seedDatabase();
+        $supervisor = User::query()->where('role', 'supervisor')->first();
         
         if (!$supervisor) {
             $this->markTestSkipped('No supervisor user found in database');
         }
 
-        // Get a project that has this supervisor assigned
         $project = Project::with(['supervisors'])
             ->whereHas('supervisors', function ($q) use ($supervisor) {
                 $q->where('project_supervisors.supervisor_id', $supervisor->user_id)
@@ -29,63 +65,52 @@ class TimelineViewsTest extends TestCase
             })
             ->first();
 
-        // Login as supervisor
         $this->actingAs($supervisor);
         
-        // Request the timeline page
         $response = $this->get('/supervisor/timeline');
 
-        // Check for successful response
         $response->assertStatus(200);
         $response->assertViewIs('supervisor.timeline');
         
-        // Verify projects data is passed to view
         $projectsData = $response->viewData('projectsWithStats');
         $this->assertNotNull($projectsData);
         
-        // If supervisor has projects, verify they're in the data
         if ($project) {
-            $this->assertTrue(
-                $projectsData->contains(function ($item) use ($project) {
-                    return $item['id'] == $project->project_id;
-                })
-            );
+            $found = false;
+            foreach ($projectsData as $item) {
+                if ($item['id'] == $project->project_id) {
+                    $found = true;
+                    break;
+                }
+            }
+            $this->assertTrue($found, 'Project should be in projects data');
         }
     }
 
-    /**
-     * Test client timeline view loads correctly
-     */
     public function test_client_timeline_view_loads()
     {
-        // Get or create client user
+        $this->seedDatabase();
         $clientUser = User::query()->where('role', 'client')->first();
         
         if (!$clientUser) {
             $this->markTestSkipped('No client user found in database');
         }
 
-        // Login as client
         $this->actingAs($clientUser);
         
-        // Request the timeline page
         $response = $this->get('/client/timeline');
 
-        // Check for successful response
         $response->assertStatus(200);
         $response->assertViewIs('client.timeline');
         
-        // Verify projects data is passed to view
         $projectsData = $response->viewData('projectsWithStats');
         $this->assertNotNull($projectsData);
     }
 
-    /**
-     * Test that supervisor cannot access admin timeline
-     */
     public function test_supervisor_cannot_access_admin_timeline()
     {
-        $supervisor = User::query()->where('role', 'site_supervisor')->first();
+        $this->seedDatabase();
+        $supervisor = User::query()->where('role', 'supervisor')->first();
         
         if (!$supervisor) {
             $this->markTestSkipped('No supervisor user found');
@@ -94,18 +119,15 @@ class TimelineViewsTest extends TestCase
         $this->actingAs($supervisor);
         $response = $this->get('/admin/timeline');
         
-        // Should be unauthorized (403) or redirected
         $this->assertTrue(
             $response->status() === 403 || $response->status() === 302,
             "Expected 403 or 302, got {$response->status()}"
         );
     }
 
-    /**
-     * Test that client cannot access admin timeline
-     */
     public function test_client_cannot_access_admin_timeline()
     {
+        $this->seedDatabase();
         $client = User::query()->where('role', 'client')->first();
         
         if (!$client) {
@@ -115,19 +137,16 @@ class TimelineViewsTest extends TestCase
         $this->actingAs($client);
         $response = $this->get('/admin/timeline');
         
-        // Should be unauthorized (403) or redirected
         $this->assertTrue(
             $response->status() === 403 || $response->status() === 302,
             "Expected 403 or 302, got {$response->status()}"
         );
     }
 
-    /**
-     * Test timeline data structure contains required fields
-     */
     public function test_timeline_data_structure_is_correct()
     {
-        $supervisor = User::query()->where('role', 'site_supervisor')->first();
+        $this->seedDatabase();
+        $supervisor = User::query()->where('role', 'supervisor')->first();
         
         if (!$supervisor) {
             $this->markTestSkipped('No supervisor user found');
@@ -138,11 +157,9 @@ class TimelineViewsTest extends TestCase
 
         $projectsData = $response->viewData('projectsWithStats');
         
-        // If there are projects, verify data structure
-        if ($projectsData && $projectsData->count() > 0) {
-            $project = $projectsData->first();
+        if ($projectsData && is_array($projectsData) && count($projectsData) > 0) {
+            $project = $projectsData[0];
             
-            // Verify required fields
             $this->assertArrayHasKey('id', $project);
             $this->assertArrayHasKey('name', $project);
             $this->assertArrayHasKey('phases', $project);
@@ -151,9 +168,8 @@ class TimelineViewsTest extends TestCase
             $this->assertArrayHasKey('inProgressPhases', $project);
             $this->assertArrayHasKey('upcomingPhases', $project);
             
-            // Verify phases expose the real database-backed fields used by the timeline UI
             $phases = $project['phases'];
-            if ($phases && $phases->count() > 0) {
+            if ($phases && is_array($phases) && count($phases) > 0) {
                 foreach ($phases as $phase) {
                     $this->assertArrayHasKey('name', $phase);
                     $this->assertArrayHasKey('start', $phase);
@@ -161,8 +177,8 @@ class TimelineViewsTest extends TestCase
                     $this->assertArrayHasKey('progress', $phase);
                     $this->assertArrayHasKey('milestones', $phase);
                     $this->assertTrue(
-                        in_array($phase->display_status, ['completed', 'in-progress', 'planning']),
-                        "Phase {$phase->phase_name} has invalid display_status: {$phase->display_status}"
+                        in_array($phase['display_status'], ['completed', 'in-progress', 'planning']),
+                        "Phase {$phase['name']} has invalid display_status: {$phase['display_status']}"
                     );
                 }
             }

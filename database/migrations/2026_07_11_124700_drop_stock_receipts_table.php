@@ -29,7 +29,7 @@ return new class extends Migration
         if (!Schema::hasTable('stock_receipts')) {
             Schema::create('stock_receipts', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('material_id')->nullable();
+                $table->bigInteger('material_id')->nullable();
                 $table->decimal('quantity', 16, 4)->nullable();
                 $table->string('supplier')->nullable();
                 $table->text('notes')->nullable();
