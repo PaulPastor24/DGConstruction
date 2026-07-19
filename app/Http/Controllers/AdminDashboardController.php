@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
 use App\Models\MaterialDelivery;
+use App\Models\MaterialRequest;
 use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\ProjectMaterial;
@@ -332,8 +333,25 @@ class AdminDashboardController extends Controller
             $selectedProject = Project::query()
                 ->with('phases')
                 ->find($request->input('project_id'));
+            
+            session(['admin_selected_project_id' => $request->input('project_id')]);
+        } elseif ($hasProjects) {
+            $sessionProjectId = session('admin_selected_project_id');
+            if ($sessionProjectId) {
+                $selectedProject = Project::query()
+                    ->with('phases')
+                    ->find($sessionProjectId);
+            }
+        }
 
+        if (! $selectedProject && $projects->isNotEmpty()) {
+            $selectedProject = $projects->first();
             if ($selectedProject) {
+                session(['admin_selected_project_id' => $selectedProject->project_id]);
+            }
+        }
+
+        if ($selectedProject) {
                 $selectedProject->id =
                     $selectedProject->project_id;
 
@@ -431,7 +449,7 @@ class AdminDashboardController extends Controller
                     ],
                 ]);
             }
-        }
+
 
         return view(
             'admin.timeline',
@@ -456,7 +474,7 @@ class AdminDashboardController extends Controller
         $usageCategory = trim((string) $request->input('usage_category', ''));
         $usageStatus = trim((string) $request->input('usage_status', ''));
         $activeView = $request->input('view', 'inventory');
-        $activeView = in_array($activeView, ['inventory', 'usage'], true) ? $activeView : 'inventory';
+        $activeView = in_array($activeView, ['inventory', 'usage', 'requests'], true) ? $activeView : 'inventory';
         $searchForUsage = $search;
 
         $query = Material::query();
@@ -603,7 +621,49 @@ class AdminDashboardController extends Controller
             ->orderBy('project_name', 'asc')
             ->get(['project_id', 'project_name']);
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials'));
+        $materialRequests = collect();
+        $requestStats = [
+            'pending' => 0,
+            'approved' => 0,
+            'rejected' => 0,
+        ];
+        $requestStatus = $request->input('request_status', '');
+
+        if (Schema::hasTable('material_requests')) {
+            $materialRequestsQuery = MaterialRequest::query()
+                ->with(['project', 'material', 'requester'])
+                ->orderByDesc('created_at');
+
+            if (in_array($requestStatus, ['pending', 'approved', 'rejected'], true)) {
+                $materialRequestsQuery->where('status', $requestStatus);
+            }
+
+            if ($search !== '') {
+                $materialRequestsQuery->where(function ($q) use ($search) {
+                    $q->whereHas('material', function ($materialQuery) use ($search) {
+                        $materialQuery->where('name', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('project', function ($projectQuery) use ($search) {
+                        $projectQuery->where('project_name', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('requester', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%'.$search.'%');
+                    });
+                });
+            }
+
+            $materialRequests = $materialRequestsQuery
+                ->paginate(20)
+                ->appends($request->only(['search', 'request_status', 'view', 'category', 'stock_status']));
+
+            $requestStats = [
+                'pending' => MaterialRequest::where('status', 'pending')->count(),
+                'approved' => MaterialRequest::where('status', 'approved')->count(),
+                'rejected' => MaterialRequest::where('status', 'rejected')->count(),
+            ];
+        }
+
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus'));
     }
 
     /**
@@ -639,10 +699,17 @@ class AdminDashboardController extends Controller
             ->orderBy('user_id', 'asc')
             ->select([
                 'user_id',
-                DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
+                DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
             ])
             ->get();
-        $selectedProject = $request->filled('project_id') ? Project::query()->find($request->input('project_id')) : null;
+        
+        $projectId = $request->filled('project_id') ? $request->input('project_id') : session('admin_selected_project_id');
+        
+        if ($request->filled('project_id')) {
+            session(['admin_selected_project_id' => $request->input('project_id')]);
+        }
+        
+        $selectedProject = $projectId ? Project::query()->find($projectId) : null;
 
         return view('admin.reports', compact('reports', 'stats', 'projects', 'phases', 'supervisors', 'selectedProject'));
     }
@@ -705,7 +772,7 @@ class AdminDashboardController extends Controller
                 ->orderBy('user_id')
                 ->select([
                     'user_id',
-                    DB::raw("CONCAT_WS(' ', first_name, last_name) as name"),
+                    DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
                 ])
                 ->get(),
             'pagination' => [
@@ -815,7 +882,7 @@ class AdminDashboardController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('report_text', 'like', "%{$search}%")
                     ->orWhere('report_id', 'like', "%{$search}%")
-                    ->orWhereRaw("CONCAT(LPAD(report_id, 4, '0')) LIKE ?", ["%{$search}%"])
+                    ->orWhereRaw("LPAD(report_id::text, 4, '0') LIKE ?", ["%{$search}%"])
                     ->orWhereHas('project', function ($projectQuery) use ($search) {
                         $projectQuery->where('project_name', 'like', "%{$search}%");
                     })
@@ -854,7 +921,7 @@ class AdminDashboardController extends Controller
                                     }
 
                                     if (Schema::hasColumn('users', 'first_name') && Schema::hasColumn('users', 'last_name')) {
-                                        $userQuery->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+                                        $userQuery->orWhereRaw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') LIKE ?", ["%{$search}%"]);
                                     }
                                 }
                             });
@@ -1525,6 +1592,158 @@ class AdminDashboardController extends Controller
 
             return back()->withInput()->with('error', 'Unable to allocate material right now. Please try again. Details: '.$e->getMessage());
         }
+    }
+
+    public function materialRequests(Request $request)
+    {
+        $query = MaterialRequest::query()
+            ->with(['project', 'material', 'requester'])
+            ->orderByDesc('created_at');
+
+        $status = strtolower((string) $request->query('status', ''));
+        if (in_array($status, ['pending', 'approved', 'rejected'], true)) {
+            $query->where('status', $status);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->query('search'));
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('material', function ($materialQuery) use ($search) {
+                    $materialQuery->where('name', 'like', '%'.$search.'%');
+                })
+                ->orWhereHas('project', function ($projectQuery) use ($search) {
+                    $projectQuery->where('project_name', 'like', '%'.$search.'%');
+                })
+                ->orWhereHas('requester', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', '%'.$search.'%');
+                });
+            });
+        }
+
+        $requests = $query->paginate(20)->appends($request->only(['status', 'search']));
+
+        $stats = [
+            'pending' => MaterialRequest::where('status', 'pending')->count(),
+            'approved' => MaterialRequest::where('status', 'approved')->count(),
+            'rejected' => MaterialRequest::where('status', 'rejected')->count(),
+        ];
+
+        return view('admin.material-requests', compact('requests', 'stats'));
+    }
+
+    public function approveMaterialRequest(Request $request, MaterialRequest $materialRequest)
+    {
+        if ($materialRequest->status !== 'pending') {
+            return back()->with('error', 'This request has already been processed.');
+        }
+
+        $approvedQuantity = (float) ($request->input('approved_quantity', $materialRequest->requested_quantity));
+        $material = $materialRequest->material;
+
+        if ($approvedQuantity > (float) ($material->current_stock ?? 0)) {
+            return back()->with('error', 'Insufficient stock. Available: '.(float) ($material->current_stock ?? 0).' '.($material->unit ?? 'unit').'.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $material->current_stock = max(0, (float) $material->current_stock - $approvedQuantity);
+            $material->save();
+
+            $materialRequest->status = 'approved';
+            $materialRequest->approved_quantity = $approvedQuantity;
+            $materialRequest->reviewed_by = Auth::user()->user_id;
+            $materialRequest->reviewed_at = now();
+            $materialRequest->save();
+
+            if (Schema::hasTable('material_deliveries')) {
+                MaterialDelivery::create([
+                    'material_id' => $material->id,
+                    'project_id' => $materialRequest->project_id,
+                    'quantity' => $approvedQuantity,
+                    'unit' => $materialRequest->unit ?? $material->unit ?? 'unit',
+                    'total_price' => null,
+                    'supplier_name' => 'Internal Request',
+                    'delivered_at' => now()->toDateString(),
+                    'notes' => 'Approved material request #'.$materialRequest->request_id,
+                ]);
+            }
+
+            if (Schema::hasTable('project_materials')) {
+                $projectMaterial = ProjectMaterial::query()
+                    ->where('project_id', $materialRequest->project_id)
+                    ->where('material_id', $material->id)
+                    ->first();
+
+                if ($projectMaterial) {
+                    $projectMaterial->planned_quantity = (float) $projectMaterial->planned_quantity + $approvedQuantity;
+                    $projectMaterial->unit = $projectMaterial->unit ?? $materialRequest->unit ?? $material->unit ?? 'unit';
+                    $projectMaterial->save();
+                } else {
+                    ProjectMaterial::create([
+                        'project_id' => $materialRequest->project_id,
+                        'material_id' => $material->id,
+                        'planned_quantity' => $approvedQuantity,
+                        'used_quantity' => 0,
+                        'unit' => $materialRequest->unit ?? $material->unit ?? 'unit',
+                    ]);
+                }
+            }
+
+            try {
+                NotificationService::notifySupervisor($materialRequest->requested_by, [
+                    'type' => 'material',
+                    'title' => 'Material Request Approved',
+                    'message' => "Your request for {$approvedQuantity} {$materialRequest->unit} of {$material->name} has been approved.",
+                    'data' => ['module' => 'supervisor.materials', 'request_id' => $materialRequest->request_id, 'project_id' => $materialRequest->project_id],
+                    'related_id' => $materialRequest->request_id,
+                    'related_type' => 'material_request',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to notify supervisor on material request approval: '.$e->getMessage());
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Material request approved and stock updated successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+
+            return back()->with('error', 'Failed to approve material request. Please try again.');
+        }
+    }
+
+    public function rejectMaterialRequest(Request $request, MaterialRequest $materialRequest)
+    {
+        if ($materialRequest->status !== 'pending') {
+            return back()->with('error', 'This request has already been processed.');
+        }
+
+        $validated = $request->validate([
+            'rejection_remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $materialRequest->status = 'rejected';
+        $materialRequest->rejection_remarks = trim((string) ($validated['rejection_remarks'] ?? ''));
+        $materialRequest->reviewed_by = Auth::user()->user_id;
+        $materialRequest->reviewed_at = now();
+        $materialRequest->save();
+
+        try {
+            NotificationService::notifySupervisor($materialRequest->requested_by, [
+                'type' => 'material',
+                'title' => 'Material Request Rejected',
+                'message' => "Your request for {$materialRequest->requested_quantity} {$materialRequest->unit} of {$materialRequest->material->name} has been rejected.",
+                'data' => ['module' => 'supervisor.materials', 'request_id' => $materialRequest->request_id, 'project_id' => $materialRequest->project_id],
+                'related_id' => $materialRequest->request_id,
+                'related_type' => 'material_request',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify supervisor on material request rejection: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Material request rejected successfully.');
     }
 
     public function profile()

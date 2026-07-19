@@ -219,7 +219,7 @@
                 </div>
                 <div class="project-card">
                     <span class="project-label">Location</span>
-                    <span class="project-value">{{ $project->project_location ?? 'N/A' }}</span>
+                    <span class="project-value">{{ $project->location ?? 'N/A' }}</span>
                 </div>
                 <div class="project-card">
                     <span class="project-label">Start Date</span>

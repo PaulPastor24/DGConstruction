@@ -65,7 +65,7 @@ class MilestoneController extends Controller
             'phase_id' => 'required|exists:construction_phases,phase_id',
             'milestone_name' => 'required|string|max:200',
             'start_date' => 'required|date',
-            'end_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'is_completed' => 'nullable|boolean',
             'is_delayed' => 'nullable|boolean',
         ]);
@@ -91,6 +91,30 @@ class MilestoneController extends Controller
             ->where('phase_id', $validated['phase_id'])
             ->where('project_id', $validated['project_id'])
             ->firstOrFail();
+
+        if ($phase->planned_start_date && $phase->planned_end_date) {
+            if ($validated['start_date'] < $phase->planned_start_date || $validated['start_date'] > $phase->planned_end_date) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Milestone start date must be within the phase schedule.',
+                    ], 422);
+                }
+
+                return back()->withErrors(['start_date' => 'Milestone start date must be within the phase schedule.'])->withInput();
+            }
+
+            if ($validated['end_date'] < $phase->planned_start_date || $validated['end_date'] > $phase->planned_end_date) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Milestone end date must be within the phase schedule.',
+                    ], 422);
+                }
+
+                return back()->withErrors(['end_date' => 'Milestone end date must be within the phase schedule.'])->withInput();
+            }
+        }
 
         try {
             DB::beginTransaction();

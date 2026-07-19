@@ -16,12 +16,12 @@ class NotificationServiceTest extends TestCase
         Schema::dropIfExists('client_notifications');
         Schema::create('client_notifications', function ($table) {
             $table->id();
-            $table->unsignedInteger('client_id');
+            $table->integer('client_id');
             $table->string('type')->nullable();
             $table->string('title');
             $table->text('message')->nullable();
             $table->json('data')->nullable();
-            $table->unsignedBigInteger('related_id')->nullable();
+            $table->bigInteger('related_id')->nullable();
             $table->string('related_type')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();

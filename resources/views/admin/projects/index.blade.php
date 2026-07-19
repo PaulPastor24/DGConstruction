@@ -1773,7 +1773,6 @@
                             <h3 id="projectSuccessModalLabel">New Project Created Successfully!</h3>
                             <p>Your project has been added to the system.</p>
                         </div>
-                        <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <div class="ps-body">
@@ -1815,7 +1814,7 @@
                                 </div>
                                 <div>
                                     <div class="ps-field-label">Location</div>
-                                    <div class="ps-field-value">{{ $newProject->project_location ?? 'Not specified' }}</div>
+                                    <div class="ps-field-value">{{ $newProject->location ?? 'Not specified' }}</div>
                                 </div>
                                 <div>
                                     <div class="ps-field-label">Actual End Date</div>
@@ -3077,7 +3076,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function populateEditProjectModal(project, supervisorId) {
+    function populateEditProjectModal(project, supervisorId, triggerBtn) {
         const form = document.getElementById('editProjectForm');
         const modalEl = document.getElementById('editProjectModal');
         const projectIdInput = document.getElementById('editProjectId');
@@ -3094,7 +3093,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!form || !modalEl || !project) return;
 
-        const projectLocationValue = project.project_location ?? project.location ?? '';
+        const explicitLocation = triggerBtn ? (triggerBtn.getAttribute('data-project-location') || '') : '';
+        const projectLocationValue = explicitLocation || project.project_location || project.location || '';
         const currentStatus = String(project.status || 'planning').toLowerCase();
 
         form.action = buildAdminProjectsUrl(project.project_id);
@@ -3210,8 +3210,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const materials = btn.getAttribute('data-materials');
         const attendance = btn.getAttribute('data-attendance');
 
-        if (sideProjectName) sideProjectName.textContent = project.project_name;
-        if (sideProjectLocation) sideProjectLocation.textContent = project.project_location || (project.location ?? '');
+        if (sideProjectName) sideProjectName.textContent = project.project_name || '';
+        if (sideProjectLocation) sideProjectLocation.textContent = project.project_location || project.location || '';
         if (sideDescription) sideDescription.textContent = project.description || 'No description provided.';
         if (sideSupervisorName) sideSupervisorName.textContent = supervisorName;
         if (sideClientName) sideClientName.textContent = clientName;
@@ -3261,7 +3261,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sideEditProjectBtn.style.display = 'inline-flex';
                 sideEditProjectBtn.onclick = function(e) {
                     e.preventDefault();
-                    populateEditProjectModal(project, supervisorId);
+                    populateEditProjectModal(project, supervisorId, btn);
                 };
             }
         }

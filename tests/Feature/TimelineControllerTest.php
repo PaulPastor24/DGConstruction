@@ -34,8 +34,8 @@ class TimelineControllerTest extends TestCase
             $table->id('project_id');
             $table->string('project_name');
             $table->string('project_location')->nullable();
-            $table->unsignedBigInteger('client_id')->nullable();
-            $table->unsignedBigInteger('engineer_id')->nullable();
+            $table->bigInteger('client_id')->nullable();
+            $table->bigInteger('engineer_id')->nullable();
             $table->date('start_date')->nullable();
             $table->date('target_end_date')->nullable();
             $table->date('actual_end_date')->nullable();
@@ -46,7 +46,7 @@ class TimelineControllerTest extends TestCase
 
         Schema::create('construction_phases', function (Blueprint $table) {
             $table->id('phase_id');
-            $table->unsignedBigInteger('project_id');
+            $table->bigInteger('project_id');
             $table->string('phase_name');
             $table->integer('phase_order')->default(1);
             $table->date('planned_start_date')->nullable();
@@ -60,7 +60,7 @@ class TimelineControllerTest extends TestCase
 
         Schema::create('timeline_milestones', function (Blueprint $table) {
             $table->id('milestone_id');
-            $table->unsignedBigInteger('phase_id');
+            $table->bigInteger('phase_id');
             $table->string('milestone_name');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
@@ -71,8 +71,8 @@ class TimelineControllerTest extends TestCase
 
         Schema::create('project_supervisors', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('project_id');
-            $table->unsignedBigInteger('supervisor_id');
+            $table->bigInteger('project_id');
+            $table->bigInteger('supervisor_id');
             $table->date('assigned_date')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

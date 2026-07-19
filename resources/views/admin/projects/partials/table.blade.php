@@ -70,7 +70,7 @@
                                 </div>
                                 <div>
                                     <div class="project-title-bold">{{ $project->project_name }}</div>
-                                    <div class="project-subtext-muted">{{ Str::limit($project->project_location, 35) }}</div>
+                                    <div class="project-subtext-muted">{{ Str::limit($project->location, 35) }}</div>
                                     <div class="project-date-badge">
                                         <i class="bi bi-calendar3"></i>
                                         {{ $project->start_date ? $project->start_date->format('M d, Y') : '' }} -
@@ -126,6 +126,7 @@
                             <div class="action-buttons-flex">
                                 <button type="button" class="btn btn-view-action trigger-details-panel"
                                         data-project-json="{{ json_encode($project) }}"
+                                        data-project-location="{{ $project->project_location ?? $project->location ?? '' }}"
                                         data-supervisor-name="{{ $project->active_supervisor->name ?? 'Juan Dela Cruz' }}"
                                         data-supervisor-id="{{ $project->active_supervisor->user_id ?? '' }}"
                                         data-client-name="{{ $project->client->user->name ?? 'Mr. & Mrs. Reyes' }}"

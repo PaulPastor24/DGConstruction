@@ -52,7 +52,7 @@ return new class extends Migration
 
                     foreach ($constraints as $c) {
                         try {
-                            DB::statement("ALTER TABLE `attendance_logs` DROP FOREIGN KEY `{$c->CONSTRAINT_NAME}`");
+                            DB::statement("ALTER TABLE attendance_logs DROP FOREIGN KEY {$c->CONSTRAINT_NAME}");
                         } catch (\Exception $e) {
                             // ignore
                         }
@@ -112,10 +112,10 @@ return new class extends Migration
         if (Schema::hasTable('attendance_logs')) {
             Schema::table('attendance_logs', function (Blueprint $table) {
                 if (!Schema::hasColumn('attendance_logs', 'project_id')) {
-                    $table->unsignedInteger('project_id')->nullable()->after('log_id');
+                    $table->integer('project_id')->nullable()->after('log_id');
                 }
                 if (!Schema::hasColumn('attendance_logs', 'worker_id')) {
-                    $table->unsignedInteger('worker_id')->nullable()->after('project_id');
+                    $table->integer('worker_id')->nullable()->after('project_id');
                 }
             });
         }

@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('project_archives', function (Blueprint $table) {
             $table->id('project_archive_id');
-            $table->unsignedInteger('project_id');
+            $table->integer('project_id');
             $table->string('project_name', 200);
             $table->text('project_location')->nullable();
-            $table->unsignedInteger('client_id')->nullable();
-            $table->unsignedBigInteger('engineer_id')->nullable();
+            $table->integer('client_id')->nullable();
+            $table->bigInteger('engineer_id')->nullable();
             $table->date('start_date')->nullable();
             $table->date('target_end_date')->nullable();
             $table->date('actual_end_date')->nullable();

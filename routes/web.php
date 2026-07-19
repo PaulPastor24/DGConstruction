@@ -61,6 +61,9 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::put('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'updateMaterial'])->name('admin.inventory.materials.update');
     Route::post('/admin/inventory/materials/receive', [AdminDashboardController::class, 'receiveStock'])->name('admin.inventory.materials.receive');
     Route::post('/admin/inventory/allocate', [AdminDashboardController::class, 'allocateMaterial'])->name('admin.inventory.allocate');
+    Route::get('/admin/inventory/requests', [AdminDashboardController::class, 'materialRequests'])->name('admin.inventory.requests');
+    Route::post('/admin/inventory/requests/{materialRequest}/approve', [AdminDashboardController::class, 'approveMaterialRequest'])->name('admin.inventory.requests.approve');
+    Route::post('/admin/inventory/requests/{materialRequest}/reject', [AdminDashboardController::class, 'rejectMaterialRequest'])->name('admin.inventory.requests.reject');
     Route::delete('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'destroyMaterial'])->name('admin.inventory.materials.destroy');
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
@@ -79,7 +82,6 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
         Route::get('/create', [ProjectController::class, 'create'])->name('create');
         Route::post('/', [ProjectController::class, 'store'])->name('store');
         Route::get('/{project}', [ProjectController::class, 'show'])->name('show');
-        Route::get('/{project}/edit', [ProjectController::class, 'edit'])->name('edit');
         Route::put('/{project}', [ProjectController::class, 'update'])->name('update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('destroy');
         Route::patch('/{project}/archive', [ProjectController::class, 'archive'])->name('archive');
@@ -125,6 +127,7 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/materials', [SupervisorController::class, 'materials'])->name('supervisor.materials');
     Route::post('/supervisor/materials', [SupervisorController::class, 'logDelivery'])->name('supervisor.materials.log');
+    Route::post('/supervisor/materials/request', [SupervisorController::class, 'requestMaterial'])->name('supervisor.materials.request');
 
     Route::get('/supervisor/reports', [ReportController::class, 'supervisorReports'])->name('supervisor.reports');
 

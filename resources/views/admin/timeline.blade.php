@@ -1627,7 +1627,6 @@
         </div>
 
         <div class="toolbar-actions">
-            <button id="exportTimelineBtn" type="button" class="btn-ghost"><i class="bi bi-download"></i> Export</button>
             <button id="addMilestoneBtn" type="button" class="btn-primary"><i class="bi bi-plus-lg"></i> Add Milestone</button>
         </div>
     </div>
@@ -1665,6 +1664,24 @@
                     <div class="milestone-modal-field">
                         <label for="milestoneName">Milestone Name <span class="milestone-modal-required">Required</span></label>
                         <input id="milestoneName" name="milestone_name" type="text" placeholder="Enter milestone name" required>
+                    </div>
+                </div>
+
+                <div id="milestonePhaseInfo" class="milestone-modal-field d-none" style="margin-top: 0.75rem;">
+                    <label class="text-muted small">Selected Phase Schedule</label>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <div class="badge bg-light text-dark border">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            <span id="milestonePhaseStart">--</span>
+                        </div>
+                        <div class="badge bg-light text-dark border">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            <span id="milestonePhaseEnd">--</span>
+                        </div>
+                        <div class="badge bg-light text-dark border">
+                            <i class="bi bi-flag me-1"></i>
+                            <span id="milestonePhaseStatus">--</span>
+                        </div>
                     </div>
                 </div>
 
@@ -2418,6 +2435,29 @@
         return Array.isArray(phase?.milestones) ? phase.milestones : [];
     }
 
+    function updateMilestonePhaseInfo(phase) {
+        const wrap = document.getElementById('milestonePhaseInfo');
+        const startEl = document.getElementById('milestonePhaseStart');
+        const endEl = document.getElementById('milestonePhaseEnd');
+        const statusEl = document.getElementById('milestonePhaseStatus');
+
+        if (!wrap || !startEl || !endEl || !statusEl) return;
+
+        if (!phase) {
+            wrap.classList.add('d-none');
+            return;
+        }
+
+        const plannedStart = phase.planned_start_date ? String(phase.planned_start_date).slice(0, 10) : 'Not set';
+        const plannedEnd = phase.planned_end_date ? String(phase.planned_end_date).slice(0, 10) : 'Not set';
+        const status = phase.status ? String(phase.status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
+
+        startEl.textContent = plannedStart;
+        endEl.textContent = plannedEnd;
+        statusEl.textContent = status;
+        wrap.classList.remove('d-none');
+    }
+
     function loadMilestoneIntoForm(phase, milestone) {
         document.getElementById('milestoneOriginalPhaseId').value = String(phase?.phase_id ?? phase?.id ?? '');
         document.getElementById('milestoneId').value = milestone?.milestone_id ?? milestone?.id ?? '';
@@ -2481,6 +2521,7 @@
         document.getElementById('milestoneId').value = '';
         existingWrap?.classList.add('d-none');
         populateMilestonePhaseOptions(phaseId || '');
+        updateMilestonePhaseInfo(findPhaseInModal(document.getElementById('milestonePhaseId')?.value || ''));
         document.body.style.overflow = 'hidden';
 
         if (mode === 'edit') {
@@ -2526,7 +2567,9 @@
 
     function closeMilestoneModal() {
         const backdrop = document.getElementById('milestoneModalBackdrop');
+        const phaseInfo = document.getElementById('milestonePhaseInfo');
         backdrop?.classList.add('d-none');
+        phaseInfo?.classList.add('d-none');
         document.body.style.overflow = '';
     }
 
@@ -2565,6 +2608,20 @@ let milestoneFormSnapshot = null;
 
         if (actualDate && plannedDate && actualDate < plannedDate) {
             return 'End date cannot be earlier than the start date.';
+        }
+
+        const phase = (getProjectPhasesForModal() || []).find((item) => String(item.phase_id ?? item.id) === String(phaseId)) || null;
+        if (phase && phase.planned_start_date_raw && phase.planned_end_date_raw) {
+            const phaseStart = phase.planned_start_date_raw;
+            const phaseEnd = phase.planned_end_date_raw;
+
+            if (plannedDate < phaseStart || plannedDate > phaseEnd) {
+                return 'Milestone start date must be within the selected phase schedule.';
+            }
+
+            if (actualDate && (actualDate < phaseStart || actualDate > phaseEnd)) {
+                return 'Milestone end date must be within the selected phase schedule.';
+            }
         }
 
         if (mode === 'edit' && milestoneFormSnapshot) {
@@ -2668,7 +2725,19 @@ let milestoneFormSnapshot = null;
         }
 
         submitButton.disabled = true;
-        submitButton.textContent = mode === 'edit' ? 'Updating...' : 'Creating...';
+        submitButton.innerHTML = mode === 'edit' ? 'Updating...' : 'Creating...';
+        let swalLoading = null;
+        if (window.Swal) {
+            swalLoading = Swal.fire({
+                title: mode === 'edit' ? 'Updating milestone...' : 'Creating milestone...',
+                text: 'Please wait while we process your request.',
+                icon: 'info',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
 
         try {
             const response = await fetch(url, {
@@ -2722,6 +2791,9 @@ let milestoneFormSnapshot = null;
                 window.alert('The request could not be completed. Please try again.');
             }
         } finally {
+            if (swalLoading) {
+                swalLoading.close();
+            }
             submitButton.disabled = false;
             submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
         }
@@ -2730,13 +2802,13 @@ let milestoneFormSnapshot = null;
     function attachMilestoneModalEvents() {
         document.getElementById('milestoneModalForm')?.addEventListener('submit', submitMilestoneModal);
 
-        // In edit mode, switching the Construction Phase should load that phase's own
-        // milestones (defaulting to its first one) instead of leaving stale data behind.
         document.getElementById('milestonePhaseId')?.addEventListener('change', function (event) {
+            const phase = findPhaseInModal(event.target.value);
+            updateMilestonePhaseInfo(phase);
+
             const form = document.getElementById('milestoneModalForm');
             if (form?.dataset.mode !== 'edit') return;
 
-            const phase = findPhaseInModal(event.target.value);
             const milestones = getPhaseMilestones(phase);
             const milestone = milestones[0] || null;
 

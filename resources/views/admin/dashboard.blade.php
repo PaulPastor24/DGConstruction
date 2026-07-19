@@ -3,6 +3,121 @@
 @section('title', 'Admin Dashboard - D&G Construction Monitor')
 @section('page_title', 'Management Dashboard')
 
+@push('styles')
+<style>
+    .project-list-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.2s ease;
+    }
+    .project-list-item:hover {
+        background-color: #f8fafc;
+    }
+    .project-list-item:last-child {
+        border-bottom: none;
+    }
+    .proj-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #eef2f7;
+    }
+    .proj-details {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .proj-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .proj-sub {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    .proj-progress-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 140px;
+    }
+    .progress-bar-bg {
+        width: 100%;
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background-color: #10b981;
+    }
+    .progress-bar-fill.blue { background-color: #2563eb; }
+    .progress-bar-fill.green { background-color: #16a34a; }
+    .progress-bar-fill.orange { background-color: #f59e0b; }
+    .proj-percent {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #334155;
+        min-width: 36px;
+        text-align: right;
+    }
+    .proj-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .proj-badge.on-track {
+        background-color: #e6f6ee;
+        color: #16a34a;
+        border: 1px solid #d1fae5;
+    }
+    .proj-badge.delayed {
+        background-color: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fee2e2;
+    }
+    .proj-badge.in-progress {
+        background-color: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+    }
+    .proj-badge.planning {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+    .proj-badge.completed {
+        background-color: #e6f6ee;
+        color: #16a34a;
+        border: 1px solid #d1fae5;
+    }
+    .proj-badge.on-hold {
+        background-color: #fff7ed;
+        color: #ea580c;
+        border: 1px solid #ffedd5;
+    }
+    .proj-badge.archived {
+        background-color: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="dashboard-container">
 
@@ -94,7 +209,16 @@
 
             <div class="project-list">
                 @forelse($activeProjects ?? [] as $project)
-                    <div class="project-list-item" onclick="window.location.href='{{ route('admin.projects.show', $project->id) }}'" style="cursor: pointer;">
+                    @php
+                        $statusClass = match(strtolower((string) ($project->status_label ?? 'Planning'))) {
+                            'completed' => 'completed',
+                            'ongoing', 'in progress' => 'in-progress',
+                            'on hold' => 'on-hold',
+                            'archived' => 'archived',
+                            default => 'planning',
+                        };
+                    @endphp
+                    <div class="project-list-item" data-project-id="{{ $project->id }}" data-project-name="{{ $project->name }}" data-project-location="{{ $project->location }}" data-project-status="{{ $project->status_label }}" data-project-phase="{{ $project->current_phase ?? 'N/A' }}" data-project-progress="{{ $project->progress_percentage ?? 0 }}" data-project-image="{{ $project->image ?? '' }}" style="cursor: pointer;" onclick="openProjectDetailModal(this)">
                         <img src="{{ $project->image ?? 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80' }}" alt="Project" class="proj-thumb" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80';">
 
                         <div class="proj-details">
@@ -110,13 +234,7 @@
                         </div>
 
                         <div>
-                            @if(($project->progress_percentage ?? 0) >= 80)
-                                <div class="proj-badge on-track">On Track</div>
-                            @elseif(($project->progress_percentage ?? 0) < 40)
-                                <div class="proj-badge delayed">Delayed</div>
-                            @else
-                                <div class="proj-badge in-progress">In Progress</div>
-                            @endif
+                            <div class="proj-badge {{ $statusClass }}">{{ $project->status_label ?? 'Planning' }}</div>
                         </div>
                     </div>
                 @empty
@@ -222,5 +340,116 @@
         </div>
     </div>
 
+    <!-- Project Detail Modal -->
+    <div class="modal fade" id="projectDetailModal" tabindex="-1" aria-labelledby="projectDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4" style="background: #ffffff;">
+                <div class="modal-header border-0 px-4 pt-4 pb-2">
+                    <div>
+                        <h4 class="modal-title fw-bold text-dark mb-1" id="projectDetailModalLabel" style="font-size: 1.35rem; letter-spacing: -0.01em;">Project Details</h4>
+                        <p class="text-muted mb-0" id="projectDetailModalSubtitle" style="font-size: 0.85rem;">Overview of the selected project.</p>
+                    </div>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.85rem;"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="metric-icon"><i class="bi bi-building"></i></div>
+                                <div>
+                                    <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Project</div>
+                                    <div class="fw-bold text-dark" id="modalProjectName">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="metric-icon"><i class="bi bi-geo-alt"></i></div>
+                                <div>
+                                    <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Location</div>
+                                    <div class="fw-bold text-dark" id="modalProjectLocation">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="metric-icon"><i class="bi bi-flag"></i></div>
+                                <div>
+                                    <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Status</div>
+                                    <div class="fw-bold text-dark" id="modalProjectStatus">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="metric-icon"><i class="bi bi-diagram-3"></i></div>
+                                <div>
+                                    <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Current Phase</div>
+                                    <div class="fw-bold text-dark" id="modalProjectPhase">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="metric-icon"><i class="bi bi-speedometer2"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Progress</div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <div class="progress flex-grow-1" style="height: 10px; background-color: #f1f5f9; border-radius: 8px;">
+                                            <div id="modalProjectProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%; border-radius: 8px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="fw-bold text-dark" id="modalProjectProgressText">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-light border px-4 shadow-sm fw-medium rounded-2" data-bs-dismiss="modal" style="height: 40px; font-size: 0.88rem; background: #ffffff; color: #334155;">Close</button>
+                    <a href="{{ route('admin.projects.index') }}" id="viewFullProjectBtn" class="btn btn-success px-4 shadow-sm fw-medium rounded-2 d-flex align-items-center gap-2" style="height: 40px; font-size: 0.88rem; text-decoration: none;">
+                        <i class="bi bi-folder2-open"></i> View Full Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function openProjectDetailModal(el) {
+        const projectId = el.getAttribute('data-project-id');
+        const projectName = el.getAttribute('data-project-name') || 'Untitled Project';
+        const projectLocation = el.getAttribute('data-project-location') || 'No location';
+        const projectStatus = el.getAttribute('data-project-status') || 'Planning';
+        const projectPhase = el.getAttribute('data-project-phase') || 'N/A';
+        const projectProgress = el.getAttribute('data-project-progress') || '0';
+        const projectImage = el.getAttribute('data-project-image') || '';
+
+        const modalEl = document.getElementById('projectDetailModal');
+        if (!modalEl) return;
+
+        document.getElementById('modalProjectName').textContent = projectName;
+        document.getElementById('modalProjectLocation').textContent = projectLocation;
+        document.getElementById('modalProjectStatus').textContent = projectStatus;
+        document.getElementById('modalProjectPhase').textContent = projectPhase;
+        document.getElementById('modalProjectProgressText').textContent = projectProgress + '%';
+        document.getElementById('modalProjectProgressBar').style.width = projectProgress + '%';
+        document.getElementById('modalProjectProgressBar').setAttribute('aria-valuenow', projectProgress);
+
+        const progressBar = document.getElementById('modalProjectProgressBar');
+        progressBar.className = 'progress-bar ' + (projectProgress >= 80 ? 'bg-success' : (projectProgress < 40 ? 'bg-warning' : 'bg-primary'));
+
+        const viewFullProjectBtn = document.getElementById('viewFullProjectBtn');
+        if (viewFullProjectBtn && projectId) {
+            viewFullProjectBtn.href = '/admin/projects';
+        }
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+</script>
+@endpush

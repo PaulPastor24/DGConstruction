@@ -139,7 +139,7 @@
                     </div>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                        <div class="col-6 col-md-4 custom-col-five">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Overall Progress</span>
                                 <div class="d-flex align-items-center justify-content-between mt-2">
@@ -149,7 +149,7 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Project-wide delivery health</span>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                        <div class="col-6 col-md-4 custom-col-five">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Completed Phases</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
@@ -159,7 +159,7 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Delivered in sequence</span>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 col-xl-2.4 custom-col-five">
+                        <div class="col-6 col-md-4 custom-col-five">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Remaining Phases</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">

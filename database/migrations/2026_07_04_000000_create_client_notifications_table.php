@@ -14,12 +14,12 @@ return new class extends Migration
 
         Schema::create('client_notifications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('client_id')->index();
+            $table->integer('client_id')->index();
             $table->string('type')->nullable()->index();
             $table->string('title');
             $table->text('message')->nullable();
             $table->json('data')->nullable();
-            $table->unsignedBigInteger('related_id')->nullable()->index();
+            $table->bigInteger('related_id')->nullable()->index();
             $table->string('related_type')->nullable()->index();
             $table->boolean('is_read')->default(false)->index();
             $table->timestamp('read_at')->nullable();

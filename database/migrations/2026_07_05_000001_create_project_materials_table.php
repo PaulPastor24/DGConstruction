@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('project_materials', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('project_id');
-            $table->unsignedBigInteger('material_id');
+            $table->integer('project_id');
+            $table->bigInteger('material_id');
             $table->decimal('planned_quantity', 12, 2)->default(0);
             $table->decimal('used_quantity', 12, 2)->default(0);
             $table->string('unit')->nullable();

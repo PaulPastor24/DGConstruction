@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SupervisorNotificationsTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_supervisor_can_open_notifications_workspace(): void
     {
         $user = User::factory()->create([

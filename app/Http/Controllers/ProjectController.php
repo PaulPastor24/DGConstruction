@@ -64,7 +64,7 @@ class ProjectController extends Controller
                     if ($usersHasName) {
                         $userQuery->where('name', 'like', "%{$search}%");
                     } elseif ($usersHasFirst && $usersHasLast) {
-                        $userQuery->whereRaw("CONCAT(IFNULL(first_name,''),' ',IFNULL(last_name,'')) LIKE ?", ["%{$search}%"]);
+                        $userQuery->whereRaw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') LIKE ?", ["%{$search}%"]);
                     } elseif ($usersHasFirst) {
                         $userQuery->where('first_name', 'like', "%{$search}%");
                     } elseif ($usersHasFull) {
@@ -78,7 +78,7 @@ class ProjectController extends Controller
                     if ($usersHasName) {
                         $supervisorQuery->where('name', 'like', "%{$search}%");
                     } elseif ($usersHasFirst && $usersHasLast) {
-                        $supervisorQuery->whereRaw("CONCAT(IFNULL(first_name,''),' ',IFNULL(last_name,'')) LIKE ?", ["%{$search}%"]);
+                        $supervisorQuery->whereRaw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') LIKE ?", ["%{$search}%"]);
                     } elseif ($usersHasFirst) {
                         $supervisorQuery->where('first_name', 'like', "%{$search}%");
                     } elseif ($usersHasFull) {
@@ -367,26 +367,6 @@ class ProjectController extends Controller
         }
 
         return view('admin.projects.show', compact('project'));
-    }
-
-    /**
-     * Show the form for editing the specified project.
-     */
-    public function edit(Project $project)
-    {
-        $clients = Client::with('user')->get();
-        $supervisors = User::query()
-            ->where('role', 'supervisor')
-            ->where('is_active', true)
-            ->orderBy('first_name', 'asc')
-            ->get();
-
-        // Get current assigned supervisor
-        $currentSupervisor = $project->supervisors()
-            ->wherePivot('is_active', true)
-            ->first();
-
-        return view('admin.projects.edit', compact('project', 'clients', 'supervisors', 'currentSupervisor'));
     }
 
     /**
@@ -976,8 +956,18 @@ class ProjectController extends Controller
         ];
 
         if ($projects->isNotEmpty()) {
-            $selectedProject = $projects->firstWhere('project_id', (int) $request->input('project_id'))
+            $projectId = $request->input('project_id') ?: session('admin_selected_project_id');
+            
+            if ($request->filled('project_id')) {
+                session(['admin_selected_project_id' => $request->input('project_id')]);
+            }
+            
+            $selectedProject = $projects->firstWhere('project_id', (int) $projectId)
                 ?: $projects->first();
+
+            if ($request->filled('project_id')) {
+                session(['admin_selected_project_id' => $selectedProject->project_id]);
+            }
 
             $selectedProject->loadMissing(['phases' => function ($query) {
                 $query->orderBy('phase_order')->with('milestones');

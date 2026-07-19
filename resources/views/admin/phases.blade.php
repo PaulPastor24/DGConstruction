@@ -741,10 +741,9 @@
     #pg-phases .phase-table td:nth-child(1)::before { content: 'Order'; }
     #pg-phases .phase-table td:nth-child(2)::before { content: 'Phase'; }
     #pg-phases .phase-table td:nth-child(3)::before { content: 'Planned'; }
-    #pg-phases .phase-table td:nth-child(4)::before { content: 'Actual'; }
-    #pg-phases .phase-table td:nth-child(5)::before { content: 'Progress'; }
-    #pg-phases .phase-table td:nth-child(6)::before { content: 'Status'; }
-    #pg-phases .phase-table td:nth-child(7)::before { content: 'Actions'; }
+    #pg-phases .phase-table td:nth-child(4)::before { content: 'Progress'; }
+    #pg-phases .phase-table td:nth-child(5)::before { content: 'Status'; }
+    #pg-phases .phase-table td:nth-child(6)::before { content: 'Actions'; }
 
     #pg-phases .phase-table td:nth-child(2) {
         display: block !important;
@@ -888,10 +887,9 @@
     #pg-phases .phase-table td:nth-child(1)::before { content: 'Order' !important; }
     #pg-phases .phase-table td:nth-child(2)::before { content: 'Phase Name' !important; }
     #pg-phases .phase-table td:nth-child(3)::before { content: 'Planned Schedule' !important; }
-    #pg-phases .phase-table td:nth-child(4)::before { content: 'Actual Schedule' !important; }
-    #pg-phases .phase-table td:nth-child(5)::before { content: 'Progress' !important; }
-    #pg-phases .phase-table td:nth-child(6)::before { content: 'Status' !important; }
-    #pg-phases .phase-table td:nth-child(7)::before { content: 'Actions' !important; }
+    #pg-phases .phase-table td:nth-child(4)::before { content: 'Progress' !important; }
+    #pg-phases .phase-table td:nth-child(5)::before { content: 'Status' !important; }
+    #pg-phases .phase-table td:nth-child(6)::before { content: 'Actions' !important; }
 
     #pg-phases .phase-table td > * {
         min-width: 0 !important;
@@ -1089,7 +1087,6 @@
                                 <th class="ps-4 text-center">Order</th>
                                 <th>Phase Name</th>
                                 <th class="text-center">Planned Schedule</th>
-                                <th class="text-center">Actual Schedule</th>
                                 <th>Progress</th>
                                 <th>Status</th>
                                 <th class="action-cell">Actions</th>
@@ -1115,8 +1112,6 @@
                                     $progressClass = $progressValue >= 100 ? 'bg-success' : ($phase->status === 'in_progress' ? 'bg-primary' : ($phase->status === 'delayed' ? 'bg-warning' : 'bg-secondary'));
                                     $startDate = optional($phase->planned_start_date)->format('M d, Y') ?? 'Not set';
                                     $endDate = optional($phase->planned_end_date)->format('M d, Y') ?? 'Not set';
-                                    $actualStartDate = optional($phase->actual_start_date)->format('M d, Y') ?? 'Not started';
-                                    $actualEndDate = optional($phase->actual_end_date)->format('M d, Y') ?? 'In progress';
                                     $milestonesPayload = $phase->milestones->map(function ($milestone) {
                                         $milestoneStatus = $milestone->is_completed ? 'Completed' : ($milestone->is_delayed ? 'Delayed' : 'Pending');
                                         $milestoneClass = $milestone->is_completed ? 'text-success' : ($milestone->is_delayed ? 'text-danger' : 'text-muted');
@@ -1139,10 +1134,6 @@
                                         'planned_end_date' => $endDate,
                                         'planned_start_date_raw' => optional($phase->planned_start_date)->format('Y-m-d') ?? '',
                                         'planned_end_date_raw' => optional($phase->planned_end_date)->format('Y-m-d') ?? '',
-                                        'actual_start_date' => $actualStartDate,
-                                        'actual_end_date' => $actualEndDate,
-                                        'actual_start_date_raw' => optional($phase->actual_start_date)->format('Y-m-d') ?? '',
-                                        'actual_end_date_raw' => optional($phase->actual_end_date)->format('Y-m-d') ?? '',
                                         'completion_percentage' => number_format($progressValue, 0),
                                         'completion_percentage_raw' => $progressValue,
                                         'progress_value' => number_format($progressValue, 0),
@@ -1170,13 +1161,6 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <div class="schedule-stack">
-                                            <span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> {{ $actualStartDate }}</span>
-                                            <span class="schedule-separator"><i class="bi bi-arrow-right"></i></span>
-                                            <span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> {{ $actualEndDate }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
                                         <div class="d-flex align-items-center justify-content-center progress-cell">
                                             <div class="progress flex-grow-1" style="background-color: #f1f5f9; border-radius: 4px;">
                                                 <div class="progress-bar {{ $progressClass }}" style="width: {{ min(100, max(0, $progressValue)) }}%;"></div>
@@ -1197,7 +1181,7 @@
                                 </tr>
                             @empty
                                 <tr id="phaseTableEmptyState">
-                                    <td colspan="7" class="text-center py-5 text-muted">No phases found for this project yet.</td>
+                                    <td colspan="6" class="text-center py-5 text-muted">No phases found for this project yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -1311,15 +1295,7 @@
                                     <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Planned End Date <span class="text-danger">*</span></label>
                                     <input type="date" name="planned_end_date" id="plannedEndDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" required>
                                 </div>
-                                <div class="col-12 col-md-6" id="actualStartDateColumn" style="display: none;">
-                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Actual Start Date</label>
-                                    <input type="date" name="actual_start_date" id="actualStartDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" />
-                                </div>
-                                <div class="col-12 col-md-6" id="actualEndDateColumn" style="display: none;">
-                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Actual End Date</label>
-                                    <input type="date" name="actual_end_date" id="actualEndDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" />
-                                </div>
-                                <div class="col-12">
+                                <div class="col-12 col-md-4">
                                     <label class="form-label mb-1 fw-semibold text-secondary" id="durationLabel" style="font-size: 0.8rem;">Duration</label>
                                     <input type="text" id="durationDisplayInput" class="form-control px-3 shadow-none border-0 text-dark fw-medium" value="0 days" style="height: 44px; border-radius: 8px; font-size: 0.88rem; background-color: #f1f5f9;" readonly disabled>
                                     <div class="form-text mt-1 text-muted" id="durationSubtext" style="font-size: 0.75rem;">Duration will be calculated automatically</div>
@@ -1351,8 +1327,13 @@
                         </div>
 
                         <div class="row mt-3" id="completionVisibleRow" style="display: none;">
-                            <div class="col-12">
-                                <label class="form-label mb-2 fw-semibold text-secondary" style="font-size: 0.8rem;">Current Progress</label>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Progress (%)</label>
+                                <input type="number" name="completion_percentage" id="completionPercentageInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="0.01" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Admin can manually set phase progress.</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label mb-2 fw-semibold text-secondary" style="font-size: 0.8rem;">Progress Preview</label>
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="flex-grow-1">
                                         <div class="progress" style="height: 12px; border-radius: 8px; background-color: #f1f5f9;">
@@ -1360,7 +1341,6 @@
                                         </div>
                                         <div class="d-flex justify-content-between mt-2">
                                             <span id="completionPercentageLabel" class="fw-semibold text-dark">0%</span>
-                                            <span class="text-muted" style="font-size: 0.75rem;">Progress is automatically updated based on approved accomplishment reports.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1749,14 +1729,6 @@
                         <span class="text-muted"><i class="bi bi-calendar-check me-2"></i>Planned End Date</span>
                         <span class="fw-semibold text-dark">${escapeHtml(payload.planned_end_date || 'Not set')}</span>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted"><i class="bi bi-calendar2-week me-2"></i>Actual Start Date</span>
-                        <span class="fw-semibold text-dark">${escapeHtml(payload.actual_start_date || 'Not started')}</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted"><i class="bi bi-calendar2-check me-2"></i>Actual End Date</span>
-                        <span class="fw-semibold text-dark">${escapeHtml(payload.actual_end_date || 'In progress')}</span>
-                    </div>
                     <div class="d-flex flex-column pt-1">
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-muted"><i class="bi bi-speedometer2 me-2"></i>Progress</span>
@@ -1995,10 +1967,29 @@
             const method = isEdit ? 'PUT' : 'POST';
             phaseFormMethod.value = method;
 
+            const submitBtn = document.getElementById('phaseFormSubmitBtn');
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+            }
+
+            let loadingSwal = null;
+            if (window.Swal) {
+                loadingSwal = Swal.fire({
+                    title: isEdit ? 'Updating phase...' : 'Creating phase...',
+                    text: 'Please wait while we process your request.',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+
             if (isEdit && projectId && phaseId) {
                 phaseForm.setAttribute('action', updateRouteTemplate.replace('__PROJECT__', encodeURIComponent(projectId)).replace('__PHASE__', encodeURIComponent(phaseId)));
 
-                // Perform AJAX update for edits
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                 const formData = new FormData(phaseForm);
                 formData.set('_method', 'PUT');
@@ -2036,10 +2027,21 @@
                 })
                 .catch((err) => {
                     Swal.fire({ title: 'Unexpected Server Error', text: err.message || 'An unexpected error occurred.', icon: 'error', confirmButtonColor: '#045a33' });
+                })
+                .finally(() => {
+                    if (loadingSwal) loadingSwal.close();
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
                 });
             } else {
                 phaseForm.setAttribute('action', createPhaseUrl);
-                // Non-AJAX create: submit normally to keep existing flow and server-side flash handling
+                if (loadingSwal) loadingSwal.close();
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
                 phaseForm.submit();
             }
         }
@@ -2087,10 +2089,11 @@
             currentPhaseStatus = payload?.status || null;
             plannedStartDateInput.value = payload?.planned_start_date_raw || '';
             plannedEndDateInput.value = payload?.planned_end_date_raw || '';
-            actualStartDateInput.value = payload?.actual_start_date_raw || '';
-            actualEndDateInput.value = payload?.actual_end_date_raw || '';
             const completionValue = Number(payload?.completion_percentage_raw ?? 0);
             activeCompletionValue = completionValue;
+            if (completionPercentageInput) {
+                completionPercentageInput.value = completionValue;
+            }
             if (completionPercentageBar) {
                 completionPercentageBar.style.width = `${completionValue}%`;
                 completionPercentageBar.setAttribute('aria-valuenow', String(completionValue));
@@ -2112,16 +2115,8 @@
             clearPhaseFormErrors();
             calculateDuration();
 
-            // Show/hide completion visible row and lock status for completed phases
             if (completionVisibleRow) {
                 completionVisibleRow.style.display = isEdit ? 'flex' : 'none';
-            }
-
-            if (actualStartDateColumn) {
-                actualStartDateColumn.style.display = isEdit ? 'block' : 'none';
-            }
-            if (actualEndDateColumn) {
-                actualEndDateColumn.style.display = isEdit ? 'block' : 'none';
             }
 
             if (phaseStatusInput) {
@@ -2170,6 +2165,13 @@
             if (completionPercentageLabel) {
                 completionPercentageLabel.textContent = `${Math.round(percentage)}%`;
             }
+        }
+
+        if (completionPercentageInput) {
+            completionPercentageInput.addEventListener('input', function () {
+                updateCompletionDisplay(this.value);
+                activeCompletionValue = Number(this.value || 0);
+            });
         }
 
         if (phaseStatusInput) {
@@ -2280,7 +2282,6 @@
                 const scheduleCells = row.querySelectorAll('.schedule-stack');
                 if (scheduleCells && scheduleCells.length >= 2) {
                     scheduleCells[0].innerHTML = `<span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> ${phase.planned_start_date || '—'}</span><span class="schedule-separator"><i class="bi bi-arrow-right"></i></span><span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> ${phase.planned_end_date || '—'}</span>`;
-                    scheduleCells[1].innerHTML = `<span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> ${phase.actual_start_date || '—'}</span><span class="schedule-separator"><i class="bi bi-arrow-right"></i></span><span class="schedule-chip"><i class="bi bi-calendar3 me-1"></i> ${phase.actual_end_date || '—'}</span>`;
                 }
 
                 const progressCell = row.querySelector('.progress-cell');
@@ -2316,8 +2317,6 @@
                         phase_order: phase.phase_order,
                         planned_start_date_raw: phase.planned_start_date_raw,
                         planned_end_date_raw: phase.planned_end_date_raw,
-                        actual_start_date_raw: phase.actual_start_date_raw,
-                        actual_end_date_raw: phase.actual_end_date_raw,
                         completion_percentage_raw: phase.completion_percentage,
                         status: phase.status,
                     });

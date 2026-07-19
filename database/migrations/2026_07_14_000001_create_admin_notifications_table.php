@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('admin_notifications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('admin_id');
+            $table->bigInteger('admin_id');
             $table->string('type')->default('system');
             $table->string('title');
             $table->text('message')->nullable();
             $table->json('data')->nullable();
-            $table->unsignedBigInteger('related_id')->nullable();
+            $table->bigInteger('related_id')->nullable();
             $table->string('related_type')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();

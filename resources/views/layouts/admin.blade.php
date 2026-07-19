@@ -153,6 +153,65 @@
                 });
             }
         });
+
+        let globalLoadingSwal = null;
+        function showGlobalLoading() {
+            if (window.Swal && !globalLoadingSwal) {
+                globalLoadingSwal = Swal.fire({
+                    title: 'Processing',
+                    text: 'Please wait while request completes...',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+        }
+
+        function closeGlobalLoading() {
+            if (globalLoadingSwal) {
+                globalLoadingSwal.close();
+                globalLoadingSwal = null;
+            }
+        }
+
+        document.addEventListener('submit', function(event) {
+            const form = event.target;
+            if (form && form.tagName === 'FORM' && !form.dataset.noGlobalLoading) {
+                showGlobalLoading();
+            }
+        }, true);
+
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch.apply(this, args).finally(() => {
+                closeGlobalLoading();
+            });
+        };
+
+        const originalXhrOpen = XMLHttpRequest.prototype.open;
+        const originalXhrSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            this._url = url;
+            return originalXhrOpen.apply(this, arguments);
+        };
+        XMLHttpRequest.prototype.send = function() {
+            this.addEventListener('loadend', closeGlobalLoading);
+            if (this._url) {
+                showGlobalLoading();
+            }
+            return originalXhrSend.apply(this, arguments);
+        };
+
+        @if(session('login_success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Welcome!',
+                text: 'You have successfully logged in.',
+                confirmButtonColor: '#198754'
+            });
+        @endif
     </script>
     @stack('scripts')
 </body>

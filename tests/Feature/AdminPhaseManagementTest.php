@@ -30,8 +30,8 @@ class AdminPhaseManagementTest extends TestCase
             $table->id('project_id');
             $table->string('project_name');
             $table->string('project_location');
-            $table->unsignedBigInteger('client_id');
-            $table->unsignedBigInteger('engineer_id');
+            $table->bigInteger('client_id');
+            $table->bigInteger('engineer_id');
             $table->date('start_date');
             $table->date('target_end_date');
             $table->date('actual_end_date')->nullable();
@@ -41,9 +41,9 @@ class AdminPhaseManagementTest extends TestCase
 
         Schema::create('construction_phases', function (Blueprint $table) {
             $table->id('phase_id');
-            $table->unsignedBigInteger('project_id');
+            $table->bigInteger('project_id');
             $table->string('phase_name');
-            $table->unsignedInteger('phase_order');
+            $table->integer('phase_order');
             $table->date('planned_start_date');
             $table->date('planned_end_date');
             $table->date('actual_start_date')->nullable();
@@ -55,7 +55,7 @@ class AdminPhaseManagementTest extends TestCase
 
         Schema::create('system_logs', function (Blueprint $table) {
             $table->id('log_id');
-            $table->unsignedBigInteger('user_id')->nullable();
+            $table->bigInteger('user_id')->nullable();
             $table->string('action');
             $table->text('description')->nullable();
             $table->string('ip_address', 45)->nullable();

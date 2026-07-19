@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Client Portal D&G Construction Monitor')</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -288,14 +288,21 @@
 
         .notification-badge {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 12px;
-            height: 12px;
+            top: 4px;
+            right: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 0.25rem;
+            border: 2px solid #ffffff;
             border-radius: 999px;
-            background: #22c55e;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
-            animation: ping-dot 1.4s ease-out infinite;
+            background: #2a4028;
+            color: #ffffff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            line-height: 1;
         }
 
         @keyframes ping-dot {
@@ -403,46 +410,7 @@
             justify-content: center;
         }
 
-        .notification-badge {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 0.25rem;
-            border: 2px solid #ffffff;
-            border-radius: 999px;
-            background: #22c55e !important;
-            color: #ffffff;
-            font-size: 0.68rem;
-            font-weight: 700;
-            line-height: 1;
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
-            animation: ping-dot 1.4s ease-out infinite;
-            pointer-events: none;
-        }
 
-        .dashboard-notification-button.notification-bell-animate::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: rgba(34, 197, 94, 0.12);
-            animation: badge-ring 1.6s ease-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes badge-ring {
-            0% { transform: scale(0.9); opacity: 0.9; }
-            60% { transform: scale(1.35); opacity: 0.1; }
-            100% { transform: scale(1.6); opacity: 0; }
-        }
 
         .notification-popup {
             position: fixed;
@@ -664,18 +632,20 @@
             position: relative;
             width: 46px;
             height: 46px;
-            border-radius: 14px;
+            border-radius: 999px;
             border: 1px solid var(--border-color);
             background: var(--surface-card);
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 8px 16px rgba(42, 64, 40, 0.08);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: var(--text-primary);
+            transition: all 0.2s ease, transform 0.2s ease;
         }
 
         .dashboard-notification-button:hover {
             background: var(--brand-mint);
+            transform: translateY(-1px);
         }
 
         .global-mobile-nav {
@@ -1449,5 +1419,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         })();
     </script>
+
+    @if(session('login_success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Welcome!',
+                text: 'You have successfully logged in.',
+                confirmButtonColor: '#198754'
+            });
+        </script>
+    @endif
+
 </body>
 </html>

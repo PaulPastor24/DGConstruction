@@ -276,7 +276,7 @@
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: var(--font-ui, 'Plus Jakarta Sans', sans-serif);
         padding: 0.5rem;
     }
 
@@ -302,6 +302,7 @@
     .metric-label {
         font-size: 0.8rem;
         font-weight: 500;
+        font-family: var(--font-ui, 'Plus Jakarta Sans', sans-serif);
         color: var(--ui-text-muted);
         margin-bottom: 0.5rem;
     }
@@ -321,6 +322,7 @@
     .project-name {
         font-size: 1.4rem;
         font-weight: 700;
+        font-family: var(--font-brand, 'Syne', sans-serif);
         color: var(--ui-text-main);
     }
 
@@ -1209,7 +1211,7 @@
             display: block !important;
             color: #102015 !important;
             font-size: 15px !important;
-            font-weight: 800 !important;
+            font-weight: 700 !important;
             line-height: 1.28 !important;
             letter-spacing: -0.01em !important;
         }
@@ -1246,7 +1248,7 @@
             margin-bottom: 7px !important;
             color: #64748b !important;
             font-size: 9.5px !important;
-            font-weight: 900 !important;
+            font-weight: 700 !important;
             letter-spacing: 0.075em !important;
             line-height: 1.2 !important;
             text-transform: uppercase !important;
@@ -1283,7 +1285,7 @@
         .date-cell-text {
             white-space: normal !important;
             font-size: 13px !important;
-            font-weight: 800 !important;
+            font-weight: 500 !important;
             color: #172033 !important;
         }
 

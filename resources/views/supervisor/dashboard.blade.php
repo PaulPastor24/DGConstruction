@@ -166,9 +166,9 @@
 
         .supervisor-dashboard-page .stat-title {
             font-size: 10px !important;
-            font-weight: 800 !important;
+            font-weight: 700 !important;
             line-height: 1.25 !important;
-            letter-spacing: 0.07em !important;
+            letter-spacing: 0.12em !important;
             text-transform: uppercase !important;
             color: #64748b !important;
             margin-bottom: 8px !important;
@@ -182,7 +182,7 @@
             color: #101827 !important;
             font-size: 18px !important;
             line-height: 1.12 !important;
-            font-weight: 800 !important;
+            font-weight: 700 !important;
             word-break: normal !important;
             overflow-wrap: anywhere !important;
         }

@@ -41,7 +41,6 @@ class PhaseController extends Controller
     public function show($projectId)
     {
         $project = Project::findOrFail($projectId);
-        $this->authorizeProject($project);
 
         $phases = $project->phases()
             ->orderBy('phase_order')
@@ -56,7 +55,6 @@ class PhaseController extends Controller
     public function create($projectId)
     {
         $project = Project::findOrFail($projectId);
-        $this->authorizeProject($project);
 
         $nextPhaseOrder = $project->phases()->max('phase_order') + 1 ?? 1;
 
@@ -70,7 +68,6 @@ class PhaseController extends Controller
     {
         try {
             $project = Project::findOrFail($request->input('project_id'));
-            $this->authorizeProject($project);
 
             $validated = $request->validate([
                 'project_id' => 'required|exists:projects,project_id',
@@ -87,15 +84,12 @@ class PhaseController extends Controller
                 }],
                 'planned_start_date' => 'required|date',
                 'planned_end_date' => 'required|date|after_or_equal:planned_start_date',
-                'actual_start_date' => 'nullable|date',
-                'actual_end_date' => 'nullable|date|after_or_equal:actual_start_date',
             ], [
                 'phase_name.required' => 'Please enter a phase name.',
                 'phase_order.required' => 'Please enter a phase order.',
                 'planned_start_date.required' => 'Please select a planned start date.',
                 'planned_end_date.required' => 'Please select a planned end date.',
                 'planned_end_date.after_or_equal' => 'The planned end date must be on or after the planned start date.',
-                'actual_end_date.after_or_equal' => 'The actual end date must be on or after the actual start date.',
                 'completion_percentage.max' => 'Progress cannot exceed 100%.',
                 'status.in' => 'Please choose a valid phase status.',
             ]);
@@ -110,8 +104,6 @@ class PhaseController extends Controller
                 'phase_order' => $validated['phase_order'],
                 'planned_start_date' => $validated['planned_start_date'],
                 'planned_end_date' => $validated['planned_end_date'],
-                'actual_start_date' => $validated['actual_start_date'] ?? null,
-                'actual_end_date' => $validated['actual_end_date'] ?? null,
                 'completion_percentage' => 0.00,
                 'status' => 'not_started',
             ]);
@@ -144,10 +136,6 @@ class PhaseController extends Controller
                     'planned_start_date_raw' => $phase->planned_start_date ? \Illuminate\Support\Carbon::parse($phase->planned_start_date)->toDateString() : null,
                     'planned_end_date' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->format('M d, Y') : null,
                     'planned_end_date_raw' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->toDateString() : null,
-                    'actual_start_date' => $phase->actual_start_date ? \Illuminate\Support\Carbon::parse($phase->actual_start_date)->format('M d, Y') : null,
-                    'actual_start_date_raw' => $phase->actual_start_date ? \Illuminate\Support\Carbon::parse($phase->actual_start_date)->toDateString() : null,
-                    'actual_end_date' => $phase->actual_end_date ? \Illuminate\Support\Carbon::parse($phase->actual_end_date)->format('M d, Y') : null,
-                    'actual_end_date_raw' => $phase->actual_end_date ? \Illuminate\Support\Carbon::parse($phase->actual_end_date)->toDateString() : null,
                     'completion_percentage' => (float) $phase->completion_percentage,
                     'status' => $phase->status,
                     'project_name' => optional($project)->project_name ?? null,
@@ -196,7 +184,6 @@ class PhaseController extends Controller
     public function edit($projectId, $phaseId)
     {
         $project = Project::findOrFail($projectId);
-        $this->authorizeProject($project);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)
@@ -212,7 +199,6 @@ class PhaseController extends Controller
     public function update(Request $request, $projectId, $phaseId)
     {
         $project = Project::findOrFail($projectId);
-        $this->authorizeProject($project);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)
@@ -235,8 +221,6 @@ class PhaseController extends Controller
                 }],
                 'planned_start_date' => 'required|date',
                 'planned_end_date' => 'required|date|after_or_equal:planned_start_date',
-                'actual_start_date' => 'nullable|date',
-                'actual_end_date' => 'nullable|date|after_or_equal:actual_start_date',
                 'completion_percentage' => 'nullable|numeric|min:0|max:100',
                 'status' => 'required|in:not_started,in_progress,completed,delayed',
             ], [
@@ -245,7 +229,6 @@ class PhaseController extends Controller
                 'planned_start_date.required' => 'Please select a planned start date.',
                 'planned_end_date.required' => 'Please select a planned end date.',
                 'planned_end_date.after_or_equal' => 'The planned end date must be on or after the planned start date.',
-                'actual_end_date.after_or_equal' => 'The actual end date must be on or after the actual start date.',
                 'completion_percentage.max' => 'Progress cannot exceed 100%.',
                 'status.in' => 'Please choose a valid phase status.',
             ]);
@@ -255,9 +238,7 @@ class PhaseController extends Controller
                 'phase_order' => (int) ($validated['phase_order'] ?? 0),
                 'planned_start_date' => $validated['planned_start_date'] ? \Illuminate\Support\Carbon::parse($validated['planned_start_date'])->toDateString() : null,
                 'planned_end_date' => $validated['planned_end_date'] ? \Illuminate\Support\Carbon::parse($validated['planned_end_date'])->toDateString() : null,
-                'actual_start_date' => !empty($validated['actual_start_date']) ? \Illuminate\Support\Carbon::parse($validated['actual_start_date'])->toDateString() : null,
-                'actual_end_date' => !empty($validated['actual_end_date']) ? \Illuminate\Support\Carbon::parse($validated['actual_end_date'])->toDateString() : null,
-                'completion_percentage' => (float) ($phase->completion_percentage ?? 0),
+                'completion_percentage' => (float) ($validated['completion_percentage'] ?? $phase->completion_percentage ?? 0),
                 'status' => (string) ($validated['status'] ?? ''),
             ];
 
@@ -266,8 +247,6 @@ class PhaseController extends Controller
                 'phase_order' => (int) $phase->phase_order,
                 'planned_start_date' => $phase->planned_start_date ? \Illuminate\Support\Carbon::parse($phase->planned_start_date)->toDateString() : null,
                 'planned_end_date' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->toDateString() : null,
-                'actual_start_date' => $phase->actual_start_date ? \Illuminate\Support\Carbon::parse($phase->actual_start_date)->toDateString() : null,
-                'actual_end_date' => $phase->actual_end_date ? \Illuminate\Support\Carbon::parse($phase->actual_end_date)->toDateString() : null,
                 'completion_percentage' => (float) $phase->completion_percentage,
                 'status' => (string) $phase->status,
             ];
@@ -279,10 +258,10 @@ class PhaseController extends Controller
             }
 
             $submittedStatus = $normalizedSubmittedValues['status'] ?? '';
-            $phaseProgress = round((float) ($phase->completion_percentage ?? 0), 2);
+            $submittedProgress = round((float) ($normalizedSubmittedValues['completion_percentage'] ?? 0), 2);
             $finalStatus = $submittedStatus;
 
-            if ($phaseProgress >= 100) {
+            if ($submittedProgress >= 100) {
                 $finalStatus = 'completed';
             }
 
@@ -292,7 +271,7 @@ class PhaseController extends Controller
                 ]);
             }
 
-            if ($submittedStatus === 'completed' && $phaseProgress < 100) {
+            if ($submittedStatus === 'completed' && $submittedProgress < 100) {
                 throw ValidationException::withMessages([
                     'status' => ['Cannot mark phase as completed unless progress is 100%.'],
                 ]);
@@ -305,7 +284,7 @@ class PhaseController extends Controller
                 'completed' => ['completed'],
             ];
 
-            $effectiveRequestedStatus = $phaseProgress >= 100 ? 'completed' : $submittedStatus;
+            $effectiveRequestedStatus = $submittedProgress >= 100 ? 'completed' : $submittedStatus;
             if ($phase->status !== 'completed') {
                 $allowed = $allowedTransitions[$phase->status] ?? [$phase->status];
                 if ($phase->status === 'not_started' && !in_array($effectiveRequestedStatus, ['not_started', 'in_progress'], true)) {
@@ -329,14 +308,6 @@ class PhaseController extends Controller
             $oldCompletion = $phase->completion_percentage;
 
             $phase->fill($validated);
-
-            if ($phase->status !== 'completed' && $finalStatus === 'in_progress' && empty($phase->actual_start_date)) {
-                $phase->actual_start_date = now()->toDateString();
-            }
-
-            if ($finalStatus === 'completed' && empty($phase->actual_end_date) && $phaseProgress >= 100) {
-                $phase->actual_end_date = now()->toDateString();
-            }
 
             $phase->save();
 
@@ -416,10 +387,6 @@ class PhaseController extends Controller
                     'planned_start_date_raw' => $phase->planned_start_date ? \Illuminate\Support\Carbon::parse($phase->planned_start_date)->toDateString() : null,
                     'planned_end_date' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->format('M d, Y') : null,
                     'planned_end_date_raw' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->toDateString() : null,
-                    'actual_start_date' => $phase->actual_start_date ? \Illuminate\Support\Carbon::parse($phase->actual_start_date)->format('M d, Y') : null,
-                    'actual_start_date_raw' => $phase->actual_start_date ? \Illuminate\Support\Carbon::parse($phase->actual_start_date)->toDateString() : null,
-                    'actual_end_date' => $phase->actual_end_date ? \Illuminate\Support\Carbon::parse($phase->actual_end_date)->format('M d, Y') : null,
-                    'actual_end_date_raw' => $phase->actual_end_date ? \Illuminate\Support\Carbon::parse($phase->actual_end_date)->toDateString() : null,
                     'completion_percentage' => (float) $phase->completion_percentage,
                     'status' => $phase->status,
                     'project_name' => optional($project)->project_name ?? null,
@@ -470,7 +437,6 @@ class PhaseController extends Controller
     public function destroy(Request $request, $projectId, $phaseId)
     {
         $project = Project::findOrFail($projectId);
-        $this->authorizeProject($project);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)
@@ -510,16 +476,6 @@ class PhaseController extends Controller
             }
 
             return back()->withErrors(['message' => 'Failed to delete phase']);
-        }
-    }
-
-    /**
-     * Authorize that the user owns this project
-     */
-    private function authorizeProject(Project $project)
-    {
-        if ($project->engineer_id !== auth('web')->user()->user_id) {
-            abort(403, 'Unauthorized to manage phases for this project');
         }
     }
 

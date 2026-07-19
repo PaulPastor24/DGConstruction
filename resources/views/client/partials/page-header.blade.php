@@ -18,10 +18,6 @@
 
     <div class="dashboard-page-tools" aria-label="Page utilities">
         {!! $extra ?? '' !!}
-        <div class="dashboard-date-pill">
-            <i class="bi bi-calendar3"></i>
-            <span>{{ $date }}</span>
-        </div>
         <div style="position: relative;">
             <button type="button" class="dashboard-notification-button notification-toggle-btn {{ ($clientUnreadCount ?? 0) > 0 ? 'notification-bell-animate' : '' }}" style="position: relative;" aria-label="Notifications">
                 <i class="bi bi-bell"></i>

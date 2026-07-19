@@ -173,7 +173,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
-                                    <button class="btn btn-sm btn-light border report-action-btn js-report-view-btn" type="button" data-report-details='@json($detailPayload)' title="View details">
+                                    <button class="btn btn-sm btn-light border report-action-btn js-report-view-btn" type="button" data-report-details='@json($detailPayload)' data-modal-target="reportDetailsModal-{{ $report->report_id }}" title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="btn btn-sm btn-light border report-action-btn report-export-link" title="Export PDF">
@@ -182,6 +182,127 @@
                                 </div>
                             </td>
                         </tr>
+
+                        <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark, #2a4028);">
+                                        <div>
+                                            <h5 class="modal-title fw-bold" id="reportDetailsModalLabel-{{ $report->report_id }}" style="color: var(--cms-green-dark, #2a4028);">Report Details</h5>
+                                            <div class="text-muted small">A complete summary of the selected accomplishment report.</div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body py-4">
+                                        <div class="row gx-4 gy-4">
+                                            <div class="col-12 col-xl-7">
+                                                <div class="report-detail-card p-4">
+                                                    <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #fff;">
+                                                        <div>
+                                                            <div class="small text-uppercase text-muted" style="font-weight: 600;">Report ID</div>
+                                                            <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $detailPayload['report_id'] }}</div>
+                                                        </div>
+                                                        <div class="text-sm-end">
+                                                            <div class="small text-uppercase text-muted" style="font-weight: 600;">Approval Status</div>
+                                                            <span class="status-pill {{ $pillClass }} p-2 mt-1 d-inline-block">{{ $status }}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-3 mb-4 small">
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                            <div class="fw-semibold text-muted mb-1">Project</div>
+                                                            <div class="text-dark">{{ $detailPayload['project'] }}</div>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                            <div class="fw-semibold text-muted mb-1">Construction Phase</div>
+                                                            <div class="text-dark">{{ $detailPayload['phase'] }}</div>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                            <div class="fw-semibold text-muted mb-1">Report Date</div>
+                                                            <div class="text-dark">{{ $detailPayload['submitted_at'] }}</div>
+                                                        </div>
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                            <div class="fw-semibold text-muted mb-1">Submitted By</div>
+                                                            <div class="text-dark">{{ $detailPayload['submitted_by'] }}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb; border-radius: 14px;">
+                                                        <div class="fw-bold mb-2" style="color: var(--cms-green-dark, #2a4028);">Construction Accomplishment</div>
+                                                        <p class="mb-0 text-dark small">{{ $detailPayload['report_text'] }}</p>
+                                                    </div>
+
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-12 col-md-6">
+                                                            <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                                <div class="fw-semibold text-muted mb-1">Reviewed By</div>
+                                                                <div class="text-dark">{{ $detailPayload['reviewed_by'] }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 col-md-6">
+                                                            <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                                <div class="fw-semibold text-muted mb-1">Approved By</div>
+                                                                <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                        <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
+                                                        <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12 col-xl-5">
+                                                <div class="report-detail-sidebar p-4">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <div class="fw-bold" style="color: var(--cms-green-dark, #2a4028);">Site Images</div>
+                                                        <div class="small text-muted">{{ count($detailPayload['site_images']) }} uploaded</div>
+                                                    </div>
+                                                    @if(count($detailPayload['site_images']) === 0)
+                                                        <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
+                                                    @else
+                                                        <div class="d-flex flex-wrap gap-2 mb-4">
+                                                            @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
+                                                                <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                                    <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
+                                                                </div>
+                                                            @endforeach
+                                                            @if(count($detailPayload['site_images']) > 4)
+                                                                <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    <div class="fw-bold mb-3" style="color: var(--cms-green-dark, #2a4028);">Approval Timeline</div>
+                                                    <div class="timeline-container small px-1">
+                                                        <div class="timeline-step active">
+                                                            <div class="timeline-icon"><i class="bi bi-check"></i></div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                        </div>
+                                                        <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
+                                                            <div class="timeline-icon"><i class="bi bi-clock"></i></div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                        </div>
+                                                        <div class="timeline-step {{ $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : '') }}">
+                                                            <div class="timeline-icon"><i class="bi bi-circle"></i></div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ($status === 'rejected' ? 'Returned' : 'Finalized') }}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid rgba(42, 64, 40, 0.12);">
+                                                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
+                                                            <i class="bi bi-download me-2"></i> Download PDF
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     @empty
                         <tr>
                             <td colspan="6" class="text-center py-4 text-muted">No reports match the current filters.</td>
@@ -253,7 +374,7 @@
                     </div>
 
                     <div class="report-mobile-actions">
-                        <button class="report-mobile-view js-report-view-btn" type="button" data-report-details='@json($detailPayload)'>
+                        <button class="report-mobile-view js-report-view-btn" type="button" data-report-details='@json($detailPayload)' data-modal-target="reportDetailsModal-{{ $report->report_id }}">
                             <i class="bi bi-eye"></i>
                             View Details
                         </button>
@@ -262,6 +383,127 @@
                         </a>
                     </div>
                 </article>
+
+                <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark, #2a4028);">
+                                <div>
+                                    <h5 class="modal-title fw-bold" id="reportDetailsModalLabel-{{ $report->report_id }}" style="color: var(--cms-green-dark, #2a4028);">Report Details</h5>
+                                    <div class="text-muted small">A complete summary of the selected accomplishment report.</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body py-4">
+                                <div class="row gx-4 gy-4">
+                                    <div class="col-12 col-xl-7">
+                                        <div class="report-detail-card p-4">
+                                            <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #fff;">
+                                                <div>
+                                                    <div class="small text-uppercase text-muted" style="font-weight: 600;">Report ID</div>
+                                                    <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ $detailPayload['report_id'] }}</div>
+                                                </div>
+                                                <div class="text-sm-end">
+                                                    <div class="small text-uppercase text-muted" style="font-weight: 600;">Approval Status</div>
+                                                    <span class="status-pill {{ $pillClass }} p-2 mt-1 d-inline-block">{{ $status }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-3 mb-4 small">
+                                                <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                    <div class="fw-semibold text-muted mb-1">Project</div>
+                                                    <div class="text-dark">{{ $detailPayload['project'] }}</div>
+                                                </div>
+                                                <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                    <div class="fw-semibold text-muted mb-1">Construction Phase</div>
+                                                    <div class="text-dark">{{ $detailPayload['phase'] }}</div>
+                                                </div>
+                                                <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                    <div class="fw-semibold text-muted mb-1">Report Date</div>
+                                                    <div class="text-dark">{{ $detailPayload['submitted_at'] }}</div>
+                                                </div>
+                                                <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb; border-radius: 14px;">
+                                                    <div class="fw-semibold text-muted mb-1">Submitted By</div>
+                                                    <div class="text-dark">{{ $detailPayload['submitted_by'] }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb; border-radius: 14px;">
+                                                <div class="fw-bold mb-2" style="color: var(--cms-green-dark, #2a4028);">Construction Accomplishment</div>
+                                                <p class="mb-0 text-dark small">{{ $detailPayload['report_text'] }}</p>
+                                            </div>
+
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-12 col-md-6">
+                                                    <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                        <div class="fw-semibold text-muted mb-1">Reviewed By</div>
+                                                        <div class="text-dark">{{ $detailPayload['reviewed_by'] }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-md-6">
+                                                    <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                        <div class="fw-semibold text-muted mb-1">Approved By</div>
+                                                        <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
+                                                <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
+                                                <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-xl-5">
+                                        <div class="report-detail-sidebar p-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div class="fw-bold" style="color: var(--cms-green-dark, #2a4028);">Site Images</div>
+                                                <div class="small text-muted">{{ count($detailPayload['site_images']) }} uploaded</div>
+                                            </div>
+                                            @if(count($detailPayload['site_images']) === 0)
+                                                <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
+                                            @else
+                                                <div class="d-flex flex-wrap gap-2 mb-4">
+                                                    @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
+                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                            <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
+                                                        </div>
+                                                    @endforeach
+                                                    @if(count($detailPayload['site_images']) > 4)
+                                                        <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
+                                                    @endif
+                                                </div>
+                                            @endif
+
+                                            <div class="fw-bold mb-3" style="color: var(--cms-green-dark, #2a4028);">Approval Timeline</div>
+                                            <div class="timeline-container small px-1">
+                                                <div class="timeline-step active">
+                                                    <div class="timeline-icon"><i class="bi bi-check"></i></div>
+                                                    <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                </div>
+                                                <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
+                                                    <div class="timeline-icon"><i class="bi bi-clock"></i></div>
+                                                    <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                </div>
+                                                <div class="timeline-step {{ $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : '') }}">
+                                                    <div class="timeline-icon"><i class="bi bi-circle"></i></div>
+                                                    <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ($status === 'rejected' ? 'Returned' : 'Finalized') }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid rgba(42, 64, 40, 0.12);">
+                                                <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
+                                                    <i class="bi bi-download me-2"></i> Download PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             @empty
                 <div class="report-mobile-empty">
                     <i class="bi bi-file-earmark-text"></i>
@@ -275,25 +517,6 @@
 <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
             <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date']))->links('pagination::bootstrap-5') }}</div>
-        </div>
-    </section>
-
-    <section id="reportDetailPanel" class="report-detail-panel-card mb-4" aria-live="polite">
-        <div class="report-detail-panel-header">
-            <div>
-                <div class="report-detail-panel-eyebrow">Report Preview</div>
-                <h5 id="reportDetailTitle" class="fw-bold mb-0">Select a report</h5>
-            </div>
-            <button type="button" id="reportDetailCloseBtn" class="btn btn-sm btn-light border rounded-circle" aria-label="Close report preview">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div id="reportDetailBody" class="report-detail-panel-body">
-            <div class="report-detail-empty-state">
-                <div class="avatar-pill avatar-pill-large">?</div>
-                <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
-                <div class="text-muted small">The selected record will open here with project, phase, report details, and approval timeline.</div>
-            </div>
         </div>
     </section>
 </div>
@@ -455,9 +678,158 @@
         overflow: hidden;
     }
 
-    .report-detail-modal .modal-header,
-    .report-detail-modal .modal-footer {
+    /* === Bootstrap Report Details Modal (matching supervisor) === */
+    .report-details-modal .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 18px 42px rgba(42, 64, 40, 0.18);
+        background-color: #ffffff;
+    }
+
+    .report-details-modal .modal-header {
+        background-color: #ffffff;
+        border-bottom: 2px solid var(--cms-green-dark, #2a4028);
+        padding: 1.1rem 1.25rem;
+    }
+
+    .report-details-modal .modal-title {
+        color: var(--cms-green-dark, #2a4028);
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .report-details-modal .modal-body {
+        padding: 1.5rem;
+        background-color: #ffffff;
+    }
+
+    .report-details-modal .modal-footer {
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 1rem 1.25rem;
+    }
+
+    .report-detail-card,
+    .report-detail-sidebar {
+        border-radius: 16px;
+        border: 1px solid rgba(42, 64, 40, 0.12);
+        background: #ffffff;
+        box-shadow: 0 18px 42px rgba(42, 64, 40, 0.06);
+    }
+
+    .report-detail-card {
+        padding: 2rem;
+    }
+
+    .report-detail-sidebar {
+        background: #f8fafc;
+        border-color: rgba(42, 64, 40, 0.12);
+    }
+
+    .report-detail-sidebar .img-thumbnail-grid {
+        width: 100%;
+        max-width: 108px;
+        height: 88px;
+        min-width: 88px;
+    }
+
+    .report-detail-sidebar .more-images-badge {
+        width: auto;
+        min-width: 108px;
+        background: #f1f5f9;
+        color: #1d321c;
+    }
+
+    .img-thumbnail-grid {
+        width: 65px;
+        height: 65px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .more-images-badge {
+        width: 65px;
+        height: 65px;
+        background: #f0f0f0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: #555;
+    }
+
+    /* Approval timeline */
+    .timeline-container {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-top: 1rem;
+        padding: 0 0.75rem;
+    }
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        top: 18px;
+        left: 20%;
+        right: 20%;
+        height: 2px;
+        background: #d9e5dd;
+        z-index: 1;
+    }
+    .timeline-step {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        min-width: 0;
+    }
+    .timeline-step:first-child {
+        text-align: left;
+    }
+    .timeline-step:last-child {
+        text-align: right;
+    }
+    .timeline-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid #d9e5dd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 0.9rem;
+    }
+    .timeline-step.active .timeline-icon {
+        border-color: #2a4028;
+        background: #2a4028;
+        color: #fff;
+    }
+    .timeline-step.current .timeline-icon {
+        border-color: #ffc107;
         background: #fff;
+        color: #ffc107;
+    }
+
+    /* Green download button matching supervisor */
+    .btn-cms-primary {
+        background-color: var(--cms-green-dark, #2a4028);
+        color: #ffffff;
+        border: none;
+        font-weight: 600;
+        padding: 0.6rem 1.4rem;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+    }
+    .btn-cms-primary:hover,
+    .btn-cms-primary:focus {
+        background-color: #1d321c;
+        color: #ffffff;
     }
 
     .drawer-section-title {
@@ -523,84 +895,7 @@
     }
 
     .report-detail-panel-card {
-        border: 1px solid rgba(42, 64, 40, 0.1);
-        border-radius: 18px;
-        background: #fff;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-        overflow: hidden;
-        opacity: 0;
-        max-height: 0;
-        transform: translateY(10px);
-        pointer-events: none;
-        transition: all 220ms ease;
-    }
-
-    .report-detail-panel-card.is-open {
-        opacity: 1;
-        max-height: 3000px;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
-
-    .report-detail-panel-card.preview-focus {
-        border-color: rgba(42, 64, 40, 0.32);
-        box-shadow: 0 16px 38px rgba(42, 64, 40, 0.14);
-    }
-
-    .report-preview-scroll-note {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        margin-top: 0.45rem;
-        padding: 0.35rem 0.65rem;
-        border-radius: 999px;
-        background: #eef8ef;
-        color: var(--brand-green);
-        font-size: 0.72rem;
-        font-weight: 700;
-    }
-
-    .report-detail-panel-card.is-switching .report-detail-panel-body {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    .report-detail-panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.15rem;
-        border-bottom: 1px solid rgba(42, 64, 40, 0.08);
-        background: linear-gradient(135deg, #f8fcf8 0%, #ffffff 100%);
-    }
-
-    .report-detail-panel-eyebrow {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--brand-green);
-    }
-
-    .report-detail-panel-body {
-        padding: 1.1rem 1.15rem 1.2rem;
-        transition: opacity 180ms ease, transform 180ms ease;
-    }
-
-    .report-detail-empty-state {
-        display: grid;
-        justify-items: center;
-        text-align: center;
-        gap: 0.5rem;
-        padding: 1rem 0 0.2rem;
-        color: var(--text-muted);
-    }
-
-    .avatar-pill-large {
-        width: 46px;
-        height: 46px;
-        font-size: 1rem;
+        display: none;
     }
 
     @media (max-width: 768px) {
@@ -616,6 +911,14 @@
     }
 
     @media (max-width: 767.98px) {
+        .client-reports-page h1,
+        .client-reports-page h2,
+        .client-reports-page h3,
+        .client-reports-page h4,
+        .client-reports-page h5,
+        .client-reports-page h6 {
+            font-family: 'DM Sans', sans-serif !important;
+        }
         .report-filter-card {
             margin-bottom: 0.9rem !important;
         }
@@ -858,6 +1161,19 @@
 
         .client-reports-page .report-filter-card form {
             gap: 10px !important;
+        }
+
+        .client-reports-page .report-filter-card .row {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        .client-reports-page .report-filter-card .row > [class*="col-"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: none !important;
+            padding: 0 !important;
         }
 
         .client-reports-page .report-filter-card .form-label {
@@ -1114,8 +1430,117 @@
             font-size: 12px !important;
         }
 
-        .client-reports-page .report-detail-panel-card {
+        /* Modal mobile overrides: prevent visibility issues and allow scrolling */
+        .report-details-modal .modal-dialog {
+            margin: 0.5rem !important;
+            max-width: calc(100vw - 1rem) !important;
+            width: auto !important;
+            z-index: 9999 !important;
+            transform: none !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .report-details-modal.show .modal-dialog {
+            transform: none !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .report-details-modal {
+            z-index: 9999 !important;
+            opacity: 1 !important;
+        }
+
+        .report-details-modal.show {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .report-details-modal .modal-backdrop {
+            z-index: 9998 !important;
+        }
+
+        .report-details-modal .modal-content {
             border-radius: 18px !important;
+            max-height: calc(100vh - 1rem) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+        }
+
+        .report-details-modal.show .modal-content {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+        }
+
+        .report-details-modal .modal-body {
+            max-height: calc(100vh - 120px) !important;
+            overflow-y: auto !important;
+            padding: 0.85rem !important;
+            flex: 1 1 auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+        }
+
+        .report-details-modal .modal-header {
+            padding: 0.85rem 0.85rem !important;
+            flex-shrink: 0 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+        }
+
+        .report-details-modal .modal-header h5,
+        .report-details-modal .modal-title {
+            font-size: 1rem !important;
+        }
+
+        .report-details-modal .modal-footer {
+            flex-shrink: 0 !important;
+            padding: 0.85rem !important;
+        }
+
+        .report-detail-card,
+        .report-detail-sidebar {
+            padding: 0.85rem !important;
+            border-radius: 15px !important;
+        }
+
+        .report-detail-card .row.g-3 > [class*="col-"] {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+
+        .report-detail-sidebar .img-thumbnail-grid {
+            max-width: 80px !important;
+            height: 64px !important;
+            min-width: 64px !important;
+        }
+
+        .report-detail-sidebar .more-images-badge {
+            min-width: 80px !important;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+        .client-reports-page .report-filter-card .row {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        .client-reports-page .report-filter-card .row > [class*="col-"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: none !important;
+            padding: 0 !important;
         }
     }
 
@@ -1147,158 +1572,25 @@
             });
         }
 
-        const panel = document.getElementById('reportDetailPanel');
-        const title = document.getElementById('reportDetailTitle');
-        const body = document.getElementById('reportDetailBody');
-        const closeButton = document.getElementById('reportDetailCloseBtn');
+        const reportModals = document.querySelectorAll('.report-details-modal');
+        reportModals.forEach(function (modal) {
+            document.body.appendChild(modal);
+        });
 
-        if (panel && title && body) {
-            panel.classList.remove('is-open');
-            const emptyStateMarkup = `
-                <div class="report-detail-empty-state">
-                    <div class="avatar-pill avatar-pill-large">?</div>
-                    <div class="fw-semibold text-dark">Choose a report to inspect its full details.</div>
-                    <div class="text-muted small">The selected record will open here with a smooth transition.</div>
-                </div>
-            `;
-
-            const escapeHtml = (value) => String(value ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/\"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-
-            const renderDetails = (payload) => {
-                const status = payload.status || 'pending';
-                const statusClass = payload.status_class || (status === 'approved' ? 'bg-success-subtle text-success' : status === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
-                const siteImages = Array.isArray(payload.site_images) ? payload.site_images : [];
-                const imagesMarkup = siteImages.length > 0 ? `
-                    <div class="drawer-section-title">Site Images</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        ${siteImages.slice(0, 3).map((image) => `<img src="${escapeHtml(image)}" class="img-thumbnail" alt="Site image" style="width: 110px; height: 78px; object-fit: cover; border-radius: 10px;">`).join('')}
-                    </div>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Report ID</div>
-                            <div class="fw-bold">${escapeHtml(payload.report_id || 'N/A')}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Approval Status</div>
-                            <span class="status-pill ${escapeHtml(statusClass)}">${escapeHtml(status)}</span>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Project</div>
-                            <div class="fw-bold">${escapeHtml(payload.project || 'N/A')}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Construction Phase</div>
-                            <div class="fw-bold">${escapeHtml(payload.phase || 'N/A')}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Submitted By</div>
-                            <div class="fw-bold">${escapeHtml(payload.submitted_by || 'Supervisor')}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="text-muted small fw-bold">Reviewed By</div>
-                            <div class="fw-bold">${escapeHtml(payload.reviewed_by || '-')}</div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex align-items-center gap-2 my-3 p-3 bg-light rounded-3">
-                        <div class="avatar-pill">${escapeHtml(payload.submitted_initial || 'S')}</div>
-                        <div>
-                            <div class="fw-bold text-dark mb-0" style="font-size:0.9rem;">${escapeHtml(payload.submitted_by || 'Supervisor')}</div>
-                            <div class="text-muted" style="font-size:0.75rem;">Submitted by site supervisor</div>
-                        </div>
-                    </div>
-
-                    <div class="drawer-section-title mt-0">Construction Accomplishment</div>
-                    <div class="p-3 bg-light rounded-3 text-muted small" style="white-space: pre-line; line-height: 1.6;">${escapeHtml(payload.report_text || 'No description was provided for this report.')}</div>
-
-                    ${imagesMarkup}
-
-                    <div class="drawer-section-title">Approval Timeline</div>
-                    <div class="timeline-row">
-                        <div class="timeline-step active">
-                            <div class="timeline-icon"><i class="bi bi-check"></i></div>
-                            <div class="fw-bold small">Submitted</div>
-                            <div class="text-muted small">${escapeHtml(payload.created_at || 'N/A')}</div>
-                        </div>
-                        <div class="timeline-step ${status !== 'pending' ? 'active' : 'current'}">
-                            <div class="timeline-icon">${status === 'pending' ? '<i class="bi bi-clock"></i>' : '<i class="bi bi-check"></i>'}</div>
-                            <div class="fw-bold small">Review</div>
-                            <div class="text-muted small">${status === 'pending' ? 'Awaiting review' : escapeHtml(payload.review_date || 'Reviewed')}</div>
-                        </div>
-                        <div class="timeline-step ${status === 'approved' ? 'active' : (status === 'rejected' ? 'active' : '')}">
-                            <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                            <div class="fw-bold small">${status === 'approved' ? 'Approved' : (status === 'rejected' ? 'Returned' : 'Finalized')}</div>
-                            <div class="text-muted small">${escapeHtml(payload.approval_date || 'Pending')}</div>
-                        </div>
-                    </div>
-                `;
-            };
-
-            const scrollToReportPreview = () => {
-                if (!panel) {
+        document.querySelectorAll('.js-report-view-btn').forEach((button) => {
+            button.addEventListener('click', function () {
+                const modalId = this.dataset.modalTarget;
+                if (!modalId) {
                     return;
                 }
-
-                panel.classList.add('preview-focus');
-
-                window.requestAnimationFrame(() => {
-                    panel.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                        inline: 'nearest'
-                    });
-
-                    setTimeout(() => {
-                        // Keeps the preview title visible below the sticky mobile topbar.
-                        window.scrollBy({ top: -76, left: 0, behavior: 'smooth' });
-                    }, 260);
-
-                    setTimeout(() => {
-                        panel.classList.remove('preview-focus');
-                    }, 1600);
-                });
-            };
-
-            const openDetails = (payload) => {
-                if (!payload) {
-                    return;
-                }
-
-                title.textContent = payload.title || 'Report Details';
-                panel.classList.remove('is-open');
-                panel.classList.add('is-switching');
-                setTimeout(() => {
-                    renderDetails(payload);
-                    panel.classList.add('is-open');
-                    panel.classList.remove('is-switching');
-                    scrollToReportPreview();
-                }, 140);
-            };
-
-            document.querySelectorAll('.js-report-view-btn').forEach((button) => {
-                button.addEventListener('click', function () {
+                const modalEl = document.getElementById(modalId);
+                if (modalEl && window.bootstrap && bootstrap.Modal) {
                     const payload = this.dataset.reportDetails ? JSON.parse(this.dataset.reportDetails) : null;
-                    if (payload) {
-                        openDetails(payload);
-                    }
-                });
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
             });
-
-            closeButton?.addEventListener('click', () => {
-                panel.classList.remove('is-open');
-                panel.classList.remove('is-switching');
-                title.textContent = 'Select a report';
-                body.innerHTML = emptyStateMarkup;
-            });
-        }
+        });
 
         document.querySelectorAll('.report-export-link, .report-export-btn').forEach(link => {
             link.addEventListener('click', function (event) {

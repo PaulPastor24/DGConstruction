@@ -41,6 +41,8 @@ class ClientDashboardInteractionsTest extends TestCase
             'project_id' => $project->project_id,
             'phase_name' => 'Foundation Works',
             'phase_order' => 1,
+            'planned_start_date' => now()->subDays(5)->toDateString(),
+            'planned_end_date' => now()->addDays(20)->toDateString(),
             'completion_percentage' => 45,
             'status' => 'in_progress',
         ]);
@@ -82,6 +84,8 @@ class ClientDashboardInteractionsTest extends TestCase
             'project_id' => $project->project_id,
             'phase_name' => 'Roofing',
             'phase_order' => 1,
+            'planned_start_date' => now()->subDays(3)->toDateString(),
+            'planned_end_date' => now()->addDays(15)->toDateString(),
             'completion_percentage' => 70,
             'status' => 'in_progress',
         ]);

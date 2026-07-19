@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('material_usages', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('project_id');
-            $table->unsignedInteger('phase_id');
-            $table->unsignedBigInteger('material_id');
+            $table->integer('project_id');
+            $table->integer('phase_id');
+            $table->bigInteger('material_id');
             $table->decimal('quantity_used', 12, 2);
             $table->string('unit')->nullable();
             $table->date('usage_date');
             $table->text('remarks')->nullable();
-            $table->unsignedBigInteger('recorded_by');
+            $table->bigInteger('recorded_by');
             $table->string('site_photo_path')->nullable();
             $table->timestamps();
 
