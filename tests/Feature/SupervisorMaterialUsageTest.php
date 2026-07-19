@@ -126,6 +126,7 @@ class SupervisorMaterialUsageTest extends TestCase
         $material = Material::create([
             'name' => 'Cement',
             'unit' => 'bags',
+            'current_stock' => 100,
         ]);
 
         $response = $this->actingAs($user)->post(route('supervisor.materials.log'), [
@@ -282,7 +283,7 @@ class SupervisorMaterialUsageTest extends TestCase
             'supplier_name' => 'Test Supplier',
         ]);
 
-        $response->assertSessionHas('error', 'Material delivery logging is no longer available.');
+        $response->assertSessionHas('error', 'Invalid material action. Please use the Record Usage form.');
         $this->assertDatabaseMissing('project_materials', [
             'project_id' => $project->project_id,
             'material_id' => $material->id,

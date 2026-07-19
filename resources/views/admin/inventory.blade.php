@@ -835,6 +835,63 @@
     }
 }
 
+    /* Material Request status badges (theme-aligned) */
+    .badge-request-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-request-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-request-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Material Request action buttons (theme-aligned) */
+    .btn-request-approve {
+        background-color: #166534;
+        border: 1px solid #166534;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+    }
+
+    .btn-request-approve:hover {
+        background-color: #14532d;
+        border-color: #14532d;
+        color: #ffffff;
+    }
+
+    .btn-request-reject {
+        background-color: #ffffff;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+    }
+
+    .btn-request-reject:hover {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #dc2626;
+    }
+
 
 
 /* =======================================================================
@@ -1109,7 +1166,7 @@
 <div class="mi-page inventory-green-theme">
     @php
         $activeInventoryView = request('view', $activeView ?? 'inventory');
-        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses']) ? $activeInventoryView : 'inventory';
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests']) ? $activeInventoryView : 'inventory';
 
         $usageLogItems = collect();
         if (isset($usageLogs)) {
@@ -1293,6 +1350,9 @@
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
                         </li>
                         <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'requests' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="requests-view"><i class="bi bi-cart-plus me-1"></i><span class="tab-full">Material Requests</span><span class="tab-short">Requests</span></a>
+                        </li>
+                        <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
                         </li>
                         <li class="nav-item">
@@ -1304,7 +1364,7 @@
                 </div>
                 
                 <div class="card-body pt-3">
-                    <div id="inventory-view" class="inventory-view-panel {{ $activeView !== 'inventory' ? 'd-none' : '' }}">
+                    <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
@@ -1496,29 +1556,216 @@
                                                         </label>
                                                     </div>
                                                     <div class="form-input-hint">Check this if you want to physically issue stock from the warehouse to this project. This will decrement the global stock.</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="footer-action-row border-top pt-3 pb-2">
-                                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
-                                            <i class="bi bi-X-lg"></i> Cancel
-                                        </button>
-                                        <button type="submit" class="btn-action-submit">
-                                            <i class="bi bi-check-circle"></i> Allocate Material
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
                     </div>
+                </div>
+            </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
                     <!-- Layout Footer Summary with Pagination Links -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                         <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
                         <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
                     </div>
+                </div>
+
+            <div id="requests-view" class="inventory-view-panel {{ $activeInventoryView !== 'requests' ? 'd-none' : '' }}">
+                <div class="mi-filter-card p-3 mb-3">
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center">
+                        <input type="hidden" name="view" value="requests" id="requests-view-input">
+                        <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                            <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm mi-search-input" placeholder="Search requests by material, project, or requester...">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="request_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="pending" {{ $requestStatus === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ $requestStatus === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ $requestStatus === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                <tr>
+                                    <th class="border-0">Request ID</th>
+                                    <th class="border-0">Material</th>
+                                    <th class="border-0">Project</th>
+                                    <th class="border-0">Requested By</th>
+                                    <th class="border-0">Quantity</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Requested At</th>
+                                    <th class="border-0 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($materialRequests as $request)
+                                    @php
+                                        $requestBadgeClass = match($request->status) {
+                                            'pending' => 'badge-request-pending',
+                                            'approved' => 'badge-request-approved',
+                                            'rejected' => 'badge-request-rejected',
+                                            default => 'badge-request-pending',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold text-dark">#{{ $request->request_id }}</td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">{{ $request->material->name ?? 'Unknown' }}</div>
+                                            <div class="text-muted small">{{ $request->unit ?? 'unit' }}</div>
+                                        </td>
+                                        <td class="text-muted">{{ $request->project->project_name ?? 'N/A' }}</td>
+                                        <td class="text-muted">{{ $request->requester->name ?? 'Unknown' }}</td>
+                                        <td class="fw-bold text-dark">{{ number_format($request->requested_quantity, 2) }}</td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $requestBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ ucfirst($request->status) }}</span></td>
+                                        <td class="text-muted">{{ $request->created_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                                        <td>
+                                            @if($request->status === 'pending')
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn-request-approve" data-bs-toggle="modal" data-bs-target="#approveModal{{ $request->request_id }}">
+                                                        <i class="bi bi-check-lg"></i> Approve
+                                                    </button>
+                                                    <button type="button" class="btn-request-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $request->request_id }}">
+                                                        <i class="bi bi-x-lg"></i> Reject
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <div class="text-center">
+                                                    <span class="text-muted small d-block">{{ $request->reviewed_at?->format('M d, Y h:i A') ?? 'N/A' }}</span>
+                                                    @if($request->rejection_remarks)
+                                                        <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ $request->rejection_remarks }}</div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    <!-- Approve Modal -->
+                                    <div class="modal fade modal-receive-stock" id="approveModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header-custom">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="modal-title-text mb-0">Approve Request #{{ $request->request_id }}</h4>
+                                                            <p class="modal-subtitle mb-0">Confirm and allocate stock for this request.</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body-custom">
+                                                    <div class="meta-info-card mb-3">
+                                                        <div class="meta-item">
+                                                            <div>
+                                                                <div class="meta-label">Material</div>
+                                                                <div class="meta-value">{{ $request->material->name ?? 'material' }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <div>
+                                                                <div class="meta-label">Requested</div>
+                                                                <div class="meta-value">{{ number_format($request->requested_quantity, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <form method="POST" action="{{ route('admin.inventory.requests.approve', $request) }}" class="receive-stock-form-main">
+                                                        @csrf
+                                                        <div class="form-group-wrapper">
+                                                            <label class="form-label-custom">Approved Quantity<span class="required-asterisk">*</span></label>
+                                                            <div class="input-container-group">
+                                                                <i class="bi bi-box-seam input-icon-left"></i>
+                                                                <input type="number" name="approved_quantity" value="{{ $request->requested_quantity }}" max="{{ $request->material->current_stock ?? 0 }}" step="0.01" min="0.01" class="control-field-input" required>
+                                                            </div>
+                                                            <div class="form-input-hint">Available stock: {{ number_format($request->material->current_stock ?? 0, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                        </div>
+                                                        <div class="footer-action-row border-top pt-3 pb-2">
+                                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-lg"></i> Cancel
+                                                            </button>
+                                                            <button type="submit" class="btn-action-submit">
+                                                                <i class="bi bi-check-lg me-1"></i> Confirm Approval
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reject Modal -->
+                                    <div class="modal fade modal-receive-stock" id="rejectModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header-custom">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="modal-icon-container" style="background-color: #fee2e2; color: #991b1b;">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="modal-title-text mb-0">Reject Request #{{ $request->request_id }}</h4>
+                                                            <p class="modal-subtitle mb-0">Provide a reason for rejecting this request.</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body-custom">
+                                                    <form method="POST" action="{{ route('admin.inventory.requests.reject', $request) }}" class="receive-stock-form-main">
+                                                        @csrf
+                                                        <div class="form-group-wrapper">
+                                                            <label class="form-label-custom">Rejection Remarks <span class="text-muted fw-normal">(Optional)</span></label>
+                                                            <textarea name="rejection_remarks" rows="3" class="control-field-input" style="padding-left: 0.85rem;" placeholder="Reason for rejection..."></textarea>
+                                                        </div>
+                                                        <div class="footer-action-row border-top pt-3 pb-2">
+                                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-lg"></i> Cancel
+                                                            </button>
+                                                            <button type="submit" class="btn-action-submit" style="background-color: #dc2626; border-color: #dc2626;">
+                                                                <i class="bi bi-x-lg me-1"></i> Confirm Rejection
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-3 text-secondary d-block mb-2"></i>
+                                            No material requests found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
+
+                    @if($materialRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $materialRequests->hasPages())
+                        <div class="card-footer bg-white border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing {{ $materialRequests->firstItem() ?? 0 }} to {{ $materialRequests->lastItem() ?? 0 }} of {{ $materialRequests->total() }} requests</span>
+                                <div>{{ $materialRequests->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
 
                     <div id="usage-view" class="inventory-view-panel {{ $activeInventoryView !== 'usage' ? 'd-none' : '' }}">
                         <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-3" id="usage-search-form">
@@ -2490,7 +2737,7 @@
                 link.classList.toggle('border-2', isActive);
             });
 
-            document.querySelectorAll('#inventory-view-input, #usage-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+            document.querySelectorAll('#inventory-view-input, #usage-view-input, #requests-view-input, #expenses-view input[name="view"]').forEach(function (input) {
                 input.value = getPanelViewValue(targetId);
             });
         }
@@ -2525,6 +2772,10 @@
 
             if (panelId === 'expenses-view') {
                 return 'expenses';
+            }
+
+            if (panelId === 'requests-view') {
+                return 'requests';
             }
 
             return 'inventory';

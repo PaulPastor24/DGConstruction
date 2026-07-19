@@ -244,13 +244,41 @@
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
     @media (max-width: 992px) {
-        .project-search-field,
-        .project-filter-select {
-            flex: 1 1 100%;
-            width: 100%;
+        .project-filter-form {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            justify-content: center !important;
+            align-items: stretch !important;
+        }
+        .project-search-field {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            width: 100% !important;
+        }
+        .project-search-field input {
+            width: 100% !important;
         }
         .project-select-fields-wrapper-group {
-            justify-content: stretch;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            justify-content: center !important;
+            align-items: stretch !important;
+            width: 100% !important;
+        }
+        .project-select-fields-wrapper-group .project-filter-select {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            width: 100% !important;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .project-feed-dynamic-3card-layout-matrix {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
         }
     }
     .project-filter-select:focus {
@@ -874,37 +902,28 @@
     /* Mobile Platform Layout Viewports */
     @media (max-width: 767px) {
         .project-feed-dynamic-3card-layout-matrix {
-            grid-template-columns: 1fr; /* Crisp clear single stack feed execution row flow lines */
+            grid-template-columns: 1fr;
             gap: 16px;
-        }
-        .project-select-fields-wrapper-group {
-            flex-direction: column;
-            width: 100%;
-            gap: 8px;
-        }
-        .project-filter-select {
-            width: 100%;
         }
         
         .project-dashboard-meta-row {
             grid-template-columns: 1fr;
         }
         
-        /* Modal Structure Complete Fullscreen Conversions */
         .project-command-modal .modal-dialog {
-            margin: 0;
-            max-width: 100%;
+            margin: 0.5rem;
+            max-width: calc(100vw - 1rem);
         }
         .project-command-shell {
-            border-radius: 0;
-            min-height: 100vh;
+            border-radius: 18px;
+            min-height: auto;
         }
         .project-command-body {
-            padding: 24px 16px;
+            padding: 20px 16px;
         }
         .project-command-modal-title {
-            font-size: 1.8rem;
-            padding-right: 32px;
+            font-size: 1.5rem;
+            padding-right: 24px;
         }
         .project-command-summary-panel-matrix {
             grid-template-columns: 1fr;
@@ -915,13 +934,15 @@
         }
         
         .project-command-footer {
-            flex-direction: column-reverse;
+            flex-direction: row;
+            justify-content: space-between;
             padding: 16px;
             gap: 10px;
         }
         .project-command-button-secondary,
         .project-command-button-primary {
-            width: 100%;
+            width: auto;
+            flex: 1;
             text-align: center;
         }
     }

@@ -605,7 +605,7 @@
             .report-mobile-title {
                 margin: 0 0 0.85rem !important;
                 color: #172033 !important;
-                font-family: var(--font-brand, 'Syne', sans-serif) !important;
+                font-family: 'DM Sans', sans-serif !important;
                 font-size: 1rem !important;
                 font-weight: 800 !important;
                 line-height: 1.28 !important;
@@ -730,24 +730,125 @@
             .report-details-modal .modal-dialog,
             .cms-modal .modal-dialog {
                 margin: 0.5rem !important;
+                max-width: calc(100vw - 1rem) !important;
+                width: auto !important;
+                z-index: 9999 !important;
+                transform: none !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            .report-details-modal.show .modal-dialog,
+            .cms-modal.show .modal-dialog {
+                transform: none !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            .report-details-modal,
+            .cms-modal {
+                z-index: 9998 !important;
+            }
+
+            .report-details-modal.show,
+            .cms-modal.show {
+                display: flex !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            .report-details-modal .modal-backdrop,
+            .cms-modal .modal-backdrop {
+                z-index: 9997 !important;
             }
 
             .report-details-modal .modal-content,
             .cms-modal .modal-content {
                 border-radius: 18px !important;
+                max-height: calc(100vh - 1rem) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                background-color: #ffffff !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
+            }
+
+            .report-details-modal.show .modal-content,
+            .cms-modal.show .modal-content {
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
             }
 
             .report-details-modal .modal-body,
             .cms-modal .modal-body {
-                max-height: calc(100vh - 150px) !important;
+                max-height: calc(100vh - 120px) !important;
                 overflow-y: auto !important;
+                padding: 0.85rem !important;
+                flex: 1 1 auto !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
+            }
+
+            .report-details-modal .modal-header,
+            .cms-modal .modal-header {
+                padding: 0.85rem 0.85rem !important;
+                flex-shrink: 0 !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
+            }
+
+            .report-details-modal .modal-header h5,
+            .cms-modal .modal-header h5 {
+                font-size: 1rem !important;
+            }
+
+            .report-details-modal .modal-footer,
+            .cms-modal .modal-footer {
+                flex-shrink: 0 !important;
+            }
+
+            .report-detail-card,
+            .report-detail-sidebar {
+                padding: 0.85rem !important;
+                border-radius: 15px !important;
+            }
+
+            .report-detail-card .row.g-3 > [class*="col-"] {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+
+            .report-detail-sidebar .img-thumbnail-grid {
+                max-width: 80px !important;
+                height: 64px !important;
+                min-width: 64px !important;
+            }
+
+            .report-detail-sidebar .more-images-badge {
+                min-width: 80px !important;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .report-details-modal .modal-dialog,
+            .cms-modal .modal-dialog {
+                max-width: calc(100vw - 2rem) !important;
+                margin: 1rem auto !important;
+            }
+
+            .report-details-modal .modal-body,
+            .cms-modal .modal-body {
+                max-height: calc(100vh - 140px) !important;
                 padding: 1rem !important;
             }
 
             .report-detail-card,
             .report-detail-sidebar {
                 padding: 1rem !important;
-                border-radius: 15px !important;
             }
         }
 
@@ -995,7 +1096,7 @@
                             $timelineStatus = $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : 'current');
                         @endphp
                         <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-xl">
+                            <div class="modal-dialog modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark);">
                                         <div>
@@ -1020,19 +1121,19 @@
                                                     </div>
 
                                                     <div class="row g-3 mb-4 small">
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Project</div>
                                                             <div class="text-dark">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Construction Phase</div>
                                                             <div class="text-dark">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Report Date</div>
                                                             <div class="text-dark">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-6 p-3 rounded" style="background: #f9fafb;">
+                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Submitted By</div>
                                                             <div class="text-dark">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
                                                         </div>
@@ -1317,6 +1418,11 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const reportModals = document.querySelectorAll('.report-details-modal');
+        reportModals.forEach(function (modal) {
+            document.body.appendChild(modal);
+        });
+
         const modalProjectSelect = document.getElementById('modal_project_id');
         const modalPhaseSelect = document.getElementById('modal_phase_id');
         const imageInput = document.getElementById('modal_report_images');

@@ -149,6 +149,29 @@
             text-decoration: none;
         }
         .notif-circle-icon i { color: var(--cms-green-dark); }
+
+        @media (max-width: 576px) {
+            .notif-list-group-item {
+                flex-wrap: wrap !important;
+            }
+            .notif-list-group-item .notif-circle-icon {
+                margin-bottom: 0.5rem;
+            }
+            .notif-list-group-item .flex-grow-1 {
+                flex: 1 1 100% !important;
+                min-width: 0 !important;
+            }
+            .notif-list-group-item .text-end {
+                flex: 1 1 100% !important;
+                text-align: start !important;
+                margin-top: 0.75rem;
+            }
+            .notif-list-group-item .btn-action-view {
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 @endpush
 

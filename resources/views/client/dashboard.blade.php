@@ -796,9 +796,9 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0">
-                <a href="{{ route('client.timeline') }}" class="project-command-button-primary">View Timeline</a>
+            <div class="modal-footer border-0 flex-wrap gap-2">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ route('client.timeline') }}" class="project-command-button-primary">View Timeline</a>
             </div>
         </div>
     </div>
@@ -827,7 +827,7 @@
         color: #64748b;
     }
     .dashboard-page-title {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.7rem;
         font-weight: 700;
         line-height: 1.15;
@@ -868,37 +868,23 @@
             font-size: 0.85rem;
         }
     }
-    .dashboard-date-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55rem;
-        padding: 0.6rem 0.9rem;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        border-radius: 14px;
-        font-size: 0.84rem;
-        font-weight: 600;
-        color: #334155;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    }
-    .dashboard-date-pill i {
-        color: #16a34a;
-    }
     .dashboard-notification-button {
         position: relative;
         width: 46px;
         height: 46px;
-        border-radius: 14px;
+        border-radius: 999px;
         border: 1px solid #e2e8f0;
         background: #ffffff;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 8px 16px rgba(42, 64, 40, 0.08);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         color: #334155;
+        transition: all 0.2s ease, transform 0.2s ease;
     }
     .dashboard-notification-button:hover {
         background: #f8fafc;
+        transform: translateY(-1px);
     }
     .dashboard-notification-button.notification-bell-animate {
         animation: bell-ring 1.2s ease-in-out infinite, pulse-soft 1.45s ease-out infinite;
@@ -944,18 +930,11 @@
         padding: 0 0.25rem;
         border: 2px solid #ffffff;
         border-radius: 999px;
-        background: #22c55e;
+        background: #2a4028;
         color: #ffffff;
         font-size: 0.68rem;
         font-weight: 700;
         line-height: 1;
-        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
-        animation: ping-dot 1.4s ease-out infinite;
-    }
-    @keyframes ping-dot {
-        0% { transform: scale(0.9); opacity: 1; }
-        80% { transform: scale(1.65); opacity: 0; }
-        100% { transform: scale(1.8); opacity: 0; }
     }
     @keyframes pulse-soft {
         0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.24); }
@@ -1013,7 +992,7 @@
         color: #b45309;
     }
     .project-title-text {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.7rem;
         font-weight: 700;
         color: #2a4028;
@@ -1139,7 +1118,7 @@
         background: none;
         padding: 0;
         margin: 0;
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -1223,10 +1202,10 @@
         background: #2E7D32;
     }
     @media (max-width: 576px) {
-        .carousel-slide-current { font-size: 1.32rem; max-width: 56%; }
-        .carousel-slide-prev, .carousel-slide-next { font-size: 0.76rem; max-width: 20%; }
-        .carousel-arrow-btn { width: 28px; height: 28px; font-size: 0.75rem; }
-        .carousel-dots { margin-left: 2.1rem; }
+        .carousel-slide-current { font-size: 1.15rem; max-width: 60%; }
+        .carousel-slide-prev, .carousel-slide-next { font-size: 0.72rem; max-width: 18%; }
+        .carousel-arrow-btn { width: 26px; height: 26px; font-size: 0.7rem; }
+        .carousel-dots { margin-left: 1.8rem; }
     }
 
     .carousel-track.is-dragging .carousel-slide-current {
@@ -1556,6 +1535,14 @@
         .dashboard-date-pill {
             flex: 1;
             justify-content: center;
+        }
+        .modal-footer.flex-wrap.gap-2 {
+            justify-content: space-between;
+        }
+        .modal-footer.flex-wrap.gap-2 .btn,
+        .modal-footer.flex-wrap.gap-2 .project-command-button-primary {
+            flex: 1 1 auto;
+            text-align: center;
         }
     }
 </style>

@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Supervisor Dashboard D&G Construction Monitor')</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -258,6 +258,48 @@
             100% { transform: translateX(100%); }
         }
 
+        .notification-bell { position: relative; }
+        .notification-bell-animate {
+            animation: bell-ring 1.2s ease-in-out infinite, pulse-soft 1.45s ease-out infinite;
+            transform-origin: center top;
+            color: #22c55e;
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+        .notification-bell-animate::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 999px;
+            border: 2px solid rgba(34, 197, 94, 0.28);
+            animation: ring-pulse 1.45s ease-out infinite;
+            pointer-events: none;
+        }
+        .notification-bell-animate .bi-bell {
+            color: #22c55e;
+            z-index: 1;
+        }
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(12deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(8deg); }
+            40% { transform: rotate(-6deg); }
+            50% { transform: rotate(4deg); }
+            60% { transform: rotate(-2deg); }
+            70% { transform: rotate(2deg); }
+            80%, 90% { transform: rotate(0deg); }
+        }
+        @keyframes pulse-soft {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.24); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        @keyframes ring-pulse {
+            0% { transform: scale(0.92); opacity: 0.9; }
+            100% { transform: scale(1.15); opacity: 0; }
+        }
+
         @media (max-width: 991.98px) {
             .dashboard-card-grid > [class*="col-"] { flex: 0 0 100%; max-width: 100%; }
             .dashboard-layout-row > [class*="col-"] { flex: 0 0 100%; max-width: 100%; }
@@ -423,6 +465,36 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+</script>
+
+<script>
+    function showSupervisorLoading(message = 'Processing your request...') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: message,
+                text: 'Please wait while we complete your request.',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+    }
+
+    function bindSupervisorFormLoading(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        form.addEventListener('submit', function (event) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.disabled = true;
+                submitBtn.dataset.originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+            }
+        });
+    }
 </script>
 
 @if(session('login_success'))

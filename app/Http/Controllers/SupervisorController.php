@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
+use App\Models\MaterialRequest;
 use App\Models\MaterialUsage;
 use App\Models\Milestone;
 use App\Models\Project;
@@ -12,6 +13,7 @@ use App\Models\ProjectMaterial;
 use App\Models\Report;
 use App\Models\SupervisorNotification;
 use App\Models\SystemLog;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -927,6 +929,7 @@ class SupervisorController extends Controller
 
         $materialsQuery = Schema::hasTable('materials') ? Material::query() : null;
         $materials_list = collect();
+        $request_materials_list = collect();
 
         if ($materialsQuery && $selectedProject) {
             $projectMaterialIds = ProjectMaterial::query()
@@ -936,10 +939,7 @@ class SupervisorController extends Controller
                 ->unique()
                 ->values();
 
-            $materialsQuery->where(function ($q) use ($projectMaterialIds) {
-                $q->whereIn('id', $projectMaterialIds)
-                    ->orWhere('current_stock', '>', 0);
-            });
+            $materialsQuery->whereIn('id', $projectMaterialIds);
 
             if ($search !== '') {
                 $materialsQuery->where(function ($q) use ($search) {
@@ -949,6 +949,17 @@ class SupervisorController extends Controller
             }
 
             $materials_list = $materialsQuery->orderBy('name', 'asc')->get();
+
+            $requestMaterialsQuery = Material::query()->orderBy('name', 'asc');
+
+            if ($search !== '') {
+                $requestMaterialsQuery->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('category', 'like', '%'.$search.'%');
+                });
+            }
+
+            $request_materials_list = $requestMaterialsQuery->get();
         }
 
         $inventoryCollection = collect();
@@ -959,7 +970,11 @@ class SupervisorController extends Controller
             $projectPhases = ConstructionPhase::query()
                 ->where('project_id', $selectedProject->project_id)
                 ->orderBy('phase_order', 'asc')
-                ->get(['phase_id', 'phase_name', 'phase_order', 'status']);
+                ->get(['phase_id', 'phase_name', 'phase_order', 'status', 'completion_percentage']);
+
+            $projectPhasesForUsage = $projectPhases->filter(function ($phase) {
+                return ($phase->completion_percentage ?? 0) < 100 && ($phase->status ?? '') !== 'completed';
+            })->values();
 
             if ($selectedPhaseId !== '') {
                 $selectedPhase = $projectPhases->firstWhere('phase_id', (int) $selectedPhaseId);
@@ -1008,21 +1023,31 @@ class SupervisorController extends Controller
                     $usedFromProject = max(0.0, (float) ($row->used_quantity ?? 0));
                     $usedFromUsageTable = max(0.0, (float) ($usageRows->get($materialId)->total_used ?? 0));
                     $used = max($usedFromProject, $usedFromUsageTable);
-                    $stockFallback = 0.0;
 
+                    $actualStock = 0.0;
                     if (Schema::hasColumn('materials', 'current_stock')) {
-                        $stockFallback = max(0.0, (float) ($material->current_stock ?? 0));
+                        $actualStock = max(0.0, (float) ($material->current_stock ?? 0));
                     }
 
-                    $planned = $plannedFromRow > 0 ? $plannedFromRow : max($used, $stockFallback);
-                    $hasAnyActivity = $planned > 0 || $used > 0 || $stockFallback > 0;
+                    $planned = $plannedFromRow > 0 ? $plannedFromRow : max($used, $actualStock);
+                    $remaining = $actualStock;
 
-                    if (! $hasAnyActivity) {
-                        return null;
+                    $statusKey = 'out_of_stock';
+                    $statusText = 'Out of Stock';
+                    $statusColor = 'danger';
+
+                    if ($actualStock > 0) {
+                        $minimumStock = (float) ($material->minimum_stock_level ?? 0);
+                        if ($actualStock <= $minimumStock && $minimumStock > 0) {
+                            $statusKey = 'low_stock';
+                            $statusText = 'Low Stock';
+                            $statusColor = 'warning';
+                        } else {
+                            $statusKey = 'available';
+                            $statusText = 'Available';
+                            $statusColor = 'success';
+                        }
                     }
-
-                    $remaining = $this->normalizeRemaining($planned, $used);
-                    $status = $this->resolveMaterialStatus($remaining, $planned);
 
                     return (object) [
                         'id' => $material->id,
@@ -1032,9 +1057,9 @@ class SupervisorController extends Controller
                         'planned' => $planned,
                         'used' => $used,
                         'remaining' => $remaining,
-                        'status_key' => $status['key'],
-                        'status_text' => $status['text'],
-                        'status_color' => $status['color'],
+                        'status_key' => $statusKey,
+                        'status_text' => $statusText,
+                        'status_color' => $statusColor,
                     ];
                 })->filter()->values();
             }
@@ -1054,6 +1079,15 @@ class SupervisorController extends Controller
 
         $perPage = 10;
         $page = max(1, (int) $request->query('page', 1));
+        $inventoryQuery = collect([
+            'tab' => 'inventory',
+            'project_id' => $selectedProject?->project_id,
+            'phase_id' => $selectedPhaseId ?: null,
+            'search' => $search !== '' ? $search : null,
+            'status' => $selectedStatus !== '' ? $selectedStatus : null,
+        ])->filter(function ($value) {
+            return $value !== null && $value !== '';
+        })->toArray();
         $inventory = new LengthAwarePaginator(
             $inventoryCollection->forPage($page, $perPage),
             $inventoryCollection->count(),
@@ -1061,7 +1095,7 @@ class SupervisorController extends Controller
             $page,
             [
                 'path' => $request->url(),
-                'query' => $request->query(),
+                'query' => $inventoryQuery,
             ]
         );
 
@@ -1077,6 +1111,8 @@ class SupervisorController extends Controller
             'query' => array_merge($request->query(), ['recent_page' => 1]),
         ]);
 
+        $usageSearch = trim((string) $request->query('usage_search', ''));
+
         if ($selectedProject) {
             $recentUsageQuery = MaterialUsage::query()
                 ->where('project_id', $selectedProject->project_id)
@@ -1086,7 +1122,22 @@ class SupervisorController extends Controller
                 $recentUsageQuery->where('phase_id', $selectedPhase->phase_id);
             }
 
+            if ($usageSearch !== '') {
+                $recentUsageQuery->whereHas('material', function ($materialQuery) use ($usageSearch) {
+                    $materialQuery->where('name', 'like', '%'.$usageSearch.'%');
+                });
+            }
+
             $recentPage = max(1, (int) $request->query('recent_page', 1));
+            $usageQuery = collect([
+                'tab' => 'usage',
+                'project_id' => $selectedProject?->project_id,
+                'phase_id' => $selectedPhaseId ?: null,
+                'usage_search' => $usageSearch !== '' ? $usageSearch : null,
+                'recent_page' => $recentPage,
+            ])->filter(function ($value) {
+                return $value !== null && $value !== '';
+            })->toArray();
             $recentUsageBaseQuery = $recentUsageQuery->clone()->orderBy('usage_date', 'desc')->orderBy('created_at', 'desc');
             $recentUsages = new LengthAwarePaginator(
                 $recentUsageBaseQuery->forPage($recentPage, 10)->get(),
@@ -1095,7 +1146,8 @@ class SupervisorController extends Controller
                 $recentPage,
                 [
                     'path' => $request->url(),
-                    'query' => array_merge($request->query(), ['recent_page' => $recentPage]),
+                    'query' => $usageQuery,
+                    'pageName' => 'recent_page',
                 ]
             );
         }
@@ -1105,14 +1157,68 @@ class SupervisorController extends Controller
             ->sortBy(fn ($item) => $item->remaining)
             ->values();
 
+        $requestStatus = trim((string) $request->query('request_status', ''));
+        $materialRequestsCollection = collect();
+
+        if (Schema::hasTable('material_requests')) {
+            $materialRequestsQuery = MaterialRequest::query()
+                ->where('requested_by', $user->user_id)
+                ->with(['project', 'material']);
+
+            if (in_array($requestStatus, ['pending', 'approved', 'rejected'], true)) {
+                $materialRequestsQuery->where('status', $requestStatus);
+            }
+
+            if ($search !== '') {
+                $materialRequestsQuery->where(function ($q) use ($search) {
+                    $q->whereHas('material', function ($materialQuery) use ($search) {
+                        $materialQuery->where('name', 'like', '%'.$search.'%');
+                    });
+                });
+            }
+
+            $materialRequestsCollection = $materialRequestsQuery
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
+        $perPageRequests = 10;
+        $requestsPage = max(1, (int) $request->query('requests_page', 1));
+        $requestsQuery = collect([
+            'tab' => 'requests',
+            'project_id' => $selectedProject?->project_id,
+            'phase_id' => $selectedPhaseId ?: null,
+            'search' => $search !== '' ? $search : null,
+            'request_status' => $requestStatus !== '' ? $requestStatus : null,
+            'requests_page' => $requestsPage,
+        ])->filter(function ($value) {
+            return $value !== null && $value !== '';
+        })->toArray();
+        $materialRequests = new LengthAwarePaginator(
+            $materialRequestsCollection->forPage($requestsPage, $perPageRequests),
+            $materialRequestsCollection->count(),
+            $perPageRequests,
+            $requestsPage,
+            [
+                'path' => $request->url(),
+                'query' => $requestsQuery,
+                'pageName' => 'requests_page',
+            ]
+        );
+
         return view('supervisor.material', compact(
             'metrics',
             'inventory',
             'materials_list',
+            'request_materials_list',
             'assignedProjects',
             'selectedProject',
             'projectPhases',
+            'projectPhasesForUsage',
             'recentUsages',
+            'materialRequests',
+            'requestStatus',
+            'usageSearch',
             'alerts',
             'search',
             'selectedStatus',
@@ -1172,6 +1278,9 @@ class SupervisorController extends Controller
                 if (! $material) {
                     return back()->withInput()->with('error', 'The selected material could not be found.');
                 }
+                if (! $material) {
+                    return back()->withInput()->with('error', 'The selected material could not be found.');
+                }
 
                 $inventoryRow = ProjectMaterial::query()
                     ->where('project_id', $project->project_id)
@@ -1179,12 +1288,18 @@ class SupervisorController extends Controller
                     ->first();
 
                 if (! $inventoryRow) {
-                    return back()->withInput()->with('error', 'Material is not allocated to this project. Please contact admin to allocate materials first.');
+                    $inventoryRow = ProjectMaterial::create([
+                        'project_id' => $project->project_id,
+                        'material_id' => $material->id,
+                        'planned_quantity' => 0,
+                        'used_quantity' => 0,
+                        'unit' => $material->unit ?? 'unit',
+                    ]);
                 }
 
                 $remainingAllocation = max(0.0, (float) ($inventoryRow->planned_quantity ?? 0) - (float) ($inventoryRow->used_quantity ?? 0));
 
-                if ($remainingAllocation < (float) $validated['quantity_used']) {
+                if ($remainingAllocation > 0 && $remainingAllocation < (float) $validated['quantity_used']) {
                     return back()->withInput()->with('error', 'Insufficient project allocation. Remaining: '.number_format($remainingAllocation, 2).' '.($inventoryRow->unit ?? $material->unit).'. Requested: '.number_format($validated['quantity_used'], 2).'.');
                 }
 
@@ -1473,5 +1588,70 @@ class SupervisorController extends Controller
                 'error' => $error->getMessage(),
             ], 500);
         }
+    }
+
+    public function requestMaterial(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'project_id' => ['required', 'integer', 'exists:projects,project_id'],
+            'material_id' => ['required', 'integer', 'exists:materials,id'],
+            'requested_quantity' => ['required', 'numeric', 'min:0.01'],
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'project_id.required' => 'Please select a project.',
+            'project_id.exists' => 'Selected project does not exist.',
+            'material_id.required' => 'Please select a material.',
+            'material_id.exists' => 'Selected material does not exist.',
+            'requested_quantity.required' => 'Please enter a requested quantity.',
+            'requested_quantity.min' => 'Requested quantity must be greater than zero.',
+            'remarks.max' => 'Remarks must not exceed 1000 characters.',
+        ]);
+
+        $project = Project::findOrFail($validated['project_id']);
+        $material = Material::findOrFail($validated['material_id']);
+        $requestedQuantity = (float) $validated['requested_quantity'];
+        $availableStock = (float) ($material->current_stock ?? 0);
+
+        if ($requestedQuantity > $availableStock) {
+            return back()->withInput()->with('error', "Requested quantity ({$requestedQuantity}) exceeds available stock ({$availableStock} {$material->unit}).");
+        }
+
+        $isAssigned = $project->supervisors()
+            ->where('project_supervisors.supervisor_id', $user->user_id)
+            ->where('project_supervisors.is_active', true)
+            ->exists();
+
+        if (! $isAssigned) {
+            return back()->with('error', 'You are not authorized to request materials for this project.');
+        }
+
+        $unit = $material->unit ?? 'unit';
+
+        MaterialRequest::create([
+            'project_id' => $project->project_id,
+            'material_id' => $material->id,
+            'requested_by' => $user->user_id,
+            'status' => 'pending',
+            'requested_quantity' => $requestedQuantity,
+            'unit' => $unit,
+            'remarks' => trim((string) ($validated['remarks'] ?? '')),
+        ]);
+
+        try {
+            NotificationService::notifyAdmins([
+                'type' => 'material',
+                'title' => 'New Material Request',
+                'message' => "Supervisor {$user->name} requested {$requestedQuantity} {$unit} of {$material->name} for project '{$project->project_name}'.",
+                'data' => ['module' => 'admin.inventory', 'project_id' => $project->project_id, 'material_id' => $material->id, 'recipient' => 'Admin'],
+                'related_id' => $material->id,
+                'related_type' => 'material',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify admins on material request: '.$e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Material request submitted successfully. Waiting for admin approval.');
     }
 }
