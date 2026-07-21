@@ -61,9 +61,9 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-start gap-3">
-                                <div class="project-thumb-wrapper" style="width: 44px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eef2f7; display: flex; align-items: center; justify-content: center; cursor: zoom-in;">
+                                <div class="project-thumb-wrapper" style="width: 44px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #eef2f7; display: flex; align-items: center; justify-content: center;">
                                     @if($project->image_url)
-                                        <img src="{{ $project->image_url }}" alt="{{ $project->project_name }}" style="width: 100%; height: 100%; object-fit: cover;" onclick="openProjectImageZoom('{{ addslashes($project->image_url) }}', '{{ addslashes($project->project_name) }}')">
+                                        <img src="{{ $project->image_url }}" alt="{{ $project->project_name }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <i class="bi bi-building text-muted"></i>
                                     @endif
@@ -103,10 +103,7 @@
                                 @endphp
                                 <div class="progress-percent-lbl">{{ $projectProgressPct }}%</div>
                                 <div class="dg-bar-track">
-                                    <div class="dg-bar-fill
-                                        {{ $normalizedStatus === 'planning' ? 'hold-fill' : '' }}
-                                        {{ $normalizedStatus === 'completed' ? 'completed-fill' : '' }}
-                                        {{ $normalizedStatus === 'on_hold' ? 'on-hold-fill' : '' }}" style="width: {{ $projectProgressPct }}%"></div>
+                                    <div class="dg-bar-fill {{ $normalizedStatus === 'planning' ? 'hold-fill' : '' }}" style="width: {{ $projectProgressPct }}%"></div>
                                 </div>
                                 <div class="progress-phase-subtitle">
                                     {{ $projectProgressSubtitle }}
@@ -207,37 +204,3 @@
         </div>
     </div>
 </div>
-
-<div class="project-image-zoom-overlay" id="projectImageZoomOverlay" onclick="closeProjectImageZoom()">
-    <div class="project-image-zoom-card" onclick="event.stopPropagation();">
-        <img id="projectImageZoomImg" src="" alt="">
-        <button type="button" class="project-image-zoom-close" onclick="closeProjectImageZoom()">&times;</button>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-    function openProjectImageZoom(url, alt) {
-        var overlay = document.getElementById('projectImageZoomOverlay');
-        var img = document.getElementById('projectImageZoomImg');
-        if (overlay && img) {
-            img.src = url;
-            img.alt = alt || '';
-            overlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-    function closeProjectImageZoom() {
-        var overlay = document.getElementById('projectImageZoomOverlay');
-        if (overlay) {
-            overlay.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-    }
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeProjectImageZoom();
-        }
-    });
-</script>
-@endpush

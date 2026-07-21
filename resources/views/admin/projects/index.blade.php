@@ -192,42 +192,6 @@
         height: 38px;
     }
 
-    /* Projects page mobile responsive */
-    @media (max-width: 991.98px) {
-        .metrics-row-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-        }
-        .metrics-row-grid > *:nth-child(5),
-        .metrics-row-grid > *:nth-child(6),
-        .metrics-row-grid > *:nth-child(7),
-        .metrics-row-grid > *:nth-child(8) {
-            grid-column: auto;
-        }
-        .filter-toolbar-panel .filter-form-row {
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-        }
-        .search-input-container {
-            grid-column: 1 / -1 !important;
-            max-width: 100% !important;
-        }
-        .filter-dropdown-select {
-            max-width: 100% !important;
-            width: 100% !important;
-        }
-        .filter-actions-right {
-            grid-column: 1 / -1 !important;
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 8px !important;
-        }
-        .proj-thumb {
-            width: 40px;
-            height: 40px;
-        }
-    }
-
     .filter-dropdown-select {
         width: 150px;
         min-width: 140px;
@@ -369,14 +333,6 @@
 
     .dg-bar-fill.hold-fill {
         background-color: #d97706;
-    }
-
-    .dg-bar-fill.completed-fill {
-        background-color: #16a34a;
-    }
-
-    .dg-bar-fill.on-hold-fill {
-        background-color: #dc2626;
     }
 
     .progress-phase-subtitle {
@@ -766,59 +722,6 @@
     @media (max-width: 768px) {
         .modal-grid-2 {
             grid-template-columns: 1fr;
-        }
-    }
-
-    .project-image-zoom-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.9);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-        z-index: 9999;
-    }
-    .project-image-zoom-overlay.open {
-        display: flex;
-    }
-    .project-image-zoom-card {
-        max-width: 95%;
-        max-height: 95%;
-        border-radius: 18px;
-        overflow: hidden;
-        background: #000;
-        box-shadow: 0 40px 120px rgba(0,0,0,0.4);
-    }
-    .project-image-zoom-card img {
-        width: 100%;
-        height: auto;
-        display: block;
-        object-fit: contain;
-        max-height: 85vh;
-        background: #000;
-    }
-    .project-image-zoom-close {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-    .view-as-mobile-btn {
-        display: none;
-    }
-    @media (max-width: 991.98px) {
-        .view-as-mobile-btn {
-            display: inline-flex;
         }
     }
 </style>
@@ -1602,34 +1505,6 @@
                             </div>
                         </div>
 
-                        <div class="modal-grid-2 mt-3">
-                            <div>
-                                <label for="modal_time_in" class="form-label modal-custom-label">Site Time In</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
-                                       id="modal_time_in"
-                                       name="time_in"
-                                       value="{{ old('time_in') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
-                                @error('time_in')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="modal_time_out" class="form-label modal-custom-label">Site Time Out</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
-                                       id="modal_time_out"
-                                       name="time_out"
-                                       value="{{ old('time_out') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
-                                @error('time_out')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
                         <div class="d-none">
                             <label for="modal_status" class="form-label modal-custom-label">Project Status <span class="text-danger">*</span></label>
                             <select class="form-select modal-custom-input w-100" id="modal_status" name="status" required>
@@ -1821,34 +1696,6 @@
                                     @endforeach
                                 </select>
                                 @error('supervisor_id')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="modal-grid-2 mt-3">
-                            <div>
-                                <label for="edit_time_in" class="form-label modal-custom-label">Site Time In</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
-                                       id="edit_time_in"
-                                       name="time_in"
-                                       value="{{ old('time_in', '') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
-                                @error('time_in')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="edit_time_out" class="form-label modal-custom-label">Site Time Out</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
-                                       id="edit_time_out"
-                                       name="time_out"
-                                       value="{{ old('time_out', '') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
-                                @error('time_out')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -3240,8 +3087,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const startDateInput = document.getElementById('edit_start_date');
         const targetEndDateInput = document.getElementById('edit_target_end_date');
         const actualEndDateInput = document.getElementById('edit_actual_end_date');
-        const timeInInput = document.getElementById('edit_time_in');
-        const timeOutInput = document.getElementById('edit_time_out');
         const supervisorSelect = document.getElementById('edit_supervisor_id');
         const statusSelect = document.getElementById('edit_status');
         const modalTitle = document.getElementById('editProjectModalLabel');
@@ -3276,8 +3121,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startDateInput) startDateInput.value = project.start_date ? project.start_date.split('T')[0] : '';
         if (targetEndDateInput) targetEndDateInput.value = project.target_end_date ? project.target_end_date.split('T')[0] : '';
         if (actualEndDateInput) actualEndDateInput.value = project.actual_end_date ? project.actual_end_date.split('T')[0] : '';
-        if (timeInInput) timeInInput.value = project.time_in || '';
-        if (timeOutInput) timeOutInput.value = project.time_out || '';
         if (supervisorSelect) supervisorSelect.value = supervisorId || '';
         if (statusSelect) {
             Array.from(statusSelect.options).forEach(function(option) {
@@ -3332,14 +3175,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openSidebarFromButton() {
         const btn = this;
-        const project = JSON.parse(btn.getAttribute('data-project-json'));
-        const projectId = project.project_id;
-
-        if (window.innerWidth <= 991.98 && projectId) {
-            openProjectDetailsModal(projectId);
-            return;
-        }
-
         const sidebar = document.getElementById('projectDetailsSidebar');
         const sideProjectName = document.getElementById('sideProjectName');
         const sideProjectLocation = document.getElementById('sideProjectLocation');
@@ -3360,6 +3195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sideArchiveForm = document.getElementById('sideArchiveForm');
         const sideDeleteForm = document.getElementById('sideDeleteForm');
 
+        const project = JSON.parse(btn.getAttribute('data-project-json'));
         const supervisorName = btn.getAttribute('data-supervisor-name');
         const supervisorId = btn.getAttribute('data-supervisor-id');
         const clientName = btn.getAttribute('data-client-name');
