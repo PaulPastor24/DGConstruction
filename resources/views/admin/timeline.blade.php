@@ -1430,14 +1430,21 @@
             border-radius: 999px !important;
             background: #edf3ee !important;
             position: relative !important;
+            display: block !important;
         }
 
         #pg-timeline .mobile-gantt-fill {
             display: block !important;
-            height: 100% !important;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: var(--bar-width, 0%) !important;
+            max-width: 100% !important;
             min-width: 0 !important;
+            height: 100% !important;
             border-radius: 999px !important;
             background: #365233 !important;
+            transition: width 0.4s ease !important;
         }
 
         #pg-timeline .mobile-gantt-fill.status-completed { background: #166534 !important; }
@@ -1558,6 +1565,29 @@
             color: #10271b !important;
             font-size: 16px !important;
             font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-track {
+            width: 100% !important;
+            height: 8px !important;
+            display: block !important;
+            background: #edf3ee !important;
+            border-radius: 999px !important;
+            overflow: hidden !important;
+            margin-top: 6px !important;
+            position: relative !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-fill {
+            display: block !important;
+            position: relative !important;
+            width: var(--bar-width, 0%) !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: 100% !important;
+            background: #365233 !important;
+            border-radius: 999px !important;
+            transition: width 0.4s ease !important;
         }
 
         #pg-timeline .timeline-mobile-detail.status,
@@ -1823,6 +1853,9 @@
     function clampPercentage(value) {
         const percentage = Number(value);
         if (!Number.isFinite(percentage)) return 0;
+        if (percentage <= 1) {
+            return Math.min(100, Math.max(0, percentage * 100));
+        }
         return Math.min(100, Math.max(0, percentage));
     }
 
@@ -2030,7 +2063,7 @@
                         </div>
                     </div>
                     <div class="mobile-gantt-progress-row">
-                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill status-${status}" style="width:${percentage}%"></span></div>
+                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill status-${status}" style="--bar-width:${Math.max(0, Math.min(100, percentage))}%; width:${Math.max(0, Math.min(100, percentage))}%;"></span></div>
                         <span class="mobile-gantt-percent">${Math.round(percentage)}%</span>
                     </div>
                 </article>
@@ -2083,6 +2116,9 @@
                         </div>
                         <div class="timeline-mobile-detail progress">
                             <span class="timeline-mobile-label">Progress</span>
+                            <div class="timeline-mobile-progress-track">
+                                <span class="timeline-mobile-progress-fill" style="--bar-width:${Math.max(0, Math.min(100, percentage))}%; width:${Math.max(0, Math.min(100, percentage))}%;"></span>
+                            </div>
                             <span class="timeline-mobile-value">${Math.round(percentage)}%</span>
                         </div>
                     </div>

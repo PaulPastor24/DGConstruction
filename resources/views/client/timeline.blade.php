@@ -337,11 +337,14 @@
                                                     </div>
                                                     <div class="mobile-mini-caption">Project timeline position</div>
                                                 </div>
+                                                @php
+                                                    $normalizedPhaseProgress = min(100, max(0, (float) $phaseProgress));
+                                                @endphp
                                                 <div class="mobile-gantt-progress-row">
                                                     <div class="mobile-gantt-track">
-                                                        <span class="mobile-gantt-fill" style="width: {{ $phaseProgress }}%;"></span>
+                                                        <span class="mobile-gantt-fill" style="width: {{ $normalizedPhaseProgress }}%;"></span>
                                                     </div>
-                                                    <span class="mobile-gantt-percent">{{ round($phaseProgress) }}%</span>
+                                                    <span class="mobile-gantt-percent">{{ round($normalizedPhaseProgress) }}%</span>
                                                 </div>
                                             </div>
                                         @endforeach

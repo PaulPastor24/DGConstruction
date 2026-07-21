@@ -117,4 +117,32 @@ class TimelineControllerTest extends TestCase
         $this->assertSame('Excavation Complete', $data['milestones'][0]['milestone_name']);
         $this->assertSame('upcoming', $data['milestones'][0]['status']);
     }
+
+    public function test_enrich_project_data_normalizes_fractional_phase_progress_to_percentages(): void
+    {
+        $project = Project::create([
+            'project_name' => 'Beta Tower',
+            'project_location' => 'Nairobi',
+            'status' => 'in_progress',
+        ]);
+
+        ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Structure',
+            'phase_order' => 1,
+            'planned_start_date' => '2026-07-01',
+            'planned_end_date' => '2026-07-15',
+            'completion_percentage' => 0.25,
+            'status' => 'in_progress',
+        ]);
+
+        $controller = new TimelineController();
+        $method = new \ReflectionMethod($controller, 'enrichProjectData');
+        $method->setAccessible(true);
+
+        $data = $method->invoke($controller, $project);
+
+        $this->assertSame(25.0, round((float) $data['phases'][0]['progress'], 2));
+        $this->assertSame(25.0, round((float) $data['progress'], 2));
+    }
 }

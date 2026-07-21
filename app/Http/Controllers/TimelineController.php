@@ -102,7 +102,9 @@ class TimelineController extends Controller
         
         $overallProgress = 0;
         if ($phases->isNotEmpty()) {
-            $overallProgress = round($phases->average('completion_percentage'), 1);
+            $overallProgress = round($phases->map(function ($phase) {
+                return $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
+            })->average(), 1);
         }
 
         $currentPhase = $phases->where('status', 'in_progress')->first() 
@@ -126,7 +128,7 @@ class TimelineController extends Controller
             $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
             $phase->start = $phase->planned_start_date?->toDateString();
             $phase->end = $phase->planned_end_date?->toDateString();
-            $phase->progress = (float) ($phase->completion_percentage ?? 0);
+            $phase->progress = $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
             $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
             $phase->milestone_count = (int) ($phase->milestones_count ?? 0);
 
@@ -210,6 +212,21 @@ class TimelineController extends Controller
             'upcomingPhases' => $upcomingPhases,
             'totalPhases' => $phases->count(),
         ];
+    }
+
+    private function normalizeCompletionPercentage($value)
+    {
+        $percentage = (float) $value;
+
+        if (!is_finite($percentage)) {
+            return 0.0;
+        }
+
+        if ($percentage <= 1) {
+            return $percentage * 100;
+        }
+
+        return min(100.0, max(0.0, $percentage));
     }
 
     private function calculateDurationDays($startDate, $endDate)
