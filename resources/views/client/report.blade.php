@@ -3,6 +3,55 @@
 @section('title', 'Client Reports')
 @section('mobileTitle', 'Reports')
 
+@push('styles')
+<style>
+    /* Image Lightbox */
+    .image-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .image-lightbox.is-open {
+        display: flex;
+    }
+
+    .image-lightbox img {
+        max-width: 90%;
+        max-height: 85vh;
+        border-radius: 8px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .image-lightbox-close {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+
+    .image-lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid p-0 client-reports-page">
     @include('client.partials.page-header', [
@@ -137,7 +186,7 @@
                                 'phase' => optional($report->phase)->phase_name ?? 'N/A',
                                 'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
                                 'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
-                                'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                                'submitted_at' => optional($report->created_at)->format('M d, Y h:i A') ?? 'N/A',
                                 'created_at' => optional($report->created_at)->format('M d, Y'),
                                 'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                                 'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
@@ -150,7 +199,7 @@
                         <tr>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</div>
-                                <div class="text-muted small">{{ optional($report->report_date)->format('h:i A') ?? '' }}</div>
+                                <div class="text-muted small">{{ optional($report->created_at)->format('h:i A') ?? '' }}</div>
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->project)->project_name ?? 'Unknown Project' }}</div>
@@ -264,11 +313,11 @@
                                                         <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
                                                     @else
                                                         <div class="d-flex flex-wrap gap-2 mb-4">
-                                                            @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                                <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
-                                                                    <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                                </div>
-                                                            @endforeach
+                                                    @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
+                                                        <button type="button" class="img-thumbnail-grid lightbox-trigger d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
+                                                            <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
+                                                        </button>
+                                                    @endforeach
                                                             @if(count($detailPayload['site_images']) > 4)
                                                                 <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
                                                             @endif
@@ -332,7 +381,7 @@
                         'phase' => optional($report->phase)->phase_name ?? 'N/A',
                         'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
                         'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
-                        'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                        'submitted_at' => optional($report->created_at)->format('M d, Y h:i A') ?? 'N/A',
                         'created_at' => optional($report->created_at)->format('M d, Y'),
                         'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                         'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
@@ -348,7 +397,7 @@
                         <div class="report-mobile-date">
                             <span>Report Date</span>
                             <strong>{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</strong>
-                            <small>{{ optional($report->report_date)->format('h:i A') ?? '' }}</small>
+                            <small>{{ optional($report->created_at)->format('h:i A') ?? '' }}</small>
                         </div>
                         <span class="status-pill {{ $pillClass }}">{{ $status === 'rejected' ? 'Returned' : $status }}</span>
                     </div>
@@ -466,9 +515,9 @@
                                             @else
                                                 <div class="d-flex flex-wrap gap-2 mb-4">
                                                     @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                        <button type="button" class="img-thumbnail-grid lightbox-trigger d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
                                                             <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                        </div>
+                                                        </button>
                                                     @endforeach
                                                     @if(count($detailPayload['site_images']) > 4)
                                                         <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
@@ -1547,6 +1596,12 @@
 </style>
 @endsection
 
+{{-- Image Lightbox --}}
+<div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+    <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
+    <img src="" alt="Site image preview" id="lightboxImage">
+</div>
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -1656,6 +1711,50 @@
                         }
                     });
             });
+        });
+
+        // Image lightbox for report details modal
+        const lightbox = document.getElementById('reportImageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+
+        function openLightbox(imageUrl) {
+            if (!lightbox || !lightboxImage) return;
+            lightboxImage.src = imageUrl;
+            lightbox.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            if (!lightbox) return;
+            lightbox.classList.remove('is-open');
+            document.body.style.overflow = '';
+            if (lightboxImage) {
+                setTimeout(() => { lightboxImage.src = ''; }, 200);
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const trigger = e.target.closest('.lightbox-trigger');
+            if (trigger) {
+                const fullImage = trigger.dataset.fullImage || trigger.querySelector('img')?.src;
+                if (fullImage) {
+                    openLightbox(fullImage);
+                }
+            }
+        });
+
+        lightboxCloseBtn?.addEventListener('click', closeLightbox);
+        lightbox?.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
+                closeLightbox();
+            }
         });
     });
 </script>

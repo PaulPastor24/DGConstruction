@@ -951,6 +951,16 @@
                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Returned</option>
             </select>
         </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label small fw-bold text-muted">Sort By</label>
+            <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="newest" {{ request('sort') == 'newest' || request('sort') === null || request('sort') === '' ? 'selected' : '' }}>Newest First</option>
+                <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                <option value="project_asc" {{ request('sort') == 'project_asc' ? 'selected' : '' }}>Project A-Z</option>
+                <option value="project_desc" {{ request('sort') == 'project_desc' ? 'selected' : '' }}>Project Z-A</option>
+                <option value="status_asc" {{ request('sort') == 'status_asc' ? 'selected' : '' }}>Status A-Z</option>
+            </select>
+        </div>
         <div class="col-12 col-md-4">
             <label class="form-label small fw-bold text-muted">Report Date</label>
             <input type="date" name="report_date" value="{{ request('report_date') }}" class="form-control form-control-sm" onchange="this.form.submit()" />
@@ -971,42 +981,39 @@
             </div>
         </div>
     </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-warning-subtle text-warning">
-                <i class="bi bi-clock"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Pending Review</div>
-                <h4 class="mb-0 fw-bold">{{ $pendingCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($pendingCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-success-subtle text-success">
-                <i class="bi bi-check-circle"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Approved Reports</div>
-                <h4 class="mb-0 fw-bold">{{ $approvedCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($approvedCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-danger-subtle text-danger">
-                <i class="bi bi-x-circle"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Rejected Reports</div>
-                <h4 class="mb-0 fw-bold">{{ $rejectedCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($rejectedCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-warning-subtle text-warning">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Pending Review</div>
+                                <h4 class="mb-0 fw-bold">{{ $pendingCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-success-subtle text-success">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Approved Reports</div>
+                                <h4 class="mb-0 fw-bold">{{ $approvedCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-danger-subtle text-danger">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Rejected Reports</div>
+                                <h4 class="mb-0 fw-bold">{{ $rejectedCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
 </div>
 
 <section class="main-report-card p-0 overflow-hidden mb-4">
@@ -1043,11 +1050,12 @@
                                 'rejected' => 'status-pill status-pill-error',
                                 default => 'status-pill status-pill-pending',
                             };
+                            $isNew = $loop->first && $status === 'pending';
                         @endphp
                         <tr>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</div>
-                                <div class="text-muted small">{{ optional($report->report_date)->format('h:i A') ?? '' }}</div>
+                                <div class="text-muted small">{{ optional($report->created_at)->format('h:i A') ?? '' }}</div>
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->project)->project_name ?? 'Unknown' }}</div>
@@ -1068,6 +1076,9 @@
                                 </div>
                             </td>
                             <td>
+                                @if($isNew)
+                                    <span class="badge bg-success me-1" style="font-size: 0.65rem; text-transform: uppercase;">New</span>
+                                @endif
                                 <span class="status-pill {{ $pillClass }}">{{ $status }}</span>
                             </td>
                             <td class="text-end">
@@ -1678,6 +1689,7 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'X-Requested-With': 'XMLHttpRequest',
                         },
                         body: formData,
                     })
@@ -1703,7 +1715,7 @@
                                 icon: 'success',
                                 confirmButtonColor: '#166534',
                             }).then(() => {
-                                window.location.reload();
+                                window.location.href = '{{ route('supervisor.reports') }}';
                             });
                         })
                         .catch(error => {

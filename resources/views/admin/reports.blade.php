@@ -2167,7 +2167,6 @@
                                 $reportStatusLabel = $selectedReport->status_label ?? 'Pending Review';
                                 $reportStatusClass = $selectedReport->status_badge_class ?? 'pending';
                                 $reportId = 'RPT-2026-' . str_pad($selectedReport->report_id, 4, '0', STR_PAD_LEFT);
-                                $completionPercentage = round((float) ($selectedReport->accomplishment_percentage ?? optional($selectedReport->phase)->completion_percentage ?? 0), 2);
                             @endphp
                             <div class="row gx-4 gy-4">
                                 <div class="col-12 col-xl-7">
@@ -2270,37 +2269,6 @@
                                                 <div class="modal-timeline-label">Approved</div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="modal-progress-card mb-3">
-                                        <div class="modal-progress-header">
-                                            <div>
-                                                <div class="modal-progress-title">Completion Percentage</div>
-                                                <div class="text-muted small">Official phase progress</div>
-                                            </div>
-                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
-                                        </div>
-                                        <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="modal-progress-card mb-3">
-                                        <div class="modal-progress-header">
-                                            <div>
-                                                <div class="modal-progress-title">Progress Approval</div>
-                                                <div class="text-muted small">Supervisor suggested progress</div>
-                                            </div>
-                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
-                                        </div>
-                                        <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                        </div>
-                                        @if($selectedReport->status === 'pending')
-                                            <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
-                                            <input type="number" id="adminProgressOverride" class="form-control mt-1" value="{{ $completionPercentage }}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
-                                            <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
-                                        @endif
                                     </div>
 
                                     @if($selectedReport->status === 'pending')
@@ -2649,7 +2617,6 @@
 
             function renderDetailsPanel(report) {
                 setDetailsPanelOpen(true);
-                const progressValue = Math.min(Math.max(Number(report.completion_percentage || 0), 0), 100);
                 const attachmentImages = Array.isArray(report.site_images) ? report.site_images.filter(Boolean) : [];
                 const attachmentCount = attachmentImages.length;
                 const attachmentMarkup = attachmentCount ? `
@@ -2750,37 +2717,6 @@
                                 </div>
                             </div>
 
-                            <div class="modal-progress-card mb-3">
-                                <div class="modal-progress-header">
-                                    <div>
-                                        <div class="modal-progress-title">Completion Percentage</div>
-                                        <div class="text-muted small">Official phase progress</div>
-                                    </div>
-                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
-                                </div>
-                                <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                </div>
-                            </div>
-
-                            <div class="modal-progress-card mb-3">
-                                <div class="modal-progress-header">
-                                    <div>
-                                        <div class="modal-progress-title">Progress Approval</div>
-                                        <div class="text-muted small">Supervisor suggested progress</div>
-                                    </div>
-                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
-                                </div>
-                                <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                </div>
-                                ${report.status === 'pending' ? `
-                                    <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
-                                    <input type="number" id="adminProgressOverride" class="form-control mt-1" value="${progressValue}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
-                                    <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
-                                ` : ''}
-                            </div>
-
                             ${report.status === 'pending' ? `
                                 <div class="modal-action-row">
                                     <button type="button" class="btn-modal btn-modal-reject js-reject-report" data-report-id="${report.id}">
@@ -2819,9 +2755,6 @@
                     return Swal.fire({ title: 'Cannot Approve', text: 'This report has already been rejected.', icon: 'warning' });
                 }
 
-                const progressInput = document.getElementById('adminProgressOverride');
-                const approvedProgress = progressInput ? Math.min(100, Math.max(0, Number(progressInput.value) || 0)) : 0;
-
                 Swal.fire({
                     title: 'Approve Report?',
                     text: 'This will mark the report as approved and notify the supervisor.',
@@ -2845,7 +2778,7 @@
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ approval_remarks: '', accomplishment_percentage: approvedProgress })
+                        body: JSON.stringify({ approval_remarks: '' })
                     })
                         .then(async response => {
                             const payload = await response.json().catch(() => ({}));

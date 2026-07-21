@@ -120,6 +120,8 @@ class ReportController extends Controller
                 ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
                 : ($report->accomplishment_percentage ?? 0.0);
 
+            $autoCompleted = false;
+
             $report->update([
                 'approval_status' => 'approved',
                 'reviewed_by' => auth('web')->user()->user_id,
@@ -516,11 +518,32 @@ class ReportController extends Controller
             });
         }
 
+        // Apply sorting
+        $sort = $request->input('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':
+                $query->orderBy('report_date', 'asc')->orderBy('created_at', 'asc');
+                break;
+            case 'project_asc':
+                $query->orderBy(Project::select('project_name')->whereColumn('projects.project_id', 'accomplishment_reports.project_id'), 'asc')
+                      ->orderBy('report_date', 'desc');
+                break;
+            case 'project_desc':
+                $query->orderBy(Project::select('project_name')->whereColumn('projects.project_id', 'accomplishment_reports.project_id'), 'desc')
+                      ->orderBy('report_date', 'desc');
+                break;
+            case 'status_asc':
+                $query->orderBy('approval_status', 'asc')->orderBy('report_date', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('report_date', 'desc')->orderBy('created_at', 'desc');
+                break;
+        }
+
         // Get paginated reports
-        $reports = $query->orderBy('report_date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->appends($request->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']));
+        $reports = $query->paginate(10)
+            ->appends($request->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search', 'sort']));
 
         // Calculate statistics for selected project
         $statsQuery = Report::whereHas('project', function ($q) use ($selectedProject, $user) {
