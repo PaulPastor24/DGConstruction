@@ -1722,6 +1722,10 @@
             background: #d64545 !important;
         }
 
+        #pg-reports .summary-card:nth-child(5) {
+            grid-column: 1 / -1 !important;
+        }
+
         #pg-reports .summary-info {
             min-width: 0 !important;
             width: 100% !important;

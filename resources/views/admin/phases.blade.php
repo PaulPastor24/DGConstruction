@@ -919,23 +919,27 @@
     }
 
     #pg-phases .phase-table .action-cell {
-        display: grid !important;
-        grid-template-columns: 118px minmax(0, 1fr) !important;
+        display: flex !important;
         align-items: center !important;
-        justify-content: initial !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 6px 0 !important;
     }
 
-    #pg-phases .project-select {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
+    #pg-phases .phase-table .action-cell::before {
+        display: none !important;
     }
 
     #pg-phases .phase-table .action-cell .btn {
-        flex: 1 1 0 !important;
-        min-width: 0 !important;
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
         justify-content: center !important;
-        white-space: nowrap !important;
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        font-size: 13px !important;
     }
 }
 
