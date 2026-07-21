@@ -55,6 +55,8 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::post('/admin/reports/{id}/evaluate', [ReportController::class, 'evaluate'])->name('admin.reports.evaluate');
     Route::post('/admin/reports/{id}/approve', [ReportController::class, 'approve'])->name('admin.reports.approve');
     Route::post('/admin/reports/{id}/revise', [ReportController::class, 'revise'])->name('admin.reports.revise');
+    Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
+    Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/materials', [AdminDashboardController::class, 'storeMaterial'])->name('admin.inventory.materials.store');

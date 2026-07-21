@@ -215,6 +215,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="time_in" class="form-label fw-bold text-dark small">Site Time In</label>
+                                <input type="time"
+                                       class="form-control form-control-sm @error('time_in') is-invalid @enderror"
+                                       id="time_in"
+                                       name="time_in"
+                                       value="{{ old('time_in') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
+                                @error('time_in')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="time_out" class="form-label fw-bold text-dark small">Site Time Out</label>
+                                <input type="time"
+                                       class="form-control form-control-sm @error('time_out') is-invalid @enderror"
+                                       id="time_out"
+                                       name="time_out"
+                                       value="{{ old('time_out') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
+                                @error('time_out')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="start_date" class="form-label fw-bold text-dark small">Planned Start Date <span class="text-danger">*</span></label>
                                 <input type="date" 

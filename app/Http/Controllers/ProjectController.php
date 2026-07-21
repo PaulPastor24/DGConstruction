@@ -234,6 +234,8 @@ class ProjectController extends Controller
                 'start_date' => $request->start_date,
                 'target_end_date' => $request->target_end_date,
                 'actual_end_date' => $request->filled('actual_end_date') ? $request->input('actual_end_date') : null,
+                'time_in' => $request->filled('time_in') ? $request->input('time_in') : null,
+                'time_out' => $request->filled('time_out') ? $request->input('time_out') : null,
                 'status' => $request->filled('status') ? $request->input('status') : 'planning',
                 'description' => $request->description,
                 'project_image' => $this->storeProjectImage($request),
@@ -388,6 +390,8 @@ class ProjectController extends Controller
             $startDate = $request->input('start_date');
             $targetEndDate = $request->input('target_end_date');
             $actualEndDate = $request->filled('actual_end_date') ? $request->input('actual_end_date') : null;
+            $timeIn = $request->filled('time_in') ? $request->input('time_in') : null;
+            $timeOut = $request->filled('time_out') ? $request->input('time_out') : null;
             $status = (string) $request->input('status', $project->status);
             $description = $request->filled('description') ? trim((string) $request->input('description')) : null;
 
@@ -472,6 +476,8 @@ class ProjectController extends Controller
                 'start_date' => $startDate,
                 'target_end_date' => $targetEndDate,
                 'actual_end_date' => $actualEndDate,
+                'time_in' => $timeIn,
+                'time_out' => $timeOut,
                 'status' => $status,
                 'description' => $description,
             ], $this->buildProjectLocationPayload($projectLocation));

@@ -108,6 +108,7 @@
                 <div class="ps-field-value"><i class="bi bi-calendar3"></i> Start: {{ $pdStart ? $pdStart->format('M d, Y') : 'Not set' }}</div>
                 <div class="ps-field-value"><i class="bi bi-calendar3"></i> Target: {{ $pdTargetEnd ? $pdTargetEnd->format('M d, Y') : 'Not set' }}</div>
                 <div class="ps-field-value"><i class="bi bi-clock-history"></i> Duration: {{ $pdDuration > 0 ? $pdDuration . ' days' : 'Not available' }}</div>
+                <div class="ps-field-value"><i class="bi bi-alarm"></i> Site Schedule: {{ $project->schedule_label }}</div>
             </div>
             <div class="ps-info-card">
                 <div class="ps-field-label">Delivery Snapshot</div>

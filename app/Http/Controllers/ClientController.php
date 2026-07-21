@@ -111,6 +111,7 @@ class ClientController extends Controller
 
         // Recent reports: if the user explicitly selected a project, filter to it;
         // otherwise show recent reports across all projects for this client.
+        // Only show reports that are approved and published to the client.
         $recentReports = Report::query()
             ->when($selectedProjectId, function ($query) use ($selectedProjectId) {
                 $query->where('project_id', $selectedProjectId);
@@ -118,6 +119,8 @@ class ClientController extends Controller
             ->whereHas('project', function ($q) use ($client) {
                 $q->where('client_id', $client->client_id);
             })
+            ->where('approval_status', 'approved')
+            ->where('is_published_to_client', true)
             ->with(['project', 'phase', 'submittedBy'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -251,6 +254,8 @@ class ClientController extends Controller
 
         $reportsByProject = Report::query()
             ->whereIn('project_id', $projectIdsForCarousel)
+            ->where('approval_status', 'approved')
+            ->where('is_published_to_client', true)
             ->with(['project', 'phase', 'submittedBy'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -384,6 +389,8 @@ class ClientController extends Controller
 
         if ($reports === null) {
             $reports = Report::where('project_id', $project->project_id)
+                ->where('approval_status', 'approved')
+                ->where('is_published_to_client', true)
                 ->with(['phase', 'submittedBy'])
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
@@ -768,6 +775,8 @@ class ClientController extends Controller
         $reportsQuery = Report::query()
             ->with(['project', 'phase', 'submittedBy'])
             ->whereIn('project_id', $assignedProjectIds)
+            ->where('approval_status', 'approved')
+            ->where('is_published_to_client', true)
             ->when($selectedProject, function ($query) use ($selectedProject) {
                 $query->where('project_id', $selectedProject->project_id);
             })
@@ -796,9 +805,7 @@ class ClientController extends Controller
 
         $stats = [
             'total' => (clone $reportsQuery)->count(),
-            'pending' => (clone $reportsQuery)->where('approval_status', 'pending')->count(),
-            'approved' => (clone $reportsQuery)->where('approval_status', 'approved')->count(),
-            'rejected' => (clone $reportsQuery)->where('approval_status', 'rejected')->count(),
+            'published' => (clone $reportsQuery)->count(),
         ];
 
         return view('client.report', compact('projects', 'selectedProject', 'activeProjectId', 'projectPhases', 'reports', 'stats'));
@@ -841,6 +848,8 @@ class ClientController extends Controller
 
         $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
             ->where('report_id', $reportId)
+            ->where('approval_status', 'approved')
+            ->where('is_published_to_client', true)
             ->whereHas('project', function ($q) use ($client) {
                 $q->where('client_id', $client->client_id);
             })->firstOrFail();
