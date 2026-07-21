@@ -144,8 +144,8 @@
                     @forelse($reports as $report)
                     @php
                         $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : 'pending');
-                        $pillClass = $status === 'approved' && $report->is_published_to_client ? 'bg-info-subtle text-info' : ($status === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
                         $displayStatus = $status;
+                        $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
                         $displayPillClass = $pillClass;
                     @endphp
                         @php
@@ -267,20 +267,15 @@
                                                         </div>
                                                         <div class="col-12 col-md-6">
                                                             <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
-                                                                <div class="fw-semibold text-muted mb-1">Approved By</div>
-                                                                <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                                 <div class="fw-semibold text-muted mb-1">Approved By</div>
+                                                                 <div class="text-dark">{{ $detailPayload['reviewed_by'] !== '-' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
 
-                                                    <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
-                                                        <div class="fw-semibold text-muted mb-1">Admin Remarks</div>
-                                                        <div class="text-dark small">{{ $detailPayload['admin_explanation'] ?: ($report->approval_remarks ?: 'No remarks') }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-12 col-xl-5">
+                                             <div class="col-12 col-xl-5">
                                                 <div class="report-detail-sidebar p-4">
                                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                                         <div class="fw-bold" style="color: var(--cms-green-dark, #2a4028);">Site Images</div>
@@ -306,14 +301,21 @@
                                                         <div class="timeline-step active">
                                                             <div class="timeline-icon"><i class="bi bi-check"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                            <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
                                                         </div>
-                                                        <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
+                                                        <div class="timeline-step active">
                                                             <div class="timeline-icon"><i class="bi bi-clock"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                            @if($report->reviewed_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
-                                                        <div class="timeline-step {{ $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : '') }}">
-                                                            <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                                                            <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ($status === 'rejected' ? 'Returned' : 'Finalized') }}</div>
+                                                        <div class="timeline-step active">
+                                                            <div class="timeline-icon"><i class="bi bi-check-circle"></i></div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">Approved</div>
+                                                            @if($report->approved_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->approved_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
                                                     </div>
 
@@ -341,8 +343,8 @@
             @forelse($reports as $report)
                 @php
                     $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : 'pending');
-                    $pillClass = $status === 'approved' && $report->is_published_to_client ? 'bg-info-subtle text-info' : ($status === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
                     $displayStatus = $status;
+                    $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
                     $displayPillClass = $pillClass;
 
                     $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
@@ -470,19 +472,14 @@
                                                 <div class="col-12 col-md-6">
                                                     <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
                                                         <div class="fw-semibold text-muted mb-1">Approved By</div>
-                                                        <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                         <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
 
-                                            <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
-                                                <div class="fw-semibold text-muted mb-1">Admin Remarks</div>
-                                                <div class="text-dark small">{{ $detailPayload['admin_explanation'] ?: ($report->approval_remarks ?: 'No remarks') }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12 col-xl-5">
+                                     <div class="col-12 col-xl-5">
                                         <div class="report-detail-sidebar p-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <div class="fw-bold" style="color: var(--cms-green-dark, #2a4028);">Site Images</div>
@@ -508,14 +505,21 @@
                                                 <div class="timeline-step active">
                                                     <div class="timeline-icon"><i class="bi bi-check"></i></div>
                                                     <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                    <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
                                                 </div>
-                                                <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
+                                                <div class="timeline-step active">
                                                     <div class="timeline-icon"><i class="bi bi-clock"></i></div>
                                                     <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                    @if($report->reviewed_at)
+                                                        <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
+                                                    @endif
                                                 </div>
-                                                <div class="timeline-step {{ $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : '') }}">
-                                                    <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                                                    <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ($status === 'rejected' ? 'Returned' : 'Finalized') }}</div>
+                                                <div class="timeline-step active">
+                                                    <div class="timeline-icon"><i class="bi bi-check-circle"></i></div>
+                                                    <div class="fw-bold" style="font-size:0.75rem;">Approved</div>
+                                                    @if($report->approved_at)
+                                                        <div class="text-muted" style="font-size:0.65rem;">{{ $report->approved_at->format('M d, Y h:i A') }}</div>
+                                                    @endif
                                                 </div>
                                             </div>
 
@@ -836,6 +840,9 @@
         background: #2a4028;
         color: #fff;
     }
+    .timeline-step.active .fw-bold {
+        color: #2a4028;
+    }
     .timeline-step.current .timeline-icon {
         border-color: #ffc107;
         background: #fff;
@@ -913,6 +920,9 @@
         border-color: var(--brand-green);
         background: var(--brand-green);
         color: #fff;
+    }
+    .timeline-step.active .fw-bold {
+        color: var(--brand-green);
     }
 
     .timeline-step.current .timeline-icon {

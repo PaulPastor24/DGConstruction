@@ -115,6 +115,35 @@
         color: #475569;
         border: 1px solid #e2e8f0;
     }
+
+    /* Dashboard mobile responsive */
+    @media (max-width: 991.98px) {
+        .stats-grid-4 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .project-list-item {
+            min-width: 0;
+        }
+        .proj-details {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .report-list-item {
+            min-width: 0;
+        }
+        .report-meta-right {
+            white-space: nowrap;
+        }
+        .donut-chart-container {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+        .donut-legend {
+            align-items: center !important;
+        }
+    }
 </style>
 @endpush
 

@@ -656,7 +656,7 @@ class ProjectController extends Controller
                     'status' => 'archived',
                     'description' => $project->description,
                     'archived_at' => now(),
-                ]
+                ]  
             );
 
             return redirect()->route('admin.projects.index')

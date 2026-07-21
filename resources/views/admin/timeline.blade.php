@@ -111,11 +111,20 @@
         width: 100%;
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 0.7rem 0.9rem;
+        padding: 0.5rem 0.7rem;
         background: #fff;
         color: var(--primary-text);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         outline: none;
+    }
+
+    .toolbar-select#projectSelector,
+    .toolbar-select#phaseFilterSelector,
+    .toolbar-select#statusFilterSelector {
+        padding: 0.4rem 2rem 0.4rem 0.7rem;
+        font-size: 0.82rem;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .toolbar-input:focus,
@@ -636,7 +645,7 @@
         border-radius: 18px;
         overflow: hidden;
         background: linear-gradient(180deg, #fcfdfa 0%, #ffffff 100%);
-        min-height: 0;
+        min-height: 420px;
     }
 
     .gantt-scroll-shell {
@@ -964,7 +973,12 @@
 
     #dhtmlxGantt {
         width: 100%;
-        min-height: 0;
+        height: 420px;
+        min-height: 420px;
+    }
+
+    .gantt-scroll-shell {
+        min-height: 420px;
     }
 
     .table-wrapper {
@@ -1114,7 +1128,7 @@
         .toolbar-actions { flex-direction: column; align-items: stretch; }
         .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { width: 100%; flex: 1 1 auto; }
         .timeline-card { padding: 1rem; }
-        .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; }
+        .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; min-height: 320px; }
         .gantt-shell { border-radius: 14px; }
         .view-toggle-group { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .view-toggle-btn { padding: 0.55rem 0.4rem; font-size: 0.74rem; text-align: center; }
@@ -1123,6 +1137,14 @@
         .gantt-mode-actions .btn-ghost,
         .gantt-mode-actions .toolbar-select.compact-select { flex: 1 1 0; min-width: 0; }
         .toolbar-select.compact-select { max-width: none; }
+        #projectSelector,
+        #phaseFilterSelector,
+        #statusFilterSelector {
+            font-size: 12px !important;
+            padding: 0.35rem 0.6rem !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
         .table-wrapper { overflow-x: hidden; }
         .standard-data-table,
         .standard-data-table thead,

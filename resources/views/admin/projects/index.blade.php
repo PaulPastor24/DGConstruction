@@ -192,6 +192,42 @@
         height: 38px;
     }
 
+    /* Projects page mobile responsive */
+    @media (max-width: 991.98px) {
+        .metrics-row-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .metrics-row-grid > *:nth-child(5),
+        .metrics-row-grid > *:nth-child(6),
+        .metrics-row-grid > *:nth-child(7),
+        .metrics-row-grid > *:nth-child(8) {
+            grid-column: auto;
+        }
+        .filter-toolbar-panel .filter-form-row {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+        .search-input-container {
+            grid-column: 1 / -1 !important;
+            max-width: 100% !important;
+        }
+        .filter-dropdown-select {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        .filter-actions-right {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .proj-thumb {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
     .filter-dropdown-select {
         width: 150px;
         min-width: 140px;
@@ -724,6 +760,59 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .project-image-zoom-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 9999;
+    }
+    .project-image-zoom-overlay.open {
+        display: flex;
+    }
+    .project-image-zoom-card {
+        max-width: 95%;
+        max-height: 95%;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 40px 120px rgba(0,0,0,0.4);
+    }
+    .project-image-zoom-card img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+        max-height: 85vh;
+        background: #000;
+    }
+    .project-image-zoom-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .view-as-mobile-btn {
+        display: none;
+    }
+    @media (max-width: 991.98px) {
+        .view-as-mobile-btn {
+            display: inline-flex;
+        }
+    }
 </style>
 @endpush
 
@@ -1074,6 +1163,9 @@
                 </select>
 
                 <div class="filter-actions-right">
+                    <button type="button" class="btn btn-dg-primary px-3 py-2 d-flex align-items-center gap-2 view-as-mobile-btn" data-bs-toggle="modal" data-bs-target="#viewAsMobileModal" style="min-width: 140px; transition: all 0.2s ease-in-out; font-size: 13px;">
+                        <i class="bi bi-layout-sidebar-inset-reverse"></i> View As
+                    </button>
                     <button type="button" class="btn btn-dg-primary px-3 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addProjectModal" style="min-width: 140px; transition: all 0.2s ease-in-out; font-size: 13px;">
                         <i class="bi bi-plus"></i> New Project
                     </button>
@@ -1088,6 +1180,25 @@
         @include('admin.projects.partials.table', ['projects' => $projects])
 
 
+    </div>
+
+    <!-- View As Modal -->
+    <div class="modal fade" id="viewAsMobileModal" tabindex="-1" aria-labelledby="viewAsMobileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-2 pt-4 px-4">
+                    <h5 class="modal-title fw-bold text-dark" id="viewAsMobileModalLabel" style="font-size: 1.1rem;">View Projects As</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2 px-4 pb-4">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-primary w-100 py-2"><i class="bi bi-layout-sidebar-inset-reverse me-2"></i>Admin</a>
+                        <a href="{{ route('supervisor.dashboard') }}" class="btn btn-outline-success w-100 py-2"><i class="bi bi-person-workspace me-2"></i>Supervisor</a>
+                        <a href="{{ route('client.dashboard') }}" class="btn btn-outline-info w-100 py-2"><i class="bi bi-person me-2"></i>Client</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Right Custom Slider-Like Detail Information Meta Panel Component -->
@@ -3235,6 +3346,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openSidebarFromButton() {
         const btn = this;
+        const project = JSON.parse(btn.getAttribute('data-project-json'));
+        const projectId = project.project_id;
+
+        if (window.innerWidth <= 991.98 && projectId) {
+            openProjectDetailsModal(projectId);
+            return;
+        }
+
         const sidebar = document.getElementById('projectDetailsSidebar');
         const sideProjectName = document.getElementById('sideProjectName');
         const sideProjectLocation = document.getElementById('sideProjectLocation');

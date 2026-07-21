@@ -773,7 +773,7 @@ class ClientController extends Controller
         $assignedProjectIds = $projects->pluck('project_id')->all();
 
         $reportsQuery = Report::query()
-            ->with(['project', 'phase', 'submittedBy'])
+            ->with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
             ->whereIn('project_id', $assignedProjectIds)
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)

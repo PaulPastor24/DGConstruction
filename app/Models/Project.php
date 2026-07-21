@@ -44,11 +44,21 @@ class Project extends Model
      */
     public function getImageUrlAttribute()
     {
-        if (empty($this->project_image)) {
+        $image = $this->project_image;
+
+        if (empty($image)) {
             return null;
         }
 
-        return asset('storage/' . ltrim($this->project_image, '/'));
+        if (is_string($image) && preg_match('#^https?://#i', $image)) {
+            return $image;
+        }
+
+        if (is_string($image)) {
+            return asset('storage/' . ltrim($image, '/'));
+        }
+
+        return null;
     }
 
     /**

@@ -1127,6 +1127,87 @@
         margin-top: 10px !important;
         font-size: 12px !important;
     }
+
+    /* Inventory mobile: static layout and 2x2 toggle grid */
+    @media (max-width: 991.98px) {
+        .inventory-green-theme .card-header .nav-tabs {
+            flex-wrap: wrap !important;
+            overflow-x: visible !important;
+            gap: 6px !important;
+        }
+        .inventory-green-theme .card-header .nav-tabs .nav-item {
+            flex: 0 0 auto !important;
+        }
+        .inventory-green-theme .card-header .nav-tabs .nav-link {
+            white-space: nowrap !important;
+            font-size: 12px !important;
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
+        }
+        .inventory-action-stack {
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .inventory-action-stack .btn {
+            flex: 0 0 auto !important;
+            width: auto !important;
+        }
+        #inventory-search-form,
+        #usage-search-form,
+        #expenses-filter-form {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            overflow-x: visible !important;
+            align-items: flex-end !important;
+        }
+        #inventory-search-form > *,
+        #usage-search-form > *,
+        #expenses-filter-form > * {
+            flex: 1 1 auto !important;
+            min-width: fit-content !important;
+        }
+        #inventory-search-form .search-container,
+        #usage-search-form .search-container,
+        #expenses-filter-form .search-container {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        #inventory-search-form .col-md-2,
+        #usage-search-form .col-md-2,
+        #usage-search-form .col-md-3,
+        #expenses-filter-form .col-md-2,
+        #expenses-filter-form .col-md-3 {
+            flex: 1 1 calc(50% - 5px) !important;
+            max-width: calc(50% - 5px) !important;
+            width: auto !important;
+        }
+        #inventory-search-form .inventory-action-stack,
+        #usage-search-form .inventory-action-stack,
+        #expenses-filter-form .inventory-action-stack {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            justify-content: flex-start !important;
+        }
+
+        .inventory-green-theme .card-header .nav-tabs {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+        }
+        .inventory-green-theme .card-header .nav-tabs .nav-item {
+            width: 100% !important;
+        }
+        .inventory-green-theme .card-header .nav-tabs .nav-link {
+            display: block !important;
+            text-align: center !important;
+            border-radius: 10px !important;
+            padding: 10px 12px !important;
+        }
+    }
 }
 
 @media (max-width: 420px) {

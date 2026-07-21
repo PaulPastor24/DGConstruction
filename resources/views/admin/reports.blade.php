@@ -55,7 +55,7 @@
         margin-bottom: 1.1rem;
     }
     .reports-header h1 {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.75rem;
         font-weight: 700;
         margin: 0 0 0.25rem 0;
@@ -100,7 +100,7 @@
         text-transform: uppercase;
     }
     .summary-info .value {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2rem;
         font-weight: 600;
         color: var(--theme-accent-strong);
@@ -1053,6 +1053,24 @@
         font-size: 1.1rem;
     }
 
+    /* Reports mobile responsive */
+    @media (max-width: 991.98px) {
+        .metrics-row-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .metrics-row-grid > *:nth-child(5) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            width: fit-content;
+        }
+        .reports-header h4,
+        .reports-header p,
+        .metric-info-text .stat-num,
+        .metric-info-text .stat-lbl {
+            font-family: 'DM Sans', sans-serif !important;
+        }
+    }
+
     .modal-image-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -1298,6 +1316,11 @@
     }
     @media (max-width: 1100px) {
         .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .summary-card:nth-child(5) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            width: fit-content;
+        }
         .top-toolbar { flex-direction: column; align-items: stretch; }
         .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; flex: 1 1 100%; }
         .toolbar-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
@@ -1400,7 +1423,7 @@
 
         .card-table-title {
             color: #14532d !important;
-            font-family: 'Syne', 'Plus Jakarta Sans', sans-serif !important;
+            font-family: 'DM Sans', 'Plus Jakarta Sans', sans-serif !important;
             font-size: 15px !important;
             line-height: 1.2 !important;
         }
@@ -1517,36 +1540,6 @@
 
         .reports-table tbody td[data-label="ID"]::before {
             display: none !important;
-        }
-
-        /* Title uses the full card width so it does not feel squeezed left. */
-        .reports-table tbody td[data-label="Report Title"] {
-            display: block !important;
-            padding: 0 48px 13px 0 !important;
-            margin: 0 0 8px !important;
-            border-bottom: 1px solid #edf3ef !important;
-        }
-
-        .reports-table tbody td[data-label="Report Title"]::before {
-            content: "Report" !important;
-            display: block !important;
-            margin-bottom: 6px !important;
-            color: #64748b !important;
-            font-size: 9.5px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.075em !important;
-            text-transform: uppercase !important;
-        }
-
-        .reports-table tbody td[data-label="Report Title"] .cell-bold,
-        .reports-table tbody td[data-label="Report Title"] span,
-        .reports-table tbody td[data-label="Report Title"] strong {
-            display: block !important;
-            color: #0f172a !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            line-height: 1.35 !important;
-            letter-spacing: -0.01em !important;
         }
 
         .reports-table tbody td[data-label="Project"],
@@ -1863,13 +1856,8 @@
             letter-spacing: 0.075em !important;
         }
 
-        #pg-reports .reports-table tbody td[data-label="Report Title"] {
-            padding-right: 2.85rem !important;
-        }
-
-        #pg-reports .reports-table tbody td[data-label="Report Title"] .cell-bold {
-            font-size: 0.94rem !important;
-            line-height: 1.34 !important;
+        #pg-reports .reports-table tbody td[data-label="ID"] {
+            display: none !important;
         }
 
         #pg-reports .status-pill {
@@ -2104,11 +2092,6 @@
 
 @section('content')
 <div id="pg-reports" class="reports-mobile-admin-page">
-    <!-- Title Header -->
-    <div class="reports-header">
-        <h1>Reports</h1>
-        <p>Review, approve, and manage accomplishment reports submitted by supervisors.</p>
-    </div>
 
     <!-- Summary Row Block -->
     <div class="summary-grid">
@@ -2217,7 +2200,6 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Report Title</th>
                             <th>Project</th>
                             <th>Phase</th>
                             <th>Supervisor</th>
@@ -2230,9 +2212,6 @@
                         @forelse($reports as $report)
                             <tr data-report-id="{{ $report->report_id }}">
                                 <td class="cell-bold" data-label="ID">{{ $report->report_id }}</td>
-                                <td data-label="Report Title">
-                                    <span class="cell-bold">{{ $report->report_title }}</span>
-                                </td>
                                 <td data-label="Project">{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
                                 <td data-label="Phase">{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
                                 <td data-label="Supervisor">
@@ -2799,14 +2778,13 @@
 
             function renderTable(reports) {
                 if (!reports.length) {
-                    tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">No accomplishment reports found.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No accomplishment reports found.</td></tr>`;
                     return;
                 }
 
                 tableBody.innerHTML = reports.map(report => `
                     <tr data-report-id="${report.id}">
                         <td class="cell-bold" data-label="ID">${report.report_id}</td>
-                        <td data-label="Report Title"><span class="cell-bold">${report.report_title}</span></td>
                         <td data-label="Project">${report.project_name}</td>
                         <td data-label="Phase">${report.phase_name}</td>
                         <td data-label="Supervisor"><div class="user-cell"><span>${report.supervisor_name}</span></div></td>

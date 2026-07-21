@@ -140,6 +140,7 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/reports/{id}', [ReportController::class, 'show'])->name('supervisor.reports.show');
     Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
+    Route::post('/supervisor/reports/{id}/update', [ReportController::class, 'updateSupervisorReport'])->name('supervisor.reports.update');
 
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
     Route::put('/supervisor/profile', [SupervisorController::class, 'updateProfile'])->name('supervisor.profile.update');

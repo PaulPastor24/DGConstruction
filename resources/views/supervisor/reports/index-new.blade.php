@@ -924,7 +924,7 @@
 
 <section class="report-filter-card p-3 mb-4">
     <form id="filterForm" method="GET" class="row g-3 align-items-end">
-        <div class="col-12 col-md-3">
+        <div class="col-6 col-md-3">
             <label class="form-label small fw-bold text-muted">Project</label>
             <select name="project_id" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="" {{ request('project_id') === null || request('project_id') === '' ? 'selected' : '' }}>All Projects</option>
@@ -933,7 +933,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-6 col-md-3">
             <label class="form-label small fw-bold text-muted">Construction Phase</label>
             <select name="phase_id" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">All Phases</option>
@@ -942,7 +942,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-6 col-md-2">
             <label class="form-label small fw-bold text-muted">Approval Status</label>
             <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">All Status</option>
@@ -951,7 +951,7 @@
                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Returned</option>
             </select>
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-6 col-md-2">
             <label class="form-label small fw-bold text-muted">Sort By</label>
             <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="newest" {{ request('sort') == 'newest' || request('sort') === null || request('sort') === '' ? 'selected' : '' }}>Newest First</option>
@@ -961,7 +961,7 @@
                 <option value="status_asc" {{ request('sort') == 'status_asc' ? 'selected' : '' }}>Status A-Z</option>
             </select>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 offset-3 col-md-2 offset-md-0">
             <label class="form-label small fw-bold text-muted">Report Date</label>
             <input type="date" name="report_date" value="{{ request('report_date') }}" class="form-control form-control-sm" onchange="this.form.submit()" />
         </div>
@@ -1106,7 +1106,7 @@
                                 ->values();
                             $timelineStatus = $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : 'current');
                         @endphp
-                        <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                            <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-report-status="{{ $status }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                             <div class="modal-dialog modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark);">
@@ -1150,9 +1150,58 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
-                                                        <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
-                                                        <p class="mb-0 text-dark small">{{ $report->report_text ?? 'No description logs reported.' }}</p>
+                                                    <div class="js-report-view-section">
+                                                        <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
+                                                            <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
+                                                            <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->report_text ?? 'No description logs reported.' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="js-edit-form" id="editForm-{{ $report->report_id }}" style="display: none;">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Report Date</label>
+                                                            <input type="datetime-local" id="editReportDate-{{ $report->report_id }}" class="form-control form-control-sm" value="{{ optional($report->report_date)->format('Y-m-d\TH:i') ?? '' }}">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Project</label>
+                                                            <select id="editProjectId-{{ $report->report_id }}" class="form-select form-select-sm edit-project-select">
+                                                                @foreach($assignedProjects as $project)
+                                                                    <option value="{{ $project->project_id }}" {{ $report->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Phase</label>
+                                                            <select id="editPhaseId-{{ $report->report_id }}" class="form-select form-select-sm edit-phase-select">
+                                                                @foreach($projectPhases as $phase)
+                                                                    <option value="{{ $phase->phase_id }}" {{ $report->phase_id == $phase->phase_id ? 'selected' : '' }}>{{ $phase->phase_name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Accomplishment Summary</label>
+                                                            <textarea id="editReportText-{{ $report->report_id }}" rows="4" class="form-control form-control-sm">{{ $report->report_text ?? '' }}</textarea>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Add Images</label>
+                                                            <input type="file" id="editReportImages-{{ $report->report_id }}" class="form-control form-control-sm" multiple accept="image/*">
+                                                        </div>
+                                                        @if(!empty($report->site_images))
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-bold text-muted">Current Images</label>
+                                                                <div class="d-flex flex-wrap gap-2">
+                                                                    @foreach($report->site_images as $img)
+                                                                        <div class="position-relative" style="width: 60px; height: 60px;">
+                                                                            <img src="{{ asset('storage/' . ltrim($img, '/')) }}" class="w-100 h-100 object-fit-cover border rounded">
+                                                                            <div class="form-check mt-1">
+                                                                                <input class="form-check-input js-remove-image-checkbox" type="checkbox" value="{{ $img }}" style="width: 12px; height: 12px;">
+                                                                                <label class="form-check-label small" style="font-size: 0.65rem;">Remove</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
+                                                        @endif
                                                     </div>
 
                                                     <div class="row g-3 mb-3">
@@ -1198,27 +1247,64 @@
                                                         </div>
                                                     @endif
 
+                                                    @if($status === 'approved')
+                                                        <div class="modal-progress-card mb-3">
+                                                            <div class="modal-section-title">Client Visibility</div>
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <span class="text-muted small">Status</span>
+                                                                <span class="status-pill {{ $report->is_published_to_client ? 'published' : 'approved' }} p-2 mt-1 d-inline-block">{{ $report->is_published_to_client ? 'Published to Client' : 'Approved (Hidden)' }}</span>
+                                                            </div>
+                                                            @if($report->published_at)
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span class="text-muted small">Published At</span>
+                                                                    <span class="small text-dark">{{ $report->published_at->format('M d, Y h:i A') }}</span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
                                                     <div class="fw-bold mb-3" style="color: var(--cms-green-dark);">Approval Timeline</div>
                                                     <div class="timeline-container small px-1">
                                                         <div class="timeline-step active">
                                                             <div class="timeline-icon"><i class="bi bi-check"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                            <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
                                                         </div>
                                                         <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
                                                             <div class="timeline-icon"><i class="bi bi-clock"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                            @if($report->reviewed_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
                                                         <div class="timeline-step {{ $status === 'approved' ? 'active' : '' }}">
                                                             <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                                                            <div class="fw-bold" style="font-size:0.75rem;">Approved</div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ucfirst($status) }}</div>
+                                                            @if($status === 'approved' && $report->approved_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->approved_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
+                                                            @if($status === 'rejected' && $report->rejected_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->rejected_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid var(--cms-green-muted);">
-                                                    <button class="btn btn-cms-primary download-report-btn" data-report-id="{{ $report->report_id }}">
-                                                        <i class="bi bi-download me-2"></i> Download PDF
-                                                    </button>
+                                                <div class="d-flex justify-content-center align-items-center" style="padding-top: 1.25rem; margin-top: 1.25rem; border-top: 2px solid var(--cms-green-muted);">
+                                                    <div class="d-inline-flex gap-2 justify-content-center">
+                                                        <button type="button" class="btn btn-sm btn-success js-edit-pending-report" style="display: none;">
+                                                            <i class="bi bi-pencil-square me-1"></i>Edit
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-success js-export-pending-report" style="display: none;">
+                                                            <i class="bi bi-download me-1"></i>Export PDF
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary js-cancel-edit-pending" style="display: none;">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-success js-save-edit-pending" style="display: none;">
+                                                            <i class="bi bi-check2 me-1"></i>Save Changes
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1666,6 +1752,7 @@
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: '#166534',
                     cancelButtonColor: '#6c757d',
+                    reverseButtons: true,
                     customClass: {
                         confirmButton: 'btn-cms-primary',
                         cancelButton: 'btn-cms-secondary'
@@ -1715,6 +1802,11 @@
                                 icon: 'success',
                                 confirmButtonColor: '#166534',
                             }).then(() => {
+                                const createModalEl = document.getElementById('createReportModal');
+                                if (createModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                    const modal = bootstrap.Modal.getInstance(createModalEl);
+                                    if (modal) modal.hide();
+                                }
                                 window.location.href = '{{ route('supervisor.reports') }}';
                             });
                         })
@@ -1782,6 +1874,212 @@
             if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
                 closeLightbox();
             }
+        });
+
+        // ===== SUPERVISOR EDIT PENDING REPORT =====
+        function initializeSupervisorEdit(reportId) {
+            const modal = document.getElementById('reportDetailsModal-' + reportId);
+            if (!modal) return;
+
+            const status = modal.dataset.reportStatus || 'pending';
+            const editBtn = modal.querySelector('.js-edit-pending-report');
+            const exportBtn = modal.querySelector('.js-export-pending-report');
+            const cancelBtn = modal.querySelector('.js-cancel-edit-pending');
+            const saveBtn = modal.querySelector('.js-save-edit-pending');
+            const viewSection = modal.querySelector('.js-report-view-section');
+            const editForm = modal.querySelector('.js-edit-form');
+
+            if (status === 'pending') {
+                if (editBtn) editBtn.style.display = 'inline-flex';
+                if (exportBtn) exportBtn.style.display = 'none';
+            } else {
+                if (editBtn) editBtn.style.display = 'none';
+                if (exportBtn) exportBtn.style.display = 'inline-flex';
+            }
+
+            exportBtn?.addEventListener('click', function () {
+                window.open(`/supervisor/api/reports/${reportId}/download-pdf`, '_blank');
+            });
+
+            editBtn?.addEventListener('click', function () {
+                Swal.fire({
+                    title: 'Edit Report?',
+                    text: 'You are about to edit this pending report. Continue?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, edit',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#166534',
+                    cancelButtonColor: '#6c757d',
+                    reverseButtons: true,
+                }).then(result => {
+                    if (!result.isConfirmed) return;
+
+                    if (viewSection) viewSection.style.display = 'none';
+                    if (editForm) editForm.style.display = 'block';
+                    if (editBtn) editBtn.style.display = 'none';
+                    if (exportBtn) exportBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+                    if (saveBtn) saveBtn.style.display = 'inline-flex';
+
+                    const selectedProjectId = editProjectSelect?.value;
+                    if (selectedProjectId) {
+                        loadEditProjectPhases(selectedProjectId);
+                    }
+                });
+            });
+
+            cancelBtn?.addEventListener('click', function () {
+                if (viewSection) viewSection.style.display = 'block';
+                if (editForm) editForm.style.display = 'none';
+                if (editBtn) editBtn.style.display = 'inline-flex';
+                if (exportBtn) exportBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'none';
+            });
+
+            const editProjectSelect = modal.querySelector('#editProjectId-' + reportId);
+            const editPhaseSelect = modal.querySelector('#editPhaseId-' + reportId);
+
+            function loadEditProjectPhases(projectId) {
+                if (!editPhaseSelect) return;
+                editPhaseSelect.innerHTML = loadingPlaceholder;
+                editPhaseSelect.disabled = true;
+
+                const endpoint = phasesApiRouteTemplate.replace('PROJECT_ID', encodeURIComponent(projectId));
+
+                fetch(endpoint, {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Phase load failed');
+                    return response.json();
+                })
+                .then(data => {
+                    editPhaseSelect.innerHTML = '';
+                    if (data.success && Array.isArray(data.phases) && data.phases.length > 0) {
+                        data.phases.forEach(phase => {
+                            const option = document.createElement('option');
+                            option.value = phase.phase_id;
+                            option.textContent = phase.phase_name;
+                            editPhaseSelect.appendChild(option);
+                        });
+                        editPhaseSelect.disabled = false;
+                    } else {
+                        editPhaseSelect.innerHTML = '<option value="" disabled>No phases available.</option>';
+                    }
+                })
+                .catch(() => {
+                    editPhaseSelect.innerHTML = '<option value="" disabled>Error loading phases.</option>';
+                });
+            }
+
+            editProjectSelect?.addEventListener('change', function () {
+                if (this.value) {
+                    loadEditProjectPhases(this.value);
+                }
+            });
+
+            saveBtn?.addEventListener('click', function () {
+                const reportText = modal.querySelector('#editReportText-' + reportId)?.value?.trim();
+                const reportDate = modal.querySelector('#editReportDate-' + reportId)?.value;
+                const projectId = modal.querySelector('#editProjectId-' + reportId)?.value;
+                const phaseId = modal.querySelector('#editPhaseId-' + reportId)?.value;
+
+                if (!reportText) {
+                    Swal.fire({ title: 'Validation Error', text: 'Report text is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!reportDate) {
+                    Swal.fire({ title: 'Validation Error', text: 'Report date is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!projectId) {
+                    Swal.fire({ title: 'Validation Error', text: 'Project is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!phaseId) {
+                    Swal.fire({ title: 'Validation Error', text: 'Phase is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('project_id', projectId);
+                formData.append('phase_id', phaseId);
+                formData.append('report_date', reportDate);
+                formData.append('report_text', reportText);
+
+                const imageInput = modal.querySelector('#editReportImages-' + reportId);
+                if (imageInput && imageInput.files && imageInput.files.length > 0) {
+                    Array.from(imageInput.files).forEach(file => {
+                        formData.append('site_images[]', file);
+                    });
+                }
+
+                const removeImages = modal.querySelectorAll('.js-remove-image-checkbox:checked');
+                removeImages.forEach(cb => formData.append('remove_site_images[]', cb.value));
+
+                Swal.fire({
+                    title: 'Saving...',
+                    text: 'Please wait while your changes are saved.',
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                });
+
+                fetch(`/supervisor/reports/${reportId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name=csrf-token]')?.content,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                })
+                .then(async response => {
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Failed to update report.');
+                    }
+                    return payload;
+                })
+                .then(payload => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Updated',
+                        text: payload.message || 'Report updated successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#166534',
+                    }).then(() => {
+                        window.location.reload();
+                    });
+
+                    if (payload.report) {
+                        const staticText = modal.querySelector('#staticReportText-' + reportId);
+                        if (staticText) staticText.textContent = payload.report.report_text;
+                    }
+
+                    if (viewSection) viewSection.style.display = 'block';
+                    if (editForm) editForm.style.display = 'none';
+                    if (editBtn) editBtn.style.display = 'inline-flex';
+                    if (exportBtn) exportBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
+                    if (saveBtn) saveBtn.style.display = 'none';
+                })
+                .catch(error => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Update Failed',
+                        text: error.message || 'Unable to update report. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#c92a2a',
+                    });
+                });
+            });
+        }
+
+        document.querySelectorAll('.report-details-modal').forEach(modal => {
+            const reportId = modal.id.replace('reportDetailsModal-', '');
+            initializeSupervisorEdit(reportId);
         });
     });
 </script>

@@ -369,10 +369,12 @@ class ReportController extends Controller
         $phase = ConstructionPhase::findOrFail($validated['phase_id']);
 
         if ($phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'This construction phase is already completed and cannot accept new reports.'], 422);
+            }
             return back()->withErrors(['phase_id' => 'This construction phase is already completed and cannot accept new reports.'])->withInput();
         }
 
-        // Verify supervisor is assigned to this project
         $this->authorizeSupervisor($project);
 
         try {
@@ -409,54 +411,10 @@ class ReportController extends Controller
                 "Report submitted for phase '{$phase->phase_name}' in project '{$project->project_name}'"
             );
 
-            // Notify admin(s) so the report shows up in the admin notifications panel
-            try {
-                NotificationService::notifyAdmins([
-                    'type' => 'report',
-                    'title' => 'New Report Submitted',
-                    'message' => "A new report has been submitted for project '{$project->project_name}' by {$report->submittedBy->name}",
-                    'data' => [
-                        'module' => 'admin.reports',
-                        'report_id' => $report->report_id,
-                        'project_id' => $project->project_id,
-                        'project_name' => $project->project_name,
-                        'recipient' => 'Admin',
-                    ],
-                    'related_id' => $report->report_id,
-                    'related_type' => 'report',
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to notify admin on report submission: ' . $e->getMessage());
-            }
-
-            // Notify the submitting supervisor
-            NotificationService::notifySupervisor(auth('web')->user()->user_id, [
-                'type' => 'report',
-                'title' => 'Report Submitted',
-                'message' => 'Accomplishment Report submitted successfully.',
-                'data' => ['module' => 'supervisor.reports', 'report_id' => $report->report_id],
-                'related_id' => $report->report_id,
-                'related_type' => 'report',
-            ]);
-
-            // Notify the client associated with the project
-            try {
-                $clientId = optional($project)->client_id;
-                if ($clientId) {
-                    NotificationService::notifyClient($clientId, [
-                        'type' => 'report',
-                        'title' => 'New Project Report',
-                        'message' => "A new accomplishment report has been submitted for project '{$project->project_name}'.",
-                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $project->project_id],
-                        'related_id' => $report->report_id,
-                        'related_type' => 'report',
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::error('Failed to notify client on report submission: ' . $e->getMessage());
-            }
-
             DB::commit();
+
+            $this->notifyOnReportSubmission($report, $project);
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'report_id' => $report->report_id]);
             }
@@ -465,7 +423,66 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Report submission failed: ' . $e->getMessage());
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+
             return back()->withErrors('Failed to submit report');
+        }
+    }
+
+    /**
+     * Send notifications after report is successfully saved
+     */
+    private function notifyOnReportSubmission(Report $report, Project $project): void
+    {
+        try {
+            NotificationService::notifyAdmins([
+                'type' => 'report',
+                'title' => 'New Report Submitted',
+                'message' => "A new report has been submitted for project '{$project->project_name}' by {$report->submittedBy->name}",
+                'data' => [
+                    'module' => 'admin.reports',
+                    'report_id' => $report->report_id,
+                    'project_id' => $project->project_id,
+                    'project_name' => $project->project_name,
+                    'recipient' => 'Admin',
+                ],
+                'related_id' => $report->report_id,
+                'related_type' => 'report',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify admin on report submission: ' . $e->getMessage());
+        }
+
+        try {
+            NotificationService::notifySupervisor($report->submitted_by, [
+                'type' => 'report',
+                'title' => 'Report Submitted',
+                'message' => 'Accomplishment Report submitted successfully.',
+                'data' => ['module' => 'supervisor.reports', 'report_id' => $report->report_id],
+                'related_id' => $report->report_id,
+                'related_type' => 'report',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify supervisor on report submission: ' . $e->getMessage());
+        }
+
+        try {
+            $clientId = optional($project)->client_id;
+            if ($clientId) {
+                NotificationService::notifyClient($clientId, [
+                    'type' => 'report',
+                    'title' => 'New Project Report',
+                    'message' => "A new accomplishment report has been submitted for project '{$project->project_name}'.",
+                    'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $project->project_id],
+                    'related_id' => $report->report_id,
+                    'related_type' => 'report',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify client on report submission: ' . $e->getMessage());
         }
     }
 
@@ -996,5 +1013,102 @@ class ReportController extends Controller
             'description' => $description,
             'ip_address' => request()->ip(),
         ]);
+    }
+
+    /**
+     * Supervisor updates their own pending report
+     */
+    public function updateSupervisorReport(Request $request, $reportId)
+    {
+        $user = auth('web')->user();
+        $report = Report::with(['project'])->where('report_id', $reportId)->firstOrFail();
+
+        if ($report->submitted_by !== $user->user_id) {
+            abort(403, 'You are not authorized to update this report.');
+        }
+
+        if ($report->approval_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Only pending reports can be edited.'], 422);
+        }
+
+        $validated = $request->validate([
+            'project_id' => 'required|exists:projects,project_id',
+            'phase_id' => 'required|exists:construction_phases,phase_id',
+            'report_date' => 'required|date',
+            'report_text' => 'required|string|max:5000',
+            'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
+            'site_images' => 'nullable|array|max:5',
+            'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'remove_site_images' => 'nullable|array',
+            'remove_site_images.*' => 'string',
+        ]);
+
+        if (!$report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+            abort(403, 'You are not assigned to this project');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $images = [];
+            if ($request->hasFile('site_images')) {
+                foreach ($request->file('site_images') as $image) {
+                    $path = $image->store('reports', 'public');
+                    $images[] = $path;
+                }
+            }
+
+            $existingImages = $report->site_images ?? [];
+            $removedImages = $request->input('remove_site_images', []);
+            if (!empty($removedImages)) {
+                $existingImages = array_values(array_filter($existingImages, function ($img) use ($removedImages) {
+                    return !in_array($img, $removedImages);
+                }));
+            }
+
+            $finalImages = array_values(array_unique(array_merge($existingImages, $images)));
+
+            $updateData = [
+                'project_id' => $validated['project_id'],
+                'phase_id' => $validated['phase_id'],
+                'report_date' => $validated['report_date'],
+                'report_text' => $validated['report_text'],
+                'site_images' => !empty($finalImages) ? $finalImages : null,
+                'accomplishment_percentage' => $request->filled('accomplishment_percentage')
+                    ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
+                    : $report->accomplishment_percentage,
+            ];
+
+            $report->update($updateData);
+
+            $this->logAction('Report Updated', "Report #{$report->report_id} updated by supervisor");
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Report updated successfully.',
+                    'report' => [
+                        'report_id' => $report->report_id,
+                        'project_id' => $report->project_id,
+                        'phase_id' => $report->phase_id,
+                        'report_date' => $report->report_date->format('M d, Y h:i A'),
+                        'report_text' => $report->report_text,
+                        'site_images' => array_map(fn ($img) => asset('storage/' . ltrim($img, '/')), $finalImages),
+                        'accomplishment_percentage' => $report->accomplishment_percentage,
+                    ]
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Report updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Supervisor report update failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update report.'], 500);
+            }
+            return back()->withErrors('Failed to update report');
+        }
     }
 }

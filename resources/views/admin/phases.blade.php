@@ -424,13 +424,15 @@
         background-position: right 0.7rem center;
         background-size: 0.9rem;
         color: #0f172a;
-        min-width: 220px;
-        padding: 0.55rem 2.1rem 0.55rem 0.85rem;
+        min-width: 160px;
+        max-width: 100%;
+        padding: 0.4rem 1.8rem 0.4rem 0.7rem;
         cursor: pointer;
         border: 1px solid #e2e8f0;
         border-radius: 999px;
         box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
         transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        font-size: 13px;
     }
     .project-select:hover {
         background-color: #f1f5f9;
@@ -648,6 +650,23 @@
         width: 100% !important;
         max-width: 100% !important;
         flex: none !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 > .col:nth-child(5) {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    #pg-phases .card.p-3 .d-flex.gap-2.justify-content-end .btn {
+        justify-content: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 12px !important;
+        white-space: normal !important;
     }
 
     #pg-phases .metric-card {
@@ -905,6 +924,19 @@
         align-items: center !important;
         justify-content: initial !important;
     }
+
+    #pg-phases .project-select {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    #pg-phases .phase-table .action-cell .btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
 }
 
 </style>
@@ -921,7 +953,7 @@
                 </div>
                 <div>
                     <label class="text-muted d-block uppercase tracking-wider mb-1" style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em;">Select Project</label>
-                    <select class="fw-semibold text-dark project-select" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 15px;">
+                     <select class="fw-semibold text-dark project-select" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 13px;">
                         @foreach($projects as $projectOption)
                             <option value="{{ $projectOption->project_id }}" {{ ($selectedProject && $selectedProject->project_id == $projectOption->project_id) ? 'selected' : '' }}>
                                 {{ $projectOption->project_name }}

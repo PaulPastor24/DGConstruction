@@ -1491,7 +1491,7 @@ padding: 0 16px;
 }
 
 .stats-grid-4 {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .qa-grid {
@@ -1502,6 +1502,7 @@ padding: 0 16px;
 .proj-progress-wrapper {
     display: none;
 }
+
 
 .hero-banner {
     min-height: 260px;
@@ -1520,6 +1521,21 @@ padding: 0 16px;
     max-width: 100%;
 }
 
+.project-list-item {
+    flex-wrap: wrap;
+}
+
+.proj-progress-wrapper {
+    display: none;
+}
+
+.report-list-item {
+    flex-wrap: wrap;
+}
+
+.report-meta-right {
+    align-items: flex-start;
+}
 
 }
 
@@ -1544,7 +1560,7 @@ width: min(280px, 86vw);
 }
 
 .donut-chart-container {
-    align-items: flex-start;
+    align-items: center;
     flex-direction: column;
 }
 
