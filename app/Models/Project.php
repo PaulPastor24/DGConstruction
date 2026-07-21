@@ -22,6 +22,8 @@ class Project extends Model
         'start_date',
         'target_end_date',
         'actual_end_date',
+        'time_in',
+        'time_out',
         'status',
         'description',
         'project_image',
@@ -31,6 +33,8 @@ class Project extends Model
         'start_date' => 'date',
         'target_end_date' => 'date',
         'actual_end_date' => 'date',
+        'time_in' => 'datetime:H:i',
+        'time_out' => 'datetime:H:i',
     ];
 
     protected $appends = ['location'];
@@ -100,6 +104,19 @@ class Project extends Model
     public function getManagerNameAttribute()
     {
         return $this->engineer ? $this->engineer->name : 'Not Assigned';
+    }
+
+    /**
+     * Human-readable "7:00 AM - 4:00 PM" style label for the project's
+     * assigned attendance schedule, or a fallback message when unset.
+     */
+    public function getScheduleLabelAttribute()
+    {
+        if (!$this->time_in || !$this->time_out) {
+            return 'Not set';
+        }
+
+        return $this->time_in->format('g:i A') . ' - ' . $this->time_out->format('g:i A');
     }
 
     /*

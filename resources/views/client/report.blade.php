@@ -35,9 +35,7 @@
                 <label class="form-label small fw-bold text-muted">Status</label>
                 <select name="status" id="statusSelect" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">All Status</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Returned</option>
+                    <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published to Client</option>
                 </select>
             </div>
             <div class="col-12 col-md-2">
@@ -54,41 +52,19 @@
                     <i class="bi bi-file-earmark-text"></i>
                 </div>
                 <div>
-                    <span class="widget-label">Total Reports</span>
+                    <span class="widget-label">Total Published Reports</span>
                     <h3>{{ $stats['total'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="report-summary-widget">
-                <div class="widget-icon bg-warning-subtle text-warning">
-                    <i class="bi bi-clock-history"></i>
+                <div class="widget-icon bg-info-subtle text-info">
+                    <i class="bi bi-eye"></i>
                 </div>
                 <div>
-                    <span class="widget-label">Pending Review</span>
-                    <h3>{{ $stats['pending'] ?? 0 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="report-summary-widget">
-                <div class="widget-icon bg-primary-subtle text-primary">
-                    <i class="bi bi-check2-circle"></i>
-                </div>
-                <div>
-                    <span class="widget-label">Approved</span>
-                    <h3>{{ $stats['approved'] ?? 0 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="report-summary-widget">
-                <div class="widget-icon bg-danger-subtle text-danger">
-                    <i class="bi bi-x-circle"></i>
-                </div>
-                <div>
-                    <span class="widget-label">Returned</span>
-                    <h3>{{ $stats['rejected'] ?? 0 }}</h3>
+                    <span class="widget-label">Published to Client</span>
+                    <h3>{{ $stats['published'] ?? $stats['total'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -118,21 +94,21 @@
                 <tbody>
                     @forelse($reports as $report)
                         @php
-                            $status = $report->approval_status ?? 'pending';
-                            $pillClass = match($status) {
-                                'approved' => 'bg-success-subtle text-success',
-                                'rejected' => 'bg-danger-subtle text-danger',
-                                default => 'bg-warning-subtle text-warning'
-                            };
+                            $status = 'published';
+                            $pillClass = 'bg-info-subtle text-info';
+                            $displayStatus = 'published';
+                            $displayPillClass = 'bg-info-subtle text-info';
                         @endphp
                         @php
                             $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
+                            $adminImages = is_array($report->admin_site_images ?? null) ? $report->admin_site_images : [];
+                            $displayImages = !empty($adminImages) ? $adminImages : $siteImages;
                             $detailPayload = [
                                 'id' => $report->report_id,
                                 'report_id' => 'RPT-2026-' . str_pad($report->report_id, 4, '0', STR_PAD_LEFT),
                                 'title' => $report->report_title ?? 'Report Details',
-                                'status' => $status,
-                                'status_label' => ucfirst($status),
+                                'status' => $displayStatus,
+                                'status_label' => ucfirst($displayStatus),
                                 'project' => optional($report->project)->project_name ?? 'N/A',
                                 'phase' => optional($report->phase)->phase_name ?? 'N/A',
                                 'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
@@ -141,10 +117,11 @@
                                 'created_at' => optional($report->created_at)->format('M d, Y'),
                                 'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                                 'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
-                                'report_text' => $report->report_text ?? 'No description was provided for this report.',
-                                'site_images' => array_map(fn ($image) => asset('storage/' . $image), $siteImages),
+                                'report_text' => $report->admin_report_text ?? $report->report_text ?? 'No description was provided for this report.',
+                                'site_images' => array_map(fn ($image) => asset('storage/' . $image), $displayImages),
+                                'admin_explanation' => $report->admin_explanation ?? '',
                                 'submitted_initial' => strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)),
-                                'status_class' => $pillClass,
+                                'status_class' => $displayPillClass,
                             ];
                         @endphp
                         <tr>
@@ -248,8 +225,8 @@
                                                     </div>
 
                                                     <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
-                                                        <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
-                                                        <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
+                                                        <div class="fw-semibold text-muted mb-1">Admin Remarks</div>
+                                                        <div class="text-dark small">{{ $detailPayload['admin_explanation'] ?: ($report->approval_remarks ?: 'No remarks') }}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -265,7 +242,7 @@
                                                     @else
                                                         <div class="d-flex flex-wrap gap-2 mb-4">
                                                             @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                                <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                                <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 client-report-image-preview" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px; cursor: pointer;">
                                                                     <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
                                                                 </div>
                                                             @endforeach
@@ -314,20 +291,20 @@
         <div class="report-mobile-list">
             @forelse($reports as $report)
                 @php
-                    $status = $report->approval_status ?? 'pending';
-                    $pillClass = match($status) {
-                        'approved' => 'bg-success-subtle text-success',
-                        'rejected' => 'bg-danger-subtle text-danger',
-                        default => 'bg-warning-subtle text-warning'
-                    };
+                    $status = 'published';
+                    $pillClass = 'bg-info-subtle text-info';
+                    $displayStatus = 'published';
+                    $displayPillClass = 'bg-info-subtle text-info';
 
                     $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
+                    $adminImages = is_array($report->admin_site_images ?? null) ? $report->admin_site_images : [];
+                    $displayImages = !empty($adminImages) ? $adminImages : $siteImages;
                     $detailPayload = [
                         'id' => $report->report_id,
                         'report_id' => 'RPT-2026-' . str_pad($report->report_id, 4, '0', STR_PAD_LEFT),
                         'title' => $report->report_title ?? 'Report Details',
-                        'status' => $status,
-                        'status_label' => ucfirst($status),
+                        'status' => $displayStatus,
+                        'status_label' => ucfirst($displayStatus),
                         'project' => optional($report->project)->project_name ?? 'N/A',
                         'phase' => optional($report->phase)->phase_name ?? 'N/A',
                         'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
@@ -336,10 +313,11 @@
                         'created_at' => optional($report->created_at)->format('M d, Y'),
                         'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                         'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
-                        'report_text' => $report->report_text ?? 'No description was provided for this report.',
-                        'site_images' => array_map(fn ($image) => asset('storage/' . $image), $siteImages),
+                        'report_text' => $report->admin_report_text ?? $report->report_text ?? 'No description was provided for this report.',
+                        'site_images' => array_map(fn ($image) => asset('storage/' . $image), $displayImages),
+                        'admin_explanation' => $report->admin_explanation ?? '',
                         'submitted_initial' => strtoupper(substr(optional($report->submittedBy)->name ?? 'S', 0, 1)),
-                        'status_class' => $pillClass,
+                        'status_class' => $displayPillClass,
                     ];
                 @endphp
 
@@ -350,12 +328,12 @@
                             <strong>{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</strong>
                             <small>{{ optional($report->report_date)->format('h:i A') ?? '' }}</small>
                         </div>
-                        <span class="status-pill {{ $pillClass }}">{{ $status === 'rejected' ? 'Returned' : $status }}</span>
+                        <span class="status-pill {{ $displayPillClass }}">Published</span>
                     </div>
 
                     <div class="report-mobile-main">
                         <h3>{{ $report->report_title ?? optional($report->phase)->phase_name ?? 'Accomplishment Report' }}</h3>
-                        <p>{{ \Illuminate\Support\Str::limit(strip_tags($report->report_text ?? 'Latest accomplishment update submitted by the site supervisor.'), 90) }}</p>
+                        <p>{{ \Illuminate\Support\Str::limit(strip_tags($report->admin_report_text ?? $report->report_text ?? 'Latest accomplishment update submitted by the site supervisor.'), 90) }}</p>
                     </div>
 
                     <div class="report-mobile-details">
@@ -449,8 +427,8 @@
                                             </div>
 
                                             <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
-                                                <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
-                                                <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
+                                                <div class="fw-semibold text-muted mb-1">Admin Remarks</div>
+                                                <div class="text-dark small">{{ $detailPayload['admin_explanation'] ?: ($report->approval_remarks ?: 'No remarks') }}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -466,7 +444,7 @@
                                             @else
                                                 <div class="d-flex flex-wrap gap-2 mb-4">
                                                     @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;">
+                                                        <div class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 client-report-image-preview" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px; cursor: pointer;">
                                                             <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
                                                         </div>
                                                     @endforeach
@@ -1544,6 +1522,61 @@
         }
     }
 
+    #clientReportImageLightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    #clientReportImageLightbox.is-open {
+        display: flex;
+    }
+
+    #clientReportImageLightbox img {
+        max-width: 90%;
+        max-height: 85vh;
+        border-radius: 8px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    #clientLightboxCloseBtn {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        z-index: 10000;
+    }
+
+    #clientLightboxCloseBtn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .client-report-image-preview img {
+        cursor: pointer;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .client-report-image-preview:hover img {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+
 </style>
 @endsection
 
@@ -1658,5 +1691,59 @@
             });
         });
     });
-</script>
+    </script>
+
+    <div class="image-lightbox" id="clientReportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+        <button type="button" class="image-lightbox-close" id="clientLightboxCloseBtn" aria-label="Close preview">&times;</button>
+        <img src="" alt="Site image preview" id="clientLightboxImage">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const clientLightbox = document.getElementById('clientReportImageLightbox');
+            const clientLightboxImage = document.getElementById('clientLightboxImage');
+
+            window.openClientLightbox = function (imageUrl) {
+                if (!clientLightbox || !clientLightboxImage || !imageUrl || typeof imageUrl !== 'string' || imageUrl.trim() === '') {
+                    return;
+                }
+                clientLightboxImage.src = imageUrl;
+                clientLightbox.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            };
+
+            window.closeClientLightbox = function () {
+                if (!clientLightbox) return;
+                clientLightbox.classList.remove('is-open');
+                document.body.style.overflow = '';
+                if (clientLightboxImage) {
+                    setTimeout(() => { clientLightboxImage.src = ''; }, 200);
+                }
+            };
+
+            document.getElementById('clientLightboxCloseBtn')?.addEventListener('click', closeClientLightbox);
+            clientLightbox?.addEventListener('click', function (event) {
+                if (event.target === clientLightbox) {
+                    closeClientLightbox();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && clientLightbox?.classList.contains('is-open')) {
+                    closeClientLightbox();
+                }
+            });
+
+            document.body.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.matches('.client-report-image-preview') || target.closest('.client-report-image-preview')) {
+                    const img = target.matches('img') ? target : target.querySelector('img');
+                    const imageUrl = img?.src || target.closest('.client-report-image-preview')?.querySelector('img')?.src;
+                    if (imageUrl) {
+                        openClientLightbox(imageUrl);
+                    }
+                }
+            });
+        });
+    </script>
 @endpush

@@ -26,14 +26,23 @@ class Report extends Model
         'reviewed_at',
         'approved_at',
         'rejected_at',
+        'accomplishment_percentage',
+        'is_published_to_client',
+        'admin_report_text',
+        'admin_site_images',
+        'admin_explanation',
+        'published_at',
     ];
 
     protected $casts = [
         'report_date' => 'date',
         'site_images' => 'array',
+        'admin_site_images' => 'array',
         'reviewed_at' => 'datetime',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'published_at' => 'datetime',
+        'is_published_to_client' => 'boolean',
     ];
 
     public function getReportTitleAttribute(): string
@@ -47,8 +56,8 @@ class Report extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->approval_status) {
-            'approved' => 'Approved',
-            'rejected' => 'Rejected',
+            'approved' => $this->is_published_to_client ? 'Published to Client' : 'Approved (Hidden)',
+            'rejected' => 'Returned for Revision',
             default => 'Pending Review',
         };
     }
@@ -56,10 +65,29 @@ class Report extends Model
     public function getStatusBadgeClassAttribute(): string
     {
         return match ($this->approval_status) {
-            'approved' => 'approved',
+            'approved' => $this->is_published_to_client ? 'published' : 'approved',
             'rejected' => 'rejected',
             default => 'pending',
         };
+    }
+
+    public function getClientReportTextAttribute(): string
+    {
+        return $this->admin_report_text ?? $this->report_text ?? '';
+    }
+
+    public function getClientSiteImagesAttribute(): array
+    {
+        $images = $this->admin_site_images ?? $this->site_images ?? [];
+
+        return array_values(array_filter(array_map(function ($image) {
+            return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+        }, (array) $images)));
+    }
+
+    public function getClientExplanationAttribute(): string
+    {
+        return $this->admin_explanation ?? $this->approval_remarks ?? '';
     }
 
     public function getReportIdentifierAttribute(): string
@@ -115,5 +143,13 @@ class Report extends Model
     public function scopeRejected($query)
     {
         return $query->where('approval_status', 'rejected');
+    }
+
+    /**
+     * Scope for reports published to client
+     */
+    public function scopePublishedToClient($query)
+    {
+        return $query->where('approval_status', 'approved')->where('is_published_to_client', true);
     }
 }

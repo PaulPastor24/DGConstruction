@@ -1505,6 +1505,34 @@
                             </div>
                         </div>
 
+                        <div class="modal-grid-2 mt-3">
+                            <div>
+                                <label for="modal_time_in" class="form-label modal-custom-label">Site Time In</label>
+                                <input type="time"
+                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
+                                       id="modal_time_in"
+                                       name="time_in"
+                                       value="{{ old('time_in') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
+                                @error('time_in')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="modal_time_out" class="form-label modal-custom-label">Site Time Out</label>
+                                <input type="time"
+                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
+                                       id="modal_time_out"
+                                       name="time_out"
+                                       value="{{ old('time_out') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
+                                @error('time_out')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
                         <div class="d-none">
                             <label for="modal_status" class="form-label modal-custom-label">Project Status <span class="text-danger">*</span></label>
                             <select class="form-select modal-custom-input w-100" id="modal_status" name="status" required>
@@ -1696,6 +1724,34 @@
                                     @endforeach
                                 </select>
                                 @error('supervisor_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="modal-grid-2 mt-3">
+                            <div>
+                                <label for="edit_time_in" class="form-label modal-custom-label">Site Time In</label>
+                                <input type="time"
+                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
+                                       id="edit_time_in"
+                                       name="time_in"
+                                       value="{{ old('time_in', '') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
+                                @error('time_in')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="edit_time_out" class="form-label modal-custom-label">Site Time Out</label>
+                                <input type="time"
+                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
+                                       id="edit_time_out"
+                                       name="time_out"
+                                       value="{{ old('time_out', '') }}">
+                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
+                                @error('time_out')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -3087,6 +3143,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const startDateInput = document.getElementById('edit_start_date');
         const targetEndDateInput = document.getElementById('edit_target_end_date');
         const actualEndDateInput = document.getElementById('edit_actual_end_date');
+        const timeInInput = document.getElementById('edit_time_in');
+        const timeOutInput = document.getElementById('edit_time_out');
         const supervisorSelect = document.getElementById('edit_supervisor_id');
         const statusSelect = document.getElementById('edit_status');
         const modalTitle = document.getElementById('editProjectModalLabel');
@@ -3121,6 +3179,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startDateInput) startDateInput.value = project.start_date ? project.start_date.split('T')[0] : '';
         if (targetEndDateInput) targetEndDateInput.value = project.target_end_date ? project.target_end_date.split('T')[0] : '';
         if (actualEndDateInput) actualEndDateInput.value = project.actual_end_date ? project.actual_end_date.split('T')[0] : '';
+        if (timeInInput) timeInInput.value = project.time_in || '';
+        if (timeOutInput) timeOutInput.value = project.time_out || '';
         if (supervisorSelect) supervisorSelect.value = supervisorId || '';
         if (statusSelect) {
             Array.from(statusSelect.options).forEach(function(option) {

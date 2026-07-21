@@ -749,6 +749,12 @@ class AdminDashboardController extends Controller
                     'phase_id' => $report->phase_id,
                     'submitted_by' => $report->submitted_by,
                     'report_text' => $report->report_text,
+                    'admin_report_text' => $report->admin_report_text,
+                    'admin_site_images' => array_values(array_filter(array_map(function ($image) {
+                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                    }, (array) ($report->admin_site_images ?? [])))),
+                    'admin_explanation' => $report->admin_explanation,
+                    'is_published_to_client' => (bool) $report->is_published_to_client,
                     'approval_remarks' => $report->approval_remarks,
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
@@ -826,6 +832,12 @@ class AdminDashboardController extends Controller
                 'status' => $report->approval_status,
                 'status_label' => $report->status_label,
                 'report_text' => $report->report_text,
+                'admin_report_text' => $report->admin_report_text,
+                'admin_site_images' => array_values(array_filter(array_map(function ($image) {
+                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                }, (array) ($report->admin_site_images ?? [])))),
+                'admin_explanation' => $report->admin_explanation,
+                'is_published_to_client' => (bool) $report->is_published_to_client,
                 'approval_remarks' => $report->approval_remarks,
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
@@ -867,14 +879,20 @@ class AdminDashboardController extends Controller
         }
 
         $status = $request->input('status');
-        if ($status === 'pending' || $status === 'approved' || $status === 'rejected') {
-            $query->where('approval_status', $status);
+        if ($status === 'pending' || $status === 'approved' || $status === 'rejected' || $status === 'published') {
+            if ($status === 'published') {
+                $query->where('approval_status', 'approved')->where('is_published_to_client', true);
+            } else {
+                $query->where('approval_status', $status);
+            }
         } elseif ($status === 'Pending Review') {
             $query->where('approval_status', 'pending');
         } elseif ($status === 'Approved') {
             $query->where('approval_status', 'approved');
         } elseif ($status === 'Rejected') {
             $query->where('approval_status', 'rejected');
+        } elseif ($status === 'Published to Client') {
+            $query->where('approval_status', 'approved')->where('is_published_to_client', true);
         }
 
         if ($request->filled('search')) {
@@ -941,6 +959,7 @@ class AdminDashboardController extends Controller
             'total' => (clone $query)->count(),
             'pending' => (clone $query)->where('approval_status', 'pending')->count(),
             'approved' => (clone $query)->where('approval_status', 'approved')->count(),
+            'published' => (clone $query)->where('approval_status', 'approved')->where('is_published_to_client', true)->count(),
             'rejected' => (clone $query)->where('approval_status', 'rejected')->count(),
         ];
     }

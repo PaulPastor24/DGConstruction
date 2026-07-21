@@ -78,7 +78,8 @@ class ReportController extends Controller
         $decision = strtolower((string) $request->input('decision', 'approve'));
 
         return match ($decision) {
-            'approve' => $this->approve($request, $reportId),
+            'approve_display' => $this->approve($request, $reportId, true),
+            'approve_hide' => $this->approve($request, $reportId, false),
             'revision', 'reject' => $this->reject($request, $reportId),
             default => back()->withErrors('Invalid report decision.'),
         };
@@ -87,8 +88,13 @@ class ReportController extends Controller
     /**
      * Approve a report (Admin only)
      */
-    public function approve(Request $request, $reportId)
+    public function approve(Request $request, $reportId, bool $publishToClient = false)
     {
+        // When called from AJAX (direct route), read publish_to_client from request
+        if ($request->has('publish_to_client')) {
+            $publishToClient = $request->boolean('publish_to_client');
+        }
+
         $report = Report::findOrFail($reportId);
 
         // Only engineers can approve
@@ -96,14 +102,22 @@ class ReportController extends Controller
             abort(403, 'Only engineers can approve reports');
         }
 
-        if ($report->approval_status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'This report has already been reviewed.']);
+        // Allow re-approving if admin is updating an already reviewed report
+        $isReApproval = $report->approval_status !== 'pending';
+        if ($isReApproval && auth('web')->user()->role !== 'engineer') {
+            return response()->json(['success' => false, 'message' => 'Only engineers can update reviewed reports.']);
         }
 
         try {
             $validated = $request->validate([
                 'approval_remarks' => 'nullable|string|max:1000',
                 'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
+                'admin_report_text' => 'nullable|string|max:10000',
+                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_admin_images' => 'nullable|array',
+                'remove_admin_images.*' => 'string',
+                'admin_explanation' => 'nullable|string|max:2000',
             ]);
         } catch (ValidationException $e) {
             if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
@@ -120,7 +134,25 @@ class ReportController extends Controller
                 ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
                 : ($report->accomplishment_percentage ?? 0.0);
 
-            $report->update([
+            $adminImages = [];
+            if ($request->hasFile('admin_site_images')) {
+                foreach ($request->file('admin_site_images') as $image) {
+                    $path = $image->store('reports/admin', 'public');
+                    $adminImages[] = $path;
+                }
+            }
+
+            $existingAdminImages = $report->admin_site_images ?? [];
+            $removedImages = $request->input('remove_admin_images', []);
+            if (!empty($removedImages)) {
+                $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
+                    return !in_array($img, $removedImages);
+                }));
+            }
+
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+
+            $updateData = [
                 'approval_status' => 'approved',
                 'reviewed_by' => auth('web')->user()->user_id,
                 'reviewed_at' => now(),
@@ -128,7 +160,30 @@ class ReportController extends Controller
                 'approved_at' => now(),
                 'approval_remarks' => $validated['approval_remarks'],
                 'accomplishment_percentage' => $approvedProgress,
-            ]);
+                'is_published_to_client' => $publishToClient,
+                'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
+                'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
+                'published_at' => $publishToClient ? now() : null,
+            ];
+
+            // If re-approving, don't change rejected_at or reviewed_at if they exist
+            if ($isReApproval) {
+                unset($updateData['reviewed_at'], $updateData['approved_at']);
+                $updateData['reviewed_by'] = auth('web')->user()->user_id;
+                $updateData['approved_by'] = auth('web')->user()->user_id;
+            }
+
+            $report->update($updateData);
+
+            if ($report->phase && $request->filled('accomplishment_percentage')) {
+                $newPhasePercentage = round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2);
+                $report->phase->update(['completion_percentage' => $newPhasePercentage]);
+
+                if ($newPhasePercentage >= 100 && $report->phase->status !== 'completed') {
+                    $report->phase->update(['status' => 'completed']);
+                }
+            }
 
             $this->logAction(
                 'Report Approved',
@@ -152,10 +207,15 @@ class ReportController extends Controller
             try {
                 $clientId = optional($report->project)->client_id;
                 if ($clientId) {
+                    $notificationTitle = $publishToClient ? 'New Approved Progress Report' : 'Report Approved';
+                    $notificationMessage = $publishToClient
+                        ? "A report for project '{$report->project->project_name}' was approved and published."
+                        : "A report for project '{$report->project->project_name}' was approved.";
+
                     NotificationService::notifyClient($clientId, [
                         'type' => 'report',
-                        'title' => 'New Approved Progress Report',
-                        'message' => "A report for project '{$report->project->project_name}' was approved.",
+                        'title' => $notificationTitle,
+                        'message' => $notificationMessage,
                         'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
                         'related_id' => $report->report_id,
                         'related_type' => 'report',
@@ -173,7 +233,7 @@ class ReportController extends Controller
                     'message' => 'Report approved successfully.',
                     'report_id' => $report->report_id,
                     'status' => 'approved',
-                    'auto_completed' => $autoCompleted,
+                    'published_to_client' => $publishToClient,
                 ]);
             }
 
@@ -242,6 +302,8 @@ class ReportController extends Controller
                 'reviewed_at' => now(),
                 'rejected_at' => now(),
                 'approval_remarks' => $validated['approval_remarks'],
+                'is_published_to_client' => false,
+                'published_at' => null,
             ]);
 
             $this->logAction(
@@ -260,23 +322,6 @@ class ReportController extends Controller
                     'related_id' => $report->report_id,
                     'related_type' => 'report',
                 ]);
-            }
-
-            // Notify client about rejection
-            try {
-                $clientId = optional($report->project)->client_id;
-                if ($clientId) {
-                    NotificationService::notifyClient($clientId, [
-                        'type' => 'report',
-                        'title' => 'Report Returned',
-                        'message' => "A report for project '{$report->project->project_name}' was returned with feedback.",
-                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $report->project_id],
-                        'related_id' => $report->report_id,
-                        'related_type' => 'report',
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::error('Failed to notify client on report rejection: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -352,6 +397,11 @@ class ReportController extends Controller
                 'accomplishment_percentage' => $request->filled('accomplishment_percentage')
                     ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
                     : null,
+                'is_published_to_client' => false,
+                'admin_report_text' => null,
+                'admin_site_images' => null,
+                'admin_explanation' => null,
+                'published_at' => null,
             ]);
 
             $this->logAction(
@@ -416,6 +466,194 @@ class ReportController extends Controller
             DB::rollBack();
             Log::error('Report submission failed: ' . $e->getMessage());
             return back()->withErrors('Failed to submit report');
+        }
+    }
+
+    /**
+     * Prepare / edit a report for client viewing (Admin only)
+     * Saves admin's edited content without changing approval status.
+     */
+    public function prepareReport(Request $request, $reportId)
+    {
+        $report = Report::findOrFail($reportId);
+
+        if (auth('web')->user()->role !== 'engineer') {
+            abort(403, 'Only engineers can prepare reports');
+        }
+
+        try {
+            $validated = $request->validate([
+                'admin_report_text' => 'nullable|string|max:10000',
+                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_admin_images' => 'nullable|array',
+                'remove_admin_images.*' => 'string',
+                'admin_explanation' => 'nullable|string|max:2000',
+                'remove_existing_admin_images' => 'nullable|boolean',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
+            }
+
+            throw $e;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $adminImages = [];
+            if ($request->hasFile('admin_site_images')) {
+                foreach ($request->file('admin_site_images') as $image) {
+                    $path = $image->store('reports/admin', 'public');
+                    $adminImages[] = $path;
+                }
+            }
+
+            $existingAdminImages = $report->admin_site_images ?? [];
+            $removedImages = $request->input('remove_admin_images', []);
+
+            if ($request->boolean('remove_existing_admin_images')) {
+                $existingAdminImages = [];
+            } elseif (!empty($removedImages)) {
+                $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
+                    return !in_array($img, $removedImages);
+                }));
+            }
+
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+
+            $report->update([
+                'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
+                'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
+            ]);
+
+            $this->logAction(
+                'Report Prepared',
+                "Report #{$report->report_id} prepared for client viewing"
+            );
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Report prepared successfully.',
+                    'report_id' => $report->report_id,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Report prepared successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Report preparation failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to prepare report.'], 500);
+            }
+            return back()->withErrors('Failed to prepare report');
+        }
+    }
+
+    /**
+     * Update an already-processed report (Admin only)
+     * Allows editing report content, images, and toggling publish status for already approved reports.
+     */
+    public function updateReport(Request $request, $reportId)
+    {
+        $report = Report::findOrFail($reportId);
+
+        if (auth('web')->user()->role !== 'engineer') {
+            abort(403, 'Only engineers can update reports');
+        }
+
+        try {
+            $validated = $request->validate([
+                'admin_report_text' => 'nullable|string|max:10000',
+                'admin_explanation' => 'nullable|string|max:2000',
+                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_admin_images' => 'nullable|array',
+                'remove_admin_images.*' => 'string',
+                'is_published_to_client' => 'nullable|boolean',
+                'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
+            }
+            throw $e;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $adminImages = [];
+            if ($request->hasFile('admin_site_images')) {
+                foreach ($request->file('admin_site_images') as $image) {
+                    $path = $image->store('reports/admin', 'public');
+                    $adminImages[] = $path;
+                }
+            }
+
+            $existingAdminImages = $report->admin_site_images ?? [];
+            $removedImages = $request->input('remove_admin_images', []);
+            if (!empty($removedImages)) {
+                $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
+                    return !in_array($img, $removedImages);
+                }));
+            }
+
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+
+            $updateData = [
+                'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
+                'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
+            ];
+
+            // If request has publish_to_client, update it and adjust published_at
+            if ($request->has('is_published_to_client')) {
+                $publishToClient = (bool) $request->input('is_published_to_client');
+                $updateData['is_published_to_client'] = $publishToClient;
+                $updateData['published_at'] = $publishToClient ? now() : null;
+            }
+
+            // Update accomplishment percentage if provided
+            if ($request->filled('accomplishment_percentage')) {
+                $newPercentage = round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2);
+                $updateData['accomplishment_percentage'] = $newPercentage;
+
+                if ($report->phase) {
+                    $report->phase->update(['completion_percentage' => $newPercentage]);
+                }
+            }
+
+            $report->update($updateData);
+
+            $this->logAction(
+                'Report Updated',
+                "Report #{$report->report_id} updated by engineer"
+            );
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Report updated successfully.',
+                    'report_id' => $report->report_id,
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Report updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Report update failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update report.'], 500);
+            }
+            return back()->withErrors('Failed to update report');
         }
     }
 
@@ -602,10 +840,16 @@ class ReportController extends Controller
                 'submitted_by' => $report->submittedBy->name,
                 'submitted_by_avatar' => strtoupper(substr($report->submittedBy->name, 0, 1)),
                 'approval_status' => $report->approval_status,
+                'is_published_to_client' => (bool) $report->is_published_to_client,
                 'reviewed_by' => $report->reviewedBy->name ?? '-',
                 'approved_by' => $report->approvedBy->name ?? '-',
                 'approval_remarks' => $report->approval_remarks ?? 'No remarks',
                 'report_text' => $report->report_text,
+                'admin_report_text' => $report->admin_report_text,
+                'admin_site_images' => array_values(array_filter(array_map(function ($image) {
+                    return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                }, (array) ($report->admin_site_images ?? [])))),
+                'admin_explanation' => $report->admin_explanation ?? '',
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
@@ -613,6 +857,7 @@ class ReportController extends Controller
                 'reviewed_at' => $report->reviewed_at ? $report->reviewed_at->format('M d, Y') : '-',
                 'approved_at' => $report->approved_at ? $report->approved_at->format('M d, Y') : '-',
                 'rejected_at' => $report->rejected_at ? $report->rejected_at->format('M d, Y') : '-',
+                'published_at' => $report->published_at ? $report->published_at->format('M d, Y h:i A') : null,
             ]
         ]);
     }

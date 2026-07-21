@@ -39,7 +39,7 @@
 
         font-family: 'DM Sans', sans-serif;
         color: var(--color-primary);
-        padding: 1.5rem;
+        padding: 1.25rem;
         background-color: var(--bg-light);
         width: 100%;
         min-height: 100%;
@@ -52,7 +52,7 @@
 
     /* Header Section */
     .reports-header {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.1rem;
     }
     .reports-header h1 {
         font-family: 'Syne', sans-serif;
@@ -71,9 +71,9 @@
     /* 5-Column Summary Grid */
     .summary-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
     }
     .summary-card {
         background: linear-gradient(180deg, #ffffff 0%, #f5faf3 100%);
@@ -442,6 +442,7 @@
     }
     .status-pill.pending { background: #fff7e4; color: #9c6a1a; border-color: #f3dfb7; }
     .status-pill.approved { background: #e6f9ea; color: #196d34; border-color: #cce7d4; }
+    .status-pill.published { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
     .status-pill.rejected { background: #ffe6e7; color: #a82f32; border-color: #f3c6c8; }
 
     /* Inline action row icons - green theme */
@@ -922,11 +923,11 @@
     #reportDetailsModal .modal-header {
         background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%);
         border-bottom: 2px solid var(--cms-green-dark);
-        padding: 1.5rem;
+        padding: 1.15rem 1.5rem;
     }
     #reportDetailsModal .modal-body {
         background: #ffffff;
-        padding: 1.75rem;
+        padding: 1.4rem 1.5rem;
     }
     #reportDetailsModal .report-details-panel {
         max-height: none;
@@ -944,7 +945,7 @@
         background: #ffffff;
         border: 1px solid #e8f0eb;
         border-radius: 16px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         box-shadow: 0 8px 30px rgba(15, 32, 21, 0.06);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -1090,6 +1091,9 @@
         color: #6b7280;
         font-size: 0.85rem;
         transition: all 0.2s ease;
+        cursor: pointer;
+        padding: 0;
+        font-family: inherit;
     }
     .modal-more-badge:hover {
         background: #e8f0eb;
@@ -1922,12 +1926,12 @@
         }
     }
 
-    /* Image Lightbox */
+    /* Image Lightbox / Gallery */
     .image-lightbox {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(10, 15, 12, 0.92);
         z-index: 9999;
         align-items: center;
         justify-content: center;
@@ -1938,11 +1942,24 @@
         display: flex;
     }
 
+    .image-lightbox-stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        max-width: 1100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .image-lightbox img {
         max-width: 90%;
-        max-height: 85vh;
-        border-radius: 8px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        max-height: 82vh;
+        border-radius: 10px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        object-fit: contain;
+        background: #0f172a;
+        user-select: none;
     }
 
     .image-lightbox-close {
@@ -1961,11 +1978,127 @@
         align-items: center;
         justify-content: center;
         transition: background 0.2s;
+        z-index: 2;
     }
 
     .image-lightbox-close:hover {
         background: rgba(255, 255, 255, 0.3);
     }
+
+    .image-lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        font-size: 1.35rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, transform 0.15s;
+        z-index: 2;
+    }
+
+    .image-lightbox-nav:hover {
+        background: rgba(255, 255, 255, 0.28);
+        transform: translateY(-50%) scale(1.05);
+    }
+
+    .image-lightbox-nav.prev { left: 0.5rem; }
+    .image-lightbox-nav.next { right: 0.5rem; }
+    .image-lightbox-nav[hidden] { display: none; }
+
+    .image-lightbox-counter {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #f1f5f9;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+    }
+
+    @media (max-width: 640px) {
+        .image-lightbox { padding: 1rem; }
+        .image-lightbox-nav { width: 38px; height: 38px; font-size: 1.1rem; }
+        .image-lightbox-close { top: 0.5rem; right: 0.75rem; }
+    }
+
+    /* Publish / Hide toggle switch */
+    .switch-toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .switch-toggle .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background-color: #cbd5e1;
+        border-radius: 999px;
+        transition: background-color 0.2s ease;
+    }
+    .switch-toggle .switch-slider::before {
+        content: '';
+        position: absolute;
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        top: 3px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+        transition: transform 0.2s ease;
+    }
+    .switch-toggle input:checked + .switch-slider {
+        background-color: #166534;
+    }
+    .switch-toggle input:checked + .switch-slider::before {
+        transform: translateX(20px);
+    }
+    .switch-toggle input:focus-visible + .switch-slider {
+        box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.25);
+    }
+    .switch-toggle-label-text {
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: #1a2e23;
+    }
+    .switch-toggle-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+    }
+    .switch-toggle-status.is-on { background: #e6f9ea; color: #196d34; }
+    .switch-toggle-status.is-off { background: #f1f5f9; color: #64748b; }
 </style>
 @endpush
 
@@ -2002,6 +2135,14 @@
                 <div class="subtext">Reports approved</div>
             </div>
             <div class="summary-icon stat-icon-wrap"><i class="bi bi-check-circle-fill"></i></div>
+        </div>
+        <div class="summary-card published">
+            <div class="summary-info">
+                <div class="label">Published to Client</div>
+                <div class="value">{{ $stats['published'] ?? 0 }}</div>
+                <div class="subtext">Visible to clients</div>
+            </div>
+            <div class="summary-icon stat-icon-wrap"><i class="bi bi-eye"></i></div>
         </div>
         <div class="summary-card rejected">
             <div class="summary-info">
@@ -2057,6 +2198,7 @@
                         <option value="">All Status</option>
                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending Review</option>
                         <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published to Client</option>
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
@@ -2169,7 +2311,7 @@
                                 $reportId = 'RPT-2026-' . str_pad($selectedReport->report_id, 4, '0', STR_PAD_LEFT);
                                 $completionPercentage = round((float) ($selectedReport->accomplishment_percentage ?? optional($selectedReport->phase)->completion_percentage ?? 0), 2);
                             @endphp
-                            <div class="row gx-4 gy-4">
+                            <div class="row gx-3 gy-3">
                                 <div class="col-12 col-xl-7">
                                     <div class="modal-detail-card">
                                         <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #ffffff; border: 1px solid #e8f0eb;">
@@ -2236,19 +2378,19 @@
                                             <div class="fw-bold" style="color: var(--cms-green-dark); font-size: 0.9rem;">Site Images</div>
                                             <div class="small text-muted">{{ count((array) ($selectedReport->site_images ?? [])) }} uploaded</div>
                                         </div>
-                                        @php $images = (array) ($selectedReport->site_images ?? []); @endphp
-                                        @if(!empty($images))
-                                            <div class="modal-image-grid mb-3">
-                                                @foreach(array_slice($images, 0, 4) as $image)
-                                                    @php $imageUrl = is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : ''; @endphp
-                                                    @if($imageUrl)
-                                                        <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
-                                                            <img src="{{ $imageUrl }}" alt="Site image">
-                                                        </button>
-                                                    @endif
+                                        @php
+                                            $images = (array) ($selectedReport->site_images ?? []);
+                                            $fullImageUrls = collect($images)->filter(fn($img) => is_string($img) && $img !== '')->map(fn($img) => asset('storage/' . ltrim($img, '/')))->values();
+                                        @endphp
+                                        @if($fullImageUrls->isNotEmpty())
+                                            <div class="modal-image-grid mb-3" data-gallery='{{ $fullImageUrls->toJson() }}'>
+                                                @foreach($fullImageUrls->take(4) as $imageUrl)
+                                                    <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
+                                                        <img src="{{ $imageUrl }}" alt="Site image">
+                                                    </button>
                                                 @endforeach
-                                                @if(count($images) > 4)
-                                                    <div class="modal-more-badge">+{{ count($images) - 4 }}</div>
+                                                @if($fullImageUrls->count() > 4)
+                                                    <button type="button" class="modal-more-badge lightbox-trigger" data-full-image="{{ $fullImageUrls->get(4) }}" aria-label="View all site images">+{{ $fullImageUrls->count() - 4 }}</button>
                                                 @endif
                                             </div>
                                         @else
@@ -2332,10 +2474,19 @@
         </div>
     </div>
 
-    {{-- Image Lightbox Modal --}}
+    {{-- Image Lightbox / Gallery Modal --}}
     <div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
         <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
-        <img src="" alt="Site image preview" id="lightboxImage">
+        <div class="image-lightbox-stage">
+            <button type="button" class="image-lightbox-nav prev" id="lightboxPrevBtn" aria-label="Previous image" hidden>
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <img src="" alt="Site image preview" id="lightboxImage">
+            <button type="button" class="image-lightbox-nav next" id="lightboxNextBtn" aria-label="Next image" hidden>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <div class="image-lightbox-counter" id="lightboxCounter" hidden></div>
+        </div>
     </div>
 
     <div id="imagePreviewOverlay" class="image-preview-overlay" data-preview-overlay>
@@ -2347,6 +2498,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const lightbox = document.getElementById('reportImageLightbox');
+            if (lightbox) {
+                document.body.appendChild(lightbox);
+            }
+
             const searchInput = document.getElementById('reportsSearchInput');
             const projectFilter = document.getElementById('projectFilter');
             const phaseFilter = document.getElementById('phaseFilter');
@@ -2363,8 +2519,26 @@
             const reportsBaseUrl = '{{ url('/admin/reports') }}';
             const detailsBaseUrl = reportsBaseUrl;
             const downloadBaseUrl = reportsBaseUrl;
+            const storageBaseUrl = '{{ rtrim(asset('storage'), '/') }}';
+
+            // The details API sometimes returns bare storage-relative paths (e.g. "reports/xyz.jpg")
+            // instead of fully-qualified URLs, which renders as a blank/broken image in <img> tags.
+            // Normalize every image reference through this before it is ever put in the DOM.
+            function resolveImageUrl(url) {
+                if (!url || typeof url !== 'string') return '';
+                const trimmed = url.trim();
+                if (!trimmed) return '';
+                if (/^(https?:)?\/\//i.test(trimmed) || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+                    return trimmed;
+                }
+                if (trimmed.startsWith('/')) {
+                    return trimmed;
+                }
+                return `${storageBaseUrl}/${trimmed.replace(/^storage\//, '')}`;
+            }
             let activeReportId = null;
             let debounceTimer;
+            let removedAdminImageUrls = new Set();
 
             function pauseModalFocusTrap() {
                 const modal = bootstrap.Modal.getInstance(reportDetailsModal);
@@ -2394,14 +2568,84 @@
                 previewImage.src = '';
             }
 
-            function openLightbox(imageUrl) {
+            let lightboxGallery = [];
+            let lightboxIndex = 0;
+
+            function renderLightboxImage() {
+                const lightboxImage = document.getElementById('lightboxImage');
+                const counter = document.getElementById('lightboxCounter');
+                const prevBtn = document.getElementById('lightboxPrevBtn');
+                const nextBtn = document.getElementById('lightboxNextBtn');
+                const total = lightboxGallery.length;
+                const imageUrl = lightboxGallery[lightboxIndex];
+                if (!lightboxImage || !imageUrl) return;
+
+                lightboxImage.onerror = function () {
+                    lightboxImage.onerror = null;
+                    lightboxImage.alt = 'Image failed to load';
+                };
+                lightboxImage.src = imageUrl;
+
+                const showNav = total > 1;
+                if (prevBtn) prevBtn.hidden = !showNav;
+                if (nextBtn) nextBtn.hidden = !showNav;
+                if (counter) {
+                    counter.hidden = !showNav;
+                    counter.textContent = `${lightboxIndex + 1} / ${total}`;
+                }
+            }
+
+            function lightboxShowNext() {
+                if (!lightboxGallery.length) return;
+                lightboxIndex = (lightboxIndex + 1) % lightboxGallery.length;
+                renderLightboxImage();
+            }
+
+            function lightboxShowPrev() {
+                if (!lightboxGallery.length) return;
+                lightboxIndex = (lightboxIndex - 1 + lightboxGallery.length) % lightboxGallery.length;
+                renderLightboxImage();
+            }
+
+            function openLightbox(imageUrl, gallery, index) {
                 const lightbox = document.getElementById('reportImageLightbox');
                 const lightboxImage = document.getElementById('lightboxImage');
-                if (!lightbox || !lightboxImage) return;
-                lightboxImage.src = imageUrl;
+                if (!lightbox || !lightboxImage || !imageUrl || typeof imageUrl !== 'string' || imageUrl.trim() === '') {
+                    return;
+                }
+
+                lightboxGallery = Array.isArray(gallery) && gallery.length ? gallery.filter(Boolean) : [imageUrl];
+                lightboxIndex = Number.isInteger(index) && index >= 0 && index < lightboxGallery.length
+                    ? index
+                    : Math.max(0, lightboxGallery.indexOf(imageUrl));
+
+                renderLightboxImage();
                 lightbox.classList.add('is-open');
                 document.body.style.overflow = 'hidden';
             }
+
+            window.openLightbox = openLightbox;
+
+            document.getElementById('lightboxPrevBtn')?.addEventListener('click', function (e) {
+                e.stopPropagation();
+                lightboxShowPrev();
+            });
+            document.getElementById('lightboxNextBtn')?.addEventListener('click', function (e) {
+                e.stopPropagation();
+                lightboxShowNext();
+            });
+
+            document.addEventListener('keydown', function(e) {
+                const lightbox = document.getElementById('reportImageLightbox');
+                if (!lightbox?.classList.contains('is-open')) return;
+                if (e.key === 'Escape') {
+                    closeLightbox();
+                } else if (e.key === 'ArrowRight') {
+                    lightboxShowNext();
+                } else if (e.key === 'ArrowLeft') {
+                    lightboxShowPrev();
+                }
+            });
 
             function closeLightbox() {
                 const lightbox = document.getElementById('reportImageLightbox');
@@ -2412,6 +2656,8 @@
                 if (lightboxImage) {
                     setTimeout(() => { lightboxImage.src = ''; }, 200);
                 }
+                lightboxGallery = [];
+                lightboxIndex = 0;
             }
 
             function setDetailsPanelOpen(isOpen) {
@@ -2446,12 +2692,29 @@
                 `;
             }
 
+            function galleryFromTrigger(triggerEl, imageUrl) {
+                const container = triggerEl?.closest('[data-gallery]');
+                if (container) {
+                    try {
+                        const parsed = JSON.parse(container.getAttribute('data-gallery'));
+                        if (Array.isArray(parsed) && parsed.length) return parsed;
+                    } catch (e) { /* fall through to sibling scan */ }
+                }
+                const scope = triggerEl?.closest('.modal-image-grid') || document;
+                const siblings = Array.from(scope.querySelectorAll('.lightbox-trigger'))
+                    .map(el => el.dataset?.fullImage || el.querySelector('img')?.src)
+                    .filter(Boolean);
+                return siblings.length ? siblings : [imageUrl];
+            }
+
             document.body.addEventListener('click', function (event) {
                 const target = event.target;
                 if (target.matches('.previewable-image') || target.closest('.lightbox-trigger')) {
-                    const imageUrl = target.matches('.previewable-image') ? target.src : (target.closest('.lightbox-trigger')?.dataset?.fullImage || target.closest('.lightbox-trigger')?.querySelector('img')?.src);
+                    const trigger = target.closest('.lightbox-trigger');
+                    const imageUrl = target.matches('.previewable-image') ? target.src : (trigger?.dataset?.fullImage || trigger?.querySelector('img')?.src);
                     if (imageUrl) {
-                        openLightbox(imageUrl);
+                        const gallery = trigger ? galleryFromTrigger(trigger, imageUrl) : [imageUrl];
+                        openLightbox(imageUrl, gallery);
                     }
                     return;
                 }
@@ -2464,15 +2727,6 @@
                 }
                 if (target.matches('.image-preview-close') || target.matches('#imagePreviewOverlay')) {
                     closeImagePreview();
-                }
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    const lightbox = document.getElementById('reportImageLightbox');
-                    if (lightbox?.classList.contains('is-open')) {
-                        closeLightbox();
-                    }
                 }
             });
 
@@ -2541,10 +2795,11 @@
             let activePage = Number(urlParams.get('page')) || 1;
 
             function updateSummary(stats) {
-                const [totalCard, pendingCard, approvedCard, rejectedCard] = summaryValues;
+                const [totalCard, pendingCard, approvedCard, publishedCard, rejectedCard] = summaryValues;
                 totalCard.textContent = stats.total ?? 0;
                 pendingCard.textContent = stats.pending ?? 0;
                 approvedCard.textContent = stats.approved ?? 0;
+                publishedCard.textContent = stats.published ?? 0;
                 rejectedCard.textContent = stats.rejected ?? 0;
             }
 
@@ -2649,22 +2904,27 @@
 
             function renderDetailsPanel(report) {
                 setDetailsPanelOpen(true);
+                report = {
+                    ...report,
+                    site_images: Array.isArray(report.site_images) ? report.site_images.filter(Boolean).map(resolveImageUrl) : [],
+                    admin_site_images: Array.isArray(report.admin_site_images) ? report.admin_site_images.filter(Boolean).map(resolveImageUrl) : []
+                };
                 const progressValue = Math.min(Math.max(Number(report.completion_percentage || 0), 0), 100);
                 const attachmentImages = Array.isArray(report.site_images) ? report.site_images.filter(Boolean) : [];
                 const attachmentCount = attachmentImages.length;
                 const attachmentMarkup = attachmentCount ? `
-                    <div class="modal-image-grid mb-3">
+                    <div class="modal-image-grid mb-3" data-gallery='${JSON.stringify(attachmentImages).replace(/'/g, "&#39;")}'>
                         ${attachmentImages.slice(0, 4).map(image => `
                             <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="${image}" aria-label="Preview site image">
                                 <img src="${image}" alt="Site image">
                             </button>
                         `).join('')}
-                        ${attachmentCount > 4 ? `<div class="modal-more-badge">+${attachmentCount - 4}</div>` : ''}
+                        ${attachmentCount > 4 ? `<button type="button" class="modal-more-badge lightbox-trigger" data-full-image="${attachmentImages[4]}" aria-label="View all site images">+${attachmentCount - 4}</button>` : ''}
                     </div>
                 ` : '<div class="text-muted small border rounded-3 p-3 mb-3" style="background: #f8faf9;">No site images were attached to this report.</div>';
 
                 detailsPanel.innerHTML = `
-                    <div class="row gx-4 gy-4">
+                    <div class="row gx-3 gy-3">
                         <div class="col-12 col-xl-7">
                             <div class="modal-detail-card">
                                 <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #ffffff; border: 1px solid #e8f0eb;">
@@ -2674,7 +2934,7 @@
                                     </div>
                                     <div class="text-sm-end">
                                         <div class="modal-section-title mb-1" style="margin-top:0; border:none; padding-bottom:0;">Approval Status</div>
-                                        <span class="status-pill ${report.status === 'approved' ? 'approved' : report.status === 'rejected' ? 'rejected' : 'pending'} p-2 mt-1 d-inline-block">${report.status_label || 'Pending Review'}</span>
+                                         <span class="status-pill ${report.status === 'approved' && report.is_published_to_client ? 'published' : report.status === 'approved' ? 'approved' : report.status === 'rejected' ? 'rejected' : 'pending'} p-2 mt-1 d-inline-block">${report.status_label || 'Pending Review'}</span>
                                     </div>
                                 </div>
 
@@ -2782,18 +3042,151 @@
                             </div>
 
                             ${report.status === 'pending' ? `
-                                <div class="modal-action-row">
-                                    <button type="button" class="btn-modal btn-modal-reject js-reject-report" data-report-id="${report.id}">
-                                        <i class="bi bi-x-lg"></i> Reject
+                                <div class="modal-progress-card mb-3">
+                                    <div class="modal-section-title">Prepare for Client Viewing</div>
+                                    <div class="text-muted small mb-3">This text will replace the original report content shown to the client. Leave blank to keep the original report text.</div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Admin Remarks / Client Explanation</label>
+                                        <textarea id="adminClientText" class="form-control mt-1" rows="4" placeholder="Add your client-facing explanation here. This will be shown to the client instead of the original report text...">${report.admin_report_text || report.admin_explanation || ''}</textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Add Images</label>
+                                        <input type="file" id="adminImageUpload" class="form-control mt-1" accept="image/*" multiple>
+                                        <span class="text-muted small">Select images to add to the client-facing report.</span>
+                                    </div>
+
+                                    ${(Array.isArray(report.admin_site_images) && report.admin_site_images.length > 0) ? `
+                                        <div class="mb-3">
+                                            <label class="text-muted small" style="font-weight:600;">Current Client Images</label>
+                                            <div class="d-flex flex-wrap gap-2 mt-2" id="adminImagesContainer">
+                                                ${report.admin_site_images.map((img, idx) => `
+                                                    <div class="position-relative admin-image-wrapper" style="width: 80px; height: 80px;" data-image-url="${img}">
+                                                        <img src="${img}" alt="Admin image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
+                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    ${(Array.isArray(report.site_images) && report.site_images.length > 0) ? `
+                                        <div class="mb-3">
+                                            <label class="text-muted small" style="font-weight:600;">Original Report Images</label>
+                                            <div class="d-flex flex-wrap gap-2 mt-2" id="originalImagesContainer">
+                                                ${report.site_images.map((img, idx) => `
+                                                    <div class="position-relative" style="width: 80px; height: 80px;" data-image-url="${img}">
+                                                        <img src="${img}" alt="Original image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded original-image-preview" style="cursor: pointer; opacity: 0.7;">
+                                                        <button type="button" class="btn btn-sm btn-success position-absolute bottom-0 start-0 p-0 use-original-image" style="width: 20px; height: 20px; font-size: 0.65rem; line-height: 1;" title="Use this image">+</button>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <button type="button" class="btn btn-sm btn-outline-primary js-prepare-report" data-report-id="${report.id}">
+                                        <i class="bi bi-save"></i> Save Preparation
                                     </button>
-                                    <button type="button" class="btn-modal btn-modal-approve js-approve-report" data-report-id="${report.id}">
-                                        <i class="bi bi-check2"></i> Approve
+                                </div>
+
+                                <div class="modal-progress-card mb-3">
+                                    <div class="modal-section-title">Publishing Decision</div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Choose how to handle this report:</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="radio" name="publishChoice" id="publishDisplay" value="display" checked>
+                                            <label class="form-check-label" for="publishDisplay">
+                                                <strong>Approve & Display to Client</strong>
+                                                <div class="text-muted small">Approve and make visible to the client assigned to this project.</div>
+                                            </label>
+                                        </div>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="radio" name="publishChoice" id="publishHide" value="hide">
+                                            <label class="form-check-label" for="publishHide">
+                                                <strong>Approve but Keep Hidden from Client</strong>
+                                                <div class="text-muted small">Approve for internal records, but do not show to the client.</div>
+                                            </label>
+                                        </div>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="radio" name="publishChoice" id="rejectReport" value="reject">
+                                            <label class="form-check-label" for="rejectReport">
+                                                <strong>Reject / Return for Revision</strong>
+                                                <div class="text-muted small">Do not publish and allow the supervisor to revise.</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" id="rejectionRemarksGroup" style="display:none;">
+                                        <label class="text-muted small" style="font-weight:600;">Rejection Remarks</label>
+                                        <textarea id="rejectionRemarks" class="form-control mt-1" rows="2" placeholder="Enter the reason for rejection..."></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="modal-action-row">
+                                    <button type="button" class="btn-modal btn-modal-approve js-submit-report" data-report-id="${report.id}" style="background-color: #166534; color: #ffffff; border-color: #166534;">
+                                        <i class="bi bi-check2"></i> Submit
                                     </button>
                                 </div>
                             ` : `
-                                <div class="modal-status-note">
-                                    <i class="bi bi-info-circle"></i>
-                                    This report has already been ${report.status === 'approved' ? 'approved' : 'rejected'}.
+                                <div class="modal-progress-card mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="modal-section-title mb-0" style="margin-top:0; border:none; padding-bottom:0;">Current Status</div>
+                                        <span class="status-pill ${report.status === 'approved' && report.is_published_to_client ? 'published' : report.status === 'approved' ? 'approved' : 'rejected'} p-2 mt-1 d-inline-block">${report.status_label || (report.status === 'approved' ? 'Approved' : 'Rejected')}</span>
+                                    </div>
+                                    <div class="text-muted small">${report.is_published_to_client ? 'This report is currently published to the client.' : 'This report is not published to the client.'}</div>
+                                    <button type="button" class="btn btn-sm mt-2 js-edit-reviewed-report" data-report-id="${report.id}" style="background-color:#166534; color:#fff; border-color:#166534; font-weight:700; width:100%;">
+                                        <i class="bi bi-pencil-square"></i> Edit Report &amp; Visibility
+                                    </button>
+                                </div>
+
+                                <div class="modal-progress-card mb-3" id="editReviewedSection-${report.id}" style="display:none;">
+                                    <div class="modal-section-title">Edit Report Content</div>
+                                    <div class="text-muted small mb-3">Modify the report content, images, and publish settings. Changes will be saved without resetting the approval status.</div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Admin Report Text</label>
+                                        <textarea id="adminClientText-${report.id}" class="form-control mt-1" rows="4" placeholder="Edit the client-facing report text...">${report.admin_report_text || report.report_text || ''}</textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Add Images</label>
+                                        <input type="file" id="adminImageUpload-${report.id}" class="form-control mt-1" accept="image/*" multiple>
+                                        <span class="text-muted small">Select images to add to the client-facing report.</span>
+                                    </div>
+
+                                    ${(Array.isArray(report.admin_site_images) && report.admin_site_images.length > 0) ? `
+                                        <div class="mb-3">
+                                            <label class="text-muted small" style="font-weight:600;">Current Client Images</label>
+                                            <div class="d-flex flex-wrap gap-2 mt-2" id="adminImagesContainer">
+                                                ${report.admin_site_images.map((img, idx) => `
+                                                    <div class="position-relative admin-image-wrapper" style="width: 80px; height: 80px;" data-image-url="${img}">
+                                                        <img src="${img}" alt="Admin image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
+                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <div class="mb-3">
+                                        <label class="text-muted small" style="font-weight:600;">Client Visibility</label>
+                                        <div class="switch-toggle-row mt-2" id="publishToggleRow-${report.id}">
+                                            <label class="switch-toggle" for="publishToggle-${report.id}">
+                                                <input type="checkbox" id="publishToggle-${report.id}" ${report.is_published_to_client ? 'checked' : ''}>
+                                                <span class="switch-slider"></span>
+                                            </label>
+                                            <span class="switch-toggle-label-text">Publish to Client</span>
+                                            <span class="switch-toggle-status ${report.is_published_to_client ? 'is-on' : 'is-off'}" id="publishToggleStatus-${report.id}">
+                                                ${report.is_published_to_client ? 'Visible' : 'Hidden'}
+                                            </span>
+                                        </div>
+                                        <div class="text-muted small mt-1">Switch on to show this report to the client, or off to keep it hidden while still saving your edits.</div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 mt-3">
+                                        <button type="button" class="btn btn-sm btn-secondary js-cancel-edit-reviewed" data-report-id="${report.id}">Cancel</button>
+                                        <button type="button" class="btn btn-sm btn-success js-save-edited-report" data-report-id="${report.id}">
+                                            <i class="bi bi-check2"></i> Save Changes
+                                        </button>
+                                    </div>
                                 </div>
                             `}
                         </div>
@@ -2801,33 +3194,324 @@
                 `;
 
                 detailsPanel.dataset.reportStatus = report.status || 'pending';
-                detailsPanel.querySelector('.js-approve-report')?.addEventListener('click', function () {
-                    handleApproval(Number(this.dataset.reportId));
+                detailsPanel.querySelector('.js-submit-report')?.addEventListener('click', function () {
+                    handleSubmit(Number(this.dataset.reportId));
                 });
-                detailsPanel.querySelector('.js-reject-report')?.addEventListener('click', function () {
-                    handleRejection(Number(this.dataset.reportId));
+                detailsPanel.querySelector('.js-prepare-report')?.addEventListener('click', function () {
+                    handlePrepare(Number(this.dataset.reportId));
                 });
+
+                // Edit reviewed report - show the edit section
+                detailsPanel.querySelectorAll('.js-edit-reviewed-report').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const reportId = this.dataset.reportId;
+                        const section = document.getElementById(`editReviewedSection-${reportId}`);
+                        if (section) {
+                            section.style.display = 'block';
+                            this.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Cancel editing reviewed report
+                detailsPanel.querySelectorAll('.js-cancel-edit-reviewed').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const reportId = this.dataset.reportId;
+                        const section = document.getElementById(`editReviewedSection-${reportId}`);
+                        const editBtn = section?.closest('.modal-progress-card')?.previousElementSibling?.querySelector('.js-edit-reviewed-report')
+                            || document.querySelector(`.js-edit-reviewed-report[data-report-id="${reportId}"]`);
+                        if (section) {
+                            section.style.display = 'none';
+                        }
+                        if (editBtn) {
+                            editBtn.style.display = '';
+                        }
+                    });
+                });
+
+                // Save edited reviewed report
+                detailsPanel.querySelectorAll('.js-save-edited-report').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const reportId = this.dataset.reportId;
+                        handleUpdateReviewedReport(reportId);
+                    });
+                });
+                detailsPanel.querySelectorAll('input[name="publishChoice"]').forEach(radio => {
+                    radio.addEventListener('change', function () {
+                        const rejectionGroup = document.getElementById('rejectionRemarksGroup');
+                        if (rejectionGroup) {
+                            rejectionGroup.style.display = this.value === 'reject' ? 'block' : 'none';
+                        }
+                    });
+                });
+
+                detailsPanel.querySelectorAll('.switch-toggle input[id^="publishToggle-"]').forEach(toggle => {
+                    toggle.addEventListener('change', function () {
+                        const reportId = this.id.replace('publishToggle-', '');
+                        const status = document.getElementById(`publishToggleStatus-${reportId}`);
+                        if (status) {
+                            status.textContent = this.checked ? 'Visible' : 'Hidden';
+                            status.classList.toggle('is-on', this.checked);
+                            status.classList.toggle('is-off', !this.checked);
+                        }
+                    });
+                });
+
+                removedAdminImageUrls = new Set();
+
+                detailsPanel.querySelectorAll('.admin-remove-image').forEach(btn => {
+                    btn.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        const wrapper = this.closest('.admin-image-wrapper');
+                        if (wrapper) {
+                            const imageUrl = wrapper.getAttribute('data-image-url');
+                            if (imageUrl) {
+                                removedAdminImageUrls.add(imageUrl);
+                            }
+                            wrapper.remove();
+                        }
+                    });
+                });
+
+                detailsPanel.querySelectorAll('.admin-image-preview').forEach(img => {
+                    img.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        const wrapper = this.closest('.admin-image-wrapper');
+                        const imageUrl = wrapper?.getAttribute('data-image-url') || this.src;
+                        if (imageUrl) {
+                            const gallery = Array.from(document.querySelectorAll('#adminImagesContainer .admin-image-preview'))
+                                .map(el => el.closest('[data-image-url]')?.getAttribute('data-image-url') || el.src)
+                                .filter(Boolean);
+                            openLightbox(imageUrl, gallery.length ? gallery : [imageUrl]);
+                        }
+                    });
+                });
+
+                detailsPanel.querySelectorAll('.original-image-preview').forEach(img => {
+                    img.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        const wrapper = this.closest('[data-image-url]');
+                        const imageUrl = wrapper?.getAttribute('data-image-url') || this.src;
+                        if (imageUrl) {
+                            const gallery = Array.from(document.querySelectorAll('#originalImagesContainer .original-image-preview'))
+                                .map(el => el.closest('[data-image-url]')?.getAttribute('data-image-url') || el.src)
+                                .filter(Boolean);
+                            openLightbox(imageUrl, gallery.length ? gallery : [imageUrl]);
+                        }
+                    });
+                });
+
+                detailsPanel.querySelectorAll('.use-original-image').forEach(btn => {
+                    btn.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        const imageUrl = this.getAttribute('data-image-url');
+                        const adminImagesContainer = document.getElementById('adminImagesContainer');
+                        if (adminImagesContainer && imageUrl) {
+                            const newWrapper = document.createElement('div');
+                            newWrapper.className = 'position-relative admin-image-wrapper';
+                            newWrapper.style.cssText = 'width: 80px; height: 80px;';
+                            newWrapper.setAttribute('data-image-url', imageUrl);
+                            newWrapper.innerHTML = `
+                                <img src="${imageUrl}" alt="Admin image" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
+                            `;
+                            adminImagesContainer.appendChild(newWrapper);
+
+                            newWrapper.querySelector('.admin-remove-image').addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                newWrapper.remove();
+                            });
+                            newWrapper.querySelector('.admin-image-preview').addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                openLightbox(imageUrl);
+                            });
+                        }
+                    });
+                });
+
+                const adminImageUpload = document.getElementById('adminImageUpload');
+                if (adminImageUpload) {
+                    const uploadLabel = adminImageUpload.parentElement.querySelector('label');
+                    const originalLabelText = uploadLabel?.textContent || '';
+
+                    adminImageUpload.addEventListener('change', function () {
+                        const files = Array.from(this.files || []);
+                        if (files.length === 0) {
+                            if (uploadLabel) {
+                                uploadLabel.textContent = originalLabelText;
+                            }
+                            return;
+                        }
+
+                        const previewContainer = document.createElement('div');
+                        previewContainer.className = 'd-flex flex-wrap gap-2 mt-2';
+                        previewContainer.id = 'adminUploadPreview';
+
+                        files.forEach(file => {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                const wrapper = document.createElement('div');
+                                wrapper.className = 'position-relative';
+                                wrapper.style.cssText = 'width: 80px; height: 80px;';
+                                wrapper.innerHTML = `
+                                    <img src="${e.target.result}" alt="New upload" class="w-100 h-100 object-fit-cover border rounded" style="cursor: pointer;">
+                                    <span class="badge bg-success position-absolute bottom-0 start-0" style="font-size: 0.6rem;">NEW</span>
+                                `;
+                                previewContainer.appendChild(wrapper);
+
+                                wrapper.querySelector('img').addEventListener('click', function (ev) {
+                                    ev.stopPropagation();
+                                    openLightbox(e.target.result);
+                                });
+                            };
+                            reader.readAsDataURL(file);
+                        });
+
+                        const existingPreview = document.getElementById('adminUploadPreview');
+                        if (existingPreview) {
+                            existingPreview.remove();
+                        }
+
+                        adminImageUpload.parentElement.appendChild(previewContainer);
+
+                        if (uploadLabel) {
+                            uploadLabel.textContent = `${files.length} file(s) selected — click to change`;
+                        }
+                    });
+                }
+
                 finishDetailsTransition();
             }
 
-            function handleApproval(reportId) {
+            function handleSubmit(reportId) {
                 const currentStatus = detailsPanel?.dataset.reportStatus;
                 if (currentStatus === 'approved') {
                     return Swal.fire({ title: 'Already Approved', text: 'This report is already approved.', icon: 'info' });
                 }
                 if (currentStatus === 'rejected') {
-                    return Swal.fire({ title: 'Cannot Approve', text: 'This report has already been rejected.', icon: 'warning' });
+                    return Swal.fire({ title: 'Cannot Submit', text: 'This report has already been rejected.', icon: 'warning' });
                 }
 
                 const progressInput = document.getElementById('adminProgressOverride');
                 const approvedProgress = progressInput ? Math.min(100, Math.max(0, Number(progressInput.value) || 0)) : 0;
+                const adminClientText = document.getElementById('adminClientText')?.value?.trim() || '';
+                const selectedChoice = document.querySelector('input[name="publishChoice"]:checked')?.value || 'display';
+                const remarksInput = document.getElementById('rejectionRemarks');
+                const rejectionRemarks = remarksInput?.value?.trim() || '';
+
+                if (selectedChoice === 'reject' && !rejectionRemarks) {
+                    return Swal.fire({ title: 'Remarks Required', text: 'Please enter rejection remarks before submitting.', icon: 'warning' });
+                }
+
+                const actionLabel = selectedChoice === 'display' ? 'Approve & Display to Client' : selectedChoice === 'hide' ? 'Approve but Keep Hidden' : 'Reject / Return for Revision';
+                const confirmColor = selectedChoice === 'reject' ? '#b23a3a' : '#1c6b43';
 
                 Swal.fire({
-                    title: 'Approve Report?',
-                    text: 'This will mark the report as approved and notify the supervisor.',
+                    title: actionLabel + '?',
+                    text: selectedChoice === 'display' ? 'This will approve the report and make it visible to the client.' : selectedChoice === 'hide' ? 'This will approve the report for internal records but keep it hidden from the client.' : 'This will return the report to the supervisor for revision.',
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Approve',
+                    confirmButtonText: actionLabel,
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: confirmColor,
+                    cancelButtonColor: '#6c757d',
+                    didOpen: pauseModalFocusTrap
+                }).then((result) => {
+                    if (!result.isConfirmed) {
+                        resumeModalFocusTrap();
+                        return;
+                    }
+                    Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+                    if (selectedChoice === 'reject') {
+                        fetch(`${detailsBaseUrl}/${reportId}/revise`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ approval_remarks: rejectionRemarks, decision: 'reject' })
+                        })
+                            .then(async response => {
+                                const payload = await response.json().catch(() => ({}));
+                                if (!response.ok || !payload.success) {
+                                    throw new Error(payload.message || 'Unable to reject report.');
+                                }
+                                return payload;
+                            })
+                            .then(payload => {
+                                Swal.close();
+                                Swal.fire({ title: 'Report Rejected', text: payload.message || 'The report has been rejected.', icon: 'success', confirmButtonColor: '#b23a3a' });
+                                closeDetailsPanel();
+                                loadReports();
+                                resumeModalFocusTrap();
+                            })
+                            .catch(error => {
+                                Swal.close();
+                                Swal.fire({ title: 'Submission Failed', text: error.message || 'Unable to complete submission.', icon: 'error' });
+                                resumeModalFocusTrap();
+                            });
+                    } else {
+                        const formData = new FormData();
+                        formData.append('approval_remarks', adminClientText);
+                        formData.append('accomplishment_percentage', approvedProgress);
+                        formData.append('publish_to_client', selectedChoice === 'display' ? 1 : 0);
+                        formData.append('admin_report_text', adminClientText);
+                        formData.append('admin_explanation', adminClientText);
+
+                        const imageUpload = document.getElementById('adminImageUpload');
+                        if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
+                            Array.from(imageUpload.files).forEach(file => {
+                                formData.append('admin_site_images[]', file);
+                            });
+                        }
+
+                        const removedAdminImages = Array.from(removedAdminImageUrls);
+                        removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+
+                        fetch(`${detailsBaseUrl}/${reportId}/approve`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        })
+                            .then(async response => {
+                                const payload = await response.json().catch(() => ({}));
+                                if (!response.ok || !payload.success) {
+                                    throw new Error(payload.message || 'Unable to approve report.');
+                                }
+                                return payload;
+                            })
+                            .then(payload => {
+                                Swal.close();
+                                Swal.fire({ title: 'Report Approved', text: payload.message || 'The report has been approved.', icon: 'success', confirmButtonColor: '#1c6b43' });
+                                closeDetailsPanel();
+                                loadReports();
+                                resumeModalFocusTrap();
+                            })
+                            .catch(error => {
+                                Swal.close();
+                                Swal.fire({ title: 'Submission Failed', text: error.message || 'Unable to complete submission.', icon: 'error' });
+                                resumeModalFocusTrap();
+                            });
+                    }
+                });
+            }
+
+            function handleUpdateReviewedReport(reportId) {
+                const adminReportText = document.getElementById(`adminClientText-${reportId}`)?.value?.trim() || '';
+                const publishToggle = document.getElementById(`publishToggle-${reportId}`);
+                const publishToClient = publishToggle ? (publishToggle.checked ? 1 : 0) : 0;
+
+                Swal.fire({
+                    title: 'Save Changes?',
+                    text: 'This will update the report content and publish settings.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Save',
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: '#1c6b43',
                     cancelButtonColor: '#6c757d',
@@ -2837,101 +3521,119 @@
                         resumeModalFocusTrap();
                         return;
                     }
-                    Swal.fire({ title: 'Approving report...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-                    fetch(`${detailsBaseUrl}/${reportId}/approve`, {
+                    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+                    const formData = new FormData();
+                    formData.append('admin_report_text', adminReportText);
+                    formData.append('admin_explanation', adminReportText);
+                    formData.append('publish_to_client', publishToClient);
+                    formData.append('is_published_to_client', publishToClient);
+
+                    const imageUpload = document.getElementById(`adminImageUpload-${reportId}`);
+                    if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
+                        Array.from(imageUpload.files).forEach(file => {
+                            formData.append('admin_site_images[]', file);
+                        });
+                    }
+
+                    const removedAdminImages = Array.from(removedAdminImageUrls);
+                    removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+
+                    fetch(`${detailsBaseUrl}/${reportId}/update`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ approval_remarks: '', accomplishment_percentage: approvedProgress })
+                        body: formData
                     })
                         .then(async response => {
                             const payload = await response.json().catch(() => ({}));
                             if (!response.ok || !payload.success) {
-                                throw new Error(payload.message || 'Unable to approve report.');
+                                throw new Error(payload.message || 'Unable to save changes.');
                             }
                             return payload;
                         })
                         .then(payload => {
-                            Swal.close();
-                            if (payload.auto_completed) {
-                                Swal.fire({ title: 'Phase Completed', text: 'The phase has automatically been marked as Completed because progress reached 100%.', icon: 'success', confirmButtonColor: '#1c6b43' });
-                            } else {
-                                Swal.fire({ title: 'Report Approved', text: payload.message || 'The report has been approved.', icon: 'success', confirmButtonColor: '#1c6b43' });
-                            }
-                            closeDetailsPanel();
-                            loadReports();
-                            resumeModalFocusTrap();
+                            Swal.fire({
+                                title: 'Changes Saved',
+                                text: payload.message || 'Report updated successfully. Reloading…',
+                                icon: 'success',
+                                confirmButtonColor: '#1c6b43',
+                                timer: 1400,
+                                timerProgressBar: true,
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
                         })
                         .catch(error => {
                             Swal.close();
-                            Swal.fire({ title: 'Approval Failed', text: error.message || 'Unable to complete approval.', icon: 'error' });
+                            Swal.fire({ title: 'Save Failed', text: error.message || 'Unable to save changes.', icon: 'error' });
                             resumeModalFocusTrap();
                         });
                 });
             }
 
-            function handleRejection(reportId) {
-                const currentStatus = detailsPanel?.dataset.reportStatus;
-                if (currentStatus === 'rejected') {
-                    return Swal.fire({ title: 'Already Rejected', text: 'This report is already rejected.', icon: 'info' });
-                }
-                if (currentStatus === 'approved') {
-                    return Swal.fire({ title: 'Cannot Reject', text: 'This report has already been approved.', icon: 'warning' });
-                }
+            function handlePrepare(reportId) {
+                const adminClientText = document.getElementById('adminClientText')?.value?.trim() || '';
 
                 Swal.fire({
-                    title: 'Reject Report',
-                    input: 'textarea',
-                    inputLabel: 'Rejection Remarks',
-                    inputPlaceholder: 'Enter the reason for rejection...',
-                    inputAttributes: { maxlength: 1000 },
+                    title: 'Save Preparation?',
+                    text: 'This will save your edits without finalizing the approval decision.',
+                    icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Reject',
+                    confirmButtonText: 'Save',
                     cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#b23a3a',
+                    confirmButtonColor: '#1c6b43',
                     cancelButtonColor: '#6c757d',
-                    preConfirm: (value) => {
-                        if (!value || !value.trim()) {
-                            Swal.showValidationMessage('Rejection remarks are required.');
-                        }
-                    },
                     didOpen: pauseModalFocusTrap
                 }).then((result) => {
                     if (!result.isConfirmed) {
                         resumeModalFocusTrap();
                         return;
                     }
-                    const remarks = result.value?.trim();
-                    Swal.fire({ title: 'Rejecting report...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-                    fetch(`${detailsBaseUrl}/${reportId}/revise`, {
+                    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+
+                    const formData = new FormData();
+                    formData.append('admin_report_text', adminClientText);
+                    formData.append('admin_explanation', adminClientText);
+
+                    const imageUpload = document.getElementById('adminImageUpload');
+                    if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
+                        Array.from(imageUpload.files).forEach(file => {
+                            formData.append('admin_site_images[]', file);
+                        });
+                    }
+
+                    const removedAdminImages = Array.from(removedAdminImageUrls);
+                    removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+
+                    fetch(`${detailsBaseUrl}/${reportId}/prepare`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ approval_remarks: remarks, decision: 'reject' })
+                        body: formData
                     })
                         .then(async response => {
                             const payload = await response.json().catch(() => ({}));
                             if (!response.ok || !payload.success) {
-                                throw new Error(payload.message || 'Unable to reject report.');
+                                throw new Error(payload.message || 'Unable to save preparation.');
                             }
                             return payload;
                         })
                         .then(payload => {
                             Swal.close();
-                            Swal.fire({ title: 'Report Rejected', text: payload.message || 'The report has been rejected.', icon: 'success', confirmButtonColor: '#b23a3a' });
-                            closeDetailsPanel();
-                            loadReports();
+                            Swal.fire({ title: 'Saved', text: payload.message || 'Preparation saved.', icon: 'success', confirmButtonColor: '#1c6b43' });
                             resumeModalFocusTrap();
                         })
                         .catch(error => {
                             Swal.close();
-                            Swal.fire({ title: 'Rejection Failed', text: error.message || 'Unable to complete rejection.', icon: 'error' });
+                            Swal.fire({ title: 'Save Failed', text: error.message || 'Unable to save preparation.', icon: 'error' });
                             resumeModalFocusTrap();
                         });
                 });
