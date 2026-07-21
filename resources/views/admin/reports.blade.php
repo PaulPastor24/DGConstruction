@@ -3586,6 +3586,14 @@
             // Automatically refresh the report list whenever a filter state exists.
             loadReports();
 
+            // Silent auto-reload every 5 seconds so newly submitted reports appear in real time.
+            setInterval(function () {
+                if (reportDetailsModal && reportDetailsModal.classList.contains('show')) {
+                    return;
+                }
+                loadReports();
+            }, 5000);
+
             // Open report details modal when a report row or view button is clicked
             tableBody.querySelectorAll('.js-view-report').forEach(button => {
                 button.addEventListener('click', function () {

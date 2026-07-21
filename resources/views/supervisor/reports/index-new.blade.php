@@ -977,7 +977,6 @@
             <div>
                 <div class="text-muted small fw-bold">Total Reports</div>
                 <h4 class="mb-0 fw-bold">{{ $totalCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">All time</span>
             </div>
         </div>
     </div>

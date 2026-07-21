@@ -103,7 +103,10 @@
                                 @endphp
                                 <div class="progress-percent-lbl">{{ $projectProgressPct }}%</div>
                                 <div class="dg-bar-track">
-                                    <div class="dg-bar-fill {{ $normalizedStatus === 'planning' ? 'hold-fill' : '' }}" style="width: {{ $projectProgressPct }}%"></div>
+                                    <div class="dg-bar-fill
+                                        {{ $normalizedStatus === 'planning' ? 'hold-fill' : '' }}
+                                        {{ $normalizedStatus === 'completed' ? 'completed-fill' : '' }}
+                                        {{ $normalizedStatus === 'on_hold' ? 'on-hold-fill' : '' }}" style="width: {{ $projectProgressPct }}%"></div>
                                 </div>
                                 <div class="progress-phase-subtitle">
                                     {{ $projectProgressSubtitle }}

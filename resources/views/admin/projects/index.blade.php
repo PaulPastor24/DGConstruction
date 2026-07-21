@@ -371,6 +371,14 @@
         background-color: #d97706;
     }
 
+    .dg-bar-fill.completed-fill {
+        background-color: #16a34a;
+    }
+
+    .dg-bar-fill.on-hold-fill {
+        background-color: #dc2626;
+    }
+
     .progress-phase-subtitle {
         font-size: 11px;
         color: #6b7280;
@@ -1163,9 +1171,6 @@
                 </select>
 
                 <div class="filter-actions-right">
-                    <button type="button" class="btn btn-dg-primary px-3 py-2 d-flex align-items-center gap-2 view-as-mobile-btn" data-bs-toggle="modal" data-bs-target="#viewAsMobileModal" style="min-width: 140px; transition: all 0.2s ease-in-out; font-size: 13px;">
-                        <i class="bi bi-layout-sidebar-inset-reverse"></i> View As
-                    </button>
                     <button type="button" class="btn btn-dg-primary px-3 py-2 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addProjectModal" style="min-width: 140px; transition: all 0.2s ease-in-out; font-size: 13px;">
                         <i class="bi bi-plus"></i> New Project
                     </button>
@@ -1180,25 +1185,6 @@
         @include('admin.projects.partials.table', ['projects' => $projects])
 
 
-    </div>
-
-    <!-- View As Modal -->
-    <div class="modal fade" id="viewAsMobileModal" tabindex="-1" aria-labelledby="viewAsMobileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0" style="border-radius: 16px;">
-                <div class="modal-header border-0 pb-2 pt-4 px-4">
-                    <h5 class="modal-title fw-bold text-dark" id="viewAsMobileModalLabel" style="font-size: 1.1rem;">View Projects As</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body pt-2 px-4 pb-4">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-primary w-100 py-2"><i class="bi bi-layout-sidebar-inset-reverse me-2"></i>Admin</a>
-                        <a href="{{ route('supervisor.dashboard') }}" class="btn btn-outline-success w-100 py-2"><i class="bi bi-person-workspace me-2"></i>Supervisor</a>
-                        <a href="{{ route('client.dashboard') }}" class="btn btn-outline-info w-100 py-2"><i class="bi bi-person me-2"></i>Client</a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Right Custom Slider-Like Detail Information Meta Panel Component -->
@@ -3374,7 +3360,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const sideArchiveForm = document.getElementById('sideArchiveForm');
         const sideDeleteForm = document.getElementById('sideDeleteForm');
 
-        const project = JSON.parse(btn.getAttribute('data-project-json'));
         const supervisorName = btn.getAttribute('data-supervisor-name');
         const supervisorId = btn.getAttribute('data-supervisor-id');
         const clientName = btn.getAttribute('data-client-name');

@@ -1429,14 +1429,22 @@
             overflow: hidden !important;
             border-radius: 999px !important;
             background: #edf3ee !important;
+            position: relative !important;
         }
 
         #pg-timeline .mobile-gantt-fill {
             display: block !important;
             height: 100% !important;
+            min-width: 0 !important;
             border-radius: 999px !important;
             background: #365233 !important;
         }
+
+        #pg-timeline .mobile-gantt-fill.status-completed { background: #166534 !important; }
+        #pg-timeline .mobile-gantt-fill.status-in-progress { background: #1565C0 !important; }
+        #pg-timeline .mobile-gantt-fill.status-upcoming { background: #B7791F !important; }
+        #pg-timeline .mobile-gantt-fill.status-delayed { background: #C62828 !important; }
+        #pg-timeline .mobile-gantt-fill.status-pending { background: #6B7280 !important; }
 
         #pg-timeline .mobile-gantt-percent {
             min-width: 42px !important;
@@ -2022,7 +2030,7 @@
                         </div>
                     </div>
                     <div class="mobile-gantt-progress-row">
-                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill" style="width:${percentage}%"></span></div>
+                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill status-${status}" style="width:${percentage}%"></span></div>
                         <span class="mobile-gantt-percent">${Math.round(percentage)}%</span>
                     </div>
                 </article>
@@ -2176,11 +2184,11 @@
                                         <button type="button" id="timelineZoomOutBtn" class="btn-ghost"><i class="bi bi-dash"></i></button>
                                         <button type="button" id="timelineTodayBtn" class="btn-ghost"><i class="bi bi-calendar2-week"></i> Today</button>
                                         <select id="timelineScaleSelector" class="toolbar-select compact-select">
-                                            <option value="day">Day</option>
-                                            <option value="week" selected>Week</option>
-                                            <option value="month">Month</option>
-                                            <option value="quarter">Quarter</option>
-                                            <option value="year">Year</option>
+                                            <option value="day" ${activeTimelineScale === 'day' ? 'selected' : ''}>Day</option>
+                                            <option value="week" ${activeTimelineScale === 'week' ? 'selected' : ''}>Week</option>
+                                            <option value="month" ${activeTimelineScale === 'month' ? 'selected' : ''}>Month</option>
+                                            <option value="quarter" ${activeTimelineScale === 'quarter' ? 'selected' : ''}>Quarter</option>
+                                            <option value="year" ${activeTimelineScale === 'year' ? 'selected' : ''}>Year</option>
                                         </select>
                                     </div>
                                 ` : ''}
@@ -2382,6 +2390,22 @@
 
         document.getElementById('timelineZoomInBtn')?.addEventListener('click', () => window.setDhtmlxZoom?.('in'));
         document.getElementById('timelineZoomOutBtn')?.addEventListener('click', () => window.setDhtmlxZoom?.('out'));
+        
+        const scaleSelector = document.getElementById('timelineScaleSelector');
+        if (scaleSelector && !scaleSelector.dataset.bound) {
+            scaleSelector.dataset.bound = 'true';
+            scaleSelector.addEventListener('change', function () {
+                const scale = this.value || 'week';
+                activeTimelineScale = scale;
+                if (window.setDhtmlxScale) {
+                    window.setDhtmlxScale(scale);
+                }
+                if (selectedProject) {
+                    renderTimeline(selectedProject);
+                }
+            });
+        }
+        
         document.getElementById('exportTimelineBtn')?.addEventListener('click', () => {
             const rows = timelineViewMode === 'timeline'
                 ? getFilteredMilestones(selectedProject).map((milestone, index) => {

@@ -55,7 +55,12 @@ class Project extends Model
         }
 
         if (is_string($image)) {
-            return asset('storage/' . ltrim($image, '/'));
+            $path = ltrim($image, '/');
+            if (str_starts_with($path, 'storage/')) {
+                return asset($path);
+            }
+
+            return asset('storage/' . $path);
         }
 
         return null;
