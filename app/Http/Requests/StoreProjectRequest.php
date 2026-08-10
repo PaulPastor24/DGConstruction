@@ -13,7 +13,7 @@ class StoreProjectRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $this->user() && $user && $user->role === 'engineer';
+        return $this->user() && $user && in_array($user->role, ['engineer', 'staff', 'admin', 'administrator'], true);
     }
 
     /**

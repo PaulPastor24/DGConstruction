@@ -621,9 +621,9 @@
                         <i class="bi bi-cone-striped"></i>
                     </div>
                     <div>
-                        <div class="text-muted small fw-semibold">Engineers</div>
-                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $engineers_count ?? 0 }}</div>
-                        <div class="text-muted" style="font-size: 11px;">Engineering staff</div>
+                        <div class="text-muted small fw-semibold">Engineers / Admin</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ (($engineers_count ?? 0) + ($staff_count ?? 0)) }}</div>
+                        <div class="text-muted" style="font-size: 11px;">Primary admin accounts</div>
                     </div>
                 </div>
             </div>
@@ -666,6 +666,7 @@
                         <select name="role" id="roleFilter" class="form-select text-muted">
                             <option value="">All Roles</option>
                             <option value="engineer" {{ request('role') == 'engineer' ? 'selected' : '' }}>Engineer/Administrator</option>
+                            <option value="staff" {{ request('role') == 'staff' ? 'selected' : '' }}>Office Staff</option>
                             <option value="supervisor" {{ request('role') == 'supervisor' ? 'selected' : '' }}>Site Supervisor</option>
                             <option value="client" {{ request('role') == 'client' ? 'selected' : '' }}>Client</option>
                         </select>

@@ -60,6 +60,7 @@
 
             <div class="role-tabs" id="roleTabs">
                 <button type="button" class="role-tab active" onclick="selectRole(this, 'engineer')">Engineer</button>
+                <button type="button" class="role-tab" onclick="selectRole(this, 'staff')">Staff</button>
                 <button type="button" class="role-tab" onclick="selectRole(this, 'supervisor')">Supervisor</button>
                 <button type="button" class="role-tab" onclick="selectRole(this, 'client')">Client</button>
             </div>
@@ -101,6 +102,7 @@
                 </div>
                 <div class="demo-grid">
                     <span><strong>Eng:</strong> admin@dg-corp.ph</span>
+                    <span><strong>Staff:</strong> staff@dg-corp.ph</span>
                     <span><strong>Super:</strong> supervisor@dg-corp.ph</span>
                     <span><strong>Client:</strong> client@dg-corp.ph</span>
                     <span><strong>Pass:</strong> password123</span>
@@ -121,6 +123,7 @@
         
         const emailInput = document.getElementById('loginEmail');
         if(role === 'engineer') emailInput.value = 'admin@dg-corp.ph';
+        if(role === 'staff') emailInput.value = 'staff@dg-corp.ph';
         if(role === 'supervisor') emailInput.value = 'supervisor@dg-corp.ph';
         if(role === 'client') emailInput.value = 'client@dg-corp.ph';
     }
@@ -152,7 +155,7 @@
             });
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any())
             Swal.fire({
                 icon: 'error',
                 title: 'Validation Error',

@@ -33,6 +33,7 @@
                         <label class="form-label">Role</label>
                         <select name="role" class="form-select" required>
                             <option value="engineer" {{ old('role', $user->role) === 'engineer' ? 'selected' : '' }}>Engineer</option>
+                            <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
                             <option value="supervisor" {{ old('role', $user->role) === 'supervisor' ? 'selected' : '' }}>Supervisor</option>
                             <option value="client" {{ old('role', $user->role) === 'client' ? 'selected' : '' }}>Client</option>
                         </select>

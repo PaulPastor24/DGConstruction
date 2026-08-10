@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,6 +31,12 @@ class Attendance extends Model
         'remarks',
         'biometric_matched',
         'created_at',
+    ];
+
+    protected $appends = [
+        'overtime_minutes',
+        'overtime_hours',
+        'overtime_label',
     ];
 
     protected $casts = [
@@ -72,5 +79,57 @@ class Attendance extends Model
     public function getDisplayProjectAttribute()
     {
         return $this->deployment?->project;
+    }
+
+    public static function calculateOvertimeMinutes($logDate, $timeIn, $timeOut): int
+    {
+        if (! $logDate || ! $timeOut) {
+            return 0;
+        }
+
+        try {
+            $timeOutDateTime = Carbon::parse($logDate.' '.$timeOut);
+            $overtimeCutoff = Carbon::parse($logDate.' 17:00:00');
+
+            return max(0, $overtimeCutoff->diffInMinutes($timeOutDateTime, false));
+        } catch (\Throwable $error) {
+            return 0;
+        }
+    }
+
+    public static function formatOvertimeLabel(int $minutes): string
+    {
+        if ($minutes <= 0) {
+            return '—';
+        }
+
+        $hours = intdiv($minutes, 60);
+        $remainingMinutes = $minutes % 60;
+        $parts = [];
+
+        if ($hours > 0) {
+            $parts[] = $hours.'h';
+        }
+
+        if ($remainingMinutes > 0 || empty($parts)) {
+            $parts[] = $remainingMinutes.'m';
+        }
+
+        return 'OT '.implode(' ', $parts);
+    }
+
+    public function getOvertimeMinutesAttribute(): int
+    {
+        return self::calculateOvertimeMinutes($this->log_date, $this->time_in, $this->time_out);
+    }
+
+    public function getOvertimeHoursAttribute(): float
+    {
+        return round($this->overtime_minutes / 60, 2);
+    }
+
+    public function getOvertimeLabelAttribute(): string
+    {
+        return self::formatOvertimeLabel($this->overtime_minutes);
     }
 }

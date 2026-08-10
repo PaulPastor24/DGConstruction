@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
 
     return match ($user->role) {
-        'engineer' => redirect()->route('admin.dashboard'),
+        'engineer', 'staff', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
         'supervisor' => redirect()->route('supervisor.dashboard'),
         'client' => redirect()->route('client.dashboard'),
         default => abort(403, 'Unauthorized role assignment.'),
@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
-Route::middleware(['auth', 'role:engineer'])->group(function () {
+Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
@@ -113,7 +113,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
 });
 
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
-Route::middleware(['auth', 'role:supervisor'])->group(function () {
+Route::middleware(['auth', 'role:supervisor,staff,admin,administrator'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
@@ -165,6 +165,13 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
         ->name('supervisor.attendance.today');
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
+
+    Route::post('/supervisor/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
+        ->name('admin.attendance.schedules.store');
+    Route::put('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])
+        ->name('admin.attendance.schedules.update');
+    Route::delete('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
+        ->name('admin.attendance.schedules.destroy');
     Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
         ->name('supervisor.attendance.today');
 

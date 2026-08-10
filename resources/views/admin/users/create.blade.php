@@ -8,7 +8,7 @@
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body">
             <h4 class="fw-bold mb-3">Create User</h4>
-            <p class="text-muted">Add a new engineer, supervisor, or client account.</p>
+            <p class="text-muted">Add a new engineer, office staff, supervisor, or client account.</p>
             <form action="{{ route('admin.users.store') }}" method="POST">
                 @csrf
                 <div class="row g-3">
@@ -32,6 +32,7 @@
                         <label class="form-label">Role</label>
                         <select name="role" class="form-select" required>
                             <option value="engineer">Engineer</option>
+                            <option value="staff">Staff</option>
                             <option value="supervisor">Supervisor</option>
                             <option value="client">Client</option>
                         </select>

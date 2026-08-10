@@ -24,10 +24,12 @@ class RoleMiddleware
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 
+        $allowedRoles = array_values(array_filter(array_map(
+            fn ($value) => trim(strtolower($value)),
+            explode(',', $role)
+        )));
 
-
-
-            if ($user->role !== $role) {
+        if (! in_array(strtolower((string) $user->role), $allowedRoles, true)) {
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 

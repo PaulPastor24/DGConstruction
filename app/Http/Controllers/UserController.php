@@ -57,6 +57,7 @@ class UserController extends Controller
         $active_users_count = DB::table('users')->where('is_active', 1)->count();
         $inactive_users_count = DB::table('users')->where('is_active', 0)->count();
         $engineers_count = DB::table('users')->where('role', 'engineer')->count();
+        $staff_count = DB::table('users')->where('role', 'staff')->count();
         $supervisors_count = DB::table('users')->where('role', 'supervisor')->count();
         $clients_count = DB::table('users')->where('role', 'client')->count();
 
@@ -66,6 +67,7 @@ class UserController extends Controller
             'active_users_count',
             'inactive_users_count',
             'engineers_count',
+            'staff_count',
             'supervisors_count',
             'clients_count'
         ));
@@ -405,7 +407,7 @@ class UserController extends Controller
         // Only engineers/administrators may delete accounts (matches
         // StoreUserRequest/UpdateUserRequest authorization for this module).
         $authUser = $request->user();
-        if (!$authUser || $authUser->role !== 'engineer') {
+        if (!$authUser || !in_array($authUser->role, ['engineer', 'staff', 'admin', 'administrator'], true)) {
             return $respond(false, 'You are not authorized to perform this action.', 403);
         }
 
