@@ -14,7 +14,7 @@ class StoreUserRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $this->user() && $user && $user->role === 'engineer';
+        return $this->user() && $user && in_array($user->role, ['engineer', 'staff', 'admin', 'administrator'], true);
     }
 
     /**
@@ -67,7 +67,7 @@ class StoreUserRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
-            'role' => ['required', 'string', Rule::in(['engineer', 'supervisor', 'client'])],
+            'role' => ['required', 'string', Rule::in(['engineer', 'staff', 'admin', 'administrator', 'supervisor', 'client'])],
             'contact_number' => [
                 'nullable',
                 'string',

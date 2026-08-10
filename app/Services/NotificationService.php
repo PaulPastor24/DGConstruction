@@ -16,7 +16,7 @@ class NotificationService
      * notifications panel (this codebase uses the engineer role as the
      * primary admin account, with 'admin'/'administrator' supported too).
      */
-    private const ADMIN_ROLES = ['engineer', 'admin', 'administrator'];
+    private const ADMIN_ROLES = ['engineer', 'staff', 'admin', 'administrator'];
 
     public static function notifySupervisor(int $supervisorId, array $data): ?SupervisorNotification
     {
@@ -63,7 +63,7 @@ class NotificationService
     }
 
     /**
-     * Send a notification to a single admin (engineer/admin/administrator) user.
+    * Send a notification to a single admin-level user.
      */
     public static function notifyAdmin(int $adminId, array $data): ?AdminNotification
     {
@@ -91,8 +91,8 @@ class NotificationService
     }
 
     /**
-     * Broadcast a notification to every active admin-level user
-     * (engineer/admin/administrator roles), creating one row per recipient
+    * Broadcast a notification to every active admin-level user
+    * (engineer/staff/admin/administrator roles), creating one row per recipient
      * so each admin can track their own read state.
      */
     public static function notifyAdmins(array $data): int

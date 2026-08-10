@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AdminNotification;
 use App\Models\Attendance;
+use App\Models\AttendanceScheduleRule;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
 use App\Models\MaterialDelivery;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminDashboardController extends Controller
 {
@@ -359,8 +361,7 @@ class AdminDashboardController extends Controller
                 $selectedProject->id =
                     $selectedProject->project_id;
 
-                $selectedProject->name =
-                    $selectedProject->project_name;
+                $selectedProject->setAttribute('name', $selectedProject->project_name);
 
                 $phases = $selectedProject->phases
                     ->map(function ($phase) {
@@ -1135,6 +1136,10 @@ class AdminDashboardController extends Controller
             ? Project::query()->orderBy('project_name', 'asc')->get()
             : collect();
 
+        $scheduleRules = Schema::hasTable('attendance_schedule_rules')
+            ? AttendanceScheduleRule::query()->orderBy('role', 'asc')->get()
+            : collect();
+
         $filters = [
             'date' => $request->input('date', Carbon::today()->toDateString()),
             'project_id' => $request->input('project_id'),
@@ -1160,7 +1165,7 @@ class AdminDashboardController extends Controller
 
             return view(
                 'admin.attendance',
-                compact('logs', 'projects', 'filters', 'stats', 'issues')
+                compact('logs', 'projects', 'filters', 'stats', 'issues', 'scheduleRules')
             );
         }
 
@@ -1310,8 +1315,64 @@ class AdminDashboardController extends Controller
 
         return view(
             'admin.attendance',
-            compact('logs', 'projects', 'filters', 'stats', 'issues')
+            compact('logs', 'projects', 'filters', 'stats', 'issues', 'scheduleRules')
         );
+    }
+
+    public function storeAttendanceSchedule(Request $request)
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+            'break_start_time' => ['nullable', 'date_format:H:i'],
+            'break_end_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        if (! Schema::hasTable('attendance_schedule_rules')) {
+            return back()->with('error', 'Attendance schedule table is not available yet.');
+        }
+
+        AttendanceScheduleRule::updateOrCreate(
+            ['role' => strtolower($validated['role'])],
+            [
+                'start_time' => $validated['start_time'].':00',
+                'end_time' => $validated['end_time'].':00',
+                'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
+                'break_end_time' => ! empty($validated['break_end_time']) ? $validated['break_end_time'].':00' : null,
+                'is_active' => true,
+            ]
+        );
+
+        return back()->with('success', 'Attendance schedule saved successfully.');
+    }
+
+    public function updateAttendanceSchedule(Request $request, AttendanceScheduleRule $rule)
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+            'break_start_time' => ['nullable', 'date_format:H:i'],
+            'break_end_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $rule->update([
+            'role' => strtolower($validated['role']),
+            'start_time' => $validated['start_time'].':00',
+            'end_time' => $validated['end_time'].':00',
+            'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
+            'break_end_time' => ! empty($validated['break_end_time']) ? $validated['break_end_time'].':00' : null,
+        ]);
+
+        return back()->with('success', 'Attendance schedule updated successfully.');
+    }
+
+    public function destroyAttendanceSchedule(AttendanceScheduleRule $rule)
+    {
+        $rule->delete();
+
+        return back()->with('success', 'Attendance schedule deleted successfully.');
     }
 
     /**

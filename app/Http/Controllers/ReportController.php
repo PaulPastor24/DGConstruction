@@ -973,8 +973,8 @@ class ReportController extends Controller
     {
         $user = auth('web')->user();
 
-        // Engineer can view all reports
-        if ($user->role === 'engineer') {
+        // Admin-level roles can view all reports
+        if (in_array($user->role, ['engineer', 'staff', 'admin', 'administrator'], true)) {
             return true;
         }
 
