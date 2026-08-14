@@ -3105,9 +3105,21 @@
                         <div class="col-md-4">
                             <div class="form-group-wrapper mb-0">
                                 <label class="form-label-custom">Category</label>
-                                <div class="input-container-group">
+                                <div class="input-container-group select-caret-wrapper">
                                     <i class="bi bi-tags input-icon-left"></i>
-                                    <input type="text" name="category" class="control-field-input" placeholder="e.g. Masonry, Electrical">
+                                    <select name="category" class="control-field-input" id="toolCategorySelect" required>
+                                        <option value="">Select category</option>
+                                        @foreach($predefinedToolCategories as $cat)
+                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                        @endforeach
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="custom-category-input d-none mt-2" id="customCategoryWrapper">
+                                    <div class="input-container-group">
+                                        <i class="bi bi-pencil-square input-icon-left"></i>
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="customCategoryInput" value="{{ old('custom_category') }}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4213,6 +4225,21 @@
         }
 
         bindToolModalHandlers();
+
+        const toolCategorySelect = document.getElementById('toolCategorySelect');
+        const customCategoryWrapper = document.getElementById('customCategoryWrapper');
+        const customCategoryInput = document.getElementById('customCategoryInput');
+
+        if (toolCategorySelect && customCategoryWrapper && customCategoryInput) {
+            toolCategorySelect.addEventListener('change', function () {
+                const isOther = this.value === 'Other';
+                customCategoryWrapper.classList.toggle('d-none', !isOther);
+                if (!isOther) {
+                    customCategoryInput.value = '';
+                }
+                customCategoryInput.required = isOther;
+            });
+        }
 
         function attachModalPaginationHandlers() {
             document.querySelectorAll('.modal .pagination a').forEach(function (link) {

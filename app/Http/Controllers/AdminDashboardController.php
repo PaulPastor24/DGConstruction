@@ -651,7 +651,8 @@ class AdminDashboardController extends Controller
                         $projectQuery->where('project_name', 'like', '%'.$search.'%');
                     })
                     ->orWhereHas('requester', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', '%'.$search.'%');
+                        $userQuery->where('first_name', 'like', '%'.$search.'%')
+                            ->orWhere('last_name', 'like', '%'.$search.'%');
                     });
                 });
             }
@@ -732,15 +733,35 @@ class AdminDashboardController extends Controller
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
             $toolCategories = Tool::query()->distinct()->pluck('category')->filter()->sort()->values();
+
+            $predefinedToolCategories = [
+                'Masonry & Concrete',
+                'Electrical',
+                'Plumbing',
+                'Carpentry',
+                'Painting & Finishing',
+                'Welding & Metal',
+                'Earthmoving & Excavation',
+                'Lifting & Rigging',
+                'Measuring & Layout',
+                'Safety & PPE',
+                'Power Tools',
+                'Hand Tools',
+                'Surveying',
+                'Formwork & Scaffolding',
+                'HVAC',
+                'General Purpose',
+            ];
         } else {
             $tools = collect();
             $activeToolLoans = collect();
             $toolLoanHistory = collect();
             $allToolDeductions = collect();
             $toolCategories = collect();
+            $predefinedToolCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories'));
     }
 
     /**
@@ -1908,6 +1929,7 @@ class AdminDashboardController extends Controller
                 'tool_code' => ['required', 'string', 'max:50', Rule::unique('tools', 'tool_code')],
                 'name' => ['required', 'string', 'max:255'],
                 'category' => ['nullable', 'string', 'max:255'],
+                'custom_category' => ['nullable', 'string', 'max:255'],
                 'type' => ['nullable', 'in:tool,equipment'],
                 'unit' => ['nullable', 'string', 'max:50'],
                 'condition' => ['nullable', 'in:good,fair,poor'],
@@ -1924,6 +1946,12 @@ class AdminDashboardController extends Controller
             $validated['tool_code'] = trim((string) ($validated['tool_code'] ?? ''));
             $validated['name'] = trim((string) ($validated['name'] ?? ''));
             $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
+            $validated['custom_category'] = trim((string) ($validated['custom_category'] ?? '')) ?: null;
+
+            if ($validated['category'] === 'Other') {
+                $validated['category'] = $validated['custom_category'] ?: 'General Purpose';
+            }
+
             $validated['unit'] = trim((string) ($validated['unit'] ?? '')) ?: null;
             $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
 
