@@ -752,14 +752,23 @@ class ClientController extends Controller
             // when the Reports page is opened without a filter we fall back to the
             // project the client last selected so the choice stays synchronized with
             // the Dashboard (and the rest of the Client portal) within the session.
-            if ($request->has('project_id')) {
-                $activeProjectId = $request->input('project_id') !== '' ? (int) $request->input('project_id') : null;
+            $requestedProjectId = $request->input('project_id');
+            $sessionProjectId = session('client_selected_project_id');
+
+            if ($request->has('project_id') && $requestedProjectId !== null && $requestedProjectId !== '') {
+                $activeProjectId = (int) $requestedProjectId;
+            } elseif ($request->has('project_id') && ($requestedProjectId === '' || $requestedProjectId === null)) {
+                $activeProjectId = null;
+                session()->forget('client_selected_project_id');
             } else {
-                $activeProjectId = session('client_selected_project_id');
+                $activeProjectId = $sessionProjectId !== null ? (int) $sessionProjectId : null;
             }
 
             if ($activeProjectId && $projects->contains('project_id', $activeProjectId)) {
                 $selectedProject = $projects->firstWhere('project_id', $activeProjectId);
+            } elseif ($activeProjectId !== null) {
+                $activeProjectId = null;
+                session()->forget('client_selected_project_id');
             }
 
             // Keep an explicit project choice sticky so navigating to other Client
@@ -777,8 +786,8 @@ class ClientController extends Controller
             ->whereIn('project_id', $assignedProjectIds)
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)
-            ->when($selectedProject, function ($query) use ($selectedProject) {
-                $query->where('project_id', $selectedProject->project_id);
+            ->when($activeProjectId !== null, function ($query) use ($activeProjectId) {
+                $query->where('project_id', $activeProjectId);
             })
             ->when($request->filled('phase_id'), function ($query) use ($request) {
                 $query->where('phase_id', $request->phase_id);

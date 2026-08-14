@@ -1875,6 +1875,25 @@
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
+    function stripRedundantSequenceLabel(value) {
+        const text = String(value ?? '').trim();
+        if (!text) return '';
+
+        return text
+            .replace(/^(PO\s*\d+|PO\d+|PHASE\s+\d+|MILESTONE\s+\d+)\s*[:\-]?\s*/i, '')
+            .replace(/^(?:Phase|Milestone)\s+\d+\s*[:\-]?\s*/i, '')
+            .replace(/^\d+\s*[:\-]?\s*/, '')
+            .trim();
+    }
+
+    function getDisplayPhaseName(phase) {
+        return stripRedundantSequenceLabel(phase?.phase_name || phase?.name || 'Unnamed phase') || 'Unnamed phase';
+    }
+
+    function getDisplayMilestoneName(milestone) {
+        return stripRedundantSequenceLabel(milestone?.milestone_name || milestone?.name || 'Unnamed milestone') || 'Unnamed milestone';
+    }
+
     function toDateInputValue(value) {
         if (!value) return '';
         const date = new Date(value);
@@ -2007,15 +2026,15 @@
         }).filter((task) => task.start_date);
     }
 
-    function initDhtmlxGantt(tasks, project) {
-        if (window.initDhtmlxGantt) {
+    function initSelectedProjectGantt(tasks, project) {
+        if (window.initDhtmlxGantt && window.initDhtmlxGantt !== initSelectedProjectGantt) {
             window.initDhtmlxGantt(tasks, project);
             if (window.setDhtmlxScale) {
                 window.setDhtmlxScale(activeTimelineScale);
             }
             return;
         }
-        if (window.refreshDhtmlxGantt) {
+        if (window.refreshDhtmlxGantt && window.refreshDhtmlxGantt !== initSelectedProjectGantt) {
             window.refreshDhtmlxGantt(tasks);
             if (window.setDhtmlxScale) {
                 window.setDhtmlxScale(activeTimelineScale);
@@ -2037,8 +2056,7 @@
         const cards = items.map((phase) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-            const phaseCode = phase.phase_code || phase.code || 'Phase';
+            const phaseName = getDisplayPhaseName(phase);
             const start = formatDateFull(phase.planned_start_date || phase.start || phase.start_date || phase.begin);
             const end = formatDateFull(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
             const statusLabel = status.replace('-', ' ');
@@ -2048,7 +2066,6 @@
                     <div class="mobile-gantt-head">
                         <div>
                             <h4 class="mobile-gantt-title">${escapeHtml(phaseName)}</h4>
-                            <span class="mobile-gantt-code">${escapeHtml(phaseCode)}</span>
                         </div>
                         <span class="status-pill-badge ${status}">${escapeHtml(statusLabel)}</span>
                     </div>
@@ -2083,23 +2100,19 @@
             return '<div class="timeline-empty-state">No phases match the current filters.</div>';
         }
 
-        return items.map((phase, index) => {
+        return items.map((phase) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-            const phaseCode = phase.phase_code || phase.code || 'Phase';
+            const phaseName = getDisplayPhaseName(phase);
             const start = formatDateFull(phase.planned_start_date || phase.start);
             const end = formatDateFull(phase.planned_end_date || phase.end);
-            const number = startIndex + index;
 
             return `
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
-                        <span class="timeline-mobile-index">${number}</span>
                         <div class="timeline-mobile-title">
                             <h4>${escapeHtml(phaseName)}</h4>
                         </div>
-                        <span class="timeline-mobile-code">${escapeHtml(phaseCode)}</span>
                     </div>
                     <div class="timeline-mobile-detail-grid">
                         <div class="timeline-mobile-detail">
@@ -2133,18 +2146,16 @@
             return '<div class="timeline-empty-state">No milestones match the current filters.</div>';
         }
 
-        return items.map((milestone, index) => {
+        return items.map((milestone) => {
             const status = getMilestoneStatus(milestone);
-            const number = startIndex + index;
-            const milestoneName = milestone.milestone_name || 'Unnamed milestone';
-            const phaseName = milestone.phase_name || 'Unnamed phase';
+            const milestoneName = getDisplayMilestoneName(milestone);
+            const phaseName = stripRedundantSequenceLabel(milestone.phase_name || 'Unnamed phase');
             const start = formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start);
             const end = formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end);
 
             return `
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
-                        <span class="timeline-mobile-index">${number}</span>
                         <div class="timeline-mobile-title">
                             <h4>${escapeHtml(milestoneName)}</h4>
                         </div>
@@ -2267,17 +2278,14 @@
                                         ${paginatedPhases.length ? paginatedPhases.map((phase, index) => {
                                             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
                                             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-                                            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-                                            const phaseCode = phase.phase_code || phase.code || 'Phase';
+                                            const phaseName = getDisplayPhaseName(phase);
                                             return `
                                                 <tr class="timeline-phase-card">
                                                     <td data-label="#">${phasesFrom + index}</td>
                                                     <td data-label="Phase" class="timeline-title-cell">
                                                         <div class="timeline-title-row">
-                                                            <span class="timeline-number-chip">${phasesFrom + index}</span>
                                                             <div class="timeline-title-copy">
                                                                 <strong>${escapeHtml(phaseName)}</strong>
-                                                                <span class="timeline-code-chip">${escapeHtml(phaseCode)}</span>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -2322,13 +2330,12 @@
                                                     <td data-label="#">${timelineFrom + index}</td>
                                                     <td data-label="Milestone" class="timeline-title-cell">
                                                         <div class="timeline-title-row">
-                                                            <span class="timeline-number-chip">${timelineFrom + index}</span>
                                                             <div class="timeline-title-copy">
-                                                                <strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong>
+                                                                <strong>${escapeHtml(getDisplayMilestoneName(milestone))}</strong>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td data-label="Phase">${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
+                                                    <td data-label="Phase">${escapeHtml(stripRedundantSequenceLabel(milestone.phase_name || 'Unnamed phase'))}</td>
                                                     <td data-label="Start Planned Date">${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
                                                     <td data-label="End Planned Date">${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
@@ -2404,7 +2411,7 @@
         });
 
         const tasks = buildGanttTasks(filteredPhases);
-        initDhtmlxGantt(tasks, project);
+        initSelectedProjectGantt(tasks, project);
     }
 
     function attachTimelineControls() {
