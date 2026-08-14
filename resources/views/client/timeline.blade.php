@@ -2,6 +2,7 @@
 
 @section('title', 'Client Timeline - D&G Construction Monitor')
 @section('page_title', 'Project Timeline')
+@section('mobileTitle', 'Timeline')
 
 @push('styles')
 <style>
@@ -975,6 +976,22 @@
         width: 100%;
         height: 420px;
         min-height: 420px;
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #dhtmlxGantt * {
+        font-family: inherit;
+    }
+
+    .gantt_scale_cell,
+    .gantt_scale_cell_date,
+    .gantt_grid_data,
+    .gantt_grid_head_cell,
+    .gantt_task_content,
+    .gantt_task_progress,
+    .gantt_task_time,
+    .gantt_task_scale .gantt_scale_cell {
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
 
     .gantt-scroll-shell {
@@ -1356,6 +1373,15 @@
             border-bottom: 1px solid #eef4ef !important;
         }
 
+        #pg-timeline .mobile-gantt-head > div:first-child {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .mobile-gantt-head .status-pill-badge {
+            flex-shrink: 0 !important;
+        }
+
         #pg-timeline .mobile-gantt-title {
             margin: 0 !important;
             color: #10271b !important;
@@ -1491,12 +1517,23 @@
 
         #pg-timeline .timeline-mobile-head {
             display: grid !important;
-            grid-template-columns: 30px minmax(0, 1fr) auto !important;
+            grid-template-columns: 1fr auto !important;
             gap: 10px !important;
             align-items: start !important;
             padding-bottom: 12px !important;
             margin-bottom: 10px !important;
             border-bottom: 1px solid #edf3ee !important;
+        }
+
+        #pg-timeline .timeline-mobile-title {
+            grid-column: 1 !important;
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .timeline-mobile-head .status-pill-badge {
+            grid-column: 2 !important;
+            flex-shrink: 0 !important;
+            justify-self: end !important;
         }
 
         #pg-timeline .timeline-mobile-index {
@@ -1521,12 +1558,22 @@
         #pg-timeline .timeline-mobile-title h4 {
             margin: 0 !important;
             color: #10271b !important;
-            font-size: 14px !important;
+            font-size: 15px !important;
             font-weight: 800 !important;
             line-height: 1.35 !important;
             letter-spacing: -0.01em !important;
             word-break: normal !important;
             overflow-wrap: anywhere !important;
+            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        }
+
+        #pg-timeline h4 {
+            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        }
+
+        #pg-timeline .mobile-gantt-title h4 {
+            font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: 15px !important;
         }
 
         #pg-timeline .timeline-mobile-code {
@@ -1982,7 +2029,7 @@
                 <article class="mobile-gantt-card">
                     <div class="mobile-gantt-head">
                         <div>
-                            <h4 class="mobile-gantt-title">${escapeHtml(phaseName)}</h4>
+                            <h4 class="mobile-gantt-title" style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">${escapeHtml(phaseName)}</h4>
                         </div>
                         <span class="status-pill-badge ${status}">${escapeHtml(statusLabel)}</span>
                     </div>
@@ -2028,7 +2075,7 @@
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
                         <div class="timeline-mobile-title">
-                            <h4>${escapeHtml(phaseName)}</h4>
+                            <h4 style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">${escapeHtml(phaseName)}</h4>
                         </div>
                     </div>
                     <div class="timeline-mobile-detail-grid">
@@ -2074,7 +2121,7 @@
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
                         <div class="timeline-mobile-title">
-                            <h4>${escapeHtml(milestoneName)}</h4>
+                            <h4 style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">${escapeHtml(milestoneName)}</h4>
                         </div>
                         <span class="status-pill-badge ${status}">${escapeHtml(status.replace('-', ' '))}</span>
                     </div>

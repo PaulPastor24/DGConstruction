@@ -975,6 +975,22 @@
         width: 100%;
         height: 420px;
         min-height: 420px;
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #dhtmlxGantt * {
+        font-family: inherit;
+    }
+
+    .gantt_scale_cell,
+    .gantt_scale_cell_date,
+    .gantt_grid_data,
+    .gantt_grid_head_cell,
+    .gantt_task_content,
+    .gantt_task_progress,
+    .gantt_task_time,
+    .gantt_task_scale .gantt_scale_cell {
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
 
     .gantt-scroll-shell {
