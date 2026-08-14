@@ -67,6 +67,12 @@ Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(fu
     Route::post('/admin/inventory/requests/{materialRequest}/approve', [AdminDashboardController::class, 'approveMaterialRequest'])->name('admin.inventory.requests.approve');
     Route::post('/admin/inventory/requests/{materialRequest}/reject', [AdminDashboardController::class, 'rejectMaterialRequest'])->name('admin.inventory.requests.reject');
     Route::delete('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'destroyMaterial'])->name('admin.inventory.materials.destroy');
+    Route::post('/admin/inventory/tools', [AdminDashboardController::class, 'storeTool'])->name('admin.inventory.tools.store');
+    Route::post('/admin/inventory/tools/{tool}/issue', [AdminDashboardController::class, 'issueTool'])->name('admin.inventory.tools.issue');
+    Route::post('/admin/inventory/tools/{tool}/return', [AdminDashboardController::class, 'returnTool'])->name('admin.inventory.tools.return');
+    Route::post('/admin/inventory/tools/{tool}/lost', [AdminDashboardController::class, 'markLost'])->name('admin.inventory.tools.lost');
+    Route::delete('/admin/inventory/tools/{tool}', [AdminDashboardController::class, 'deleteTool'])->name('admin.inventory.tools.destroy');
+
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
     Route::post('/admin/notifications/{id}/mark-read', [AdminDashboardController::class, 'markNotificationRead'])->name('admin.notifications.markRead');
@@ -193,6 +199,7 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
     Route::get('/client/projects/{project}', [ClientController::class, 'projectDetails'])->name('client.project.show');
     Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
+    Route::get('/client/timeline/data/{project}', [TimelineController::class, 'clientTimelineData'])->name('client.timeline.data');
     Route::get('/client/milestones', [TimelineController::class, 'clientTimeline'])->name('client.milestones');
     Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
     Route::get('/client/reports/{id}/download-pdf', [ClientController::class, 'downloadReportPdf'])->name('client.reports.downloadPdf');

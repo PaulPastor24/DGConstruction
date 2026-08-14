@@ -79,9 +79,32 @@ class TimelineController extends Controller
     }
 
     /**
-     * Return refreshed project timeline data for the admin UI.
-     */
-    public function timelineData(Request $request, Project $project)
+      * Return refreshed project timeline data for the client UI.
+      */
+     public function clientTimelineData(Request $request, Project $project)
+     {
+         $user = Auth::user();
+         $client = $user->client;
+
+         if (!$client) {
+             abort(403, 'User is not associated with a client account');
+         }
+
+         $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+             ->where('project_id', $project->project_id)
+             ->where('client_id', $client->client_id)
+             ->firstOrFail();
+
+         return response()->json([
+             'success' => true,
+             'project' => $this->enrichProjectData($project),
+         ]);
+     }
+
+     /**
+      * Return refreshed project timeline data for the admin UI.
+      */
+     public function timelineData(Request $request, Project $project)
     {
         $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
             ->where('project_id', $project->project_id)

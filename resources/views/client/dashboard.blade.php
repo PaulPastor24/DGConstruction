@@ -150,7 +150,7 @@
                 <div>
                     <div class="metric-title">Latest Report Status</div>
                     <div class="metric-main-val text-success" id="metricLatestReportStatus" style="font-size: 1.25rem; font-weight:700; margin: 0.3rem 0;">
-                        {{ $recentReports->first()?->approval_status ?? 'Pending' }}
+                        {{ $recentReports->first()?->approval_status === 'approved' && $recentReports->first()?->is_published_to_client ? 'Published' : ($recentReports->first()?->approval_status === 'rejected' ? 'Returned' : 'No report') }}
                     </div>
                     <div class="metric-sub-text" id="metricLatestReportNote">{{ $recentReports->count() > 0 ? 'Last uploaded report' : 'No report submitted' }}</div>
                 </div>

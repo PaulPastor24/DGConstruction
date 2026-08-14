@@ -13,7 +13,11 @@ use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\Report;
+use App\Models\Tool;
+use App\Models\ToolDeduction;
+use App\Models\ToolLoan;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -475,7 +479,7 @@ class AdminDashboardController extends Controller
         $usageCategory = trim((string) $request->input('usage_category', ''));
         $usageStatus = trim((string) $request->input('usage_status', ''));
         $activeView = $request->input('view', 'inventory');
-        $activeView = in_array($activeView, ['inventory', 'usage', 'requests'], true) ? $activeView : 'inventory';
+        $activeView = in_array($activeView, ['inventory', 'usage', 'expenses', 'requests', 'tools'], true) ? $activeView : 'inventory';
         $searchForUsage = $search;
 
         $query = Material::query();
@@ -664,7 +668,80 @@ class AdminDashboardController extends Controller
             ];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus'));
+        $toolLoans = collect();
+        $toolDeductions = collect();
+        $toolMetrics = [
+            'total_tools' => 0,
+            'available' => 0,
+            'in_use' => 0,
+            'lost' => 0,
+        ];
+        $toolsSearch = $search;
+        $toolCategory = $request->input('tool_category', '');
+        $toolStatus = $request->input('tool_status', '');
+
+        if (Schema::hasTable('tools')) {
+            $toolsQuery = Tool::query()->with(['currentBorrower']);
+
+            if ($toolsSearch !== '') {
+                $toolsQuery->where(function ($q) use ($toolsSearch) {
+                    $q->where('name', 'like', '%'.$toolsSearch.'%')
+                        ->orWhere('tool_code', 'like', '%'.$toolsSearch.'%')
+                        ->orWhere('category', 'like', '%'.$toolsSearch.'%');
+                });
+            }
+
+            if ($toolCategory !== '') {
+                $toolsQuery->where('category', $toolCategory);
+            }
+
+            if ($toolStatus !== '' && in_array($toolStatus, ['available', 'in_use', 'lost', 'retired'], true)) {
+                $toolsQuery->where('status', $toolStatus);
+            }
+
+            $tools = $toolsQuery
+                ->orderByDesc('updated_at')
+                ->orderBy('name', 'asc')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $toolMetrics = [
+                'total_tools' => Tool::count('*'),
+                'available' => Tool::where('status', 'available')->count('*'),
+                'in_use' => Tool::where('status', 'in_use')->count('*'),
+                'lost' => Tool::where('status', 'lost')->count('*'),
+            ];
+
+            $activeToolLoans = ToolLoan::query()
+                ->with(['tool', 'worker', 'project'])
+                ->where('status', 'borrowed')
+                ->orderByDesc('borrowed_at')
+                ->get();
+
+            $toolLoanHistory = ToolLoan::query()
+                ->with(['tool', 'worker'])
+                ->where('status', '!=', 'borrowed')
+                ->orderByDesc('returned_at')
+                ->orderByDesc('updated_at')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $allToolDeductions = ToolDeduction::query()
+                ->with(['tool', 'worker', 'approvedBy', 'loan'])
+                ->orderByDesc('created_at')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $toolCategories = Tool::query()->distinct()->pluck('category')->filter()->sort()->values();
+        } else {
+            $tools = collect();
+            $activeToolLoans = collect();
+            $toolLoanHistory = collect();
+            $allToolDeductions = collect();
+            $toolCategories = collect();
+        }
+
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus'));
     }
 
     /**
@@ -1879,5 +1956,252 @@ class AdminDashboardController extends Controller
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
+    }
+
+    public function storeTool(Request $request)
+    {
+        if (! Schema::hasTable('tools')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'tool_code' => ['required', 'string', 'max:50', Rule::unique('tools', 'tool_code')],
+                'name' => ['required', 'string', 'max:255'],
+                'category' => ['nullable', 'string', 'max:255'],
+                'type' => ['nullable', 'in:tool,equipment'],
+                'unit' => ['nullable', 'string', 'max:50'],
+                'condition' => ['nullable', 'in:good,fair,poor'],
+                'purchase_date' => ['nullable', 'date'],
+                'purchase_price' => ['nullable', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string'],
+            ], [
+                'tool_code.required' => 'Tool code is required.',
+                'tool_code.unique' => 'A tool with this code already exists.',
+                'name.required' => 'Tool name is required.',
+                'purchase_price.min' => 'Purchase price cannot be negative.',
+            ]);
+
+            $validated['tool_code'] = trim((string) ($validated['tool_code'] ?? ''));
+            $validated['name'] = trim((string) ($validated['name'] ?? ''));
+            $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
+            $validated['unit'] = trim((string) ($validated['unit'] ?? '')) ?: null;
+            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
+
+            Tool::create($validated);
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool added successfully.');
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Unable to add tool right now. Please try again.')->withInput();
+        }
+    }
+
+    public function issueTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        if ($tool->status === 'lost' || $tool->status === 'retired') {
+            return back()->with('error', 'Cannot issue a tool that is lost or retired.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->exists();
+
+        if ($activeLoan) {
+            return back()->with('error', 'This tool is already borrowed.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'worker_id' => ['required', 'integer', 'exists:workers,worker_id'],
+                'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
+                'expected_return_date' => ['nullable', 'date'],
+                'condition_at_issue' => ['required', 'in:good,fair,poor'],
+                'notes' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'worker_id.required' => 'Please select a worker.',
+                'worker_id.exists' => 'The selected worker does not exist.',
+                'condition_at_issue.required' => 'Please select the condition at issue.',
+            ]);
+
+            DB::beginTransaction();
+
+            $tool->update([
+                'status' => 'in_use',
+                'current_borrower_worker_id' => (int) $validated['worker_id'],
+            ]);
+
+            ToolLoan::create([
+                'tool_id' => $tool->id,
+                'worker_id' => (int) $validated['worker_id'],
+                'project_id' => $validated['project_id'] ?? null,
+                'expected_return_date' => $validated['expected_return_date'] ?? null,
+                'condition_at_issue' => $validated['condition_at_issue'],
+                'notes' => trim((string) ($validated['notes'] ?? '')),
+                'status' => 'borrowed',
+                'borrowed_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool issued successfully.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to issue tool right now. Please try again.');
+        }
+    }
+
+    public function returnTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->orderByDesc('borrowed_at')
+            ->first();
+
+        if (! $activeLoan) {
+            return back()->with('error', 'No active loan found for this tool.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'condition_at_return' => ['required', 'in:good,fair,poor'],
+                'remarks' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'condition_at_return.required' => 'Please select the condition at return.',
+            ]);
+
+            DB::beginTransaction();
+
+            $activeLoan->update([
+                'status' => 'returned',
+                'returned_at' => now(),
+                'condition_at_return' => $validated['condition_at_return'],
+            ]);
+
+            $tool->update([
+                'status' => 'available',
+                'current_borrower_worker_id' => null,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool returned successfully.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to return tool right now. Please try again.');
+        }
+    }
+
+    public function markLost(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans') || ! Schema::hasTable('tool_deductions')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->orderByDesc('borrowed_at')
+            ->first();
+
+        if (! $activeLoan) {
+            return back()->with('error', 'No active borrowed loan found for this tool.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'amount' => ['required', 'numeric', 'min:0.01'],
+                'reason' => ['required', 'in:lost,damaged_beyond_repair,stolen'],
+                'remarks' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'amount.required' => 'Please enter a deduction amount.',
+                'amount.min' => 'Deduction amount must be greater than ₱0.00.',
+                'reason.required' => 'Please select a reason.',
+            ]);
+
+            $amount = (float) $validated['amount'];
+
+            if ($amount <= 0) {
+                return back()->withErrors(['amount' => 'Deduction amount must be greater than ₱0.00.'])->withInput();
+            }
+
+            DB::beginTransaction();
+
+            $activeLoan->update([
+                'status' => 'lost',
+            ]);
+
+            $tool->update([
+                'status' => 'lost',
+                'current_borrower_worker_id' => null,
+            ]);
+
+            ToolDeduction::create([
+                'tool_loan_id' => $activeLoan->id,
+                'tool_id' => $tool->id,
+                'worker_id' => $activeLoan->worker_id,
+                'amount' => $amount,
+                'reason' => $validated['reason'],
+                'remarks' => trim((string) ($validated['remarks'] ?? '')),
+                'status' => 'approved',
+                'approved_by' => Auth::user()->user_id,
+                'approved_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool marked as lost and deduction recorded.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to mark tool as lost. Please try again.');
+        }
+    }
+
+    public function deleteTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tools')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            if ($tool->activeLoan()->exists()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Cannot delete a tool with an active borrowed loan.');
+            }
+
+            ToolDeduction::where('tool_id', $tool->id)->update(['tool_id' => null]);
+            $tool->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool deleted successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to delete tool right now. Please try again.');
+        }
     }
 }

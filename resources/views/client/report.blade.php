@@ -65,9 +65,12 @@
             <div class="col-12 col-md-4">
                 <label class="form-label small fw-bold text-muted">Project</label>
                 <select name="project_id" id="projectSelect" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="" {{ request('project_id') == '' ? 'selected' : '' }}>All Projects</option>
+                    @php
+                        $selectedProjectFilter = $activeProjectId ?? request('project_id');
+                    @endphp
+                    <option value="" {{ $selectedProjectFilter == '' || $selectedProjectFilter === null ? 'selected' : '' }}>All Projects</option>
                     @foreach($projects as $project)
-                        <option value="{{ $project->project_id }}" {{ request('project_id') == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                        <option value="{{ $project->project_id }}" {{ (string) $selectedProjectFilter === (string) $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -143,9 +146,9 @@
                 <tbody>
                     @forelse($reports as $report)
                     @php
-                        $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : 'pending');
-                        $displayStatus = $status;
-                        $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
+                        $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : null);
+                        $displayStatus = $status ?? 'hidden';
+                        $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'd-none');
                         $displayPillClass = $pillClass;
                     @endphp
                         @php
@@ -195,7 +198,11 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="status-pill {{ $pillClass }}">{{ $status }}</span>
+                                @if($status)
+                                    <span class="status-pill {{ $pillClass }}">{{ $status === 'published' ? 'Published' : 'Returned' }}</span>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
@@ -230,7 +237,11 @@
                                                         </div>
                                                         <div class="text-sm-end">
                                                             <div class="small text-uppercase text-muted" style="font-weight: 600;">Approval Status</div>
-                                                            <span class="status-pill {{ $pillClass }} p-2 mt-1 d-inline-block">{{ $status }}</span>
+                                                            @if($status)
+                                                                <span class="status-pill {{ $pillClass }} p-2 mt-1 d-inline-block">{{ $status === 'published' ? 'Published' : 'Returned' }}</span>
+                                                            @else
+                                                                <span class="text-muted small">—</span>
+                                                            @endif
                                                         </div>
                                                     </div>
 
@@ -268,7 +279,7 @@
                                                         <div class="col-12 col-md-6">
                                                             <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
                                                                  <div class="fw-semibold text-muted mb-1">Approved By</div>
-                                                                 <div class="text-dark">{{ $detailPayload['reviewed_by'] !== '-' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                                 <div class="text-dark">{{ $detailPayload['reviewed_by'] !== '-' ? $detailPayload['reviewed_by'] : '—' }}</div>
                                                              </div>
                                                          </div>
                                                      </div>
@@ -304,13 +315,6 @@
                                                             <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
                                                         </div>
                                                         <div class="timeline-step active">
-                                                            <div class="timeline-icon"><i class="bi bi-clock"></i></div>
-                                                            <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
-                                                            @if($report->reviewed_at)
-                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
-                                                            @endif
-                                                        </div>
-                                                        <div class="timeline-step active">
                                                             <div class="timeline-icon"><i class="bi bi-check-circle"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Approved</div>
                                                             @if($report->approved_at)
@@ -342,11 +346,9 @@
         <div class="report-mobile-list">
             @forelse($reports as $report)
                 @php
-                    $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : 'pending');
-                    $displayStatus = $status;
-                    $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning');
-                    $displayPillClass = $pillClass;
-
+                    $status = $report->approval_status === 'approved' && $report->is_published_to_client ? 'published' : ($report->approval_status === 'rejected' ? 'rejected' : null);
+                    $displayStatus = $status ?? 'hidden';
+                    $pillClass = $displayStatus === 'published' ? 'bg-success-subtle text-success' : ($displayStatus === 'rejected' ? 'bg-danger-subtle text-danger' : 'd-none');
                     $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
                     $adminImages = is_array($report->admin_site_images ?? null) ? $report->admin_site_images : [];
                     $displayImages = !empty($adminImages) ? $adminImages : $siteImages;
@@ -379,7 +381,11 @@
                             <strong>{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</strong>
                             <small>{{ optional($report->created_at)->format('h:i A') ?? '' }}</small>
                         </div>
-                        <span class="status-pill {{ $displayPillClass }}">{{ $displayStatus === 'rejected' ? 'Returned' : ucfirst($displayStatus) }}</span>
+                        @if($status)
+                            <span class="status-pill {{ $displayPillClass }}">{{ $displayStatus === 'rejected' ? 'Returned' : 'Published' }}</span>
+                        @else
+                            <span class="text-muted small">—</span>
+                        @endif
                     </div>
 
                     <div class="report-mobile-main">
@@ -472,7 +478,7 @@
                                                 <div class="col-12 col-md-6">
                                                     <div class="p-3 rounded-3" style="background: #f9fafb; border-radius: 14px;">
                                                         <div class="fw-semibold text-muted mb-1">Approved By</div>
-                                                         <div class="text-dark">{{ $detailPayload['status'] === 'approved' ? $detailPayload['reviewed_by'] : 'Pending approval' }}</div>
+                                                         <div class="text-dark">{{ $detailPayload['reviewed_by'] !== '-' ? $detailPayload['reviewed_by'] : '—' }}</div>
                                                      </div>
                                                  </div>
                                              </div>
@@ -506,13 +512,6 @@
                                                     <div class="timeline-icon"><i class="bi bi-check"></i></div>
                                                     <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
                                                     <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
-                                                </div>
-                                                <div class="timeline-step active">
-                                                    <div class="timeline-icon"><i class="bi bi-clock"></i></div>
-                                                    <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
-                                                    @if($report->reviewed_at)
-                                                        <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
-                                                    @endif
                                                 </div>
                                                 <div class="timeline-step active">
                                                     <div class="timeline-icon"><i class="bi bi-check-circle"></i></div>
