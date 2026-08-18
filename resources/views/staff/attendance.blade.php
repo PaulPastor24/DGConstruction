@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.staff')
 
 @section('title', 'Worker Attendance')
 @section('page_title', 'Worker Attendance')
@@ -555,11 +555,11 @@
 
                         <div class="issue-body">
                             <strong>{{ $issueWorkerName }}</strong>
-                            <span>{{ $issueReason }} • {{ $issueProjectName }}</span>
+                            <span>{{ $issueReason }} â€¢ {{ $issueProjectName }}</span>
                         </div>
 
                         <div class="issue-date">
-                            {{ $issue->log_date ? \Carbon\Carbon::parse($issue->log_date)->format('M d') : '—' }}
+                            {{ $issue->log_date ? \Carbon\Carbon::parse($issue->log_date)->format('M d') : 'â€”' }}
                         </div>
                     </div>
                 @endforeach
@@ -684,7 +684,7 @@
                                 && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
 
                             $breakExceeded = false;
-                            $overtimeLabel = $log->overtime_label ?? '—';
+                            $overtimeLabel = $log->overtime_label ?? 'â€”';
 
                             if ($log->break_out && $log->break_in) {
                                 try {
@@ -733,23 +733,23 @@
                             </td>
 
                             <td data-label="Date">
-                                {{ $log->log_date ? \Carbon\Carbon::parse($log->log_date)->format('M d, Y') : '—' }}
+                                {{ $log->log_date ? \Carbon\Carbon::parse($log->log_date)->format('M d, Y') : 'â€”' }}
                             </td>
 
                             <td data-label="Time In">
-                                {{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('h:i A') : '—' }}
+                                {{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('h:i A') : 'â€”' }}
                             </td>
 
                             <td data-label="Break Out">
-                                {{ $log->break_out ? \Carbon\Carbon::parse($log->break_out)->format('h:i A') : '—' }}
+                                {{ $log->break_out ? \Carbon\Carbon::parse($log->break_out)->format('h:i A') : 'â€”' }}
                             </td>
 
                             <td data-label="Break In">
-                                {{ $log->break_in ? \Carbon\Carbon::parse($log->break_in)->format('h:i A') : '—' }}
+                                {{ $log->break_in ? \Carbon\Carbon::parse($log->break_in)->format('h:i A') : 'â€”' }}
                             </td>
 
                             <td data-label="Time Out">
-                                {{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('h:i A') : '—' }}
+                                {{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('h:i A') : 'â€”' }}
                             </td>
 
                             <td data-label="OT">
@@ -758,7 +758,7 @@
                                         {{ $overtimeLabel }}
                                     </span>
                                 @else
-                                    —
+                                    â€”
                                 @endif
                             </td>
 
@@ -790,7 +790,7 @@
 
                             <td data-label="Remarks">
                                 <span class="remarks-cell" title="{{ $log->remarks ?? 'No remarks' }}">
-                                    {{ $log->remarks ?? '—' }}
+                                    {{ $log->remarks ?? 'â€”' }}
                                 </span>
                             </td>
 

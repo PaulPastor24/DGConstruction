@@ -23,10 +23,10 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
         if (in_array($user->role, ['engineer', 'staff', 'admin', 'administrator'], true)) {
-            return redirect()->intended(route('admin.dashboard'))->with('login_success', true);
+            return redirect()->intended(route('dashboard'))->with('login_success', true);
         }
-        if ($user->role === 'supervisor') return redirect()->intended(route('supervisor.dashboard'))->with('login_success', true);
-        if ($user->role === 'client') return redirect()->intended(route('client.dashboard'))->with('login_success', true);
+        if ($user->role === 'supervisor') return redirect()->intended(route('dashboard'))->with('login_success', true);
+        if ($user->role === 'client') return redirect()->intended(route('dashboard'))->with('login_success', true);
 
         return redirect()->intended(url('/'))->with('login_success', true);
     }

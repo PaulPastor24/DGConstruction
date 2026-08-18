@@ -44,6 +44,27 @@ class User extends Authenticatable implements HasPasskeys
     }
 
     /**
+     * Convert role labels left by older imports into the roles used by the
+     * application. This keeps existing accounts usable without changing the
+     * value stored in the database during a login request.
+     */
+    public static function normalizeRole(?string $role): string
+    {
+        $normalized = strtolower(trim((string) $role));
+
+        return match ($normalized) {
+            'office staff', 'office_staff' => 'staff',
+            'site supervisor', 'site_supervisor' => 'supervisor',
+            default => $normalized,
+        };
+    }
+
+    public function getRoleAttribute($value): string
+    {
+        return self::normalizeRole($value);
+    }
+
+    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName()

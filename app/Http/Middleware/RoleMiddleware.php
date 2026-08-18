@@ -29,7 +29,7 @@ class RoleMiddleware
             explode(',', $role)
         )));
 
-        if (! in_array(strtolower((string) $user->role), $allowedRoles, true)) {
+        if (! in_array($user->role, $allowedRoles, true)) {
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 

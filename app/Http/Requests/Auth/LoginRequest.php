@@ -42,31 +42,16 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $rawRole = trim(strtolower($this->input('role')));
-        $inputRole = match($rawRole) {
-            'engineer' => 'engineer',
-            'staff', 'office staff', 'office_staff' => 'staff',
-            'supervisor', 'site supervisor', 'site_supervisor' => 'supervisor',
-            'client' => 'client',
-            default => $rawRole,
-        };
+        $inputRole = User::normalizeRole($this->input('role'));
 
-        $user = User::query()
-            ->where('email', $this->input('email'))
-            ->where('role', $inputRole)
-            ->first();
+        // Fetch by email first, then compare canonical roles. Older data may
+        // contain labels such as "Office Staff", which must remain able to log in.
+        $user = User::query()->where('email', $this->input('email'))->first();
 
-        // 4. Fallback check: If matching by role fails, try matching by email only 
-        // to see if the account actually exists in the database
-        if (!$user) {
-            $userByEmail = User::query()->where('email', '=', $this->input('email'))->first();
-            
-            if ($userByEmail) {
-                // If the user exists but the role mismatched, throw an informative error
-                throw ValidationException::withMessages([
-                    'email' => "Account found, but role mismatch. Form sent: '{$this->input('role')}', Database expects: '{$userByEmail->role}'.",
-                ]);
-            }
+        if ($user && $user->role !== $inputRole) {
+            throw ValidationException::withMessages([
+                'email' => 'The selected role does not match this account.',
+            ]);
         }
 
         // 5. Verify password against your custom column

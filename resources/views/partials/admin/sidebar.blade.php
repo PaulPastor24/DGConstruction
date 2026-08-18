@@ -53,7 +53,7 @@
             </div>
             <div class="user-info">
                 <div class="user-name">{{ auth()->user()->name ?? 'Admin' }}</div>
-                <div class="user-role">Administrator</div>
+                <div class="user-role">{{ auth()->user()->role_name ?? 'User' }}</div>
             </div>
         </div>
     </div>
