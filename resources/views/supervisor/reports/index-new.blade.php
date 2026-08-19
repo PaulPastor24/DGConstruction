@@ -1245,21 +1245,22 @@
                                     <button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#reportDetailsModal-{{ $report->report_id }}" style="background: white; color: var(--cms-green-dark); transition: all 0.2s ease;" onmouseover="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1.2)';" onmouseout="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1)';">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm download-report-btn" data-report-id="{{ $report->report_id }}" style="background: white; color: var(--cms-green-dark); transition: all 0.2s ease;" onmouseover="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1.2)';" onmouseout="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1)';">
-                                        <i class="bi bi-download"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
 
                         @php
-                            $siteImages = is_array($report->site_images) ? $report->site_images : [];
+                            $siteImages = is_array($report->site_images)
+                                ? $report->site_images
+                                : (json_decode((string) $report->site_images, true) ?: []);
                             $siteImageUrls = collect($siteImages)
                                 ->map(function ($path) {
                                     if (!$path) {
                                         return null;
                                     }
-                                    return asset('storage/' . ltrim($path, '/'));
+                                    return str_starts_with($path, 'http://') || str_starts_with($path, 'https://')
+                                        ? $path
+                                        : asset('storage/' . ltrim($path, '/'));
                                 })
                                 ->filter()
                                 ->values();
@@ -1355,7 +1356,7 @@
                                                                 @if(!empty($report->site_images))
                                                                     @foreach($report->site_images as $img)
                                                                         <div class="current-image-item">
-                                                                            <img src="{{ asset('storage/' . ltrim($img, '/')) }}" class="object-fit-cover border rounded" alt="Current site image">
+                                                                            <img src="{{ str_starts_with($img, 'http://') || str_starts_with($img, 'https://') ? $img : asset('storage/' . ltrim($img, '/')) }}" class="object-fit-cover border rounded" alt="Original report image">
                                                                             <div class="form-check mt-1">
                                                                                 <input class="form-check-input js-remove-image-checkbox" type="checkbox" value="{{ $img }}" style="width: 12px; height: 12px;">
                                                                                 <label class="form-check-label small" style="font-size: 0.65rem;">Remove</label>
@@ -1458,7 +1459,7 @@
 
                                                 <div class="d-flex justify-content-center align-items-center" style="padding-top: 1.25rem; margin-top: 1.25rem; border-top: 2px solid var(--cms-green-muted);">
                                                     <div class="d-inline-flex gap-2 justify-content-center">
-                                                        <button type="button" class="btn btn-sm btn-success js-edit-pending-report" style="display: none;">
+                                                        <button type="button" class="btn btn-sm btn-success js-edit-pending-report" style="display: {{ in_array($status, ['pending', 'rejected'], true) ? 'inline-flex' : 'none' }};">
                                                             <i class="bi bi-pencil-square me-1"></i>Edit
                                                         </button>
                                                         <button type="button" class="btn btn-sm btn-success js-export-pending-report" style="display: none;">
@@ -2318,7 +2319,7 @@
             const viewSection = modal.querySelector('.js-report-view-section');
             const editForm = modal.querySelector('.js-edit-form');
 
-            if (status === 'rejected') {
+            if (status === 'pending' || status === 'rejected') {
                 if (editBtn) editBtn.style.display = 'inline-flex';
                 if (exportBtn) exportBtn.style.display = 'inline-flex';
             } else {
@@ -2333,7 +2334,7 @@
             editBtn?.addEventListener('click', function () {
                 Swal.fire({
                     title: 'Edit Report?',
-                    text: 'You are about to revise this rejected report. Continue?',
+                    text: 'You are about to edit this report. Continue?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, edit',

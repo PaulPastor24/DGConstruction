@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(fu
     Route::get('/admin/reports/data', [AdminDashboardController::class, 'reportsData'])->name('admin.reports.data');
     Route::get('/admin/reports/{id}/details', [AdminDashboardController::class, 'reportDetails'])->name('admin.reports.details');
     Route::get('/admin/reports/{id}/download-pdf', [AdminDashboardController::class, 'downloadReportPdf'])->name('admin.reports.downloadPdf');
+    Route::get('/admin/reports/{project}/images-pdf', [AdminDashboardController::class, 'downloadProjectImagesPdf'])->name('admin.reports.imagesPdf');
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
     Route::get('/admin/phases/export/csv', [PhasesExportController::class, 'exportCsv'])->name('admin.phases.export.csv');
     Route::get('/admin/phases/export/pdf', [PhasesExportController::class, 'exportPdf'])->name('admin.phases.export.pdf');
@@ -215,6 +216,7 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/milestones', [TimelineController::class, 'clientTimeline'])->name('client.milestones');
     Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
     Route::get('/client/reports/{id}/download-pdf', [ClientController::class, 'downloadReportPdf'])->name('client.reports.downloadPdf');
+    Route::get('/client/reports/{project}/images-pdf', [ClientController::class, 'downloadProjectImagesPdf'])->name('client.reports.imagesPdf');
     Route::get('/client/updates', [ClientController::class, 'updates'])->name('client.updates');
     Route::get('/client/notifications', [ClientController::class, 'notifications'])->name('client.notifications');
     Route::post('/client/notifications/{id}/mark-read', [ClientController::class, 'markNotificationRead'])->name('client.notifications.markRead');

@@ -184,6 +184,21 @@
                 </div>
             </div>
         </div>
+        @if($selectedProject)
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="report-summary-widget">
+                    <div class="widget-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-images"></i>
+                    </div>
+                    <div>
+                        <span class="widget-label">Project Image Export</span>
+                        <a href="{{ route('client.reports.imagesPdf', $selectedProject->project_id) }}" class="btn btn-sm btn-cms-primary mt-2" target="_blank">
+                            Export Images
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <section class="report-main-panel mb-4">
@@ -219,7 +234,12 @@
                         @php
                             $siteImages = is_array($report->site_images ?? null) ? $report->site_images : [];
                             $adminImages = is_array($report->admin_site_images ?? null) ? $report->admin_site_images : [];
-                            $displayImages = !empty($adminImages) ? $adminImages : $siteImages;
+                            $displayImages = collect(!empty($adminImages) ? $adminImages : $siteImages)
+                                ->map(fn ($image) => ltrim((string) $image, '/'))
+                                ->filter()
+                                ->unique()
+                                ->values()
+                                ->all();
                             $detailPayload = [
                                 'id' => $report->report_id,
                                 'report_id' => 'RPT-2026-' . str_pad($report->report_id, 4, '0', STR_PAD_LEFT),
@@ -286,7 +306,7 @@
                                     <button class="btn btn-sm btn-light border report-action-btn js-report-view-btn" type="button" data-report-details='@json($detailPayload)' data-modal-target="reportDetailsModal-{{ $report->report_id }}" title="View details">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="btn btn-sm btn-light border report-action-btn report-export-link" title="Export PDF">
+                                    <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" target="_blank" data-report-id="{{ $report->report_id }}" class="btn btn-sm btn-light border report-action-btn report-export-link" title="Export PDF">
                                         <i class="bi bi-download"></i>
                                     </a>
                                 </div>
@@ -396,7 +416,7 @@
                                                     </div>
 
                                                     <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid rgba(42, 64, 40, 0.12);">
-                                                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
+                                                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" target="_blank" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
                                                             <i class="bi bi-download me-2"></i> Download PDF
                                                         </a>
                                                     </div>
@@ -485,7 +505,7 @@
                             <i class="bi bi-eye"></i>
                             View Details
                         </button>
-                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" data-report-id="{{ $report->report_id }}" class="report-mobile-download report-export-link">
+                        <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" target="_blank" data-report-id="{{ $report->report_id }}" class="report-mobile-download report-export-link">
                             <i class="bi bi-download"></i>
                         </a>
                     </div>
@@ -590,7 +610,7 @@
                                             </div>
 
                                             <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid rgba(42, 64, 40, 0.12);">
-                                                <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
+                                                <a href="{{ route('client.reports.downloadPdf', $report->report_id) }}" target="_blank" class="btn btn-cms-primary report-export-link" data-report-id="{{ $report->report_id }}">
                                                     <i class="bi bi-download me-2"></i> Download PDF
                                                 </a>
                                             </div>
@@ -1924,6 +1944,10 @@
 
         document.querySelectorAll('.report-export-link, .report-export-btn').forEach(link => {
             link.addEventListener('click', function (event) {
+                if (this.target === '_blank') {
+                    return;
+                }
+
                 event.preventDefault();
 
                 const url = this.href;
