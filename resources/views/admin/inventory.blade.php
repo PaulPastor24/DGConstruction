@@ -2674,7 +2674,19 @@
                                         <label class="form-label-custom">Category</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-tags input-icon-left"></i>
-                                            <input type="text" id="receiveStockMaterialCategoryInput" name="category" class="control-field-input" placeholder="Category" value="{{ old('category') }}">
+                                            <select name="category" class="control-field-input" id="receiveStockMaterialCategoryInput">
+                                                <option value="">Select category</option>
+                                                @foreach($predefinedMaterialCategories as $cat)
+                                                    <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                @endforeach
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="custom-category-input d-none mt-2" id="receiveStockCustomCategoryWrapper">
+                                            <div class="input-container-group">
+                                                <i class="bi bi-pencil-square input-icon-left"></i>
+                                                <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="receiveStockCustomCategoryInput" value="{{ old('custom_category') }}">
+                                            </div>
                                         </div>
                                         <div class="form-input-hint">Material category — stored in materials table.</div>
                                         </div>
@@ -2831,7 +2843,19 @@
                                 <label class="form-label-custom">Category</label>
                                 <div class="input-container-group">
                                     <i class="bi bi-tags input-icon-left"></i>
-                                    <input type="text" name="category" class="control-field-input" placeholder="e.g. Masonry">
+                                    <select name="category" class="control-field-input" id="addMaterialCategorySelect">
+    <option value="">Select category</option>
+    @foreach($predefinedMaterialCategories as $cat)
+        <option value="{{ $cat }}">{{ $cat }}</option>
+    @endforeach
+    <option value="Other">Other</option>
+</select>
+<div class="custom-category-input d-none mt-2" id="addMaterialCustomCategoryWrapper">
+    <div class="input-container-group">
+        <i class="bi bi-pencil-square input-icon-left"></i>
+        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+    </div>
+</div>
                                 </div>
                                 <div class="form-input-hint">Optional classification for grouping.</div>
                             </div>
@@ -2962,7 +2986,16 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Category</label>
-                            <input type="text" name="category" class="form-control" value="{{ old('category', $material->category ?? '') }}">
+                            <select name="category" class="form-control" id="editMaterialCategorySelect">
+                                <option value="">Select category</option>
+                                @foreach($predefinedMaterialCategories as $cat)
+                                    <option value="{{ $cat }}" {{ old('category', $material->category ?? '') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="custom-category-input d-none mt-2" id="editMaterialCustomCategoryWrapper">
+                                <input type="text" name="custom_category" class="form-control" placeholder="Enter custom category" id="editMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Unit</label>
@@ -4240,6 +4273,27 @@
                 customCategoryInput.required = isOther;
             });
         }
+
+        function bindMaterialCategoryToggle(selectId, wrapperId, inputId) {
+            const select = document.getElementById(selectId);
+            const wrapper = document.getElementById(wrapperId);
+            const input = document.getElementById(inputId);
+
+            if (!select || !wrapper || !input) return;
+
+            select.addEventListener('change', function () {
+                const isOther = this.value === 'Other';
+                wrapper.classList.toggle('d-none', !isOther);
+                if (!isOther) {
+                    input.value = '';
+                }
+                input.required = isOther;
+            });
+        }
+
+        bindMaterialCategoryToggle('receiveStockMaterialCategoryInput', 'receiveStockCustomCategoryWrapper', 'receiveStockCustomCategoryInput');
+        bindMaterialCategoryToggle('addMaterialCategorySelect', 'addMaterialCustomCategoryWrapper', 'addMaterialCustomCategoryInput');
+        bindMaterialCategoryToggle('editMaterialCategorySelect', 'editMaterialCustomCategoryWrapper', 'editMaterialCustomCategoryInput');
 
         function attachModalPaginationHandlers() {
             document.querySelectorAll('.modal .pagination a').forEach(function (link) {

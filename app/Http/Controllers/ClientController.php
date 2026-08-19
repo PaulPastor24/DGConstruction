@@ -799,12 +799,18 @@ class ClientController extends Controller
                 $query->whereDate('report_date', $request->report_date);
             });
 
-        $paginationParams = $request->only(['phase_id', 'status', 'report_date']);
+        $sort = $request->input('sort', 'newest') === 'oldest' ? 'oldest' : 'newest';
+        $paginationParams = $request->only(['phase_id', 'status', 'report_date', 'sort']);
+        $paginationParams['sort'] = $sort;
         if ($activeProjectId !== null) {
             $paginationParams['project_id'] = $activeProjectId;
         }
 
-        $reports = $reportsQuery->latest('report_date')->paginate(10)->appends($paginationParams);
+        $reports = $reportsQuery
+            ->orderBy('report_date', $sort === 'newest' ? 'desc' : 'asc')
+            ->orderBy('created_at', $sort === 'newest' ? 'desc' : 'asc')
+            ->paginate(10)
+            ->appends($paginationParams);
 
         if ($selectedProject) {
             $projectPhases = $selectedProject->phases()->orderBy('phase_order')->get();

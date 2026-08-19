@@ -64,7 +64,7 @@ class AdminDashboardController extends Controller
             )
             : 0;
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'active_projects' => $activeProjectsCount,
 
             'projects_change_label' => $totalProjectsCount.
@@ -98,7 +98,7 @@ class AdminDashboardController extends Controller
 
         $activeProjects = collect();
 
-        $overallProgress = [
+        $overallProgress = $predefinedMaterialCategories = [
             'percentage' => 0,
             'on_track' => 0,
             'delayed' => 0,
@@ -225,7 +225,7 @@ class AdminDashboardController extends Controller
 
         $today = Carbon::today();
 
-        $attendance = [
+        $attendance = $predefinedMaterialCategories = [
             'present' => 0,
             'absent' => 0,
             'late' => 0,
@@ -251,7 +251,7 @@ class AdminDashboardController extends Controller
             $totalExpected =
                 $present + $absent + $late;
 
-            $attendance = [
+            $attendance = $predefinedMaterialCategories = [
                 'present' => $present,
                 'absent' => $absent,
                 'late' => $late,
@@ -286,8 +286,8 @@ class AdminDashboardController extends Controller
      */
     private function calculateMonthlyBurnRate(): array
     {
-        $months = [];
-        $bars = [];
+        $months = $predefinedMaterialCategories = [];
+        $bars = $predefinedMaterialCategories = [];
 
         for ($i = 4; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
@@ -296,7 +296,7 @@ class AdminDashboardController extends Controller
 
             $monthlyCost = rand(15, 85);
 
-            $bars[] = [
+            $bars[] = $predefinedMaterialCategories = [
                 'percentage' => $monthlyCost,
                 'is_active' => $i === 0,
             ];
@@ -326,7 +326,7 @@ class AdminDashboardController extends Controller
         $phases = collect();
         $milestones = collect();
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'phases_done' => 0,
             'phases_processing' => 0,
             'phases_upcoming' => 0,
@@ -402,7 +402,7 @@ class AdminDashboardController extends Controller
                         ];
                     });
 
-                $stats = [
+                $stats = $predefinedMaterialCategories = [
                     'phases_done' => $selectedProject->phases
                         ->where(
                             'status',
@@ -578,7 +578,7 @@ class AdminDashboardController extends Controller
         $availableMaterials = Material::where('current_stock', '>', 0, 'and')->count('*');
         $lowStockAlerts = Material::whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')->where('current_stock', '>', 0, 'and')->count('*');
         $outOfStock = Material::where('current_stock', '<=', 0, 'and')->count('*');
-        $metrics = [
+        $metrics = $predefinedMaterialCategories = [
             'total_materials' => $totalMaterials,
             'available_materials' => $availableMaterials,
             'low_stock_alerts' => $lowStockAlerts,
@@ -622,12 +622,28 @@ class AdminDashboardController extends Controller
 
         $categories = Material::query()->distinct()->pluck('category')->filter()->sort()->values();
 
+        $predefinedMaterialCategories = [
+            'Cement & Concrete',
+            'Steel & Rebar',
+            'Lumber & Wood',
+            'Masonry & Blocks',
+            'Electrical',
+            'Plumbing',
+            'Paint & Finishing',
+            'Roofing',
+            'Aggregates & Sand',
+            'Structural Steel',
+            'Hardware & Fasteners',
+            'Safety Equipment',
+            'General',
+        ];
+
         $projects = Project::query()
             ->orderBy('project_name', 'asc')
             ->get(['project_id', 'project_name']);
 
         $materialRequests = collect();
-        $requestStats = [
+        $requestStats = $predefinedMaterialCategories = [
             'pending' => 0,
             'approved' => 0,
             'rejected' => 0,
@@ -662,7 +678,7 @@ class AdminDashboardController extends Controller
                 ->paginate(20)
                 ->appends($request->only(['search', 'request_status', 'view', 'category', 'stock_status']));
 
-            $requestStats = [
+            $requestStats = $predefinedMaterialCategories = [
                 'pending' => MaterialRequest::where('status', 'pending')->count(),
                 'approved' => MaterialRequest::where('status', 'approved')->count(),
                 'rejected' => MaterialRequest::where('status', 'rejected')->count(),
@@ -671,7 +687,7 @@ class AdminDashboardController extends Controller
 
         $toolLoans = collect();
         $toolDeductions = collect();
-        $toolMetrics = [
+        $toolMetrics = $predefinedMaterialCategories = [
             'total_tools' => 0,
             'available' => 0,
             'in_use' => 0,
@@ -706,7 +722,7 @@ class AdminDashboardController extends Controller
                 ->paginate(10)
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
-            $toolMetrics = [
+            $toolMetrics = $predefinedMaterialCategories = [
                 'total_tools' => Tool::count('*'),
                 'available' => Tool::where('status', 'available')->count('*'),
                 'in_use' => Tool::where('status', 'in_use')->count('*'),
@@ -760,9 +776,10 @@ class AdminDashboardController extends Controller
             $allToolDeductions = collect();
             $toolCategories = collect();
             $predefinedToolCategories = [];
+            $predefinedMaterialCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**
@@ -830,7 +847,7 @@ class AdminDashboardController extends Controller
         $query = $this->buildReportQuery($request);
         $reports = $query->orderByDesc('created_at')->paginate(10)->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search']));
 
-        $payload = [
+        $payload = $predefinedMaterialCategories = [
             'reports' => $reports->getCollection()->map(function (Report $report) {
                 return [
                     'id' => $report->report_id,
@@ -896,7 +913,7 @@ class AdminDashboardController extends Controller
     {
         $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy'])->findOrFail($reportId);
 
-        $materialUsage = [];
+        $materialUsage = $predefinedMaterialCategories = [];
         if (Schema::hasTable('material_usages')) {
             $materialUsage = DB::table('material_usages')->where('project_id', $report->project_id)->where('phase_id', $report->phase_id)->get();
         }
@@ -908,7 +925,7 @@ class AdminDashboardController extends Controller
                 ->whereDate('log_date', $report->report_date)
                 ->get();
 
-            $attendanceSummary = [
+            $attendanceSummary = $predefinedMaterialCategories = [
                 'present' => $attendanceRows->where('status', 'present')->count(),
                 'absent' => $attendanceRows->where('status', 'absent')->count(),
                 'total' => $attendanceRows->count(),
@@ -934,6 +951,7 @@ class AdminDashboardController extends Controller
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->admin_site_images ?? [])))),
+                'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_explanation' => $report->admin_explanation,
                 'is_published_to_client' => (bool) $report->is_published_to_client,
                 'approval_remarks' => $report->approval_remarks,
@@ -942,6 +960,7 @@ class AdminDashboardController extends Controller
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
+                'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'material_usage' => $materialUsage,
                 'attendance_summary' => $attendanceSummary,
             ],
@@ -1074,7 +1093,7 @@ class AdminDashboardController extends Controller
 
     private function buildSimplePdf(Report $report): string
     {
-        $lines = [
+        $lines = $predefinedMaterialCategories = [
             'D&G Construction Management System',
             'Accomplishment Report',
             '',
@@ -1100,7 +1119,7 @@ class AdminDashboardController extends Controller
         $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
         $stream = "BT\n/F1 10 Tf\n50 760 Td\n($escaped) Tj\nET";
 
-        $objects = [];
+        $objects = $predefinedMaterialCategories = [];
         $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
         $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
         $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
@@ -1108,7 +1127,7 @@ class AdminDashboardController extends Controller
         $objects[] = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
 
         $pdf = "%PDF-1.4\n";
-        $offsets = [0];
+        $offsets = $predefinedMaterialCategories = [0];
         foreach ($objects as $object) {
             $offsets[] = strlen($pdf);
             $pdf .= $object;
@@ -1140,7 +1159,7 @@ class AdminDashboardController extends Controller
             ? AttendanceScheduleRule::query()->orderBy('role', 'asc')->get()
             : collect();
 
-        $filters = [
+        $filters = $predefinedMaterialCategories = [
             'date' => $request->input('date', Carbon::today()->toDateString()),
             'project_id' => $request->input('project_id'),
             'status' => $request->input('status'),
@@ -1151,7 +1170,7 @@ class AdminDashboardController extends Controller
         if (! Schema::hasTable('attendance_logs')) {
             $logs = collect();
 
-            $stats = [
+            $stats = $predefinedMaterialCategories = [
                 'total' => 0,
                 'present' => 0,
                 'late' => 0,
@@ -1265,7 +1284,7 @@ class AdminDashboardController extends Controller
             }
         };
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'total' => $logs->count(),
 
             'present' => $logs
@@ -1389,7 +1408,7 @@ class AdminDashboardController extends Controller
                 'query' => $request->query(),
             ]);
 
-            $summary = [
+            $summary = $predefinedMaterialCategories = [
                 'total_count' => 0,
                 'unread_count' => 0,
                 'sent_this_month' => 0,
@@ -1411,7 +1430,7 @@ class AdminDashboardController extends Controller
             ->whereIn('role', ['engineer', 'admin', 'administrator'])
             ->count();
 
-        $summary = [
+        $summary = $predefinedMaterialCategories = [
             'total_count' => $totalCount,
             'unread_count' => $unreadCount,
             'sent_this_month' => $sentThisMonth,
@@ -1549,8 +1568,8 @@ class AdminDashboardController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255', Rule::unique('materials', 'name')],
                 'category' => ['nullable', 'string', 'max:255'],
+                'custom_category' => ['nullable', 'string', 'max:255'],
                 'unit' => ['required', 'string', 'max:50'],
-                'current_stock' => ['required', 'numeric', 'min:0', 'max:1000000000'],
                 'minimum_stock_level' => ['required', 'numeric', 'min:0', 'max:1000000000'],
                 'supplier' => ['nullable', 'string', 'max:255'],
                 'description' => ['nullable', 'string'],
@@ -1564,15 +1583,23 @@ class AdminDashboardController extends Controller
 
             $validated['name'] = trim((string) ($validated['name'] ?? ''));
             $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
-            $validated['unit'] = trim((string) ($validated['unit'] ?? ''));
-            $validated['supplier'] = trim((string) ($validated['supplier'] ?? '')) ?: null;
-            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
+            $validated['custom_category'] = trim((string) ($validated['custom_category'] ?? '')) ?: null;
 
-            Material::create($validated);
+            if ($validated['category'] === 'Other') {
+                $validated['category'] = $validated['custom_category'] ?: 'General';
+            }
+
+            $validated['unit'] = trim((string) ($validated['unit'] ?? '')) ?: null;
+            Material::create([
+                'name' => $validated['name'],
+                'category' => $validated['category'],
+                'unit' => $validated['unit'],
+                'minimum_stock_level' => $validated['minimum_stock_level'],
+                'supplier' => $validated['supplier'] ?? null,
+                'description' => $validated['description'] ?? null,
+            ]);
 
             return redirect()->back()->with('success', 'Material added successfully.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Unable to add material right now. Please try again.')->withInput();
         }
@@ -1798,7 +1825,7 @@ class AdminDashboardController extends Controller
 
         $requests = $query->paginate(20)->appends($request->only(['status', 'search']));
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'pending' => MaterialRequest::where('status', 'pending')->count(),
             'approved' => MaterialRequest::where('status', 'approved')->count(),
             'rejected' => MaterialRequest::where('status', 'rejected')->count(),
@@ -2233,3 +2260,7 @@ class AdminDashboardController extends Controller
         }
     }
 }
+
+
+
+
