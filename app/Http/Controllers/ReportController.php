@@ -11,6 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
 
@@ -113,10 +114,12 @@ class ReportController extends Controller
                 'approval_remarks' => 'nullable|string|max:1000',
                 'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
                 'admin_report_text' => 'nullable|string|max:10000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
             ]);
         } catch (ValidationException $e) {
@@ -143,14 +146,28 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $includedOriginalImages = array_values(array_intersect(
+                (array) $request->input('include_original_images', []),
+                (array) ($report->site_images ?? [])
+            ));
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map(function ($image) {
+                    $image = (string) $image;
+                    return str_contains($image, '/storage/')
+                        ? Str::after($image, '/storage/')
+                        : ltrim($image, '/');
+                })
+                ->filter()
+                ->values()
+                ->all();
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
             if (!empty($removedImages)) {
                 $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
                     return !in_array($img, $removedImages);
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $updateData = [
                 'approval_status' => 'approved',
@@ -361,7 +378,7 @@ class ReportController extends Controller
             'report_date' => 'required|date',
             'report_text' => 'required|string|max:5000',
             'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
-            'site_images' => 'nullable|array|max:5',
+            'site_images' => 'nullable|array|max:20',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
@@ -501,10 +518,12 @@ class ReportController extends Controller
         try {
             $validated = $request->validate([
                 'admin_report_text' => 'nullable|string|max:10000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
                 'remove_existing_admin_images' => 'nullable|boolean',
             ]);
@@ -528,7 +547,21 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $includedOriginalImages = array_values(array_intersect(
+                (array) $request->input('include_original_images', []),
+                (array) ($report->site_images ?? [])
+            ));
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map(function ($image) {
+                    $image = (string) $image;
+                    return str_contains($image, '/storage/')
+                        ? Str::after($image, '/storage/')
+                        : ltrim($image, '/');
+                })
+                ->filter()
+                ->values()
+                ->all();
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
 
             if ($request->boolean('remove_existing_admin_images')) {
                 $existingAdminImages = [];
@@ -538,7 +571,7 @@ class ReportController extends Controller
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $report->update([
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
@@ -588,10 +621,14 @@ class ReportController extends Controller
             $validated = $request->validate([
                 'admin_report_text' => 'nullable|string|max:10000',
                 'admin_explanation' => 'nullable|string|max:2000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
+                'client_image_paths' => 'nullable|array|max:20',
+                'client_image_paths.*' => 'string',
                 'is_published_to_client' => 'nullable|boolean',
                 'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             ]);
@@ -614,14 +651,41 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $allowedClientImages = array_values(array_unique(array_merge(
+                (array) ($report->admin_site_images ?? []),
+                (array) ($report->site_images ?? [])
+            )));
+            $normalizeImagePath = static function ($image): string {
+                $image = (string) $image;
+                return str_contains($image, '/storage/')
+                    ? Str::after($image, '/storage/')
+                    : ltrim($image, '/');
+            };
+            $existingAdminImages = array_values(array_map($normalizeImagePath, $existingAdminImages));
+            $allowedClientImages = array_values(array_map($normalizeImagePath, $allowedClientImages));
+            $includedOriginalImages = array_values(array_intersect(
+                array_map($normalizeImagePath, (array) $request->input('include_original_images', [])),
+                array_map($normalizeImagePath, (array) ($report->site_images ?? []))
+            ));
+            if ($request->has('client_image_paths')) {
+                $existingAdminImages = array_values(array_intersect(
+                    array_map($normalizeImagePath, (array) $request->input('client_image_paths', [])),
+                    $allowedClientImages
+                ));
+            }
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
             if (!empty($removedImages)) {
                 $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
                     return !in_array($img, $removedImages);
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $updateData = [
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
@@ -684,7 +748,9 @@ class ReportController extends Controller
         // Get all projects assigned to supervisor
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
-        })->orderBy('project_name')->get();
+        })->with(['phases' => function ($query) {
+            $query->orderBy('phase_order', 'asc');
+        }])->orderBy('project_name')->get();
 
         if ($assignedProjects->isEmpty()) {
             $emptyReports = new LengthAwarePaginator([], 0, 10);
@@ -829,7 +895,7 @@ class ReportController extends Controller
     /**
      * Get phases for a project (AJAX)
      */
-    public function getProjectPhases($projectId)
+    public function getProjectPhases(Request $request, $projectId)
     {
         $user = auth('web')->user();
 
@@ -838,18 +904,26 @@ class ReportController extends Controller
                 $q->where('supervisor_id', $user->user_id);
             })->firstOrFail();
 
-        $phases = ConstructionPhase::query()->where('project_id', $projectId)
-            ->where(function ($q) {
-                $q->where('status', '!=', 'completed')
-                    ->where(function ($q2) {
-                        $q2->whereNull('completion_percentage')
-                            ->orWhere('completion_percentage', '<', 100);
-                    });
-            })
+        $phasesQuery = ConstructionPhase::query()->where('project_id', $projectId);
+
+        if ($request->boolean('editable')) {
+            $phasesQuery->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'completed');
+            })->where(function ($query) {
+                $query->whereNull('completion_percentage')
+                    ->orWhere('completion_percentage', '<', 100);
+            });
+        }
+
+        $phases = $phasesQuery
             ->orderBy('phase_order', 'asc')
             ->get(['phase_id', 'phase_name', 'phase_order', 'status', 'completion_percentage']);
 
-        return response()->json(['success' => true, 'phases' => $phases]);
+        return response()->json([
+            'success' => true,
+            'project_id' => (int) $project->project_id,
+            'phases' => $phases,
+        ]);
     }
 
     /**
@@ -884,10 +958,12 @@ class ReportController extends Controller
                 'approval_remarks' => $report->approval_remarks ?? 'No remarks',
                 'report_text' => $report->report_text,
                 'admin_report_text' => $report->admin_report_text,
+                'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_explanation' => $report->admin_explanation ?? '',
+                'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
@@ -1016,7 +1092,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Supervisor updates their own pending report
+     * Supervisor revises their own rejected report
      */
     public function updateSupervisorReport(Request $request, $reportId)
     {
@@ -1027,23 +1103,46 @@ class ReportController extends Controller
             abort(403, 'You are not authorized to update this report.');
         }
 
-        if ($report->approval_status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Only pending reports can be edited.'], 422);
+        if ($report->approval_status !== 'rejected') {
+            return response()->json(['success' => false, 'message' => 'Only rejected reports can be revised.'], 422);
         }
 
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,project_id',
             'phase_id' => 'required|exists:construction_phases,phase_id',
-            'report_date' => 'required|date',
+            'report_date' => ['required', 'date_format:Y-m-d\\TH:i', 'before_or_equal:now'],
             'report_text' => 'required|string|max:5000',
             'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
-            'site_images' => 'nullable|array|max:5',
+            'site_images' => 'nullable|array|max:20',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'remove_site_images' => 'nullable|array',
             'remove_site_images.*' => 'string',
         ]);
 
-        if (!$report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+        $project = Project::query()
+            ->where('project_id', $validated['project_id'])
+            ->whereHas('supervisors', function ($query) use ($user) {
+                $query->where('supervisor_id', $user->user_id);
+            })
+            ->firstOrFail();
+
+        $phase = ConstructionPhase::query()
+            ->where('phase_id', $validated['phase_id'])
+            ->where('project_id', $project->project_id)
+            ->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'completed');
+            })
+            ->where(function ($query) {
+                $query->whereNull('completion_percentage')
+                    ->orWhere('completion_percentage', '<', 100);
+            })
+            ->first();
+
+        if (!$phase) {
+            return response()->json(['success' => false, 'message' => 'Select an unfinished phase belonging to the selected project.'], 422);
+        }
+
+        if (!$project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
             abort(403, 'You are not assigned to this project');
         }
 
@@ -1074,6 +1173,10 @@ class ReportController extends Controller
                 'report_date' => $validated['report_date'],
                 'report_text' => $validated['report_text'],
                 'site_images' => !empty($finalImages) ? $finalImages : null,
+                'approval_status' => 'pending',
+                'approval_remarks' => null,
+                'is_published_to_client' => false,
+                'published_at' => null,
                 'accomplishment_percentage' => $request->filled('accomplishment_percentage')
                     ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
                     : $report->accomplishment_percentage,
@@ -1095,6 +1198,7 @@ class ReportController extends Controller
                         'phase_id' => $report->phase_id,
                         'report_date' => $report->report_date->format('M d, Y h:i A'),
                         'report_text' => $report->report_text,
+                        'site_image_paths' => $finalImages,
                         'site_images' => array_map(fn ($img) => asset('storage/' . ltrim($img, '/')), $finalImages),
                         'accomplishment_percentage' => $report->accomplishment_percentage,
                     ]

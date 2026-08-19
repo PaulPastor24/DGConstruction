@@ -406,7 +406,7 @@
     @php
         $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject->phases->first())->phase_name ?? 'Mobilization';
         $projectTargetDate = optional($primaryProject->target_end_date);
-        $daysRemaining = $projectTargetDate ? max(0, $projectTargetDate->diffInDays(now(), false)) : null;
+        $daysRemaining = $projectTargetDate ? max(0, (int) round($projectTargetDate->diffInDays(now(), false))) : null;
         $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not specified';
         $projectLocation = $primaryProject?->location ?? $primaryProject?->project_location ?? 'Not specified';
         $projectEngineer = $primaryProject?->engineer?->name ?? 'Not specified';

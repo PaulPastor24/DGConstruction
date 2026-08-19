@@ -37,8 +37,12 @@
         color: #fff;
         width: 40px;
         height: 40px;
+        padding: 0;
         border-radius: 50%;
         font-size: 1.5rem;
+        line-height: 1;
+        font-family: Arial, sans-serif;
+        text-align: center;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -48,6 +52,59 @@
 
     .image-lightbox-close:hover {
         background: rgba(255, 255, 255, 0.3);
+    }
+
+    .image-lightbox-stage {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .image-lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        z-index: 2;
+    }
+
+    .image-lightbox-nav:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .image-lightbox-nav.prev {
+        left: 1rem;
+    }
+
+    .image-lightbox-nav.next {
+        right: 1rem;
+    }
+
+    .image-lightbox-counter {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        z-index: 2;
     }
 </style>
 @endpush
@@ -62,7 +119,7 @@
 
     <section class="report-filter-card p-3 mb-4">
         <form method="GET" id="filterForm" class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <label class="form-label small fw-bold text-muted">Project</label>
                 <select name="project_id" id="projectSelect" class="form-select form-select-sm" onchange="this.form.submit()">
                     @php
@@ -91,7 +148,14 @@
                 </select>
             </div>
             <div class="col-12 col-md-2">
-                <label class="form-label small fw-bold text-muted">Report Date</label>
+                <label class="form-label small fw-bold text-muted">Order</label>
+                <select name="sort" id="sortSelect" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="newest" {{ request('sort', 'newest') == 'newest' ? 'selected' : '' }}>Newest first</option>
+                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest first</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-bold text-muted">Submitted Date</label>
                 <input type="date" name="report_date" id="reportDateInput" value="{{ request('report_date') }}" class="form-control form-control-sm" onchange="this.form.submit()" />
             </div>
         </form>
@@ -140,6 +204,7 @@
                         <th>Phase</th>
                         <th>Submitted By</th>
                         <th>Status</th>
+                        <th>Images</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -165,7 +230,7 @@
                                 'phase' => optional($report->phase)->phase_name ?? 'N/A',
                                 'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
                                 'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
-                                'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                                'submitted_at' => optional($report->report_date)->format('M d, Y') ?? 'N/A',
                                 'created_at' => optional($report->created_at)->format('M d, Y'),
                                 'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                                 'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
@@ -204,6 +269,18 @@
                                     <span class="text-muted small">—</span>
                                 @endif
                             </td>
+                            <td>
+                                @php
+                                    $imageCount = count($displayImages);
+                                @endphp
+                                @if($imageCount > 0)
+                                    <span class="badge bg-success-subtle text-success" style="font-size: 0.75rem;">
+                                        <i class="bi bi-image"></i> {{ $imageCount }}
+                                    </span>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
+                            </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
                                     <button class="btn btn-sm btn-light border report-action-btn js-report-view-btn" type="button" data-report-details='@json($detailPayload)' data-modal-target="reportDetailsModal-{{ $report->report_id }}" title="View details">
@@ -216,7 +293,7 @@
                             </td>
                         </tr>
 
-                        <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-gallery='@json($detailPayload['site_images'] ?? [])' tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark, #2a4028);">
@@ -295,15 +372,10 @@
                                                     @if(count($detailPayload['site_images']) === 0)
                                                         <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
                                                     @else
-                                                        <div class="d-flex flex-wrap gap-2 mb-4">
-                                                    @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                        <button type="button" class="img-thumbnail-grid lightbox-trigger d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
-                                                            <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                        </button>
-                                                    @endforeach
-                                                            @if(count($detailPayload['site_images']) > 4)
-                                                                <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
-                                                            @endif
+                                                        <div class="report-image-carousel" data-gallery='@json($detailPayload['site_images'] ?? [])'>
+                                                            <button type="button" class="report-image-carousel-nav report-image-carousel-prev" aria-label="Previous images" hidden><i class="bi bi-chevron-left"></i></button>
+                                                            <div class="report-image-carousel-viewport"><div class="report-image-carousel-track"></div></div>
+                                                            <button type="button" class="report-image-carousel-nav report-image-carousel-next" aria-label="Next images" hidden><i class="bi bi-chevron-right"></i></button>
                                                         </div>
                                                     @endif
 
@@ -337,7 +409,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">No reports match the current filters.</td>
+                            <td colspan="7" class="text-center py-4 text-muted">No reports match the current filters.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -362,7 +434,7 @@
                         'phase' => optional($report->phase)->phase_name ?? 'N/A',
                         'submitted_by' => optional($report->submittedBy)->name ?? 'Supervisor',
                         'reviewed_by' => optional($report->reviewedBy)->name ?? '-',
-                        'submitted_at' => optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A',
+                        'submitted_at' => optional($report->report_date)->format('M d, Y') ?? 'N/A',
                         'created_at' => optional($report->created_at)->format('M d, Y'),
                         'review_date' => optional($report->reviewed_at)->format('M d, Y') ?? 'Reviewed',
                         'approval_date' => optional($report->approved_at)->format('M d, Y') ?? optional($report->rejected_at)->format('M d, Y') ?? 'Pending',
@@ -419,7 +491,7 @@
                     </div>
                 </article>
 
-                <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-gallery='@json($detailPayload['site_images'] ?? [])' tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark, #2a4028);">
@@ -494,15 +566,10 @@
                                             @if(count($detailPayload['site_images']) === 0)
                                                 <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
                                             @else
-                                                <div class="d-flex flex-wrap gap-2 mb-4">
-                                                    @foreach(array_slice($detailPayload['site_images'], 0, 4) as $imageUrl)
-                                                        <button type="button" class="img-thumbnail-grid lightbox-trigger d-flex align-items-center justify-content-center overflow-hidden p-0" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
-                                                            <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
-                                                        </button>
-                                                    @endforeach
-                                                    @if(count($detailPayload['site_images']) > 4)
-                                                        <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ count($detailPayload['site_images']) - 4 }} more</div>
-                                                    @endif
+                                                <div class="report-image-carousel" data-gallery='@json($detailPayload['site_images'] ?? [])'>
+                                                    <button type="button" class="report-image-carousel-nav report-image-carousel-prev" aria-label="Previous images" hidden><i class="bi bi-chevron-left"></i></button>
+                                                    <div class="report-image-carousel-viewport"><div class="report-image-carousel-track"></div></div>
+                                                    <button type="button" class="report-image-carousel-nav report-image-carousel-next" aria-label="Next images" hidden><i class="bi bi-chevron-right"></i></button>
                                                 </div>
                                             @endif
 
@@ -546,7 +613,7 @@
 
 <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
-            <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date']))->links('pagination::bootstrap-5') }}</div>
+            <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'sort']))->links('pagination::bootstrap-5') }}</div>
         </div>
     </section>
 </div>
@@ -789,6 +856,101 @@
         font-size: 0.85rem;
         font-weight: bold;
         color: #555;
+        cursor: pointer;
+        border: none;
+        transition: background 0.2s;
+    }
+
+    .more-images-badge:hover {
+        background: #e2e8f0;
+    }
+
+    .report-image-carousel {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-image-carousel-viewport {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .report-image-carousel-track {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(2, 78px);
+        gap: 6px;
+    }
+
+    .report-details-modal .report-image-carousel .img-thumbnail-grid {
+        width: 78px;
+        min-width: 78px;
+        max-width: 78px;
+        height: 78px;
+        justify-self: center;
+    }
+
+    .report-image-carousel-nav {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 30px;
+        width: 30px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid #d5e1d8;
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--cms-green-dark, #2a4028);
+    }
+
+    .report-image-carousel-nav:hover {
+        background: #edf7ef;
+    }
+
+    .report-details-modal .timeline-container {
+        align-items: flex-start;
+    }
+
+    .report-details-modal .timeline-container::before {
+        z-index: 0;
+    }
+
+    .report-details-modal .timeline-step {
+        min-width: 0;
+        z-index: 1;
+    }
+
+    .report-details-modal .timeline-icon {
+        position: relative;
+        z-index: 3;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px #ffffff;
+    }
+
+    .report-details-modal .timeline-step.active .timeline-icon {
+        background: var(--cms-green-dark, #2a4028);
+    }
+
+    @media (min-width: 992px) {
+        .report-filter-card form {
+            flex-wrap: nowrap;
+        }
+
+        .report-filter-card .form-select,
+        .report-filter-card .form-control {
+            min-width: 0;
+        }
     }
 
     /* Approval timeline */
@@ -1598,6 +1760,9 @@
     #clientReportImageLightbox img {
         max-width: 90%;
         max-height: 85vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
         border-radius: 8px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
@@ -1611,8 +1776,12 @@
         color: #fff;
         width: 40px;
         height: 40px;
+        padding: 0;
         border-radius: 50%;
         font-size: 1.5rem;
+        line-height: 1;
+        font-family: Arial, sans-serif;
+        text-align: center;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -1623,6 +1792,14 @@
 
     #clientLightboxCloseBtn:hover {
         background: rgba(255, 255, 255, 0.3);
+    }
+
+    #reportImageLightbox .image-lightbox-close,
+    #clientReportImageLightbox #clientLightboxCloseBtn {
+        z-index: 10001;
+        pointer-events: auto;
+        width: 48px;
+        height: 48px;
     }
 
     .client-report-image-preview img {
@@ -1641,7 +1818,12 @@
 {{-- Image Lightbox --}}
 <div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
     <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
-    <img src="" alt="Site image preview" id="lightboxImage">
+    <div class="image-lightbox-stage">
+        <button type="button" class="image-lightbox-nav prev" id="lightboxPrevBtn" aria-label="Previous image" hidden>‹</button>
+        <img src="" alt="Site image preview" id="lightboxImage">
+        <button type="button" class="image-lightbox-nav next" id="lightboxNextBtn" aria-label="Next image" hidden>›</button>
+        <div class="image-lightbox-counter" id="lightboxCounter" hidden></div>
+    </div>
 </div>
 
 @push('scripts')
@@ -1672,6 +1854,57 @@
         const reportModals = document.querySelectorAll('.report-details-modal');
         reportModals.forEach(function (modal) {
             document.body.appendChild(modal);
+        });
+
+        document.querySelectorAll('.report-image-carousel').forEach(function (carousel) {
+            let gallery = [];
+            try {
+                gallery = JSON.parse(carousel.dataset.gallery || '[]').filter(Boolean);
+            } catch (error) {
+                gallery = [];
+            }
+
+            const track = carousel.querySelector('.report-image-carousel-track');
+            const previousButton = carousel.querySelector('.report-image-carousel-prev');
+            const nextButton = carousel.querySelector('.report-image-carousel-next');
+            const pageSize = 8;
+            let page = 0;
+
+            const renderCarousel = () => {
+                if (!track) return;
+                const start = page * pageSize;
+                track.innerHTML = '';
+                gallery.slice(start, start + pageSize).forEach((imageUrl) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'img-thumbnail-grid lightbox-trigger d-flex align-items-center justify-content-center overflow-hidden p-0';
+                    button.setAttribute('aria-label', 'Preview site image');
+                    button.dataset.fullImage = imageUrl;
+                    button.dataset.gallery = JSON.stringify(gallery);
+                    const image = document.createElement('img');
+                    image.src = imageUrl;
+                    image.alt = 'Site image';
+                    image.className = 'w-100 h-100 object-fit-cover';
+                    button.appendChild(image);
+                    track.appendChild(button);
+                });
+
+                const hasPrevious = page > 0;
+                const hasNext = start + pageSize < gallery.length;
+                if (previousButton) previousButton.hidden = !hasPrevious;
+                if (nextButton) nextButton.hidden = !hasNext;
+            };
+
+            previousButton?.addEventListener('click', () => {
+                page = Math.max(0, page - 1);
+                renderCarousel();
+            });
+            nextButton?.addEventListener('click', () => {
+                page = Math.min(Math.ceil(gallery.length / pageSize) - 1, page + 1);
+                renderCarousel();
+            });
+
+            renderCarousel();
         });
 
         document.querySelectorAll('.js-report-view-btn').forEach((button) => {
@@ -1759,10 +1992,54 @@
         const lightbox = document.getElementById('reportImageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
         const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+        const lightboxPrevBtn = document.getElementById('lightboxPrevBtn');
+        const lightboxNextBtn = document.getElementById('lightboxNextBtn');
+        const lightboxCounter = document.getElementById('lightboxCounter');
 
-        function openLightbox(imageUrl) {
-            if (!lightbox || !lightboxImage) return;
+        let lightboxGallery = [];
+        let lightboxIndex = 0;
+
+        function renderLightboxImage() {
+            const total = lightboxGallery.length;
+            const imageUrl = lightboxGallery[lightboxIndex];
+            if (!lightboxImage || !imageUrl) return;
+
+            lightboxImage.onerror = function () {
+                lightboxImage.onerror = null;
+                lightboxImage.alt = 'Image failed to load';
+            };
             lightboxImage.src = imageUrl;
+
+            const showNav = total > 1;
+            if (lightboxPrevBtn) lightboxPrevBtn.hidden = !showNav;
+            if (lightboxNextBtn) lightboxNextBtn.hidden = !showNav;
+            if (lightboxCounter) {
+                lightboxCounter.hidden = !showNav;
+                lightboxCounter.textContent = `${lightboxIndex + 1} / ${total}`;
+            }
+        }
+
+        function lightboxShowNext() {
+            if (!lightboxGallery.length) return;
+            lightboxIndex = (lightboxIndex + 1) % lightboxGallery.length;
+            renderLightboxImage();
+        }
+
+        function lightboxShowPrev() {
+            if (!lightboxGallery.length) return;
+            lightboxIndex = (lightboxIndex - 1 + lightboxGallery.length) % lightboxGallery.length;
+            renderLightboxImage();
+        }
+
+        function openLightbox(imageUrl, gallery, index) {
+            if (!lightbox || !lightboxImage || !imageUrl || typeof imageUrl !== 'string' || imageUrl.trim() === '') return;
+
+            lightboxGallery = Array.isArray(gallery) && gallery.length ? gallery.filter(Boolean) : [imageUrl];
+            lightboxIndex = Number.isInteger(index) && index >= 0 && index < lightboxGallery.length
+                ? index
+                : Math.max(0, lightboxGallery.indexOf(imageUrl));
+
+            renderLightboxImage();
             lightbox.classList.add('is-open');
             document.body.style.overflow = 'hidden';
         }
@@ -1774,6 +2051,8 @@
             if (lightboxImage) {
                 setTimeout(() => { lightboxImage.src = ''; }, 200);
             }
+            lightboxGallery = [];
+            lightboxIndex = 0;
         }
 
         document.addEventListener('click', function(e) {
@@ -1781,12 +2060,31 @@
             if (trigger) {
                 const fullImage = trigger.dataset.fullImage || trigger.querySelector('img')?.src;
                 if (fullImage) {
-                    openLightbox(fullImage);
+                    let gallery = [fullImage];
+                    try {
+                        const galleryData = trigger.dataset.gallery || '[]';
+                        const parsed = JSON.parse(galleryData);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            gallery = parsed.filter(Boolean);
+                        }
+                    } catch (err) {
+                        gallery = [fullImage];
+                    }
+                    const idx = gallery.indexOf(fullImage);
+                    openLightbox(fullImage, gallery, idx >= 0 ? idx : 0);
                 }
             }
         });
 
         lightboxCloseBtn?.addEventListener('click', closeLightbox);
+        lightboxPrevBtn?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            lightboxShowPrev();
+        });
+        lightboxNextBtn?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            lightboxShowNext();
+        });
         lightbox?.addEventListener('click', function(e) {
             if (e.target === lightbox) {
                 closeLightbox();
@@ -1794,8 +2092,13 @@
         });
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
+            if (!lightbox?.classList.contains('is-open')) return;
+            if (e.key === 'Escape') {
                 closeLightbox();
+            } else if (e.key === 'ArrowRight') {
+                lightboxShowNext();
+            } else if (e.key === 'ArrowLeft') {
+                lightboxShowPrev();
             }
         });
     });
