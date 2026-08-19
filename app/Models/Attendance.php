@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Schema;
 
 class Attendance extends Model
 {
@@ -81,7 +82,28 @@ class Attendance extends Model
         return $this->deployment?->project;
     }
 
-    public static function calculateOvertimeMinutes($logDate, $timeIn, $timeOut): int
+    public static function scheduleForRole(string $role = 'worker'): array
+    {
+        $role = User::normalizeRole($role);
+
+        $rule = Schema::hasTable('attendance_schedule_rules')
+            ? AttendanceScheduleRule::query()
+                ->where('role', $role)
+                ->where('is_active', true)
+                ->first()
+            : null;
+
+        return $rule
+            ? [
+                'start_time' => $rule->start_time,
+                'end_time' => $rule->end_time,
+                'break_start_time' => $rule->break_start_time,
+                'break_end_time' => $rule->break_end_time,
+            ]
+            : AttendanceScheduleRule::defaultsForRole($role);
+    }
+
+    public static function calculateOvertimeMinutes($logDate, $timeIn, $timeOut, string $role = 'worker'): int
     {
         if (! $logDate || ! $timeOut) {
             return 0;
@@ -89,7 +111,8 @@ class Attendance extends Model
 
         try {
             $timeOutDateTime = Carbon::parse($logDate.' '.$timeOut);
-            $overtimeCutoff = Carbon::parse($logDate.' 17:00:00');
+            $schedule = self::scheduleForRole($role);
+            $overtimeCutoff = Carbon::parse($logDate.' '.$schedule['end_time']);
 
             return max(0, $overtimeCutoff->diffInMinutes($timeOutDateTime, false));
         } catch (\Throwable $error) {

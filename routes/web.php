@@ -11,6 +11,8 @@ use App\Http\Controllers\ProjectArchiveController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupervisorController;
+use App\Http\Controllers\StaffDashboardController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +26,8 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
 
     return match ($user->role) {
-        'engineer', 'staff', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
+        'engineer', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
+        'staff' => redirect()->route('staff.dashboard'),
         'supervisor' => redirect()->route('supervisor.dashboard'),
         'client' => redirect()->route('client.dashboard'),
         default => abort(403, 'Unauthorized role assignment.'),
@@ -58,6 +61,10 @@ Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(fu
     Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
+    Route::put('/admin/attendance/{attendance}', [AdminDashboardController::class, 'updateAttendanceLog'])->name('admin.attendance.update');
+    Route::post('/admin/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])->name('admin.attendance.schedules.store');
+    Route::put('/admin/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])->name('admin.attendance.schedules.update');
+    Route::delete('/admin/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])->name('admin.attendance.schedules.destroy');
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/materials', [AdminDashboardController::class, 'storeMaterial'])->name('admin.inventory.materials.store');
     Route::put('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'updateMaterial'])->name('admin.inventory.materials.update');
@@ -118,8 +125,19 @@ Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(fu
     Route::patch('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/mark-delayed', [MilestoneController::class, 'markDelayed'])->name('admin.milestones.mark-delayed');
 });
 
+// ==================== STAFF WORKSPACE ====================
+Route::middleware(['auth', 'role:staff'])->group(function () {
+    Route::get('/staff/dashboard', [StaffDashboardController::class, 'index'])->name('staff.dashboard');
+    Route::get('/staff/timeline', [StaffController::class, 'timeline'])->name('staff.timeline');
+    Route::get('/staff/reports', [StaffController::class, 'reports'])->name('staff.reports.index');
+    Route::get('/staff/attendance', [StaffController::class, 'attendance'])->name('staff.attendance');
+    Route::get('/staff/inventory', [StaffController::class, 'inventory'])->name('staff.inventory');
+    Route::get('/staff/projects', [StaffController::class, 'projects'])->name('staff.projects.index');
+    Route::get('/staff/projects/create', [StaffController::class, 'createProject'])->name('staff.projects.create');
+});
+
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
-Route::middleware(['auth', 'role:supervisor,staff,admin,administrator'])->group(function () {
+Route::middleware(['auth', 'role:supervisor,admin,administrator'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
@@ -172,12 +190,6 @@ Route::middleware(['auth', 'role:supervisor,staff,admin,administrator'])->group(
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
 
-    Route::post('/supervisor/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
-        ->name('admin.attendance.schedules.store');
-    Route::put('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])
-        ->name('admin.attendance.schedules.update');
-    Route::delete('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
-        ->name('admin.attendance.schedules.destroy');
     Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
         ->name('supervisor.attendance.today');
 

@@ -159,7 +159,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Validation Error',
-                text: 'Please check your input and try again.',
+                text: {{ json_encode($errors->first('email') ?: $errors->first()) }},
                 confirmButtonColor: '#198754'
             });
         @endif

@@ -1,0 +1,4308 @@
+@extends('layouts.staff')
+
+@section('title', 'Materials & Inventory')
+@section('page_title', 'Materials & Inventory')
+
+@push('styles')
+<style>
+    :root {
+        /* map to global brand tokens */
+        --mi-dark: var(--brand-dark);
+        --mi-muted: #64748b;
+        --mi-border: var(--border);
+        --mi-background: var(--bg-page);
+        --mi-white: var(--surface);
+        --mi-accent: var(--brand-green);
+        --mi-accent-soft: var(--brand-accent-soft);
+        --mi-accent-hover: var(--brand-green);
+    }
+
+    .content {
+        background: var(--mi-background);
+    }
+
+    .mi-page {
+        width: 100%;
+        padding: 4px 0 28px;
+    }
+
+    .inventory-green-theme .card {
+        border: 1px solid var(--mi-border) !important;
+        box-shadow: 0 10px 28px rgba(22, 101, 52, 0.08);
+    }
+
+    .inventory-green-theme .search-container i {
+        left: 12px;
+        color: #7a8b7f;
+    }
+
+    .inventory-green-theme .badge-available {
+        background-color: var(--mi-accent-soft);
+        color: var(--mi-accent);
+    }
+
+    .inventory-green-theme .badge-in-use {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .inventory-green-theme .badge-lost {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .inventory-green-theme .badge-retired {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .inventory-green-theme .badge-loan-borrowed {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .inventory-green-theme .badge-deduction-pending {
+        background-color: #fff7ed;
+        color: #c2410c;
+    }
+
+    .inventory-green-theme .badge-deduction-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .inventory-green-theme .badge-deduction-cancelled {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .inventory-green-theme .badge-low-stock {
+        background-color: #fff7ed;
+        color: #c2410c;
+    }
+
+    .inventory-green-theme .badge-out-of-stock {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    .inventory-green-theme .table-hover tbody tr:hover {
+        background-color: #f7fcf8;
+    }
+
+    .inventory-green-theme .btn-primary,
+    .inventory-green-theme .btn-success {
+        background-color: var(--mi-accent) !important;
+        border-color: var(--mi-accent) !important;
+        color: #ffffff !important;
+    }
+
+    .inventory-green-theme .btn-primary:hover,
+    .inventory-green-theme .btn-success:hover,
+    .inventory-green-theme .btn-primary:focus,
+    .inventory-green-theme .btn-success:focus {
+        background-color: var(--mi-accent-hover) !important;
+        border-color: var(--mi-accent-hover) !important;
+        color: #ffffff !important;
+    }
+
+    .inventory-green-theme .btn-outline-secondary:hover {
+        border-color: var(--mi-accent) !important;
+        color: var(--mi-accent) !important;
+        background-color: var(--mi-accent-soft) !important;
+    }
+
+    .inventory-green-theme .text-primary,
+    .inventory-green-theme .nav-link.active,
+    .inventory-green-theme .nav-link.active.text-primary {
+        color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .border-primary {
+        border-color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .bg-primary {
+        background-color: var(--mi-accent) !important;
+    }
+
+    .inventory-green-theme .table thead {
+        background-color: #f2f8f3 !important;
+    }
+
+    .inventory-green-theme .form-control:focus,
+    .inventory-green-theme .form-select:focus {
+        border-color: var(--mi-accent) !important;
+        box-shadow: 0 0 0 0.2rem rgba(22, 101, 52, 0.16) !important;
+    }
+
+    .inventory-view-panel {
+        transition: all 0.2s ease;
+    }
+
+    .inventory-green-theme .pagination .page-link {
+        color: #166534;
+        border-color: #d1fae5;
+    }
+
+    .inventory-green-theme .pagination .page-item.active .page-link {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: #ffffff;
+    }
+
+    .inventory-green-theme .pagination .page-link:hover {
+        color: #14532d;
+        background-color: #ecfdf5;
+        border-color: #86efac;
+    }
+
+    .inventory-card-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+        border-radius: 14px;
+        border: 1px solid rgba(22, 101, 52, 0.14);
+        background-color: rgba(22, 101, 52, 0.08);
+        color: #166534;
+        flex-shrink: 0;
+    }
+
+    .inventory-action-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .inventory-action-stack .btn {
+        white-space: nowrap;
+    }
+
+    .inventory-mobile-table-label {
+        display: none;
+    }
+
+    .inventory-card-icon.available {
+        background-color: rgba(22, 101, 52, 0.08);
+        color: #166534;
+    }
+
+    .inventory-card-icon.low-stock {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #c2410c;
+        border-color: rgba(249, 115, 22, 0.16);
+    }
+
+    .inventory-card-icon.out-of-stock {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border-color: rgba(239, 68, 68, 0.16);
+    }
+
+    .inventory-modal-card {
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    }
+
+    .inventory-stat-pill {
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .inventory-modal-pagination .page-link {
+        color: #166534;
+        border-color: #d1fae5;
+    }
+
+    .inventory-modal-pagination .page-item.active .page-link {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: #ffffff;
+    }
+
+    .inventory-modal-pagination .page-link:hover {
+        color: #14532d;
+        background-color: #ecfdf5;
+        border-color: #86efac;
+    }
+
+    /* HIGH-FIDELITY RECEIVE STOCK MODAL STYLING OVERRIDES */
+    .modal-receive-stock .modal-content {
+        border-radius: 12px !important;
+        border: none !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        background-color: #ffffff;
+    }
+
+    .modal-receive-stock .modal-header-custom {
+        padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .modal-receive-stock .modal-body-custom {
+        padding: 0 1.5rem 3rem 1.5rem;
+    }
+
+    .modal-receive-stock .modal-icon-container {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background-color: #f0f7f4;
+        border: 1px solid #e1efe8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #166534;
+        font-size: 1.35rem;
+    }
+
+    .modal-receive-stock .modal-title-text {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #166534;
+    }
+
+    .modal-receive-stock .modal-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 0.15rem;
+    }
+
+    .modal-receive-stock .close-btn-x {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: #1e293b;
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    .modal-receive-stock .meta-info-card {
+        background-color: #ffffff;
+        border: 1px solid #edf2f0;
+        border-radius: 8px;
+        padding: 0.85rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-receive-stock .meta-item {
+        position: relative;
+    }
+
+    .modal-receive-stock .meta-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 15%;
+        height: 70%;
+        width: 1px;
+        background-color: #e2e8f0;
+    }
+
+    .modal-receive-stock .meta-label {
+        font-size: 0.725rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.25rem;
+    }
+
+    .modal-receive-stock .meta-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .modal-receive-stock .badge-status-pill {
+        background-color: #eaf7ef;
+        color: #166534;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        display: inline-block;
+    }
+
+    .modal-receive-stock .form-group-wrapper {
+        margin-bottom: 1.25rem;
+    }
+
+    .modal-receive-stock .form-label-custom {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #0f172a;
+        margin-bottom: 0.4rem;
+    }
+
+    .modal-receive-stock .form-label-custom .required-asterisk {
+        color: #ef4444;
+        margin-left: 0.15rem;
+    }
+
+    .modal-receive-stock .input-container-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .modal-receive-stock .input-icon-left {
+        position: absolute;
+        left: 14px;
+        color: #94a3b8;
+        font-size: 0.95rem;
+    }
+
+    .modal-receive-stock .control-field-input {
+        width: 100%;
+        padding: 0.65rem 0.85rem 0.65rem 2.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #334155;
+        background-color: #ffffff;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .control-field-input:focus {
+        outline: none;
+        border-color: #166534;
+        box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.08);
+    }
+
+    .modal-receive-stock .select-caret-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .modal-receive-stock .select-caret-wrapper select {
+        padding-right: 2.5rem;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .modal-receive-stock .select-caret-wrapper::after {
+        content: '\f282';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        font-size: 0.8rem;
+        pointer-events: none;
+    }
+
+    .modal-receive-stock .input-addon-right {
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-left: none;
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+        color: #475569;
+        font-weight: 500;
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+    }
+
+    .modal-receive-stock .input-has-addon {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    .modal-receive-stock .form-input-hint {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.35rem;
+    }
+
+    .modal-receive-stock .char-count-indicator {
+        font-size: 0.725rem;
+        color: #94a3b8;
+    }
+
+    .modal-receive-stock .summary-box-card {
+        background-color: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        height: auto;
+        min-height: auto;
+    }
+
+    .modal-receive-stock .summary-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: #0f172a;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.55rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .modal-receive-stock .summary-row-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.65rem;
+        font-size: 0.84rem;
+    }
+
+    .modal-receive-stock .summary-row-label {
+        color: #475569;
+    }
+
+    .modal-receive-stock .summary-row-value {
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .modal-receive-stock .summary-row-value.received-highlight {
+        color: #166534;
+    }
+
+    .modal-receive-stock .summary-total-divider {
+        border-top: 1px dashed #cbd5e1;
+        margin: 0.9rem 0 0.8rem 0;
+    }
+
+    .modal-receive-stock .new-stock-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+
+    .modal-receive-stock .new-stock-big-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #166534;
+        line-height: 1.1;
+    }
+
+    .modal-receive-stock .alert-banner-toast {
+        background-color: #f0fdf4;
+        border: 1px solid #dcfce7;
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        min-height: 96px;
+    }
+
+    .modal-receive-stock .alert-banner-toast i {
+        color: #166534;
+        font-size: 1.15rem;
+    }
+
+    .modal-receive-stock .alert-banner-text {
+        font-size: 0.8rem;
+        color: #14532d;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .modal-receive-stock .footer-action-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-receive-stock .btn-action-cancel {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .btn-action-cancel:hover {
+        background-color: #f8fafc;
+    }
+
+    .modal-receive-stock .btn-action-submit {
+        background-color: #166534;
+        border: 1px solid #166534;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .modal-receive-stock .btn-action-submit:hover {
+        background-color: #14532d;
+        border-color: #14532d;
+    }
+
+    .mi-smooth-loading {
+        opacity: 0.55;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+    }
+
+    .mi-filter-card {
+        border: 1px solid rgba(22, 101, 52, 0.10);
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    }
+
+    .mi-expense-summary-card {
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 32, 21, 0.05);
+    }
+
+    .mi-expense-summary-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(22, 101, 52, 0.08);
+        color: #166534;
+        border: 1px solid rgba(22, 101, 52, 0.12);
+        flex-shrink: 0;
+    }
+
+    .mi-search-input {
+        padding-left: 2.15rem !important;
+    }
+
+    .mi-search-icon {
+        left: 12px;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .mi-empty-row {
+        display: none;
+    }
+
+    .mi-empty-row.is-visible {
+        display: table-row;
+    }
+
+
+    @media (max-width: 991.98px) {
+        .mi-page {
+            padding: 4px 0 20px;
+        }
+
+        .inventory-green-theme .card-header .nav-tabs {
+            flex-wrap: wrap;
+        }
+
+        .inventory-green-theme .card-header .nav-tabs .nav-link {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .inventory-action-stack {
+            justify-content: flex-start;
+        }
+
+        .modal-receive-stock .modal-dialog {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem);
+        }
+
+        .modal-receive-stock .modal-body-custom {
+            padding: 0 1rem 2rem 1rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .inventory-green-theme .card-body {
+            padding: 1rem;
+        }
+
+        .inventory-green-theme .row.g-3 > [class*='col-'] {
+            width: 100%;
+        }
+
+        .inventory-card-icon {
+            width: 42px;
+            height: 42px;
+            font-size: 18px;
+        }
+
+        .inventory-green-theme .search-container,
+        .inventory-green-theme .col-md-2,
+        .inventory-green-theme .col-md-4 {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .inventory-action-stack {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .inventory-action-stack .btn {
+            width: 100%;
+        }
+
+        .inventory-mobile-table-label {
+            display: inline-block;
+            min-width: 96px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .inventory-green-theme .table-responsive {
+            border: 1px solid #eef5ef;
+            border-radius: 12px;
+        }
+
+        .modal-receive-stock .receive-stock-form-main,
+        .modal-receive-stock .receive-stock-form-sidebar {
+            flex: 0 0 100%;
+            max-width: 100%;
+            margin-left: 0;
+        }
+
+        .modal-receive-stock .footer-action-row {
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .modal-receive-stock .btn-action-cancel,
+        .modal-receive-stock .btn-action-submit {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+
+/* =======================================================================
+   MOBILE V2 INVENTORY / USAGE / EXPENSE CARD FIX
+   Makes materials, usage logs, and project-phase expenses readable on phones.
+   ======================================================================= */
+@media (max-width: 820px) {
+    .inventory-green-theme input,
+    .inventory-green-theme select,
+    .inventory-green-theme textarea,
+    .inventory-green-theme button,
+    .inventory-green-theme .form-control,
+    .inventory-green-theme .form-select {
+        font-size: 16px !important;
+    }
+
+    .inventory-green-theme .card-body,
+    .inventory-green-theme .mi-filter-card,
+    .inventory-green-theme .filter-toolbar-panel {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .inventory-green-theme .nav-tabs,
+    .inventory-green-theme .card-header .nav,
+    .inventory-green-theme .card-header .nav-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        padding-bottom: 4px !important;
+        scrollbar-width: none !important;
+    }
+
+    .inventory-green-theme .nav-tabs::-webkit-scrollbar,
+    .inventory-green-theme .card-header .nav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .inventory-green-theme .table-responsive {
+        overflow-x: hidden !important;
+        padding: 0 4px 10px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody,
+    .inventory-green-theme #usageLogsTableBody,
+    .inventory-green-theme #expensesTableBody,
+    .inventory-green-theme #toolsTableBody {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody tr,
+    .inventory-green-theme #usageLogsTableBody tr,
+    .inventory-green-theme #expensesTableBody tr,
+    .inventory-green-theme #toolsTableBody tr {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 0 12px !important;
+        padding: 14px !important;
+        border: 1px solid #e6eee8 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+        overflow: hidden !important;
+    }
+
+    .inventory-green-theme table,
+    .inventory-green-theme thead,
+    .inventory-green-theme tbody,
+    .inventory-green-theme tr,
+    .inventory-green-theme th,
+    .inventory-green-theme td {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .inventory-green-theme thead {
+        display: none !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td,
+    .inventory-green-theme #usageLogsTableBody td,
+    .inventory-green-theme #expensesTableBody td,
+    .inventory-green-theme #toolsTableBody td {
+        display: grid !important;
+        grid-template-columns: 112px minmax(0, 1fr) !important;
+        gap: 12px !important;
+        align-items: start !important;
+        padding: 8px 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        text-align: left !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td::before,
+    .inventory-green-theme #usageLogsTableBody td::before,
+    .inventory-green-theme #expensesTableBody td::before,
+    .inventory-green-theme #toolsTableBody td::before {
+        display: block !important;
+        color: #5f6f66 !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        line-height: 1.25 !important;
+        text-transform: uppercase !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(1)::before { content: 'Material' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(2)::before { content: 'Category' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(3)::before { content: 'Unit' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(4)::before { content: 'Current Stock' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(5)::before { content: 'Minimum Stock' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(6)::before { content: 'Status' !important; }
+    .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(7)::before { content: 'Actions' !important; }
+
+    .inventory-green-theme #usageLogsTableBody td:nth-child(1)::before { content: 'Date' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(2)::before { content: 'Project' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(3)::before { content: 'Phase' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(4)::before { content: 'Material' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(5)::before { content: 'Qty Used' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(6)::before { content: 'Unit' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(7)::before { content: 'Used By' !important; }
+    .inventory-green-theme #usageLogsTableBody td:nth-child(8)::before { content: 'Details' !important; }
+
+    .inventory-green-theme #expensesTableBody td:nth-child(1)::before { content: 'Date' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(2)::before { content: 'Project' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(3)::before { content: 'Phase' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(4)::before { content: 'Material' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(5)::before { content: 'Qty Used' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(6)::before { content: 'Unit Cost' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(7)::before { content: 'Total Expense' !important; }
+    .inventory-green-theme #expensesTableBody td:nth-child(8)::before { content: 'Used By' !important; }
+
+    .inventory-green-theme #toolsTableBody td:nth-child(1)::before { content: 'Code' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(2)::before { content: 'Name' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(3)::before { content: 'Category' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(4)::before { content: 'Type' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(5)::before { content: 'Unit' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(6)::before { content: 'Condition' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(7)::before { content: 'Status' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(8)::before { content: 'Borrower' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(9)::before { content: 'Actions' !important; }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td > *,
+    .inventory-green-theme #usageLogsTableBody td > *,
+    .inventory-green-theme #expensesTableBody td > *,
+    .inventory-green-theme #toolsTableBody td > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child,
+    .inventory-green-theme #usageLogsTableBody td:last-child,
+    .inventory-green-theme #toolsTableBody td:last-child {
+        align-items: center !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child .d-flex,
+    .inventory-green-theme #usageLogsTableBody td:last-child .d-flex,
+    .inventory-green-theme #toolsTableBody td:last-child .d-flex {
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    .inventory-green-theme .badge,
+    .inventory-green-theme .badge-status-pill {
+        width: fit-content !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+    }
+}
+
+    /* Material Request status badges (theme-aligned) */
+    .badge-request-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-request-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-request-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Material Request action buttons (theme-aligned) */
+    .btn-request-approve {
+        background-color: #166534;
+        border: 1px solid #166534;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+    }
+
+    .btn-request-approve:hover {
+        background-color: #14532d;
+        border-color: #14532d;
+        color: #ffffff;
+    }
+
+    .btn-request-reject {
+        background-color: #ffffff;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+    }
+
+    .btn-request-reject:hover {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #dc2626;
+    }
+
+
+
+/* =======================================================================
+   ADMIN INVENTORY MOBILE POLISH
+   Compact metric grid, cleaner tabs, tighter material cards, and smaller
+   right-side widgets for phone / Capacitor WebView.
+   ======================================================================= */
+.mi-metric-card {
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mi-metric-card:hover {
+    transform: translateY(-1px);
+}
+
+.mi-metric-caption {
+    font-size: 11px;
+}
+
+.inventory-green-theme .nav-tabs .nav-link {
+    border-radius: 999px 999px 0 0;
+    color: #667085;
+}
+
+.inventory-green-theme .nav-tabs .nav-link.active {
+    background: #f7fcf8;
+}
+
+.inventory-green-theme .tab-short {
+    display: none;
+}
+
+.mi-side-widget {
+    overflow: hidden;
+}
+
+.mi-side-widget .btn-link {
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem !important;
+    background: #f7fcf8;
+}
+
+@media (max-width: 991.98px) {
+    .mi-metric-grid {
+        margin-bottom: 12px !important;
+    }
+
+    .mi-metric-card {
+        border-radius: 16px !important;
+        min-height: 108px;
+    }
+
+    .mi-metric-card .card-body {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        padding: 14px !important;
+    }
+
+    .mi-metric-card .inventory-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 17px;
+    }
+
+    .mi-metric-copy {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .mi-metric-card .small {
+        font-size: 10px !important;
+        line-height: 1.2;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .mi-metric-card .fs-2 {
+        font-size: 1.55rem !important;
+        margin: 3px 0 !important;
+    }
+
+    .mi-metric-caption {
+        display: block;
+        font-size: 10px !important;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .inventory-green-theme > .row.g-4 {
+        gap: 14px 0 !important;
+    }
+
+    .inventory-green-theme .card-header {
+        padding: 12px 12px 0 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-tabs {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        overflow: visible !important;
+        padding: 5px !important;
+        border-radius: 999px !important;
+        background: #f2f7f3 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-item {
+        min-width: 0 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link {
+        width: 100% !important;
+        min-height: 42px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 8px 5px !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        font-size: 11.5px !important;
+        line-height: 1.15 !important;
+        text-align: center !important;
+        white-space: normal !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link.active {
+        background: #2a4028 !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 16px rgba(42, 64, 40, 0.18) !important;
+    }
+
+    .inventory-green-theme .tab-full {
+        display: none !important;
+    }
+
+    .inventory-green-theme .tab-short {
+        display: inline !important;
+    }
+
+    .inventory-green-theme .card-body.pt-3 {
+        padding-top: 12px !important;
+    }
+
+    .inventory-green-theme #inventory-search-form,
+    .inventory-green-theme #usage-search-form,
+    .inventory-green-theme #expenses-filter-form {
+        gap: 8px 0 !important;
+        margin-bottom: 12px !important;
+    }
+
+    .inventory-green-theme #inventory-search-form .form-control,
+    .inventory-green-theme #inventory-search-form .form-select,
+    .inventory-green-theme #usage-search-form .form-control,
+    .inventory-green-theme #usage-search-form .form-select,
+    .inventory-green-theme #expenses-filter-form .form-control,
+    .inventory-green-theme #expenses-filter-form .form-select,
+    .inventory-green-theme #expenseClearFilterBtn {
+        min-height: 42px !important;
+        border-radius: 11px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody tr,
+    .inventory-green-theme #usageLogsTableBody tr,
+    .inventory-green-theme #expensesTableBody tr {
+        border-radius: 18px !important;
+        padding: 15px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:first-child {
+        display: block !important;
+        padding: 0 0 12px !important;
+        margin-bottom: 8px !important;
+        border-bottom: 1px solid #edf3ee !important;
+        color: #10271b !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:first-child::before {
+        content: 'Material' !important;
+        margin-bottom: 4px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child,
+    .inventory-green-theme #usageLogsTableBody td:last-child {
+        padding-top: 12px !important;
+        border-top: 1px solid #edf3ee !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td:last-child .btn,
+    .inventory-green-theme #usageLogsTableBody td:last-child .btn {
+        min-width: 38px !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 11px !important;
+    }
+
+    .inventory-green-theme .mi-expense-summary-card {
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    .inventory-green-theme .mi-expense-summary-icon {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 12px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget {
+        padding: 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget h6 {
+        margin-bottom: 10px !important;
+        font-size: 13px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget .d-flex.flex-column.gap-3 {
+        gap: 9px !important;
+    }
+
+    .inventory-green-theme .mi-side-widget .btn-link {
+        margin-top: 10px !important;
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .mi-metric-grid {
+        --bs-gutter-x: 0.55rem;
+        --bs-gutter-y: 0.55rem;
+    }
+
+    .mi-metric-card {
+        min-height: 102px;
+    }
+
+    .mi-metric-card .card-body {
+        padding: 12px !important;
+    }
+
+    .mi-metric-card .fs-2 {
+        font-size: 1.42rem !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link {
+        font-size: 10.5px !important;
+    }
+
+    .inventory-green-theme #inventoryMaterialsTableBody td,
+    .inventory-green-theme #usageLogsTableBody td,
+    .inventory-green-theme #expensesTableBody td {
+        grid-template-columns: 102px minmax(0, 1fr) !important;
+        gap: 10px !important;
+    }
+}
+
+</style>
+@endpush
+
+@section('content')
+<div class="mi-page inventory-green-theme">
+    @php
+        $activeInventoryView = request('view', $activeView ?? 'inventory');
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
+
+        $usageLogItems = collect();
+        if (isset($usageLogs)) {
+            $usageLogItems = method_exists($usageLogs, 'items')
+                ? collect($usageLogs->items())
+                : collect($usageLogs);
+        }
+
+        $inventoryProjectOptions = collect();
+        if (isset($projects)) {
+            $inventoryProjectOptions = collect($projects);
+        }
+
+        if ($inventoryProjectOptions->isEmpty()) {
+            $inventoryProjectOptions = $usageLogItems
+                ->map(fn ($log) => $log->project ?? null)
+                ->filter()
+                ->unique(fn ($project) => data_get($project, 'project_id') ?? data_get($project, 'id') ?? data_get($project, 'project_name') ?? (is_object($project) ? spl_object_id($project) : md5(json_encode($project))))
+                ->values();
+        }
+
+        $inventoryPhaseOptions = $usageLogItems
+            ->map(fn ($log) => $log->phase ?? null)
+            ->filter()
+            ->unique(fn ($phase) => data_get($phase, 'phase_id') ?? data_get($phase, 'id') ?? data_get($phase, 'phase_name') ?? (is_object($phase) ? spl_object_id($phase) : md5(json_encode($phase))))
+            ->values();
+
+        $selectedInventoryProjectId = request('project_id', '');
+        $selectedInventoryPhaseId = request('phase_id', '');
+
+        $expenseTotalAmount = $usageLogItems->sum(function ($log) {
+            $material = $log->material ?? null;
+            $quantity = (float) ($log->quantity_used ?? 0);
+            $unitCost = (float) (
+                $log->unit_cost
+                ?? $log->cost_per_unit
+                ?? optional($material)->unit_cost
+                ?? optional($material)->cost
+                ?? optional($material)->price
+                ?? 0
+            );
+            $totalCost = (float) (
+                $log->total_cost
+                ?? $log->amount
+                ?? $log->expense_amount
+                ?? 0
+            );
+
+            return $totalCost > 0 ? $totalCost : ($quantity * $unitCost);
+        });
+
+        $expenseTotalQuantity = $usageLogItems->sum(fn ($log) => (float) ($log->quantity_used ?? 0));
+        $expenseProjectCount = $usageLogItems
+            ->map(fn ($log) => optional($log->project)->project_id ?? optional($log->project)->id ?? optional($log->project)->project_name)
+            ->filter()
+            ->unique()
+            ->count();
+        $expensePhaseCount = $usageLogItems
+            ->map(fn ($log) => optional($log->phase)->phase_id ?? optional($log->phase)->id ?? optional($log->phase)->phase_name)
+            ->filter()
+            ->unique()
+            ->count();
+    @endphp
+    
+    <!-- Top 4 Summary Cards Grid Row -->
+    <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon available">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="mi-metric-copy">
+                        <div class="text-muted small fw-semibold">Total Materials</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['total_materials'] }}</div>
+                        <div class="text-muted mi-metric-caption">All registered</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon available">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="mi-metric-copy">
+                        <div class="text-muted small fw-semibold">Available</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['available_materials'] }}</div>
+                        <div class="text-muted mi-metric-caption">Sufficient stock</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon low-stock">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="mi-metric-copy">
+                        <div class="text-muted small fw-semibold">Low Stock</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['low_stock_alerts'] }}</div>
+                        <div class="text-muted mi-metric-caption">Below minimum</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="inventory-card-icon out-of-stock">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div class="mi-metric-copy">
+                        <div class="text-muted small fw-semibold">Out of Stock</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['out_of_stock'] }}</div>
+                        <div class="text-muted mi-metric-caption">No stock</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Success',
+                    text: '{{ addslashes(session('success')) }}',
+                    icon: 'success',
+                    confirmButtonColor: '#166534'
+                }).then(function() {
+                    var modals = document.querySelectorAll('.modal.show');
+                    modals.forEach(function(modal) {
+                        var modalInstance = bootstrap.Modal.getInstance(modal);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                    });
+                });
+            });
+        </script>
+    @endif
+    @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    title: 'Action failed',
+                    text: '{{ addslashes(session('error')) }}',
+                    icon: 'error',
+                    confirmButtonColor: '#dc2626'
+                });
+            });
+        </script>
+    @endif
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const fieldToModal = {
+                    'name': 'addToolModal',
+                    'tool_code': 'addToolModal',
+                    'category': 'addToolModal',
+                    'type': 'addToolModal',
+                    'unit': 'addToolModal',
+                    'condition': 'addToolModal',
+                    'purchase_date': 'addToolModal',
+                    'purchase_price': 'addToolModal',
+                    'description': 'addToolModal',
+                    'worker_id': 'issueToolModal',
+                    'project_id': 'issueToolModal',
+                    'expected_return_date': 'issueToolModal',
+                    'condition_at_issue': 'issueToolModal',
+                    'notes': 'issueToolModal',
+                    'condition_at_return': 'returnToolModal',
+                    'remarks': 'returnToolModal',
+                    'amount': 'markLostModal',
+                    'reason': 'markLostModal',
+                };
+
+                const firstError = @json($errors->first());
+                const errorKeys = @json($errors->keys());
+                const errorMessages = @json($errors->all());
+
+                let targetModalId = null;
+                errorKeys.forEach(function (key) {
+                    if (fieldToModal[key] && !targetModalId) {
+                        targetModalId = fieldToModal[key];
+                    }
+                });
+
+                if (targetModalId) {
+                    const modal = document.getElementById(targetModalId);
+                    if (modal) {
+                        const errorContainer = modal.querySelector('.alert-danger');
+                        if (errorContainer) {
+                            errorContainer.innerHTML = errorMessages.map(function (msg) {
+                                return '<div>' + msg + '</div>';
+                            }).join('');
+                            errorContainer.classList.remove('d-none');
+                        }
+                        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+                        if (bsModal) {
+                            bsModal.show();
+                        }
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Validation error',
+                        text: firstError,
+                        icon: 'warning',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            });
+        </script>
+    @endif
+
+    <!-- Main Workspace Split Grid Layout (Left Content, Right Dashboard Widgets) -->
+    <div class="row g-4">
+        
+        <!-- LEFT MAIN DATA SECTOR -->
+        <div class="col-lg-9">
+            
+            <!-- Core Inventory Management Master Panel -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <ul class="nav nav-tabs border-bottom-0">
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'requests' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="requests-view"><i class="bi bi-cart-plus me-1"></i><span class="tab-full">Material Requests</span><span class="tab-short">Requests</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'tools' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="tools-view">
+                                <i class="bi bi-wrench me-1"></i><span class="tab-full">Tools & Equipments</span><span class="tab-short">Tools</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
+                                <i class="bi bi-cash-stack me-1"></i><span class="tab-full">Project / Phase Expenses</span><span class="tab-short">Expenses</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-body pt-3">
+                    <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
+                    <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
+                        <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                            <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
+                            <input type="hidden" name="view" value="inventory" id="inventory-view-input">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="category" class="form-select form-select-sm text-muted" >
+                                <option value="">All Categories</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}" {{ $category === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="stock_status" class="form-select form-select-sm text-muted" >
+                                <option value="">All Status</option>
+                                <option value="normal" {{ $stockStatus === 'normal' ? 'selected' : '' }}>Available</option>
+                                <option value="low_stock" {{ $stockStatus === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                                <option value="out_of_stock" {{ $stockStatus === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addMaterialModal" title="Register a new material in the master catalog">
+                                <i class="bi bi-plus-lg me-1"></i> Add Material
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" title="Receive stock for a material">
+                                <i class="bi bi-envelope-open me-1"></i> Receive Stock
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#allocateMaterialModal" title="Allocate material to a project">
+                                <i class="bi bi-diagram-3 me-1"></i> Allocate
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Main Dynamic Table Content Mapping -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                <tr>
+                                    <th class="border-0">Material Name</th>
+                                    <th class="border-0">Category</th>
+                                    <th class="border-0">Unit</th>
+                                    <th class="border-0">Current Stock</th>
+                                    <th class="border-0">Minimum Stock</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryMaterialsTableBody">
+                                @forelse($materials as $material)
+                                    @php
+                                        if($material->current_stock <= 0) {
+                                            $badgeClass = 'badge-out-of-stock';
+                                            $statusText = 'Out of Stock';
+                                            $stockStatusKey = 'out_of_stock';
+                                        } elseif($material->current_stock <= $material->minimum_stock_level) {
+                                            $badgeClass = 'badge-low-stock';
+                                            $statusText = 'Low Stock';
+                                            $stockStatusKey = 'low_stock';
+                                        } else {
+                                            $badgeClass = 'badge-available';
+                                            $statusText = 'Available';
+                                            $stockStatusKey = 'normal';
+                                        }
+
+                                        $materialSearchText = strtolower(trim(($material->name ?? '') . ' ' . ($material->category ?? 'General') . ' ' . ($material->unit ?? '') . ' ' . $statusText));
+                                    @endphp
+                                    <tr data-inventory-row="true"
+                                        data-material-search="{{ $materialSearchText }}"
+                                        data-material-category="{{ $material->category ?? 'General' }}"
+                                        data-material-status="{{ $stockStatusKey }}">
+                                        <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                        <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                        <td class="text-muted">{{ $material->unit }}</td>
+                                        <td class="fw-bold text-dark">{{ number_format($material->current_stock, 0) }}</td>
+                                        <td class="text-muted">{{ number_format($material->minimum_stock_level, 0) }}</td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $badgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $statusText }}</span></td>
+                                        <td>
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}" title="View details"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}" title="Edit material"><i class="bi bi-pencil"></i></button>
+                                                <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete material"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr id="inventoryEmptyStateRow"><td colspan="7" class="text-center text-muted py-4">No structural materials profiles discovered.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="modal fade modal-receive-stock" id="allocateMaterialModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header-custom">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="modal-icon-container">
+                                            <i class="bi bi-diagram-3"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="modal-title-text mb-0">Allocate Material to Project</h4>
+                                            <p class="modal-subtitle mb-0">Assign warehouse stock to a specific project with planned quantity.</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="modal-body-custom">
+                                    <form id="allocateMaterialForm" method="POST" action="{{ route('admin.inventory.allocate') }}">
+                                        @csrf
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Material<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group select-caret-wrapper">
+                                                        <i class="bi bi-box-seam input-icon-left"></i>
+                                                        <select name="material_id" id="allocateMaterialSelect" class="control-field-input" required>
+                                                            <option value="">Select material</option>
+                                                            @foreach($materials as $materialOption)
+                                                                <option value="{{ $materialOption->id }}"
+                                                                    data-name="{{ $materialOption->name }}"
+                                                                    data-unit="{{ $materialOption->unit }}"
+                                                                    data-stock="{{ $materialOption->current_stock }}"
+                                                                    data-min="{{ $materialOption->minimum_stock_level }}">
+                                                                    {{ $materialOption->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-input-hint">Select a material from the catalog.</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Unit</label>
+                                                    <div class="input-container-group">
+                                                        <i class="bi bi-rulers input-icon-left"></i>
+                                                        <input type="text" name="unit" id="allocateMaterialUnit" class="control-field-input" placeholder="e.g. Bags, Pieces" readonly>
+                                                    </div>
+                                                    <div class="form-input-hint">Auto-filled from selected material.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Project<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group select-caret-wrapper">
+                                                        <i class="bi bi-building input-icon-left"></i>
+                                                        <select name="project_id" class="control-field-input" required>
+                                                            <option value="">Select project</option>
+                                                            @foreach($inventoryProjectOptions as $projectOption)
+                                                                @php
+                                                                    $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                                                    $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                                                @endphp
+                                                                <option value="{{ $projectOptionId }}">{{ $projectOptionName }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <label class="form-label-custom">Planned Quantity<span class="required-asterisk">*</span></label>
+                                                    <div class="input-container-group">
+                                                        <i class="bi bi-box input-icon-left"></i>
+                                                        <input type="number" step="0.01" min="0.01" name="planned_quantity" class="control-field-input" placeholder="Enter planned quantity" required>
+                                                    </div>
+                                                    <div class="form-input-hint">Total quantity allocated to this project.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-12">
+                                                <div class="form-group-wrapper mb-0">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="issue_from_stock" id="issueFromStockCheck" value="1">
+                                                        <label class="form-check-label fw-semibold text-dark" for="issueFromStockCheck">
+                                                            Issue from warehouse stock
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-input-hint">Check this if you want to physically issue stock from the warehouse to this project. This will decrement the global stock.</div>
+                    </div>
+                </div>
+            </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    <!-- Layout Footer Summary with Pagination Links -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
+                        <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
+                        <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
+                    </div>
+                </div>
+
+            <div id="requests-view" class="inventory-view-panel {{ $activeInventoryView !== 'requests' ? 'd-none' : '' }}">
+                <div class="mi-filter-card p-3 mb-3">
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center">
+                        <input type="hidden" name="view" value="requests" id="requests-view-input">
+                        <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                            <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm mi-search-input" placeholder="Search requests by material, project, or requester...">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="request_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="pending" {{ $requestStatus === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ $requestStatus === 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ $requestStatus === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                <tr>
+                                    <th class="border-0">Request ID</th>
+                                    <th class="border-0">Material</th>
+                                    <th class="border-0">Project</th>
+                                    <th class="border-0">Requested By</th>
+                                    <th class="border-0">Quantity</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Requested At</th>
+                                    <th class="border-0 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($materialRequests as $request)
+                                    @php
+                                        $requestBadgeClass = match($request->status) {
+                                            'pending' => 'badge-request-pending',
+                                            'approved' => 'badge-request-approved',
+                                            'rejected' => 'badge-request-rejected',
+                                            default => 'badge-request-pending',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold text-dark">#{{ $request->request_id }}</td>
+                                        <td>
+                                            <div class="fw-semibold text-dark">{{ $request->material->name ?? 'Unknown' }}</div>
+                                            <div class="text-muted small">{{ $request->unit ?? 'unit' }}</div>
+                                        </td>
+                                        <td class="text-muted">{{ $request->project->project_name ?? 'N/A' }}</td>
+                                        <td class="text-muted">{{ $request->requester->name ?? 'Unknown' }}</td>
+                                        <td class="fw-bold text-dark">{{ number_format($request->requested_quantity, 2) }}</td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $requestBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ ucfirst($request->status) }}</span></td>
+                                        <td class="text-muted">{{ $request->created_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                                        <td>
+                                            @if($request->status === 'pending')
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn-request-approve" data-bs-toggle="modal" data-bs-target="#approveModal{{ $request->request_id }}">
+                                                        <i class="bi bi-check-lg"></i> Approve
+                                                    </button>
+                                                    <button type="button" class="btn-request-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $request->request_id }}">
+                                                        <i class="bi bi-x-lg"></i> Reject
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <div class="text-center">
+                                                    <span class="text-muted small d-block">{{ $request->reviewed_at?->format('M d, Y h:i A') ?? 'N/A' }}</span>
+                                                    @if($request->rejection_remarks)
+                                                        <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ $request->rejection_remarks }}</div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    <!-- Approve Modal -->
+                                    <div class="modal fade modal-receive-stock" id="approveModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header-custom">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="modal-title-text mb-0">Approve Request #{{ $request->request_id }}</h4>
+                                                            <p class="modal-subtitle mb-0">Confirm and allocate stock for this request.</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body-custom">
+                                                    <div class="meta-info-card mb-3">
+                                                        <div class="meta-item">
+                                                            <div>
+                                                                <div class="meta-label">Material</div>
+                                                                <div class="meta-value">{{ $request->material->name ?? 'material' }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <div>
+                                                                <div class="meta-label">Requested</div>
+                                                                <div class="meta-value">{{ number_format($request->requested_quantity, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <form method="POST" action="{{ route('admin.inventory.requests.approve', $request) }}" class="receive-stock-form-main">
+                                                        @csrf
+                                                        <div class="form-group-wrapper">
+                                                            <label class="form-label-custom">Approved Quantity<span class="required-asterisk">*</span></label>
+                                                            <div class="input-container-group">
+                                                                <i class="bi bi-box-seam input-icon-left"></i>
+                                                                <input type="number" name="approved_quantity" value="{{ $request->requested_quantity }}" max="{{ $request->material->current_stock ?? 0 }}" step="0.01" min="0.01" class="control-field-input" required>
+                                                            </div>
+                                                            <div class="form-input-hint">Available stock: {{ number_format($request->material->current_stock ?? 0, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                        </div>
+                                                        <div class="footer-action-row border-top pt-3 pb-2">
+                                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-lg"></i> Cancel
+                                                            </button>
+                                                            <button type="submit" class="btn-action-submit">
+                                                                <i class="bi bi-check-lg me-1"></i> Confirm Approval
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reject Modal -->
+                                    <div class="modal fade modal-receive-stock" id="rejectModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header-custom">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="modal-icon-container" style="background-color: #fee2e2; color: #991b1b;">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="modal-title-text mb-0">Reject Request #{{ $request->request_id }}</h4>
+                                                            <p class="modal-subtitle mb-0">Provide a reason for rejecting this request.</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body-custom">
+                                                    <form method="POST" action="{{ route('admin.inventory.requests.reject', $request) }}" class="receive-stock-form-main">
+                                                        @csrf
+                                                        <div class="form-group-wrapper">
+                                                            <label class="form-label-custom">Rejection Remarks <span class="text-muted fw-normal">(Optional)</span></label>
+                                                            <textarea name="rejection_remarks" rows="3" class="control-field-input" style="padding-left: 0.85rem;" placeholder="Reason for rejection..."></textarea>
+                                                        </div>
+                                                        <div class="footer-action-row border-top pt-3 pb-2">
+                                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                                                <i class="bi bi-x-lg"></i> Cancel
+                                                            </button>
+                                                            <button type="submit" class="btn-action-submit" style="background-color: #dc2626; border-color: #dc2626;">
+                                                                <i class="bi bi-x-lg me-1"></i> Confirm Rejection
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-3 text-secondary d-block mb-2"></i>
+                                            No material requests found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if($materialRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $materialRequests->hasPages())
+                        <div class="card-footer bg-white border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Showing {{ $materialRequests->firstItem() ?? 0 }} to {{ $materialRequests->lastItem() ?? 0 }} of {{ $materialRequests->total() }} requests</span>
+                                <div>{{ $materialRequests->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+                    <div id="usage-view" class="inventory-view-panel {{ $activeInventoryView !== 'usage' ? 'd-none' : '' }}">
+                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-3" id="usage-search-form">
+                            <input type="hidden" name="category" value="{{ $category }}">
+                            <input type="hidden" name="stock_status" value="{{ $stockStatus }}">
+                            <input type="hidden" name="view" value="usage" id="usage-view-input">
+                            <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search usage logs...">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="project_id" id="usageProjectFilter" class="form-select form-select-sm text-muted">
+                                    <option value="">All Projects</option>
+                                    @foreach($inventoryProjectOptions as $projectOption)
+                                        @php
+                                            $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                            $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                        @endphp
+                                        <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
+                                            {{ $projectOptionName }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="phase_id" id="usagePhaseFilter" class="form-select form-select-sm text-muted">
+                                    <option value="">All Phases</option>
+                                    @foreach($inventoryPhaseOptions as $phaseOption)
+                                        @php
+                                            $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
+                                            $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
+                                            $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
+                                        @endphp
+                                        <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
+                                            {{ $phaseOptionName }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="usage_category" class="form-select form-select-sm text-muted" >
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat }}" {{ $usageCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="usage_status" class="form-select form-select-sm text-muted"  style="display: none;">
+                                    <option value="">All</option>
+                                    <option value="with_remarks" {{ $usageStatus === 'with_remarks' ? 'selected' : '' }}>Has Notes</option>
+                                    <option value="without_remarks" {{ $usageStatus === 'without_remarks' ? 'selected' : '' }}>No Notes</option>
+                                </select>
+                            </div>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px;">
+                                    <tr>
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Project</th>
+                                        <th class="border-0">Phase</th>
+                                        <th class="border-0">Material</th>
+                                        <th class="border-0">Quantity Used</th>
+                                        <th class="border-0">Unit</th>
+                                        <th class="border-0">Used By (Supervisor)</th>
+                                        <th class="border-0 text-center">Other Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usageLogsTableBody">
+                                    @forelse($usageLogs as $log)
+                                        @php
+                                            $usageProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
+                                            $usagePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
+                                            $usageMaterial = $log->material ?? null;
+                                            $usageQuantity = (float) ($log->quantity_used ?? 0);
+                                            $usageUnitCost = (float) (
+                                                $log->unit_cost
+                                                ?? $log->cost_per_unit
+                                                ?? optional($usageMaterial)->unit_cost
+                                                ?? optional($usageMaterial)->cost
+                                                ?? optional($usageMaterial)->price
+                                                ?? 0
+                                            );
+                                            $usageTotalCost = (float) (
+                                                $log->total_cost
+                                                ?? $log->amount
+                                                ?? $log->expense_amount
+                                                ?? 0
+                                            );
+                                            $usageExpenseAmount = $usageTotalCost > 0 ? $usageTotalCost : ($usageQuantity * $usageUnitCost);
+                                            $usageSearchText = strtolower(trim(
+                                                (optional($log->project)->project_name ?? '') . ' ' .
+                                                (optional($log->phase)->phase_name ?? '') . ' ' .
+                                                (optional($usageMaterial)->name ?? '') . ' ' .
+                                                (optional($log->recorder)->name ?? '') . ' ' .
+                                                ($log->remarks ?? '')
+                                            ));
+                                        @endphp
+                                        <tr data-usage-row="true"
+                                            data-project-id="{{ $usageProjectId }}"
+                                            data-phase-id="{{ $usagePhaseId }}"
+                                            data-usage-category="{{ optional($usageMaterial)->category ?? 'General' }}"
+                                            data-usage-search="{{ $usageSearchText }}"
+                                            data-expense-amount="{{ $usageExpenseAmount }}">
+                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
+                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->material)->name ?? 'N/A' }}</td>
+                                            <td class="fw-bold text-dark">{{ number_format($log->quantity_used, 0) }}</td>
+                                            <td class="text-muted">{{ optional($log->material)->unit ?? 'Piece' }}</td>
+                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                            <td class="text-center">
+                                                <button type="button"
+                                                    class="btn btn-outline-success btn-sm p-2"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#materialUsageDetailModal"
+                                                    data-date="{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}"
+                                                    data-project="{{ optional($log->project)->project_name ?? 'N/A' }}"
+                                                    data-phase="{{ optional($log->phase)->phase_name ?? 'N/A' }}"
+                                                    data-material="{{ optional($log->material)->name ?? 'N/A' }}"
+                                                    data-quantity="{{ number_format($log->quantity_used, 0) }}"
+                                                    data-unit="{{ optional($log->material)->unit ?? 'Piece' }}"
+                                                    data-recorder="{{ optional($log->recorder)->name ?? 'Unknown' }}"
+                                                    data-notes="{{ e($log->remarks ?? '') }}"
+                                                    data-photo="{{ $log->site_photo_path ? asset('storage/' . ltrim($log->site_photo_path, '/')) : '' }}"
+                                                    title="View usage details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr id="usageEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No analytical usage sequences registered.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    </div>
+
+                    <div id="tools-view" class="inventory-view-panel {{ $activeInventoryView !== 'tools' ? 'd-none' : '' }}">
+                        <!-- Tools Metrics -->
+                        <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon available">
+                                            <i class="bi bi-wrench"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Total Tools</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['total_tools'] }}</div>
+                                            <div class="text-muted mi-metric-caption">All registered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon available">
+                                            <i class="bi bi-check-circle"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Available</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['available'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Ready for issue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon low-stock">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">In Use</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['in_use'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Currently borrowed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon out-of-stock">
+                                            <i class="bi bi-x-circle"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Lost</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['lost'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Lost / Unrecovered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tools Search & Filters -->
+                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="tools-search-form">
+                            <input type="hidden" name="view" value="tools" id="tools-view-input">
+                            <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                                <input type="text" name="search" value="{{ $toolsSearch ?? $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search tools by name, code, or category...">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="tool_category" class="form-select form-select-sm text-muted">
+                                    <option value="">All Categories</option>
+                                    @foreach($toolCategories as $cat)
+                                        <option value="{{ $cat }}" {{ ($toolCategory ?? '') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="tool_status" class="form-select form-select-sm text-muted">
+                                    <option value="">All Status</option>
+                                    <option value="available" {{ ($toolStatus ?? '') === 'available' ? 'selected' : '' }}>Available</option>
+                                    <option value="in_use" {{ ($toolStatus ?? '') === 'in_use' ? 'selected' : '' }}>In Use</option>
+                                    <option value="lost" {{ ($toolStatus ?? '') === 'lost' ? 'selected' : '' }}>Lost</option>
+                                    <option value="retired" {{ ($toolStatus ?? '') === 'retired' ? 'selected' : '' }}>Retired</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-12 col-12 inventory-action-stack">
+                                <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addToolModal">
+                                    <i class="bi bi-plus-lg me-1"></i> Add Tool
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Tools Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                    <tr>
+                                        <th class="border-0">Code</th>
+                                        <th class="border-0">Name</th>
+                                        <th class="border-0">Category</th>
+                                        <th class="border-0">Type</th>
+                                        <th class="border-0">Unit</th>
+                                        <th class="border-0">Condition</th>
+                                        <th class="border-0">Status</th>
+                                        <th class="border-0">Current Borrower</th>
+                                        <th class="border-0 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="toolsTableBody">
+                                    @forelse($tools as $tool)
+                                        @php
+                                            $toolBadgeClass = $tool->status_badge_class;
+                                            $toolStatusLabel = $tool->status_label;
+                                            $borrowerName = $tool->currentBorrower ? $tool->currentBorrower->full_name : '-';
+                                            $canIssue = in_array($tool->status, ['available']);
+                                            $canReturn = $tool->status === 'in_use';
+                                            $canMarkLost = $tool->status === 'in_use';
+                                            $hasActiveLoan = $tool->activeLoan()->exists();
+                                        @endphp
+                                        <tr data-tool-row="true"
+                                            data-tool-search="{{ strtolower(trim(($tool->name ?? '') . ' ' . ($tool->tool_code ?? '') . ' ' . ($tool->category ?? '') . ' ' . $toolStatusLabel)) }}"
+                                            data-tool-category="{{ $tool->category ?? 'General' }}"
+                                            data-tool-status="{{ $tool->status }}">
+                                            <td class="fw-semibold text-dark">{{ $tool->tool_code }}</td>
+                                            <td class="fw-semibold text-dark">{{ $tool->name }}</td>
+                                            <td class="text-muted">{{ $tool->category ?? 'General' }}</td>
+                                            <td class="text-muted">{{ ucfirst($tool->type) }}</td>
+                                            <td class="text-muted">{{ $tool->unit ?? '-' }}</td>
+                                            <td class="text-muted">{{ ucfirst($tool->condition ?? '-') }}</td>
+                                            <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $toolBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $toolStatusLabel }}</span></td>
+                                            <td class="text-muted">{{ $borrowerName }}</td>
+                                            <td>
+                                                <div class="d-flex justify-content-center gap-1 inventory-action-stack">
+                                                    @if($canIssue)
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
+                                                    @endif
+                                                    @if($canReturn)
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white btn-mark-lost-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Mark as lost"><i class="bi bi-exclamation-triangle"></i> Mark Lost</button>
+                                                    @endif
+                                                    <form method="POST" action="{{ route('admin.inventory.tools.destroy', $tool->id) }}" class="inventory-delete-form d-inline m-0">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete tool"><i class="bi bi-trash"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr id="toolsEmptyStateRow"><td colspan="9" class="text-center text-muted py-4">No tools or equipment registered yet.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Active Tool Loans -->
+                        @if($activeToolLoans->count() > 0)
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Code</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Project</th>
+                                            <th class="border-0">Expected Return</th>
+                                            <th class="border-0">Condition at Issue</th>
+                                            <th class="border-0">Borrowed At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($activeToolLoans as $loan)
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
+                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Tool Deduction Ledger -->
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i>Deduction Ledger</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Reason</th>
+                                            <th class="border-0">Amount</th>
+                                            <th class="border-0">Status</th>
+                                            <th class="border-0">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allToolDeductions as $deduction)
+                                            @php
+                                                $deductionBadgeClass = $deduction->status_badge_class;
+                                                $deductionStatusLabel = $deduction->status_label;
+                                            @endphp
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
+                                                <td class="fw-bold text-dark">â‚±{{ number_format($deduction->amount, 2) }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
+                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+            </div>
+
+                    <div id="expenses-view" class="inventory-view-panel {{ $activeInventoryView !== 'expenses' ? 'd-none' : '' }}">
+                        <div class="mi-filter-card p-3 mb-3">
+                            <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="expenses-filter-form">
+                                <input type="hidden" name="view" value="expenses">
+                                <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                                    <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search project, phase, material, or supervisor...">
+                                    <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="project_id" id="expenseProjectFilter" class="form-select form-select-sm text-muted">
+                                        <option value="">All Projects</option>
+                                        @foreach($inventoryProjectOptions as $projectOption)
+                                            @php
+                                                $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
+                                                $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
+                                            @endphp
+                                            <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
+                                                {{ $projectOptionName }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="phase_id" id="expensePhaseFilter" class="form-select form-select-sm text-muted">
+                                        <option value="">All Phases</option>
+                                        @foreach($inventoryPhaseOptions as $phaseOption)
+                                            @php
+                                                $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
+                                                $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
+                                                $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
+                                            @endphp
+                                            <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
+                                                {{ $phaseOptionName }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="expenseClearFilterBtn">
+                                        Clear
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-cash-stack"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Total Expense</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalAmount">â‚±{{ number_format($expenseTotalAmount, 2) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-boxes"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Materials Used</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalQuantity">{{ number_format($expenseTotalQuantity, 0) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-building"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Projects</div>
+                                            <div class="fw-bold text-dark" id="expenseProjectCount">{{ $expenseProjectCount }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="mi-expense-summary-card p-3 h-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="mi-expense-summary-icon"><i class="bi bi-bar-chart-steps"></i></div>
+                                        <div>
+                                            <div class="text-muted small fw-semibold">Phases</div>
+                                            <div class="fw-bold text-dark" id="expensePhaseCount">{{ $expensePhaseCount }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px;">
+                                    <tr>
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Project</th>
+                                        <th class="border-0">Phase</th>
+                                        <th class="border-0">Material</th>
+                                        <th class="border-0">Qty Used</th>
+                                        <th class="border-0">Unit Cost</th>
+                                        <th class="border-0">Total Expense</th>
+                                        <th class="border-0">Used By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    @forelse($usageLogItems as $log)
+                                        @php
+                                            $expenseProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
+                                            $expensePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
+                                            $expenseMaterial = $log->material ?? null;
+                                            $expenseQuantity = (float) ($log->quantity_used ?? 0);
+                                            $expenseUnitCost = (float) (
+                                                $log->unit_cost
+                                                ?? $log->cost_per_unit
+                                                ?? optional($expenseMaterial)->unit_cost
+                                                ?? optional($expenseMaterial)->cost
+                                                ?? optional($expenseMaterial)->price
+                                                ?? 0
+                                            );
+                                            $expenseDirectCost = (float) (
+                                                $log->total_cost
+                                                ?? $log->amount
+                                                ?? $log->expense_amount
+                                                ?? 0
+                                            );
+                                            $expenseAmount = $expenseDirectCost > 0 ? $expenseDirectCost : ($expenseQuantity * $expenseUnitCost);
+                                            $expenseSearchText = strtolower(trim(
+                                                (optional($log->project)->project_name ?? '') . ' ' .
+                                                (optional($log->phase)->phase_name ?? '') . ' ' .
+                                                (optional($expenseMaterial)->name ?? '') . ' ' .
+                                                (optional($log->recorder)->name ?? '') . ' ' .
+                                                ($log->remarks ?? '')
+                                            ));
+                                        @endphp
+                                        <tr data-expense-row="true"
+                                            data-project-id="{{ $expenseProjectId }}"
+                                            data-phase-id="{{ $expensePhaseId }}"
+                                            data-expense-search="{{ $expenseSearchText }}"
+                                            data-expense-amount="{{ $expenseAmount }}"
+                                            data-expense-quantity="{{ $expenseQuantity }}">
+                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
+                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
+                                            <td class="fw-semibold text-dark">{{ optional($expenseMaterial)->name ?? 'N/A' }}</td>
+                                            <td class="fw-bold text-dark">{{ number_format($expenseQuantity, 0) }} {{ optional($expenseMaterial)->unit ?? 'Piece' }}</td>
+                                            <td class="text-muted">â‚±{{ number_format($expenseUnitCost, 2) }}</td>
+                                            <td class="fw-bold text-success">â‚±{{ number_format($expenseAmount, 2) }}</td>
+                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr id="expenseEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No material expense records available.</td></tr>
+                                    @endforelse
+                                    @if($usageLogItems->count() > 0)
+                                        <tr id="expenseEmptyStateRow" class="mi-empty-row"><td colspan="8" class="text-center text-muted py-4">No matching expense records found.</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-light border mt-3 mb-0 small text-muted">
+                            <i class="bi bi-info-circle text-success me-1"></i>
+                            Expense values use <strong>total_cost</strong>, <strong>amount</strong>, or <strong>expense_amount</strong> when available. If not available, the page estimates expense using quantity used Ã— material unit cost.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COMPACT SIDEBAR COLUMN -->
+        <div class="col-lg-3 d-flex flex-column gap-3">
+            
+            <!-- Widget Component 1: Compact Low Stock Visual Tracking alerts -->
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Low Stock Alerts</h6>
+                <div class="d-flex flex-column gap-3">
+                    @forelse($lowStockMaterials as $lowMat)
+                    <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #f97316;"></span>
+                            <span class="text-dark fw-semibold">{{ $lowMat->name }}</span>
+                        </div>
+                        <span class="text-muted fw-bold">{{ number_format((float) $lowMat->current_stock, 0) }} / <span class="text-muted small fw-normal">{{ number_format((float) $lowMat->minimum_stock_level, 0) }} {{ $lowMat->unit }}</span></span>
+                    </div>
+                    @empty
+                    <div class="text-muted small">No low-stock materials at the moment.</div>
+                    @endforelse
+                </div>
+                <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#lowStockModal">View all low stock</button>
+            </div>
+
+            <!-- Widget Component 2: Dynamic Receivals Stream Log -->
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Recent Stock Received</h6>
+                <div class="d-flex flex-column gap-3">
+                    @forelse($recentlyUpdatedMaterials as $recMat)
+                    <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
+                        <div>
+                            <div class="text-dark fw-semibold">{{ $recMat->name }}</div>
+                            <div class="text-muted small" style="font-size: 11px;">{{ optional($recMat->updated_at)->format('M d, Y') ?? 'Recently updated' }}</div>
+                        </div>
+                        <span class="text-success fw-bold">{{ number_format((float) $recMat->current_stock, 0) }} {{ $recMat->unit }}</span>
+                    </div>
+                    @empty
+                    <div class="text-muted small">No recent stock updates available.</div>
+                    @endforelse
+                </div>
+                <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#recentStockModal">View all received</button>
+            </div>
+
+            <!-- Widget Component 3: Clean Analytics Donut Graphic representation -->
+            <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
+                <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Inventory Summary</h6>
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="position-relative d-flex align-items-center justify-content-center" style="width: 115px; height: 115px; border-radius: 50%; background: conic-gradient(#10b981 0% {{ $metrics['available_percentage'] }}%, #f97316 {{ $metrics['available_percentage'] }}% {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}%, #ef4444 {{ $metrics['available_percentage'] + $metrics['low_stock_percentage'] }}% 100%);">
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 85px; height: 85px;">
+                            <div class="text-center">
+                                <span class="fs-4 fw-bold text-dark lh-1 d-block">{{ $metrics['total_materials'] }}</span>
+                                <span class="text-muted" style="font-size: 9px; uppercase;">Total Items</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex flex-column gap-2" style="font-size: 12px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #10b981;"></span>
+                            <span class="text-muted">Available</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['available_materials'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #f97316;"></span>
+                            <span class="text-muted">Low Stock</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['low_stock_alerts'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #ef4444;"></span>
+                            <span class="text-muted">Out of Stock</span>
+                        </div>
+                        <span class="fw-bold text-dark">{{ $metrics['out_of_stock'] }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dialog Structures Block Configurations -->
+<div class="modal fade" id="lowStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark">Low Stock Materials</h5>
+                    <p class="text-muted small mb-0">Items that require replenishment soon.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Material</th>
+                                <th>Category</th>
+                                <th>Current</th>
+                                <th>Minimum</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allLowStockMaterials as $material)
+                                <tr>
+                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                    <td class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }}</td>
+                                    <td class="text-muted">{{ number_format((float) $material->minimum_stock_level, 0) }}</td>
+                                    <td><span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 py-1">Low Stock</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-center text-muted py-4">No low stock items available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
+                    <span class="text-muted small">Showing {{ $allLowStockMaterials->firstItem() ?? 0 }} to {{ $allLowStockMaterials->lastItem() ?? 0 }} of {{ $allLowStockMaterials->total() }} items</span>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="recentStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark">Recent Stock Updates</h5>
+                    <p class="text-muted small mb-0">Latest materials with current available stock.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Material</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allRecentlyUpdatedMaterials as $material)
+                                <tr>
+                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
+                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
+                                    <td class="fw-bold text-success">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</td>
+                                    <td class="text-muted">{{ optional($material->updated_at)->format('M d, Y H:i') ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center text-muted py-4">No recent stock updates available.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
+                    <span class="text-muted small">Showing {{ $allRecentlyUpdatedMaterials->firstItem() ?? 0 }} to {{ $allRecentlyUpdatedMaterials->lastItem() ?? 0 }} of {{ $allRecentlyUpdatedMaterials->total() }} items</span>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HIGH-FIDELITY RECEIVE STOCK MODAL (MATCHES IMAGE EXACTLY) -->
+<div class="modal fade modal-receive-stock" id="receiveStockModalGeneral" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Header Segment -->
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Receive New Stock</h4>
+                        <p class="modal-subtitle mb-0">Create a new material or receive stock to update inventory.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="modal-body-custom">
+                <!-- Meta Statistics Header Bar -->
+                <div class="meta-info-card">
+                    <div class="row g-2 text-center text-sm-start">
+                        <div class="col-sm-3 meta-item">
+                            <div class="meta-label">Material</div>
+                            <div class="meta-value" id="metaMaterialName">Cement (Holcim)</div>
+                        </div>
+                        <div class="col-sm-3 meta-item text-sm-center">
+                            <div class="meta-label">Current Stock</div>
+                            <div class="meta-value text-success" id="metaCurrentStock">120 Bags</div>
+                        </div>
+                        <div class="col-sm-3 meta-item text-sm-center">
+                            <div class="meta-label">Minimum Stock</div>
+                            <div class="meta-value" id="metaMinimumStock">50 Bags</div>
+                        </div>
+                        <div class="col-sm-3 text-sm-center">
+                            <div class="meta-label">Status</div>
+                            <div class="mt-1">
+                                <span class="badge-status-pill" id="metaStatusBadge">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="receiveStockForm" method="POST" action="{{ route('admin.inventory.materials.receive') }}">
+                    @csrf
+                    <div class="row g-4 align-items-start receive-stock-form-layout">
+                        <!-- Left Layout Form Parameter Fields -->
+                        <div class="receive-stock-form-main">
+                            
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Material<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group select-caret-wrapper">
+                                            <i class="bi bi-box-seam input-icon-left"></i>
+                                            <select id="receiveStockMaterialSelect" name="material_id" class="control-field-input" required>
+                                                <option value="">Select material</option>
+                                                @foreach($materials as $material)
+                                                    <option value="{{ $material->id }}"
+                                                            data-name="{{ $material->name }}"
+                                                            data-unit="{{ $material->unit }}"
+                                                            data-stock="{{ $material->current_stock }}"
+                                                            data-min="{{ $material->minimum_stock_level }}"
+                                                            data-category="{{ $material->category }}"
+                                                            {{ old('material_id') == $material->id ? 'selected' : '' }}>
+                                                        {{ $material->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-input-hint">Select an existing material to receive stock.</div>
+                                    </div>
+                                    </div>
+
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Category</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-tags input-icon-left"></i>
+                                            <input type="text" id="receiveStockMaterialCategoryInput" name="category" class="control-field-input" placeholder="Category" value="{{ old('category') }}">
+                                        </div>
+                                        <div class="form-input-hint">Material category â€” stored in materials table.</div>
+                                        </div>
+                                </div>
+                                </div>
+
+                                <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Quantity Received<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-box input-icon-left"></i>
+                                            <input type="number" step="0.01" min="0.01" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" value="{{ old('quantity_received') }}" required>
+                                            <span class="input-addon-right" id="addonUnitText">Bags</span>
+                                        </div>
+                                        <div class="form-input-hint">Enter the total quantity of material received.</div>
+                                        </div>
+                                </div>
+
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Received Date<span class="required-asterisk">*</span></label>
+                                        <div class="input-container-group select-caret-wrapper">
+                                            <i class="bi bi-calendar3 input-icon-left"></i>
+                                            <input type="date" id="inputReceivedDate" name="received_date" class="control-field-input" value="{{ now()->toDateString() }}" required>
+                                        </div>
+                                        <div class="form-input-hint">Select the date when the stock was received.</div>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mt-1">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Supplier</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-person input-icon-left"></i>
+                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)" value="{{ old('supplier') }}">
+                                        </div>
+                                        <div class="form-input-hint">Supplier who delivered the materials.</div>
+                                    </div>
+                                    </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-0">
+                                        <label class="form-label-custom">Reference / OR No.</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-file-earmark-text input-icon-left"></i>
+                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)" value="{{ old('notes') }}">
+                                        </div>
+                                        <div class="form-input-hint">Delivery receipt number or official receipt number.</div>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <div class="row g-3 mt-1">
+                                <div class="col-12 col-lg-6">
+                                    <div class="form-group-wrapper mb-2">
+                                        <label class="form-label-custom">Remarks (Optional)</label>
+                                        <div class="input-container-group">
+                                            <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;">{{ old('remarks') }}</textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <div class="form-input-hint my-0">Additional notes about this stock receipt.</div>
+                                            <div class="char-count-indicator" id="remarksCharCounter">0 / 255</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="alert-banner-toast">
+                                        <i class="bi bi-info-circle" style="font-size:1.25rem; margin-right:0.6rem;"></i>
+                                        <div class="alert-banner-text">
+                                            <strong>Note:</strong> The received quantity will be added to the current stock of this material.
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                        </div>
+
+                        <!-- Right Calculation Dynamic Summary Box Sidebar -->
+                        <div class="receive-stock-form-sidebar">
+                            <div class="summary-box-card">
+                                <div class="summary-header">
+                                    <i class="bi bi-graph-up-arrow text-muted"></i>
+                                    <span>Stock Summary</span>
+                                </div>
+                                
+                                <div class="summary-row-item">
+                                    <span class="summary-row-label">Current Stock</span>
+                                    <span class="summary-row-value" id="summaryCurrentStock">120 Bags</span>
+                                </div>
+
+                                <div class="summary-row-item">
+                                    <span class="summary-row-label">Quantity Received</span>
+                                    <span class="summary-row-value received-highlight" id="summaryQtyReceived">0 Bags</span>
+                                </div>
+
+                                <div class="summary-total-divider"></div>
+
+                                <div class="new-stock-title">New Stock (After Receive)</div>
+                                <div class="new-stock-big-value" id="summaryNewStockCalculation">120 Bags</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lower Footer Interactive Buttons Row -->
+                    <div class="footer-action-row">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Add Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-receive-stock" id="addMaterialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Add New Master Material</h4>
+                        <p class="modal-subtitle mb-0">Register a new material in the master catalog before receiving stock.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="{{ route('admin.inventory.materials.store') }}" class="inventory-form">
+                    @csrf
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Material Name<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-box-seam input-icon-left"></i>
+                                    <input type="text" name="name" class="control-field-input" placeholder="e.g. Portland Cement" required>
+                                </div>
+                                <div class="form-input-hint">Unique material name in the catalog.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Category</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-tags input-icon-left"></i>
+                                    <input type="text" name="category" class="control-field-input" placeholder="e.g. Masonry">
+                                </div>
+                                <div class="form-input-hint">Optional classification for grouping.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Unit Type<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-rulers input-icon-left"></i>
+                                    <input type="text" name="unit" class="control-field-input" placeholder="e.g. Bag, Piece, Meter" required>
+                                </div>
+                                <div class="form-input-hint">Standard unit of measurement.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Supplier Source Partner</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-person input-icon-left"></i>
+                                    <input type="text" name="supplier" class="control-field-input" placeholder="Enter supplier name">
+                                </div>
+                                <div class="form-input-hint">Primary vendor for this material.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Initial Stock Level</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-box input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="current_stock" class="control-field-input" value="0" required>
+                                </div>
+                                <div class="form-input-hint">Starting quantity in warehouse. Default is 0.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Minimum Threshold Limit</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-exclamation-triangle input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="minimum_stock_level" class="control-field-input" value="0" required>
+                                </div>
+                                <div class="form-input-hint">Alert threshold when stock falls below this level.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Description</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="description" class="control-field-input" rows="3" placeholder="Enter material description..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                                <div class="form-input-hint">Optional description or notes for this material.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-action-row border-top pt-3 pb-2">
+                    <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-X-lg"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-action-submit">
+                        <i class="bi bi-check-circle"></i> Save Material Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach($materials as $material)
+<div class="modal fade" id="viewMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-dark">{{ $material->name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2">Category Segment: <strong class="text-dark">{{ $material->category ?? 'General' }}</strong></p>
+                <p class="text-muted mb-2">Unit Classification: <strong class="text-dark">{{ $material->unit }}</strong></p>
+                <p class="text-muted mb-2">Current Active Stock: <strong class="text-dark">{{ number_format($material->current_stock, 2) }}</strong></p>
+                <p class="text-muted mb-2">Minimum Level Bound: <strong class="text-dark">{{ number_format($material->minimum_stock_level, 2) }}</strong></p>
+                <p class="text-muted mb-0">Assigned Vendor: <strong class="text-dark">{{ $material->supplier ?? 'Not specified' }}</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0">
+            <form method="POST" action="{{ route('admin.inventory.materials.update', $material->id) }}" class="inventory-form">
+                @csrf
+                @method('PUT')
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="inventory-card-icon available">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">Modify Registered Inventory Item</h5>
+                            <p class="text-muted small mb-0">Update the material profile, reorder threshold, and supplier details.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="inventory-modal-card p-3 mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Current Stock</div>
+                                <div class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-muted small fw-semibold mb-1">Status</div>
+                                <span class="inventory-stat-pill {{ $material->current_stock <= 0 ? 'bg-danger-subtle text-danger' : ($material->current_stock <= $material->minimum_stock_level ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success') }}">{{ $material->current_stock <= 0 ? 'Out of Stock' : ($material->current_stock <= $material->minimum_stock_level ? 'Low Stock' : 'Available') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Material Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ old('name', $material->name) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Category</label>
+                            <input type="text" name="category" class="form-control" value="{{ old('category', $material->category ?? '') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Unit</label>
+                            <input type="text" name="unit" class="form-control" value="{{ old('unit', $material->unit) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Minimum Stock Level</label>
+                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="{{ old('minimum_stock_level', $material->minimum_stock_level) }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Supplier</label>
+                            <input type="text" name="supplier" class="form-control" value="{{ old('supplier', $material->supplier ?? '') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted fw-semibold">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ old('description', $material->description) }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+<div class="modal fade" id="materialUsageDetailModal" tabindex="-1" aria-labelledby="materialUsageDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-2" style="background: linear-gradient(135deg, #ecfdf3 0%, #f8fff9 100%);">
+                <div>
+                    <h5 class="modal-title fw-bold text-success" id="materialUsageDetailModalLabel">Material Usage Details</h5>
+                    <div class="text-muted small">Complete record for this material usage entry</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-4 pt-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Material</div>
+                            <div id="detailMaterial" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Project</div>
+                            <div id="detailProject" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Phase</div>
+                            <div id="detailPhase" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Date Used</div>
+                            <div id="detailDate" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Quantity Used</div>
+                            <div id="detailQuantity" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Used By</div>
+                            <div id="detailRecorder" class="fw-semibold text-dark"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Other Details / Notes</div>
+                            <div id="detailNotes" class="text-muted mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 border bg-light-subtle">
+                            <div class="text-uppercase text-muted small fw-semibold">Submitted Photo</div>
+                            <div id="detailPhoto" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Tool Modal -->
+<div class="modal fade modal-receive-stock" id="addToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Register New Tool / Equipment</h4>
+                        <p class="modal-subtitle mb-0">Add a new tool or equipment to the inventory.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="{{ route('admin.inventory.tools.store') }}" class="receive-stock-form-main" id="addToolForm">
+                    @csrf
+                    <div class="alert alert-danger add-tool-errors d-none" role="alert"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Tool Name<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-wrench input-icon-left"></i>
+                                    <input type="text" name="name" class="control-field-input" placeholder="e.g. Concrete Vibrator" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Tool Code<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-upc-scan input-icon-left"></i>
+                                    <input type="text" name="tool_code" class="control-field-input" placeholder="e.g. TL-001" required>
+                                </div>
+                                <div class="form-input-hint">Unique code for this tool (e.g. TL-001, EQ-001).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Category</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-tags input-icon-left"></i>
+                                    <select name="category" class="control-field-input" id="toolCategorySelect" required>
+                                        <option value="">Select category</option>
+                                        @foreach($predefinedToolCategories as $cat)
+                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                        @endforeach
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="custom-category-input d-none mt-2" id="customCategoryWrapper">
+                                    <div class="input-container-group">
+                                        <i class="bi bi-pencil-square input-icon-left"></i>
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="customCategoryInput" value="{{ old('custom_category') }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Type<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-diagram-3 input-icon-left"></i>
+                                    <select name="type" class="control-field-input" required>
+                                        <option value="tool">Tool</option>
+                                        <option value="equipment">Equipment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Unit</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-rulers input-icon-left"></i>
+                                    <input type="text" name="unit" class="control-field-input" placeholder="e.g. Piece, Set">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition" class="control-field-input">
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Purchase Date</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-calendar3 input-icon-left"></i>
+                                    <input type="date" name="purchase_date" class="control-field-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Purchase Price (â‚±)</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-currency-peso input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="purchase_price" class="control-field-input" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Description</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="description" rows="3" class="control-field-input" placeholder="Enter tool description..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Register Tool
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Tool Modal -->
+<div class="modal fade modal-receive-stock" id="issueToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-arrow-up-right-square"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Issue Tool</h4>
+                        <p class="modal-subtitle mb-0">Assign this tool to a worker.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="issueToolForm">
+                    @csrf
+                    <div class="alert alert-danger issue-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-4 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="issueToolName">-</div>
+                            </div>
+                            <div class="col-sm-4 meta-item text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="issueToolCode">-</div>
+                            </div>
+                            <div class="col-sm-4 text-sm-center">
+                                <div class="meta-label">Status</div>
+                                <div class="mt-1">
+                                    <span class="badge-status-pill" id="issueToolStatusBadge">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Active Worker<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-person input-icon-left"></i>
+                                    <select name="worker_id" class="control-field-input" required>
+                                        <option value="">Select worker</option>
+                                        @foreach(\App\Models\Worker::where('is_active', true)->orderBy('first_name')->get() as $workerOption)
+                                            <option value="{{ $workerOption->worker_id }}">{{ $workerOption->full_name }} @if($workerOption->trade)({{ $workerOption->trade }})@endif</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Project (Optional)</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-building input-icon-left"></i>
+                                    <select name="project_id" class="control-field-input">
+                                        <option value="">No project</option>
+                                        @foreach($projects as $projectOption)
+                                            @php $pid = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id'); $pname = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed'; @endphp
+                                            <option value="{{ $pid }}">{{ $pname }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Expected Return Date</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-calendar3 input-icon-left"></i>
+                                    <input type="date" name="expected_return_date" class="control-field-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition at Issue<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition_at_issue" class="control-field-input" required>
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Notes</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="notes" rows="3" class="control-field-input" placeholder="Optional notes about this issue..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Confirm Issue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Return Tool Modal -->
+<div class="modal fade modal-receive-stock" id="returnToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-arrow-down-left-square"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Return Tool</h4>
+                        <p class="modal-subtitle mb-0">Record the return of this tool.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="returnToolForm">
+                    @csrf
+                    <div class="alert alert-danger return-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-6 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="returnToolName">-</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="returnToolCode">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition at Return<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition_at_return" class="control-field-input" required>
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Remarks</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="remarks" rows="3" class="control-field-input" placeholder="Optional remarks..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit" style="background-color: #059669; border-color: #059669;">
+                            <i class="bi bi-check-circle"></i> Confirm Return
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mark Lost Modal -->
+<div class="modal fade modal-receive-stock" id="markLostModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Mark Tool as Lost</h4>
+                        <p class="modal-subtitle mb-0">Record a lost/damaged tool and create a deduction entry.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="markLostToolForm">
+                    @csrf
+                    <div class="alert alert-danger mark-lost-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-6 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="lostToolName">-</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="lostToolCode">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Deduction Amount (â‚±)<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-currency-peso input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0.01" name="amount" class="control-field-input" placeholder="0.00" required>
+                                </div>
+                                <div class="form-input-hint">Must be greater than â‚±0.00.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Reason<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-exclamation-triangle input-icon-left"></i>
+                                    <select name="reason" class="control-field-input" required>
+                                        <option value="lost">Lost</option>
+                                        <option value="damaged_beyond_repair">Damaged Beyond Repair</option>
+                                        <option value="stolen">Stolen</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Remarks</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="remarks" rows="3" class="control-field-input" placeholder="Additional details..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit" style="background-color: #059669; border-color: #059669;">
+                            <i class="bi bi-check-circle"></i> Confirm Mark Lost
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        function setActiveView(targetId) {
+            document.querySelectorAll('.inventory-view-panel').forEach(function (panel) {
+                panel.classList.toggle('d-none', panel.id !== targetId);
+            });
+
+            document.querySelectorAll('.inventory-view-toggle').forEach(function (link) {
+                const isActive = link.getAttribute('data-target') === targetId;
+                link.classList.toggle('active', isActive);
+                link.classList.toggle('text-primary', isActive);
+                link.classList.toggle('text-muted', !isActive);
+                link.classList.toggle('fw-bold', isActive);
+                link.classList.toggle('border-bottom', isActive);
+                link.classList.toggle('border-primary', isActive);
+                link.classList.toggle('border-2', isActive);
+            });
+
+            document.querySelectorAll('#inventory-view-input, #usage-view-input, #requests-view-input, #tools-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+                input.value = getPanelViewValue(targetId);
+            });
+        }
+
+        document.querySelectorAll('.inventory-view-toggle').forEach(function (toggle) {
+            toggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                setActiveView(toggle.getAttribute('data-target'));
+            });
+        });
+
+        let smoothSearchTimer = null;
+
+        function formatCurrency(value) {
+            const number = Number(value || 0);
+            return 'â‚±' + number.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function setPanelLoading(panel, isLoading) {
+            if (panel) {
+                panel.classList.toggle('mi-smooth-loading', isLoading);
+            }
+        }
+
+        function getPanelViewValue(panelId) {
+            if (panelId === 'usage-view') {
+                return 'usage';
+            }
+
+            if (panelId === 'expenses-view') {
+                return 'expenses';
+            }
+
+            if (panelId === 'requests-view') {
+                return 'requests';
+            }
+
+            if (panelId === 'tools-view') {
+                return 'tools';
+            }
+
+            return 'inventory';
+        }
+
+        function buildInventoryUrl(form, panelId) {
+            const url = new URL(form.getAttribute('action') || window.location.href, window.location.origin);
+            const data = new FormData(form);
+
+            data.set('view', getPanelViewValue(panelId));
+
+            Array.from(data.entries()).forEach(function ([key, value]) {
+                if (value !== null && String(value).trim() !== '') {
+                    url.searchParams.set(key, value);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            });
+
+            return url;
+        }
+
+        async function fetchInventoryPanel(form, panelId) {
+            const panel = document.getElementById(panelId);
+
+            if (!form || !panel) {
+                return;
+            }
+
+            const url = buildInventoryUrl(form, panelId);
+
+            try {
+                setPanelLoading(panel, true);
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Unable to refresh inventory data.');
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const refreshedPanel = doc.getElementById(panelId);
+
+                if (!refreshedPanel) {
+                    window.location.href = url.toString();
+                    return;
+                }
+
+                panel.innerHTML = refreshedPanel.innerHTML;
+                window.history.replaceState({}, '', url.toString());
+
+                bindSmoothInventoryForms();
+                bindInventoryPagination();
+                bindExpenseFilters();
+                bindUsageClientFilters();
+
+                if (panelId === 'usage-view') {
+                    applyUsageClientFilters();
+                }
+
+                if (panelId === 'expenses-view') {
+                    applyExpenseFilters();
+                }
+
+                if (panelId === 'tools-view') {
+                    bindToolModalHandlers();
+                }
+            } catch (error) {
+                console.error(error);
+                window.location.href = url.toString();
+            } finally {
+                setPanelLoading(panel, false);
+            }
+        }
+
+        function bindSmoothInventoryForms() {
+            document.querySelectorAll('#inventory-search-form, #usage-search-form, #tools-search-form').forEach(function (form) {
+                if (form.dataset.smoothBound === '1') {
+                    return;
+                }
+
+                form.dataset.smoothBound = '1';
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const panel = form.closest('.inventory-view-panel');
+                    fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                });
+
+                form.querySelectorAll('input[name="search"]').forEach(function (input) {
+                    input.addEventListener('input', function () {
+                        clearTimeout(smoothSearchTimer);
+                        smoothSearchTimer = setTimeout(function () {
+                            const panel = form.closest('.inventory-view-panel');
+                            fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                        }, 350);
+                    });
+                });
+
+                form.querySelectorAll('select').forEach(function (select) {
+                    select.addEventListener('change', function () {
+                        const panel = form.closest('.inventory-view-panel');
+
+                        if (select.id === 'usageProjectFilter' || select.id === 'usagePhaseFilter') {
+                            applyUsageClientFilters();
+                            return;
+                        }
+
+                        fetchInventoryPanel(form, panel?.id || 'inventory-view');
+                    });
+                });
+            });
+        }
+
+        function bindInventoryPagination() {
+            document.querySelectorAll('#inventory-view .pagination a, #usage-view .pagination a, #tools-view .pagination a').forEach(function (link) {
+                if (link.dataset.smoothBound === '1') {
+                    return;
+                }
+
+                link.dataset.smoothBound = '1';
+
+                link.addEventListener('click', function (event) {
+                    const href = link.getAttribute('href');
+
+                    if (!href || href === '#') {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    const panel = link.closest('.inventory-view-panel');
+                    const targetPanelId = panel?.id || 'inventory-view';
+
+                    fetch(href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        },
+                        cache: 'no-store'
+                    })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Pagination failed.');
+                            }
+
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const refreshedPanel = doc.getElementById(targetPanelId);
+
+                            if (!refreshedPanel || !panel) {
+                                window.location.href = href;
+                                return;
+                            }
+
+                            panel.innerHTML = refreshedPanel.innerHTML;
+                            window.history.replaceState({}, '', href);
+
+                            bindSmoothInventoryForms();
+                            bindInventoryPagination();
+                            bindExpenseFilters();
+                            bindUsageClientFilters();
+                            applyUsageClientFilters();
+                        })
+                        .catch(function () {
+                            window.location.href = href;
+                        });
+                });
+            });
+        }
+
+        function filterPhaseOptions(projectSelect, phaseSelect) {
+            if (!projectSelect || !phaseSelect) {
+                return;
+            }
+
+            const projectId = projectSelect.value;
+
+            Array.from(phaseSelect.options).forEach(function (option) {
+                if (!option.value) {
+                    option.hidden = false;
+                    return;
+                }
+
+                const optionProjectId = option.getAttribute('data-project-id') || '';
+                option.hidden = projectId && optionProjectId && optionProjectId !== projectId;
+            });
+
+            if (phaseSelect.selectedOptions[0]?.hidden) {
+                phaseSelect.value = '';
+            }
+        }
+
+        function applyUsageClientFilters() {
+            const projectSelect = document.getElementById('usageProjectFilter');
+            const phaseSelect = document.getElementById('usagePhaseFilter');
+            const projectId = projectSelect?.value || '';
+            const phaseId = phaseSelect?.value || '';
+            const rows = Array.from(document.querySelectorAll('#usageLogsTableBody tr[data-usage-row="true"]'));
+            const emptyRow = document.getElementById('usageEmptyStateRow');
+            let visibleCount = 0;
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+
+            rows.forEach(function (row) {
+                const matchesProject = !projectId || row.dataset.projectId === projectId;
+                const matchesPhase = !phaseId || row.dataset.phaseId === phaseId;
+                const isVisible = matchesProject && matchesPhase;
+
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+        }
+
+        function bindUsageClientFilters() {
+            const projectSelect = document.getElementById('usageProjectFilter');
+            const phaseSelect = document.getElementById('usagePhaseFilter');
+
+            [projectSelect, phaseSelect].forEach(function (select) {
+                if (!select || select.dataset.clientFilterBound === '1') {
+                    return;
+                }
+
+                select.dataset.clientFilterBound = '1';
+                select.addEventListener('change', applyUsageClientFilters);
+            });
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+        }
+
+        function updateExpenseSummary() {
+            const visibleRows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'))
+                .filter(function (row) {
+                    return row.style.display !== 'none';
+                });
+
+            const amount = visibleRows.reduce(function (total, row) {
+                return total + Number(row.dataset.expenseAmount || 0);
+            }, 0);
+
+            const quantity = visibleRows.reduce(function (total, row) {
+                return total + Number(row.dataset.expenseQuantity || 0);
+            }, 0);
+
+            const projects = new Set();
+            const phases = new Set();
+
+            visibleRows.forEach(function (row) {
+                if (row.dataset.projectId) {
+                    projects.add(row.dataset.projectId);
+                }
+                if (row.dataset.phaseId) {
+                    phases.add(row.dataset.phaseId);
+                }
+            });
+
+            const totalAmountEl = document.getElementById('expenseTotalAmount');
+            const totalQuantityEl = document.getElementById('expenseTotalQuantity');
+            const projectCountEl = document.getElementById('expenseProjectCount');
+            const phaseCountEl = document.getElementById('expensePhaseCount');
+
+            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(amount);
+            if (totalQuantityEl) totalQuantityEl.textContent = Math.round(quantity).toLocaleString();
+            if (projectCountEl) projectCountEl.textContent = projects.size;
+            if (phaseCountEl) phaseCountEl.textContent = phases.size;
+        }
+
+        function applyExpenseFilters() {
+            const form = document.getElementById('expenses-filter-form');
+            const searchInput = form?.querySelector('input[name="search"]');
+            const projectSelect = document.getElementById('expenseProjectFilter');
+            const phaseSelect = document.getElementById('expensePhaseFilter');
+            const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+            const projectId = projectSelect?.value || '';
+            const phaseId = phaseSelect?.value || '';
+            const rows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'));
+            const emptyRow = document.getElementById('expenseEmptyStateRow');
+            let visibleCount = 0;
+
+            filterPhaseOptions(projectSelect, phaseSelect);
+
+            rows.forEach(function (row) {
+                const matchesSearch = !searchTerm || (row.dataset.expenseSearch || '').includes(searchTerm);
+                const matchesProject = !projectId || row.dataset.projectId === projectId;
+                const matchesPhase = !phaseId || row.dataset.phaseId === phaseId;
+                const isVisible = matchesSearch && matchesProject && matchesPhase;
+
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (emptyRow) {
+                emptyRow.classList.toggle('is-visible', visibleCount === 0);
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+
+            updateExpenseSummary();
+        }
+
+        function bindExpenseFilters() {
+            const form = document.getElementById('expenses-filter-form');
+            const clearBtn = document.getElementById('expenseClearFilterBtn');
+
+            if (form && form.dataset.expenseBound !== '1') {
+                form.dataset.expenseBound = '1';
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    applyExpenseFilters();
+                });
+
+                form.querySelectorAll('input, select').forEach(function (control) {
+                    control.addEventListener('input', applyExpenseFilters);
+                    control.addEventListener('change', applyExpenseFilters);
+                });
+            }
+
+            if (clearBtn && clearBtn.dataset.expenseClearBound !== '1') {
+                clearBtn.dataset.expenseClearBound = '1';
+                clearBtn.addEventListener('click', function () {
+                    form?.reset();
+                    applyExpenseFilters();
+                });
+            }
+
+            applyExpenseFilters();
+        }
+
+        const activePanel = document.querySelector('.inventory-view-panel:not(.d-none)');
+        if (activePanel) {
+            setActiveView(activePanel.id);
+        }
+
+        bindSmoothInventoryForms();
+        bindInventoryPagination();
+        bindUsageClientFilters();
+        bindExpenseFilters();
+        applyUsageClientFilters();
+        applyExpenseFilters();
+
+        // REAL-TIME MODAL MATHEMATICAL COMPUTATION & VALUE TRACKING LOGIC
+        const receiveStockModal = document.getElementById('receiveStockModalGeneral');
+        const receiveStockForm = document.getElementById('receiveStockForm');
+        const receiveStockSelect = document.getElementById('receiveStockMaterialSelect');
+        const receiveStockTextInput = document.getElementById('receiveStockMaterialInput');
+        const receiveStockCategoryInput = document.getElementById('receiveStockMaterialCategoryInput');
+        const receiveStockSubmitRoute = '{{ route('admin.inventory.materials.receive') }}';
+
+        const inputQty = document.getElementById('inputQuantityReceived');
+        const txtRemarks = document.getElementById('textareaRemarks');
+        const charCounter = document.getElementById('remarksCharCounter');
+
+        const metaName = document.getElementById('metaMaterialName');
+        const metaCurrent = document.getElementById('metaCurrentStock');
+        const metaMin = document.getElementById('metaMinimumStock');
+        const metaStatus = document.getElementById('metaStatusBadge');
+        const addonUnit = document.getElementById('addonUnitText');
+
+        const sumCurrent = document.getElementById('summaryCurrentStock');
+        const sumReceived = document.getElementById('summaryQtyReceived');
+        const sumCalculatedTotal = document.getElementById('summaryNewStockCalculation');
+
+        let currentMaterialStockValue = 0;
+        let activeMaterialUnitText = "Bags";
+
+        function formatStockValue(value) {
+            const numericValue = Number(value);
+            if (!Number.isFinite(numericValue)) {
+                return '0';
+            }
+
+            const roundedValue = Math.round(numericValue * 100) / 100;
+            return Number.isInteger(roundedValue)
+                ? String(roundedValue)
+                : roundedValue.toFixed(2).replace(/\.0+$/, '').replace(/(\.[1-9]*)0+$/, '$1');
+        }
+
+        function resetMaterialSummary() {
+            if (metaName) metaName.textContent = 'Select a material';
+            if (metaCurrent) metaCurrent.textContent = 'â€”';
+            if (metaMin) metaMin.textContent = 'â€”';
+            if (metaStatus) {
+                metaStatus.textContent = 'Select material';
+                metaStatus.className = 'badge-status-pill';
+            }
+            if (addonUnit) addonUnit.textContent = 'Unit';
+            if (sumCurrent) sumCurrent.textContent = 'â€”';
+            if (sumReceived) sumReceived.textContent = '0 Unit';
+            if (sumCalculatedTotal) sumCalculatedTotal.textContent = '0 Unit';
+            if (receiveStockForm) receiveStockForm.setAttribute('action', receiveStockSubmitRoute);
+        }
+
+        function calculateLiveStockSummary() {
+            const incomingQty = parseFloat(inputQty.value) || 0;
+            const computedNewTotal = currentMaterialStockValue + incomingQty;
+            
+            if (sumReceived) {
+                sumReceived.textContent = formatStockValue(incomingQty) + " " + activeMaterialUnitText;
+            }
+            if (sumCalculatedTotal) {
+                sumCalculatedTotal.textContent = formatStockValue(computedNewTotal) + " " + activeMaterialUnitText;
+            }
+            
+            if(incomingQty > 0 && sumReceived) {
+                sumReceived.classList.add('text-success');
+            } else if (sumReceived) {
+                sumReceived.classList.remove('text-success');
+            }
+        }
+
+        function toggleNewMaterialInput() {
+            // No-op: new material creation was moved to Add Material modal
+        }
+
+        function updateMaterialSummaryFromSelection() {
+            if (!receiveStockSelect) {
+                return;
+            }
+
+            const chosenOption = receiveStockSelect.options[receiveStockSelect.selectedIndex];
+
+            if (!chosenOption || chosenOption.value === "") {
+                resetMaterialSummary();
+                return;
+            }
+
+            const mName = chosenOption.getAttribute('data-name') || chosenOption.textContent.trim();
+            activeMaterialUnitText = chosenOption.getAttribute('data-unit') || "Bags";
+            currentMaterialStockValue = parseFloat(chosenOption.getAttribute('data-stock')) || 0;
+            const minStockLevel = parseFloat(chosenOption.getAttribute('data-min')) || 0;
+            const existingCategory = chosenOption.getAttribute('data-category') || '';
+
+            if (receiveStockCategoryInput) {
+                receiveStockCategoryInput.value = existingCategory;
+            }
+
+            if (receiveStockForm) {
+                receiveStockForm.setAttribute('action', receiveStockSubmitRoute);
+            }
+
+            if (metaName) metaName.textContent = mName;
+            if (metaCurrent) metaCurrent.textContent = formatStockValue(currentMaterialStockValue) + " " + activeMaterialUnitText;
+            if (metaMin) metaMin.textContent = formatStockValue(minStockLevel) + " " + activeMaterialUnitText;
+            if (addonUnit) addonUnit.textContent = activeMaterialUnitText;
+            if (sumCurrent) sumCurrent.textContent = formatStockValue(currentMaterialStockValue) + " " + activeMaterialUnitText;
+
+            if (metaStatus) {
+                if (currentMaterialStockValue <= 0) {
+                    metaStatus.textContent = "Out of Stock";
+                    metaStatus.className = "badge-status-pill bg-danger-subtle text-danger";
+                } else if (currentMaterialStockValue <= minStockLevel) {
+                    metaStatus.textContent = "Low Stock";
+                    metaStatus.className = "badge-status-pill bg-warning-subtle text-warning";
+                } else {
+                    metaStatus.textContent = "Available";
+                    metaStatus.className = "badge-status-pill";
+                }
+            }
+
+            if (inputQty) inputQty.value = '';
+            if (txtRemarks) txtRemarks.value = '';
+            if (charCounter) charCounter.textContent = '0 / 255';
+            calculateLiveStockSummary();
+        }
+
+        if (txtRemarks && charCounter) {
+            txtRemarks.addEventListener('input', function() {
+                charCounter.textContent = this.value.length + " / 255";
+            });
+        }
+
+        if (inputQty) {
+            inputQty.addEventListener('input', calculateLiveStockSummary);
+        }
+
+        if (receiveStockSelect) {
+            receiveStockSelect.addEventListener('change', function () {
+                toggleNewMaterialInput();
+                updateMaterialSummaryFromSelection();
+            });
+        }
+
+        if (receiveStockModal) {
+            receiveStockModal.addEventListener('show.bs.modal', function (event) {
+                const triggerButton = event.relatedTarget;
+                const materialId = triggerButton?.getAttribute('data-material-id') || '';
+                const materialName = triggerButton?.getAttribute('data-material-name') || '';
+
+                if (receiveStockSelect) {
+                    if (materialId) {
+                        receiveStockSelect.value = materialId;
+                    } else if (materialName) {
+                        const matchingOption = Array.from(receiveStockSelect.options).find(function (option) {
+                            return option.getAttribute('data-name')?.trim() === materialName.trim();
+                        });
+                        if (matchingOption) {
+                            receiveStockSelect.value = matchingOption.value;
+                        }
+                    } else {
+                        receiveStockSelect.selectedIndex = 0;
+                    }
+
+                    updateMaterialSummaryFromSelection();
+                }
+            });
+        }
+
+        const allocateMaterialModal = document.getElementById('allocateMaterialModal');
+        const allocateMaterialForm = document.getElementById('allocateMaterialForm');
+
+        if (allocateMaterialModal && allocateMaterialForm) {
+            allocateMaterialModal.addEventListener('show.bs.modal', function () {
+                allocateMaterialForm.reset();
+                document.getElementById('allocateMaterialUnit').value = '';
+            });
+
+            document.getElementById('allocateMaterialSelect')?.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const unit = selectedOption?.getAttribute('data-unit') || '';
+                document.getElementById('allocateMaterialUnit').value = unit;
+            });
+        }
+
+        const detailModal = document.getElementById('materialUsageDetailModal');
+        if (detailModal) {
+            detailModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('detailMaterial').textContent = button.getAttribute('data-material') || 'N/A';
+                document.getElementById('detailProject').textContent = button.getAttribute('data-project') || 'N/A';
+                document.getElementById('detailPhase').textContent = button.getAttribute('data-phase') || 'N/A';
+                document.getElementById('detailDate').textContent = button.getAttribute('data-date') || 'N/A';
+                document.getElementById('detailQuantity').textContent = (button.getAttribute('data-quantity') || '0') + ' ' + (button.getAttribute('data-unit') || '');
+                document.getElementById('detailRecorder').textContent = button.getAttribute('data-recorder') || 'Unknown';
+
+                const notes = button.getAttribute('data-notes') || '';
+                document.getElementById('detailNotes').textContent = notes ? notes : 'No notes were provided for this usage entry.';
+
+                const photoContainer = document.getElementById('detailPhoto');
+                const photoUrl = button.getAttribute('data-photo') || '';
+                if (photoUrl) {
+                    photoContainer.innerHTML = '<img src="' + photoUrl + '" alt="Material usage photo" class="img-fluid rounded-3 border" style="max-height: 240px; object-fit: cover;">';
+                } else {
+                    photoContainer.innerHTML = '<div class="text-muted">No photo was submitted for this usage entry.</div>';
+                }
+            });
+        }
+
+        document.addEventListener('click', function (event) {
+            const deleteButton = event.target.closest('.inventory-delete-form button[type="submit"]');
+            if (!deleteButton) {
+                return;
+            }
+
+            event.preventDefault();
+            const form = deleteButton.closest('form');
+            
+            Swal.fire({
+                title: 'Remove this tool/equipment?',
+                text: 'This operation is absolute and cannot be instantly undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait while the record is being removed.',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: function () {
+                            Swal.showLoading();
+                        }
+                    });
+                    form.submit();
+                }
+            });
+        });
+
+        function bindModalFormLoading(form) {
+            if (!form || form.dataset.loadingBound === '1') {
+                return;
+            }
+
+            form.dataset.loadingBound = '1';
+
+            form.addEventListener('submit', function () {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.dataset.originalText = originalText;
+                }
+            });
+        }
+
+        bindModalFormLoading(document.getElementById('receiveStockForm'));
+        bindModalFormLoading(document.getElementById('allocateMaterialForm'));
+        bindModalFormLoading(document.querySelector('#addMaterialModal form'));
+        bindModalFormLoading(document.querySelector('#editMaterialModal{{ $material->id }} form'));
+        bindModalFormLoading(document.getElementById('addToolForm'));
+        bindModalFormLoading(document.getElementById('issueToolForm'));
+        bindModalFormLoading(document.getElementById('returnToolForm'));
+        bindModalFormLoading(document.getElementById('markLostToolForm'));
+
+        function bindToolModalHandlers() {
+            document.querySelectorAll('.btn-issue-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('issueToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/issue');
+                    const nameEl = document.getElementById('issueToolName');
+                    const codeEl = document.getElementById('issueToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('issueToolModal'));
+                    if (modal) modal.show();
+                });
+            });
+
+            document.querySelectorAll('.btn-return-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('returnToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/return');
+                    const nameEl = document.getElementById('returnToolName');
+                    const codeEl = document.getElementById('returnToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('returnToolModal'));
+                    if (modal) modal.show();
+                });
+            });
+
+            document.querySelectorAll('.btn-mark-lost-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('markLostToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/lost');
+                    const nameEl = document.getElementById('lostToolName');
+                    const codeEl = document.getElementById('lostToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('markLostModal'));
+                    if (modal) modal.show();
+                });
+            });
+        }
+
+        bindToolModalHandlers();
+
+        const toolCategorySelect = document.getElementById('toolCategorySelect');
+        const customCategoryWrapper = document.getElementById('customCategoryWrapper');
+        const customCategoryInput = document.getElementById('customCategoryInput');
+
+        if (toolCategorySelect && customCategoryWrapper && customCategoryInput) {
+            toolCategorySelect.addEventListener('change', function () {
+                const isOther = this.value === 'Other';
+                customCategoryWrapper.classList.toggle('d-none', !isOther);
+                if (!isOther) {
+                    customCategoryInput.value = '';
+                }
+                customCategoryInput.required = isOther;
+            });
+        }
+
+        function attachModalPaginationHandlers() {
+            document.querySelectorAll('.modal .pagination a').forEach(function (link) {
+                link.onclick = null;
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const modal = link.closest('.modal');
+                    const href = link.getAttribute('href');
+
+                    if (!modal || !href) {
+                        return;
+                    }
+
+                    const modalBody = modal.querySelector('.modal-body');
+                    const paginationContainer = modal.querySelector('.inventory-modal-pagination');
+
+                    if (!modalBody || !paginationContainer) {
+                        return;
+                    }
+
+                    modalBody.classList.add('opacity-50');
+
+                    fetch(href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(function (response) {
+                            return response.text();
+                        })
+                        .then(function (html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const refreshedModal = doc.getElementById(modal.id);
+
+                            if (!refreshedModal) {
+                                window.location.href = href;
+                                return;
+                            }
+
+                            const refreshedBody = refreshedModal.querySelector('.modal-body');
+                            const refreshedPagination = refreshedModal.querySelector('.inventory-modal-pagination');
+
+                            if (refreshedBody) {
+                                modalBody.innerHTML = refreshedBody.innerHTML;
+                            }
+
+                            if (refreshedPagination && paginationContainer) {
+                                paginationContainer.innerHTML = refreshedPagination.innerHTML;
+                            }
+
+                            window.history.pushState({}, '', href);
+                            attachModalPaginationHandlers();
+                            modalBody.classList.remove('opacity-50');
+                        })
+                        .catch(function () {
+                            window.location.href = href;
+                        });
+                });
+            });
+        }
+
+        attachModalPaginationHandlers();
+    });
+</script>
+@endsection

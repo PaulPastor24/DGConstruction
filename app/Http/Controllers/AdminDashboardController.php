@@ -1338,10 +1338,35 @@ class AdminDashboardController extends Controller
         );
     }
 
+    public function updateAttendanceLog(Request $request, Attendance $attendance)
+    {
+        abort_unless(in_array($request->user()?->role, ['engineer', 'staff', 'admin', 'administrator'], true), 403);
+
+        $validated = $request->validate([
+            'time_in' => ['nullable', 'date_format:H:i'],
+            'break_out' => ['nullable', 'date_format:H:i'],
+            'break_in' => ['nullable', 'date_format:H:i'],
+            'time_out' => ['nullable', 'date_format:H:i'],
+            'status' => ['required', 'in:present,late,absent,half_day,on_leave'],
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        foreach (['time_in', 'break_out', 'break_in', 'time_out'] as $field) {
+            $validated[$field] = ! empty($validated[$field]) ? $validated[$field].':00' : null;
+        }
+
+        $validated['recorded_by'] = $request->user()->user_id;
+        $validated['remarks'] = trim(($validated['remarks'] ?? '').' Admin-adjusted attendance.');
+        $attendance->update($validated);
+
+        return back()->with('success', 'Attendance record updated. Overtime was recalculated from the role schedule.');
+    }
+
     public function storeAttendanceSchedule(Request $request)
     {
+        $this->authorizeAttendanceScheduleManagement($request);
         $validated = $request->validate([
-            'role' => ['required', 'string', 'max:50'],
+            'role' => ['required', 'string', 'in:staff,worker'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
             'break_start_time' => ['nullable', 'date_format:H:i'],
@@ -1352,8 +1377,12 @@ class AdminDashboardController extends Controller
             return back()->with('error', 'Attendance schedule table is not available yet.');
         }
 
+        if (! empty($validated['break_start_time']) xor ! empty($validated['break_end_time'])) {
+            return back()->withErrors(['break_start_time' => 'Provide both break start and break end, or leave both blank.']);
+        }
+
         AttendanceScheduleRule::updateOrCreate(
-            ['role' => strtolower($validated['role'])],
+            ['role' => User::normalizeRole($validated['role'])],
             [
                 'start_time' => $validated['start_time'].':00',
                 'end_time' => $validated['end_time'].':00',
@@ -1368,16 +1397,21 @@ class AdminDashboardController extends Controller
 
     public function updateAttendanceSchedule(Request $request, AttendanceScheduleRule $rule)
     {
+        $this->authorizeAttendanceScheduleManagement($request);
         $validated = $request->validate([
-            'role' => ['required', 'string', 'max:50'],
+            'role' => ['required', 'string', 'in:staff,worker'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
             'break_start_time' => ['nullable', 'date_format:H:i'],
             'break_end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
+        if (! empty($validated['break_start_time']) xor ! empty($validated['break_end_time'])) {
+            return back()->withErrors(['break_start_time' => 'Provide both break start and break end, or leave both blank.']);
+        }
+
         $rule->update([
-            'role' => strtolower($validated['role']),
+            'role' => User::normalizeRole($validated['role']),
             'start_time' => $validated['start_time'].':00',
             'end_time' => $validated['end_time'].':00',
             'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
@@ -1389,9 +1423,15 @@ class AdminDashboardController extends Controller
 
     public function destroyAttendanceSchedule(AttendanceScheduleRule $rule)
     {
+        $this->authorizeAttendanceScheduleManagement(request());
         $rule->delete();
 
-        return back()->with('success', 'Attendance schedule deleted successfully.');
+        return back()->with('success', 'Custom attendance schedule removed. The role will use its default schedule.');
+    }
+
+    private function authorizeAttendanceScheduleManagement(Request $request): void
+    {
+        abort_unless(in_array($request->user()?->role, ['engineer', 'staff', 'admin', 'administrator'], true), 403);
     }
 
     /**

@@ -371,11 +371,12 @@ class SupervisorController extends Controller
                 $updates['time_out'] = $requestedTimeOut ?? $now->format('H:i:s');
                 $updates['remarks'] = trim(($existingLog->remarks ?? '').' Time out recorded.');
 
-                $overtimeMinutes = Attendance::calculateOvertimeMinutes(
-                    $date,
-                    $existingLog->time_in,
-                    $updates['time_out']
-                );
+                  $overtimeMinutes = Attendance::calculateOvertimeMinutes(
+                      $date,
+                      $existingLog->time_in,
+                      $updates['time_out'],
+                      'worker'
+                  );
 
                 if ($overtimeMinutes > 0) {
                     $updates['remarks'] = trim(($updates['remarks'] ?? '').' '.Attendance::formatOvertimeLabel($overtimeMinutes).'.');
