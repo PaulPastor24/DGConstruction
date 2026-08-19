@@ -2317,6 +2317,14 @@
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
+
+                @if(request('project_id'))
+                    <div class="toolbar-group">
+                        <a href="{{ route('admin.reports.imagesPdf', request('project_id')) }}" class="btn-export" target="_blank">
+                            <i class="bi bi-images"></i> Export Project Images
+                        </a>
+                    </div>
+                @endif
             </div>
 
         <!-- Left Part Element: Table Core Panel -->
@@ -2358,6 +2366,7 @@
                                 <td data-label="Actions">
                                     <div class="action-icons-group">
                                         <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
+                                        <a href="{{ route('admin.reports.downloadPdf', $report->report_id) }}" class="btn-icon-action" title="Export PDF"><i class="bi bi-download"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -2672,6 +2681,7 @@
             let activeReportId = null;
             let debounceTimer;
             let removedAdminImageUrls = new Set();
+            let removedOriginalImagePaths = new Set();
             let includedOriginalImagePaths = new Set();
 
             function pauseModalFocusTrap() {
@@ -3024,7 +3034,7 @@
 
             function renderTable(reports) {
                 if (!reports.length) {
-                    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4">No accomplishment reports found.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No accomplishment reports found.</td></tr>`;
                     return;
                 }
 
@@ -3039,6 +3049,7 @@
                         <td data-label="Actions">
                             <div class="action-icons-group">
                                 <button type="button" class="btn-icon-action js-view-report" data-report-id="${report.id}" title="View Details"><i class="bi bi-eye"></i></button>
+                                <a href="/admin/reports/${report.id}/download-pdf" class="btn-icon-action" title="Export PDF" target="_blank"><i class="bi bi-download"></i></a>
                             </div>
                         </td>
                     </tr>
@@ -3436,6 +3447,7 @@
                 });
 
                 removedAdminImageUrls = new Set();
+                removedOriginalImagePaths = new Set();
                 includedOriginalImagePaths = new Set(report.status === 'pending' && Array.isArray(report.site_image_paths)
                     ? report.site_image_paths
                     : []);
@@ -3493,6 +3505,7 @@
                         if (imagePath) {
                             includedOriginalImagePaths.delete(imagePath);
                             removedAdminImageUrls.add(imagePath);
+                            removedOriginalImagePaths.add(imagePath);
                             window.reviewedClientImagePaths.delete(imagePath);
                         }
                         wrapper?.remove();
@@ -3725,6 +3738,7 @@
 
                         const removedAdminImages = Array.from(removedAdminImageUrls);
                         removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+                        Array.from(removedOriginalImagePaths).forEach(path => formData.append('remove_site_images[]', path));
                         Array.from(includedOriginalImagePaths).forEach(path => formData.append('include_original_images[]', path));
 
                         fetch(`${detailsBaseUrl}/${reportId}/approve`, {
@@ -3794,6 +3808,7 @@
 
                     const removedAdminImages = Array.from(removedAdminImageUrls);
                     removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+                    Array.from(removedOriginalImagePaths).forEach(path => formData.append('remove_site_images[]', path));
                     Array.from(includedOriginalImagePaths).forEach(path => formData.append('include_original_images[]', path));
                     Array.from(window.reviewedClientImagePaths || []).forEach(path => formData.append('client_image_paths[]', path));
 

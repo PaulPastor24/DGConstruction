@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use Mpdf\Mpdf;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfImageService;
 
 class ClientController extends Controller
 {
@@ -702,7 +703,7 @@ class ClientController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('client.partials.project-gallery', compact('projects'))->render(),
-                'pagination' => view('vendor.pagination.bootstrap-5', ['paginator' => $projects])->render(),
+                'pagination' => view('vendor.pagination.bootstrap-5-limited', ['paginator' => $projects])->render(),
                 'total' => $projects->total(),
                 'count' => $projects->count(),
                 'from' => $projects->firstItem(),
@@ -861,7 +862,7 @@ class ClientController extends Controller
             abort(403, 'Client account not found');
         }
 
-        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
+        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy', 'phase.milestones'])
             ->where('report_id', $reportId)
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)
@@ -869,27 +870,77 @@ class ClientController extends Controller
                 $q->where('client_id', $client->client_id);
             })->firstOrFail();
 
-        // Reuse the supervisor PDF view if a client-specific PDF template is not present
-        $viewName = view()->exists('client.reports.pdf') ? 'client.reports.pdf' : 'supervisor.reports.pdf';
-        $html = view($viewName, compact('report'))->render();
+        session_write_close();
 
+        $viewName = view()->exists('client.reports.pdf') ? 'client.reports.pdf' : 'admin.reports.pdf';
         try {
-            if (class_exists('\\Mpdf\\Mpdf')) {
-                $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
-                $mpdf->WriteHTML($html);
-                $fileName = 'report_'.$report->report_id.'_'.date('Y-m-d').'.pdf';
-
-                return $mpdf->Output($fileName, 'D');
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
             }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView($viewName, compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
         } catch (\Throwable $e) {
-            Log::error('PDF generation failed (client): '.$e->getMessage());
+            Log::error('Client PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
+    }
+
+    public function downloadProjectImagesPdf(Project $project)
+    {
+        $user = auth('web')->user();
+        $client = $user?->client;
+
+        if (! $client) {
+            abort(403, 'Client account not found');
         }
 
-        $fileName = 'report_'.$report->report_id.'_'.date('Y-m-d').'.html';
+        if ($project->client_id !== $client->client_id) {
+            abort(403, 'Project does not belong to this client');
+        }
 
-        return response($html, 200, [
-            'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ]);
+        $project->load(['reports' => function ($q) {
+            $q->with(['phase', 'submittedBy'])
+                ->where('approval_status', 'approved')
+                ->where('is_published_to_client', true)
+                ->orderByDesc('report_date');
+        }]);
+
+        $reports = $project->reports;
+        session_write_close();
+
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = $reports->mapWithKeys(function ($report) use ($pdfImageService) {
+                $paths = collect(array_merge(
+                    (array) ($report->admin_site_images ?? []),
+                    (array) ($report->site_images ?? [])
+                ))->map(function ($path) {
+                    $path = ltrim((string) $path, '/');
+                    return str_starts_with($path, 'storage/') ? substr($path, 8) : $path;
+                })->filter()->unique()->values()->all();
+
+                return [$report->report_id => collect($paths)
+                    ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                    ->filter()
+                    ->values()];
+            });
+            $pdf = Pdf::loadView('admin.reports.images-pdf', compact('project', 'reports', 'reportPdfImages'));
+            $fileName = 'project-report-images-' . Str::slug($project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Client images PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 }

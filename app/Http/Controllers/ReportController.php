@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
+use App\Services\PdfImageService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -118,6 +120,8 @@ class ReportController extends Controller
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'remove_site_images' => 'nullable|array',
+                'remove_site_images.*' => 'string',
                 'include_original_images' => 'nullable|array|max:20',
                 'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
@@ -150,6 +154,12 @@ class ReportController extends Controller
                 (array) $request->input('include_original_images', []),
                 (array) ($report->site_images ?? [])
             ));
+            $normalizeImagePath = static function ($image): string {
+                $image = (string) $image;
+                return str_contains($image, '/storage/')
+                    ? Str::after($image, '/storage/')
+                    : ltrim($image, '/');
+            };
             $removedImages = collect($request->input('remove_admin_images', []))
                 ->map(function ($image) {
                     $image = (string) $image;
@@ -160,6 +170,19 @@ class ReportController extends Controller
                 ->filter()
                 ->values()
                 ->all();
+            $removedSiteImages = collect($request->input('remove_site_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            if (!empty($removedSiteImages)) {
+                $remainingSiteImages = array_values(array_filter(
+                    (array) ($report->site_images ?? []),
+                    fn ($img) => !in_array($normalizeImagePath($img), $removedSiteImages, true)
+                ));
+            } else {
+                $remainingSiteImages = $report->site_images;
+            }
             $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
             if (!empty($removedImages)) {
                 $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
@@ -180,6 +203,7 @@ class ReportController extends Controller
                 'is_published_to_client' => $publishToClient,
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
                 'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'site_images' => !empty($remainingSiteImages) ? $remainingSiteImages : null,
                 'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
                 'published_at' => $publishToClient ? now() : null,
             ];
@@ -522,6 +546,8 @@ class ReportController extends Controller
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'remove_site_images' => 'nullable|array',
+                'remove_site_images.*' => 'string',
                 'include_original_images' => 'nullable|array|max:20',
                 'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
@@ -661,6 +687,17 @@ class ReportController extends Controller
                     ? Str::after($image, '/storage/')
                     : ltrim($image, '/');
             };
+            $removedSiteImages = collect($request->input('remove_site_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            $remainingSiteImages = !empty($removedSiteImages)
+                ? array_values(array_filter(
+                    (array) ($report->site_images ?? []),
+                    fn ($img) => !in_array($normalizeImagePath($img), $removedSiteImages, true)
+                ))
+                : (array) ($report->site_images ?? []);
             $existingAdminImages = array_values(array_map($normalizeImagePath, $existingAdminImages));
             $allowedClientImages = array_values(array_map($normalizeImagePath, $allowedClientImages));
             $includedOriginalImages = array_values(array_intersect(
@@ -690,6 +727,7 @@ class ReportController extends Controller
             $updateData = [
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
                 'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'site_images' => !empty($remainingSiteImages) ? $remainingSiteImages : null,
                 'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
             ];
 
@@ -982,8 +1020,9 @@ class ReportController extends Controller
     public function downloadReportPdf($reportId)
     {
         $user = auth('web')->user();
+        session_write_close();
 
-        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
+        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy', 'phase.milestones'])
             ->where('report_id', $reportId)
             ->whereHas('project', function ($q) use ($user) {
                 $q->whereHas('supervisors', function ($sq) use ($user) {
@@ -991,25 +1030,23 @@ class ReportController extends Controller
                 });
             })->firstOrFail();
 
-        $html = view('supervisor.reports.pdf', compact('report'))->render();
-
         try {
-            if (class_exists('\Mpdf\Mpdf')) {
-                $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
-                $mpdf->WriteHTML($html);
-                $fileName = 'report_' . $report->report_id . '_' . date('Y-m-d') . '.pdf';
-                return $mpdf->Output($fileName, 'D');
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
             }
-        } catch (\Exception $e) {
-            Log::error('PDF generation failed: ' . $e->getMessage());
-        }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView('admin.reports.pdf', compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
 
-        // Fallback: return HTML as a downloadable attachment when mPDF is unavailable.
-        $fileName = 'report_' . $report->report_id . '_' . date('Y-m-d') . '.html';
-        return response($html, 200, [
-            'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ]);
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Supervisor PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 
     /**
@@ -1092,7 +1129,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Supervisor revises their own rejected report
+     * Supervisor edits their own pending or rejected report
      */
     public function updateSupervisorReport(Request $request, $reportId)
     {
@@ -1103,8 +1140,8 @@ class ReportController extends Controller
             abort(403, 'You are not authorized to update this report.');
         }
 
-        if ($report->approval_status !== 'rejected') {
-            return response()->json(['success' => false, 'message' => 'Only rejected reports can be revised.'], 422);
+        if (! in_array($report->approval_status, ['pending', 'rejected'], true)) {
+            return response()->json(['success' => false, 'message' => 'Only pending or rejected reports can be edited.'], 422);
         }
 
         $validated = $request->validate([

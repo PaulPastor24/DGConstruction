@@ -31,6 +31,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfImageService;
 
 class AdminDashboardController extends Controller
 {
@@ -969,13 +971,64 @@ class AdminDashboardController extends Controller
 
     public function downloadReportPdf($reportId)
     {
-        $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy'])->findOrFail($reportId);
-        $pdfContents = $this->buildSimplePdf($report);
+        $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy', 'phase.milestones'])->findOrFail($reportId);
+        session_write_close();
 
-        return response($pdfContents, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="report-'.$report->report_id.'.pdf"',
-        ]);
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView('admin.reports.pdf', compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Admin PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
+    }
+
+    public function downloadProjectImagesPdf(Project $project)
+    {
+        $project->load(['reports' => function ($q) {
+            $q->with(['phase', 'submittedBy'])->orderByDesc('report_date');
+        }]);
+
+        $reports = $project->reports;
+        session_write_close();
+
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = $reports->mapWithKeys(function ($report) use ($pdfImageService) {
+                $paths = collect(array_merge(
+                    (array) ($report->admin_site_images ?? []),
+                    (array) ($report->site_images ?? [])
+                ))->map(function ($path) {
+                    $path = ltrim((string) $path, '/');
+                    return str_starts_with($path, 'storage/') ? substr($path, 8) : $path;
+                })->filter()->unique()->values()->all();
+
+                return [$report->report_id => collect($paths)
+                    ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                    ->filter()
+                    ->values()];
+            });
+            $pdf = Pdf::loadView('admin.reports.images-pdf', compact('project', 'reports', 'reportPdfImages'));
+            $fileName = 'project-report-images-' . Str::slug($project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Admin images PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 
     private function buildReportQuery(Request $request)
