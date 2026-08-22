@@ -23,7 +23,7 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::with(['client.user', 'engineer', 'supervisors']);
+        $query = Project::with(['client.user', 'engineer', 'supervisors', 'statusHistory.user']);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -94,7 +94,7 @@ class ProjectController extends Controller
         $hasArchiveFlag = Schema::hasColumn('projects', 'is_archived');
 
         if ($requestedStatus !== null && $requestedStatus !== '') {
-            $normalizedStatus = $this->normalizeProjectStatus($requestedStatus);
+            $normalizedStatus = Project::normalizeStatus($requestedStatus);
             if ($normalizedStatus === 'archived') {
                 $query->where(function ($q) use ($hasArchiveFlag) {
                     $q->where('status', 'archived');
@@ -103,7 +103,7 @@ class ProjectController extends Controller
                     }
                 });
             } elseif ($normalizedStatus !== 'all') {
-                $query->whereIn('status', $this->getProjectStatusVariants($normalizedStatus))
+                $query->whereIn('status', Project::statusVariants($normalizedStatus))
                     ->where('status', '!=', 'archived');
 
                 if ($hasArchiveFlag) {
@@ -155,10 +155,10 @@ class ProjectController extends Controller
 
         $stats = [
             'total' => DB::table('projects')->count(),
-            'planning' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
-            'ongoing' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('in_progress'))->count(),
-            'completed' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('completed'))->count(),
-            'on_hold' => DB::table('projects')->whereIn('status', $this->getProjectStatusVariants('pending'))->count(),
+            'planning' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_PLANNING))->count(),
+            'ongoing' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))->count(),
+            'completed' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))->count(),
+            'on_hold' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ON_HOLD))->count(),
             'archived' => DB::table('projects')->where(function ($q) {
                 $q->where('status', 'archived');
                 if (Schema::hasColumn('projects', 'is_archived')) {
@@ -171,6 +171,21 @@ class ProjectController extends Controller
             ->with(['project', 'client.user', 'engineer'])
             ->latest('archived_at')
             ->get();
+
+        $archiveClients = Client::query()
+            ->whereIn('client_id', function ($q) {
+                $q->select('client_id')->from('project_archives')->whereNotNull('client_id')->distinct();
+            })
+            ->with('user')
+            ->orderBy('company_name')
+            ->get();
+
+        $archiveEngineers = User::query()
+            ->whereIn('user_id', function ($q) {
+                $q->select('engineer_id')->from('project_archives')->whereNotNull('engineer_id')->distinct();
+            })
+            ->orderBy('first_name')
+            ->get(['user_id', 'first_name', 'last_name', 'email']);
 
         $clients = Client::with('user')->get();
         $supervisors = User::query()
@@ -194,7 +209,7 @@ class ProjectController extends Controller
 
         }
 
-        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors', 'newProject', 'archives'));
+        return view('admin.projects.index', compact('projects', 'stats', 'clients', 'supervisors', 'newProject', 'archives', 'archiveClients', 'archiveEngineers'));
     }
 
     /**
@@ -348,7 +363,8 @@ class ProjectController extends Controller
             'client.user',
             'engineer',
             'supervisors',
-            'phases'
+            'phases',
+            'statusHistory.user'
         ]);
 
         // Verify project was loaded
@@ -393,26 +409,11 @@ class ProjectController extends Controller
             $timeIn = $request->filled('time_in') ? $request->input('time_in') : null;
             $timeOut = $request->filled('time_out') ? $request->input('time_out') : null;
             $status = (string) $request->input('status', $project->status);
+            $holdReason = trim((string) $request->input('hold_reason', ''));
             $description = $request->filled('description') ? trim((string) $request->input('description')) : null;
 
-            $currentStatus = strtolower((string) $project->status);
-            $requestedStatus = strtolower((string) $status);
-            $normalizedCurrentStatus = match ($currentStatus) {
-                'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
-                'completed', 'complete', 'finished' => 'completed',
-                'on_hold', 'pending' => 'on_hold',
-                'planning', 'not_started', 'paused', 'delayed' => 'planning',
-                'archived' => 'archived',
-                default => 'planning',
-            };
-            $normalizedRequestedStatus = match ($requestedStatus) {
-                'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
-                'completed', 'complete', 'finished' => 'completed',
-                'on_hold', 'pending' => 'on_hold',
-                'planning', 'not_started', 'paused', 'delayed' => 'planning',
-                'archived' => 'archived',
-                default => 'planning',
-            };
+            $normalizedCurrentStatus = $project->workflowStatus();
+            $normalizedRequestedStatus = Project::normalizeStatus($status);
 
             if ($normalizedCurrentStatus === 'archived') {
                 return redirect()
@@ -423,50 +424,24 @@ class ProjectController extends Controller
                     ->with('error', 'An archived project cannot be modified.');
             }
 
-            if ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'planning') {
-                // Planning projects can stay planning or advance to in progress.
-            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'ongoing') {
-                // Allowed progression from planning to in progress.
-            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'completed') {
-                return redirect()
-                    ->route('admin.projects.index')
-                    ->withInput()
-                    ->with('edit_project_id', $project->project_id)
-                    ->with('show_edit_project_modal', true)
-                    ->with('error', 'A planning project must move to in progress before it can be marked as completed.');
-            } elseif ($normalizedCurrentStatus === 'ongoing' && $normalizedRequestedStatus === 'planning') {
-                return redirect()
-                    ->route('admin.projects.index')
-                    ->withInput()
-                    ->with('edit_project_id', $project->project_id)
-                    ->with('show_edit_project_modal', true)
-                    ->with('error', 'A project that is already in progress cannot be moved back to planning.');
-            } elseif ($normalizedCurrentStatus === 'on_hold' && $normalizedRequestedStatus === 'planning') {
-                // On-hold projects may return to planning when needed.
-            } elseif ($normalizedCurrentStatus === 'on_hold' && $normalizedRequestedStatus === 'on_hold') {
-                // On-hold projects can remain on hold.
-            } elseif ($normalizedCurrentStatus === 'completed' && $normalizedRequestedStatus !== 'completed') {
-                return redirect()
-                    ->route('admin.projects.index')
-                    ->withInput()
-                    ->with('edit_project_id', $project->project_id)
-                    ->with('show_edit_project_modal', true)
-                    ->with('error', 'A completed project cannot be changed back to planning or in progress.');
-            } elseif ($normalizedCurrentStatus === 'planning' && $normalizedRequestedStatus === 'archived') {
-                return redirect()
-                    ->route('admin.projects.index')
-                    ->withInput()
-                    ->with('edit_project_id', $project->project_id)
-                    ->with('show_edit_project_modal', true)
-                    ->with('error', 'A planning project cannot be archived directly.');
-            }
+            if (!$project->canTransitionTo($normalizedRequestedStatus)) {
+                $transitionMessage = match ($normalizedCurrentStatus) {
+                    Project::STATUS_PLANNING => 'A planning project must move to in progress before it can be marked as completed.',
+                    Project::STATUS_ONGOING => 'A project that is already in progress cannot be moved back to planning.',
+                    Project::STATUS_COMPLETED => 'A completed project cannot be changed back to planning or in progress.',
+                    default => 'This project status transition is not allowed.',
+                };
 
-            if ($normalizedRequestedStatus === 'completed' && empty($actualEndDate)) {
-                $actualEndDate = now()->toDateString();
+                return redirect()
+                    ->route('admin.projects.index')
+                    ->withInput()
+                    ->with('edit_project_id', $project->project_id)
+                    ->with('show_edit_project_modal', true)
+                    ->with('error', $transitionMessage);
             }
 
             // Keep old values for notification decisions
-            $oldStatus = $project->status;
+            $oldStatus = $project->workflowStatus();
             $oldClientId = $project->client_id;
 
             // Update project details directly once the request passes validation.
@@ -478,7 +453,8 @@ class ProjectController extends Controller
                 'actual_end_date' => $actualEndDate,
                 'time_in' => $timeIn,
                 'time_out' => $timeOut,
-                'status' => $status,
+                'status' => $normalizedRequestedStatus,
+                'hold_reason' => $normalizedRequestedStatus === Project::STATUS_ON_HOLD ? $holdReason : null,
                 'description' => $description,
             ], $this->buildProjectLocationPayload($projectLocation));
 
@@ -491,7 +467,11 @@ class ProjectController extends Controller
             }
 
             $project->forceFill($payload);
+            $project->setStatusChangeReason($normalizedRequestedStatus === Project::STATUS_ON_HOLD
+                ? $holdReason
+                : 'Status changed from the project management workflow.');
             $project->save();
+            $project->syncStatusFromPhases();
 
             // Preserve the explicit status chosen in the edit form.
             // The workflow status is derived from phases elsewhere, so avoid overwriting
@@ -541,7 +521,7 @@ class ProjectController extends Controller
                 // If project status changed
                 if ($oldStatus !== $status && $project->client_id) {
                     $normalizedOld = strtolower((string) $oldStatus);
-                    $normalizedNew = strtolower((string) $status);
+                    $normalizedNew = $normalizedRequestedStatus;
 
                     if (in_array($normalizedNew, ['in_progress', 'inprogress', 'ongoing', 'active'], true) && !in_array($normalizedOld, ['in_progress', 'inprogress', 'ongoing', 'active', 'completed'], true)) {
                         \App\Services\NotificationService::notifyClient($project->client_id, [
@@ -632,6 +612,9 @@ class ProjectController extends Controller
                     ->with('error_title', 'Cannot Archive Project');
             }
 
+            session_abort();
+            session_write_close();
+
             $payload = [
                 'status' => $this->getArchiveStatusValue(),
             ];
@@ -640,6 +623,7 @@ class ProjectController extends Controller
             }
 
             $project->forceFill($payload);
+            $project->setStatusChangeReason('Project archived from the project management workflow.');
             $project->save();
             $project->refresh();
 
@@ -656,7 +640,7 @@ class ProjectController extends Controller
                     'status' => 'archived',
                     'description' => $project->description,
                     'archived_at' => now(),
-                ]  
+                ]
             );
 
             return redirect()->route('admin.projects.index')
@@ -700,12 +684,16 @@ class ProjectController extends Controller
                     ->with('error_title', 'Restore Not Available');
             }
 
+            session_abort();
+            session_write_close();
+
             $payload = ['status' => $this->getRestoreStatusValue()];
             if (Schema::hasColumn('projects', 'is_archived')) {
                 $payload['is_archived'] = false;
             }
 
             $project->forceFill($payload);
+            $project->setStatusChangeReason('Project restored to the active project workflow.');
             $project->save();
             $project->refresh();
 
@@ -894,28 +882,6 @@ class ProjectController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed to delete project image: ' . $e->getMessage());
         }
-    }
-
-    private function normalizeProjectStatus($status): string
-    {
-        return match (strtolower((string) $status)) {
-            'in_progress', 'inprogress', 'ongoing', 'active' => 'in_progress',
-            'completed', 'complete', 'finished' => 'completed',
-            'pending', 'planning', 'not_started', 'on_hold', 'paused', 'delayed' => 'pending',
-            'archived' => 'archived',
-            default => 'pending',
-        };
-    }
-
-    private function getProjectStatusVariants(string $status): array
-    {
-        return match ($status) {
-            'in_progress' => ['in_progress', 'ongoing', 'inprogress', 'active'],
-            'completed' => ['completed', 'complete', 'finished'],
-            'pending' => ['planning', 'on_hold'],
-            'archived' => ['archived'],
-            default => ['pending'],
-        };
     }
 
     public function phaseManagement(Request $request)

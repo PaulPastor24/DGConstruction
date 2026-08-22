@@ -310,6 +310,7 @@ class PhaseController extends Controller
             $phase->fill($validated);
 
             $phase->save();
+            $project->syncStatusFromPhases();
 
             if ($oldStatus !== $phase->status) {
                 $this->logAction('Phase Status Changed', "Phase '{$phase->phase_name}' status changed from {$oldStatus} to {$phase->status}");
