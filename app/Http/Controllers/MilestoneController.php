@@ -9,6 +9,7 @@ use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MilestoneController extends Controller
 {
@@ -127,6 +128,8 @@ class MilestoneController extends Controller
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
+
+            $this->syncAffectedPhaseWorkflow($milestone);
 
             // Notify client about new milestone
             try {
@@ -267,6 +270,8 @@ class MilestoneController extends Controller
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
 
+            $this->syncAffectedPhaseWorkflow($milestone, $oldPhaseId);
+
             // Log status changes
             $changes = [];
             if ($oldStatus !== $milestone->is_completed) {
@@ -302,7 +307,11 @@ class MilestoneController extends Controller
             DB::commit();
 
             if ($request->ajax()) {
-                return response()->json(['success' => true, 'message' => 'Milestone updated successfully']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Milestone updated successfully',
+                    'phase' => $this->phaseProgressPayload($milestone->phase),
+                ]);
             }
 
             return redirect()
@@ -344,6 +353,8 @@ class MilestoneController extends Controller
                 'end_date' => now()->toDateString(),
             ]);
 
+            $this->syncAffectedPhaseWorkflow($milestone);
+
             $this->logAction(
                 'Milestone Completed',
                 "Milestone '{$milestone->milestone_name}' marked as completed"
@@ -367,7 +378,11 @@ class MilestoneController extends Controller
 
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Milestone marked as completed']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Milestone marked as completed',
+                'phase' => $this->phaseProgressPayload($milestone->phase),
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Milestone completion failed: ' . $e->getMessage());
@@ -485,6 +500,35 @@ class MilestoneController extends Controller
         if ($project->engineer_id !== auth('web')->user()->user_id) {
             abort(403, 'Unauthorized to manage milestones for this project');
         }
+    }
+
+    private function syncAffectedPhaseWorkflow(Milestone $milestone, ?int $oldPhaseId = null): void
+    {
+        $phaseIds = array_unique(array_filter([(int) $milestone->phase_id, $oldPhaseId]));
+
+        foreach ($phaseIds as $phaseId) {
+            $phase = ConstructionPhase::query()->find($phaseId);
+            if (!$phase) {
+                continue;
+            }
+
+            $phase->syncStatusFromMilestones();
+            Project::query()->find($phase->project_id)?->syncStatusFromPhases();
+        }
+    }
+
+    private function phaseProgressPayload(?ConstructionPhase $phase): ?array
+    {
+        if (!$phase) {
+            return null;
+        }
+
+        return [
+            'phase_id' => $phase->phase_id,
+            'status' => $phase->status,
+            'completion_percentage' => (float) $phase->progress_percentage,
+            'milestone_progress_summary' => $phase->milestone_progress_summary,
+        ];
     }
 
     /**
