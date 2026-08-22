@@ -179,16 +179,28 @@ class Project extends Model
             return;
         }
 
-        $phases = $this->phases()->get(['status', 'completion_percentage']);
+        $phases = $this->phases()->get(['phase_id', 'status', 'completion_percentage']);
         if ($phases->isEmpty()) {
             return;
         }
 
-        $allComplete = $phases->every(fn ($phase) => (float) $phase->completion_percentage >= 100);
+        $allComplete = $phases->every(fn ($phase) => $phase->progress_percentage >= 100);
+        $clearHoldReason = Schema::hasColumn('projects', 'hold_reason');
         if ($this->actual_end_date && $allComplete) {
-            $this->forceFill(['status' => self::STATUS_COMPLETED, 'hold_reason' => null])->save();
+            $payload = ['status' => self::STATUS_COMPLETED];
+            if ($clearHoldReason) $payload['hold_reason'] = null;
+            $this->forceFill($payload)->save();
+        } elseif ($allComplete && $this->actual_end_date === null) {
+            $payload = [
+                'status' => self::STATUS_COMPLETED,
+                'actual_end_date' => now()->toDateString(),
+            ];
+            if ($clearHoldReason) $payload['hold_reason'] = null;
+            $this->forceFill($payload)->save();
         } elseif ($phases->contains(fn ($phase) => $phase->status === 'in_progress')) {
-            $this->forceFill(['status' => self::STATUS_ONGOING, 'hold_reason' => null])->save();
+            $payload = ['status' => self::STATUS_ONGOING];
+            if ($clearHoldReason) $payload['hold_reason'] = null;
+            $this->forceFill($payload)->save();
         }
     }
 
@@ -444,11 +456,24 @@ class Project extends Model
      */
     public function getProgressPercentageAttribute()
     {
-        $phasesCount = $this->phases()->count();
-        if ($phasesCount > 0) {
-            return round($this->phases()->avg('completion_percentage'), 2);
+        $phases = $this->relationLoaded('phases') ? $this->phases : $this->phases()->get();
+        $weightedProgress = 0.0;
+        $totalWeight = 0.0;
+
+        foreach ($phases as $phase) {
+            $progress = (float) $phase->progress_percentage;
+            if (!$phase->actual_start_date && $progress <= 0) {
+                continue;
+            }
+
+            $weight = $phase->planned_start_date && $phase->planned_end_date
+                ? max(1, $phase->planned_start_date->diffInDays($phase->planned_end_date))
+                : 1;
+            $weightedProgress += $progress * $weight;
+            $totalWeight += $weight;
         }
-        return 0;
+
+        return $totalWeight > 0 ? round($weightedProgress / $totalWeight, 2) : 0.0;
     }
 
     /**
