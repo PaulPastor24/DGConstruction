@@ -1,0 +1,1 @@
+@include('admin.projects.show', ['project' => $project, 'isModal' => $isModal ?? true])

@@ -21,7 +21,7 @@ class ProjectControllerArchiveTest extends TestCase
             }
         };
 
-        $this->assertSame('completed', $controller->exposeArchiveStatusValue());
+        $this->assertSame('archived', $controller->exposeArchiveStatusValue());
         $this->assertSame('planning', $controller->exposeRestoreStatusValue());
     }
 }
