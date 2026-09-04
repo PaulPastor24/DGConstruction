@@ -5,6 +5,16 @@
 
 @push('styles')
 <style>
+    /* Global modal backdrop removal */
+    .modal-backdrop,
+    .modal-backdrop.show {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        z-index: -9999 !important;
+        background: transparent !important;
+    }
+    
     /* Page-level scroll fix: ensure the page can always scroll vertically
        even if a parent layout wrapper constrains height/overflow. */
     html, body {
@@ -914,11 +924,45 @@
     }
 
     /* Report Details Modal */
+    #reportDetailsModal {
+        --bs-backdrop-bg: transparent !important;
+        --bs-modal-backdrop-bg: transparent !important;
+        background: transparent !important;
+    }
+    
+    #reportDetailsModal .modal-backdrop {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        z-index: -9999 !important;
+        background: transparent !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    #reportDetailsModal.show .modal-backdrop {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    #reportDetailsModal.fade {
+        background: transparent !important;
+    }
+    
+    #reportDetailsModal.show {
+        background: transparent !important;
+    }
+    
     #reportDetailsModal .modal-content {
         border-radius: 20px;
         border: 1px solid rgba(148, 163, 184, 0.18);
         box-shadow: 0 32px 100px rgba(15, 32, 21, 0.12);
         overflow: hidden;
+        z-index: 10000 !important;
+        position: relative !important;
+        pointer-events: auto !important;
     }
     #reportDetailsModal .modal-header {
         background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%);
@@ -935,9 +979,47 @@
     }
     #reportDetailsModal .modal-dialog {
         max-width: 1100px;
+        margin-top: 60px;
+        margin-bottom: 20px;
+        max-height: calc(100vh - 80px);
     }
     #reportDetailsModal .modal-xl {
         max-width: 1100px;
+    }
+    
+    /* Ensure modal is scrollable and header is always visible */
+    #reportDetailsModal .modal-dialog-scrollable {
+        display: flex;
+        flex-direction: column;
+    }
+    #reportDetailsModal .modal-dialog-scrollable .modal-content {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 80px);
+    }
+    #reportDetailsModal .modal-dialog-scrollable .modal-body {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* Mobile adjustments for close button accessibility */
+    @media (max-width: 768px) {
+        #reportDetailsModal .modal-dialog {
+            margin-top: 50px;
+            margin-bottom: 10px;
+            max-height: calc(100vh - 60px);
+        }
+        #reportDetailsModal .modal-dialog-scrollable .modal-content {
+            max-height: calc(100vh - 60px);
+        }
+        #reportDetailsModal .modal-header {
+            padding: 1rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%);
+        }
     }
 
     /* Enhanced Modal Cards */
@@ -2521,6 +2603,55 @@
             const downloadBaseUrl = reportsBaseUrl;
             const storageBaseUrl = '{{ rtrim(asset('storage'), '/') }}';
 
+            // Initialize modal without backdrop
+            if (reportDetailsModal) {
+                // Remove any existing backdrops
+                const existingBackdrops = reportDetailsModal.querySelectorAll('.modal-backdrop');
+                existingBackdrops.forEach(backdrop => backdrop.remove());
+                
+                // Create modal with backdrop disabled
+                const modalInstance = new bootstrap.Modal(reportDetailsModal, {
+                    backdrop: false,
+                    keyboard: true,
+                    focus: true
+                });
+                
+                // Watch for any backdrops being added and remove them
+                const observer = new MutationObserver(function(mutations) {
+                    const backdrops = reportDetailsModal.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                });
+                
+                observer.observe(reportDetailsModal, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Handle modal show events
+                reportDetailsModal.addEventListener('show.bs.modal', function(e) {
+                    // Remove backdrop if created
+                    setTimeout(() => {
+                        const backdrop = this.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }, 10);
+                });
+                
+                reportDetailsModal.addEventListener('shown.bs.modal', function(e) {
+                    // Ensure backdrop is removed and content is interactive
+                    const backdrop = this.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                    const content = this.querySelector('.modal-content');
+                    if (content) {
+                        content.style.pointerEvents = 'auto';
+                        content.style.zIndex = '10000';
+                    }
+                });
+            }
+
             // The details API sometimes returns bare storage-relative paths (e.g. "reports/xyz.jpg")
             // instead of fully-qualified URLs, which renders as a blank/broken image in <img> tags.
             // Normalize every image reference through this before it is ever put in the DOM.
@@ -2663,8 +2794,24 @@
             function setDetailsPanelOpen(isOpen) {
                 workspaceLayout?.classList.toggle('is-panel-open', isOpen);
                 if (isOpen && reportDetailsModal && !reportDetailsModal.classList.contains('show')) {
-                    const modal = bootstrap.Modal.getOrCreateInstance(reportDetailsModal);
+                    const modal = bootstrap.Modal.getOrCreateInstance(reportDetailsModal, {
+                        backdrop: false,
+                        keyboard: true
+                    });
                     modal.show();
+                    
+                    // Remove backdrop if it was created
+                    setTimeout(() => {
+                        const backdrop = reportDetailsModal.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                        const content = reportDetailsModal.querySelector('.modal-content');
+                        if (content) {
+                            content.style.pointerEvents = 'auto';
+                            content.style.zIndex = '10000';
+                        }
+                    }, 50);
                 }
             }
 
@@ -3691,6 +3838,20 @@
                         Select a report from the table queue to preview its core properties and verification parameters.
                     </div>
                 `;
+            });
+            
+            // Global handler to continuously remove any modal backdrops
+            const globalBackdropObserver = new MutationObserver(function(mutations) {
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+            });
+            
+            globalBackdropObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: false,
+                characterData: false
             });
         });
     </script>

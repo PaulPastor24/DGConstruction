@@ -82,6 +82,30 @@
             max-width: 1080px;
         }
 
+        .report-details-modal {
+            display: none !important;
+        }
+
+        .report-details-modal.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .report-details-modal .modal-dialog {
+            position: relative;
+            width: auto;
+            margin: auto;
+        }
+
+        .report-details-modal .modal-content {
+            background: #ffffff;
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
         .report-detail-card,
         .report-detail-sidebar {
             border-radius: 16px;
@@ -736,6 +760,8 @@
                 transform: none !important;
                 opacity: 1 !important;
                 visibility: visible !important;
+                position: relative !important;
+                pointer-events: all !important;
             }
 
             .report-details-modal.show .modal-dialog,
@@ -743,11 +769,30 @@
                 transform: none !important;
                 opacity: 1 !important;
                 visibility: visible !important;
+                position: relative !important;
+                pointer-events: all !important;
             }
 
             .report-details-modal,
             .cms-modal {
-                z-index: 9998 !important;
+                z-index: 1000 !important;
+                display: none !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: auto !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0.5rem !important;
+                background: none !important;
+                background-color: transparent !important;
+                pointer-events: none !important;
             }
 
             .report-details-modal.show,
@@ -755,11 +800,29 @@
                 display: flex !important;
                 opacity: 1 !important;
                 visibility: visible !important;
+                overflow-y: auto !important;
+                background: none !important;
+                background-color: transparent !important;
+                pointer-events: auto !important;
+            }
+
+            .report-details-modal.show .modal-dialog,
+            .cms-modal.show .modal-dialog {
+                pointer-events: auto !important;
             }
 
             .report-details-modal .modal-backdrop,
-            .cms-modal .modal-backdrop {
-                z-index: 9997 !important;
+            .report-details-modal.show .modal-backdrop,
+            .cms-modal .modal-backdrop,
+            .cms-modal.show .modal-backdrop {
+                display: none !important;
+                visibility: hidden !important;
+                background: none !important;
+                opacity: 0 !important;
+                z-index: -9999 !important;
+                width: 0 !important;
+                height: 0 !important;
+                pointer-events: none !important;
             }
 
             .report-details-modal .modal-content,
@@ -772,6 +835,10 @@
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: none !important;
+                width: 100% !important;
+                position: relative !important;
+                z-index: 10000 !important;
+                pointer-events: auto !important;
             }
 
             .report-details-modal.show .modal-content,
@@ -783,13 +850,15 @@
 
             .report-details-modal .modal-body,
             .cms-modal .modal-body {
-                max-height: calc(100vh - 120px) !important;
+                max-height: calc(100vh - 180px) !important;
                 overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
                 padding: 0.85rem !important;
                 flex: 1 1 auto !important;
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: none !important;
+                pointer-events: auto !important;
             }
 
             .report-details-modal .modal-header,
@@ -799,6 +868,7 @@
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: none !important;
+                pointer-events: auto !important;
             }
 
             .report-details-modal .modal-header h5,
@@ -809,6 +879,14 @@
             .report-details-modal .modal-footer,
             .cms-modal .modal-footer {
                 flex-shrink: 0 !important;
+                pointer-events: auto !important;
+            }
+
+            .report-details-modal .btn-close,
+            .cms-modal .btn-close {
+                position: relative !important;
+                z-index: 10001 !important;
+                pointer-events: auto !important;
             }
 
             .report-detail-card,
@@ -1421,6 +1499,97 @@
         const reportModals = document.querySelectorAll('.report-details-modal');
         reportModals.forEach(function (modal) {
             document.body.appendChild(modal);
+            
+            // Remove any existing backdrops
+            const existingBackdrops = modal.querySelectorAll('.modal-backdrop');
+            existingBackdrops.forEach(backdrop => backdrop.remove());
+            
+            // Initialize Bootstrap modal without backdrop
+            const bsModal = new bootstrap.Modal(modal, {
+                backdrop: false,
+                keyboard: true,
+                focus: true
+            });
+            
+            // Override modal backdrop creation
+            modal._backdrop = null;
+            
+            // Handle modal show/hide
+            modal.addEventListener('show.bs.modal', function(e) {
+                document.body.style.overflow = 'hidden';
+                document.body.style.height = '100vh';
+                
+                // Remove backdrop if created
+                setTimeout(() => {
+                    const backdrop = this.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                }, 10);
+            });
+            
+            modal.addEventListener('shown.bs.modal', function(e) {
+                // Remove backdrop if it exists
+                const backdrop = this.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                // Ensure modal content is interactive
+                const content = this.querySelector('.modal-content');
+                if (content) {
+                    content.style.pointerEvents = 'auto';
+                    content.style.zIndex = '10000';
+                }
+            });
+            
+            modal.addEventListener('hide.bs.modal', function(e) {
+                document.body.style.overflow = '';
+                document.body.style.height = '';
+            });
+            
+            // Close on ESC key
+            modal.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    bsModal.hide();
+                }
+            });
+            
+            // Close button handler
+            const closeBtn = modal.querySelector('.btn-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    bsModal.hide();
+                });
+            }
+            
+            // Ensure scrolling works on mobile
+            const modalBody = modal.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.style.overscrollBehavior = 'contain';
+                modalBody.style.WebkitOverscrollBehavior = 'contain';
+                modalBody.style.touchAction = 'pan-y';
+                modalBody.style.pointerEvents = 'auto';
+            }
+            
+            // Ensure content is clickable
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.pointerEvents = 'auto';
+            }
+        });
+        
+        // Global handler to remove any backdrops that might be created
+        const observer = new MutationObserver(function(mutations) {
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
         });
 
         const modalProjectSelect = document.getElementById('modal_project_id');
