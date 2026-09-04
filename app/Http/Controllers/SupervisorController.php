@@ -429,7 +429,9 @@ class SupervisorController extends Controller
 
             try {
                 $attendanceQuery = Attendance::query()
-                    ->where('project_id', $primaryProject->project_id);
+                    ->whereHas('deployment', function ($query) use ($primaryProject) {
+                        $query->where('project_id', $primaryProject->project_id);
+                    });
 
                 if (Schema::hasColumn('attendance_logs', 'log_date')) {
                     $attendanceQuery->whereDate('log_date', '=', now()->toDateString(), 'and');

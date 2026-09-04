@@ -1029,6 +1029,40 @@
         let scannedWorkerIds = new Set();
         let manualWorkersCache = [];
 
+        // ========================================================================
+        // WEBAUTHN BROWSER SUPPORT CHECK
+        // ========================================================================
+        const isWebAuthnSupported = () => {
+            return (
+                typeof window !== 'undefined' &&
+                typeof window.PublicKeyCredential !== 'undefined' &&
+                typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
+            );
+        };
+
+        const webAuthnAvailable = isWebAuthnSupported();
+
+        // Initialize biometric button state based on WebAuthn support
+        if (btnGlobalScan) {
+            if (!webAuthnAvailable) {
+                btnGlobalScan.disabled = true;
+                btnGlobalScan.style.opacity = '0.5';
+                btnGlobalScan.style.cursor = 'not-allowed';
+                
+                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    WebAuthn is not supported in this browser. Please use the 
+                    <strong>Manual Log</strong> option or try a different browser (Chrome, Firefox, Safari).
+                `;
+            }
+        }
+
+        if (btnRegisterFingerprint && !webAuthnAvailable) {
+            btnRegisterFingerprint.disabled = true;
+            btnRegisterFingerprint.style.opacity = '0.5';
+        }
+
         function escapeHtml(value) {
             return String(value ?? '')
                 .replaceAll('&', '&amp;')
@@ -1802,6 +1836,17 @@
         });
 
         btnGlobalScan?.addEventListener('click', async function () {
+            // Check WebAuthn support before proceeding
+            if (!webAuthnAvailable) {
+                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    WebAuthn is not supported in this browser. Please use the 
+                    <strong>Manual Log</strong> option or try a different browser.
+                `;
+                return;
+            }
+
             globalScanStatus.className = 'alert alert-warning border text-dark small py-2 mb-0';
             globalScanStatus.innerHTML = `
                 <span class="spinner-border spinner-border-sm me-2"></span>
@@ -1855,15 +1900,33 @@
             } catch (err) {
                 console.error(err);
 
+                let errorMessage = err.message || 'Unknown error occurred';
+                
+                // Provide user-friendly error messages
+                if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
+                    errorMessage = 'WebAuthn operation cancelled or not supported. Please try the Manual Log option.';
+                } else if (errorMessage.includes('NotSupportedError')) {
+                    errorMessage = 'WebAuthn is not supported on this device. Please use Manual Log instead.';
+                } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+                    errorMessage = 'Biometric verification timed out. Please try again.';
+                }
+
                 globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
                 globalScanStatus.innerHTML = `
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    ${escapeHtml(err.message)}
+                    ${escapeHtml(errorMessage)}
                 `;
             }
         });
 
         btnRegisterFingerprint?.addEventListener('click', async function () {
+            // Check WebAuthn support before proceeding
+            if (!webAuthnAvailable) {
+                regStatusLabel.innerText = 'WebAuthn is not supported in this browser. Please use Chrome, Firefox, or Safari.';
+                regStatusLabel.className = 'd-block text-danger small mt-1';
+                return;
+            }
+
             const firstName = document.getElementById('regFirstName').value.trim();
             const lastName = document.getElementById('regLastName').value.trim();
 
@@ -1912,7 +1975,16 @@
 
                 capturedPasskeyCredential = null;
 
-                regStatusLabel.innerText = err.message || 'Registration failed. Please try again.';
+                let errorMessage = err.message || 'Registration failed. Please try again.';
+                
+                // Provide user-friendly error messages
+                if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
+                    errorMessage = 'Biometric capture cancelled or not supported. Please try with a different browser.';
+                } else if (errorMessage.includes('NotSupportedError')) {
+                    errorMessage = 'WebAuthn is not supported on this device.';
+                }
+
+                regStatusLabel.innerText = errorMessage;
                 regStatusLabel.className = 'd-block text-danger small mt-1';
 
                 btnSaveWorker.disabled = true;

@@ -1434,7 +1434,9 @@ transition: transform 0.25s ease;
 }
 
 .menu-button {
-    display: inline-flex;
+    display: inline-flex !important;
+    position: relative;
+    z-index: 110;
 }
 
 .main {
