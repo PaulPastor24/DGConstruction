@@ -2084,6 +2084,8 @@
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.style.zIndex = '99999';
                     }
                 });
             }

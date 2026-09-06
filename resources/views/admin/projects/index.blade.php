@@ -1957,10 +1957,6 @@
                                     <div class="ps-field-label">Duration</div>
                                     <div class="ps-field-value"><i class="bi bi-clock-history"></i> {{ $psDuration > 0 ? $psDuration . ' days' : 'Not available' }}</div>
                                 </div>
-                                <div>
-                                    <div class="ps-field-label">Last Updated</div>
-                                    <div class="ps-field-value"><i class="bi bi-calendar3"></i> {{ $newProject->updated_at ? $newProject->updated_at->format('M d, Y h:i A') : 'N/A' }}</div>
-                                </div>
                             </div>
                         </div>
 

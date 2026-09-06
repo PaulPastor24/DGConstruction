@@ -1742,30 +1742,9 @@
                         <input id="milestoneName" name="milestone_name" type="text" placeholder="Enter milestone name" required>
                     </div>
                 </div>
-
-                <div id="milestonePhaseInfo" class="milestone-modal-field d-none" style="margin-top: 0.75rem;">
-                    <label class="text-muted small">Selected Phase Schedule</label>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-calendar3 me-1"></i>
-                            <span id="milestonePhaseStart">--</span>
-                        </div>
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-calendar-check me-1"></i>
-                            <span id="milestonePhaseEnd">--</span>
-                        </div>
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-flag me-1"></i>
-                            <span id="milestonePhaseStatus">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="milestoneExistingSelectorWrap" class="milestone-modal-field d-none" style="margin-top: 1rem;">
-                    <label for="milestoneExistingSelector">Milestone to Edit</label>
-                    <select id="milestoneExistingSelector"></select>
-                </div>
             </div>
+
+            <div class="milestone-modal-section">
 
             <div class="milestone-modal-section">
                 <div class="milestone-modal-section-title">Schedule</div>
@@ -1907,7 +1886,7 @@
     }
 
     function getDisplayMilestoneName(milestone) {
-        return stripRedundantSequenceLabel(milestone?.milestone_name || milestone?.name || 'Unnamed milestone') || 'Unnamed milestone';
+        return stripRedundantSequenceLabel(milestone?.milestone_name || milestone?.name || '') || '';
     }
 
     function toDateInputValue(value) {
@@ -2015,8 +1994,8 @@
     function buildGanttTasks(phases) {
         return phases.map((phase, index) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-            const start = toDateInputValue(phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
-            let end = toDateInputValue(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
+            const start = toDateInputValue(phase.actual_start_date || phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
+            let end = toDateInputValue(phase.actual_end_date || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
             if (!end && start) end = start;
             const milestones = Array.isArray(phase.milestones) ? phase.milestones.map((milestone, milestoneIndex) => ({
                 ...milestone,
@@ -2073,8 +2052,8 @@
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
             const phaseName = getDisplayPhaseName(phase);
-            const start = formatDateFull(phase.planned_start_date || phase.start || phase.start_date || phase.begin);
-            const end = formatDateFull(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
+            const start = formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start || phase.start_date || phase.begin);
+            const end = formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
             const statusLabel = status.replace('-', ' ');
 
             return `
@@ -2120,8 +2099,8 @@
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
             const phaseName = getDisplayPhaseName(phase);
-            const start = formatDateFull(phase.planned_start_date || phase.start);
-            const end = formatDateFull(phase.planned_end_date || phase.end);
+            const start = formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start);
+            const end = formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end);
 
             return `
                 <article class="timeline-mobile-card">
@@ -2305,8 +2284,8 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td data-label="Start">${formatDateFull(phase.planned_start_date || phase.start)}</td>
-                                                    <td data-label="End">${formatDateFull(phase.planned_end_date || phase.end)}</td>
+                                                    <td data-label="Start">${formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start)}</td>
+                                                    <td data-label="End">${formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end)}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
                                                     <td data-label="Progress">${Math.round(percentage)}%</td>
                                                 </tr>
@@ -2469,11 +2448,11 @@
             const rows = timelineViewMode === 'timeline'
                 ? getFilteredMilestones(selectedProject).map((milestone, index) => {
                     const status = getMilestoneStatus(milestone);
-                    return [index + 1, milestone.milestone_name || 'Unnamed milestone', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.start_date || milestone.start || '', milestone.planned_end_date || milestone.end_date || milestone.end || ''];
+                    return [index + 1, milestone.milestone_name || '', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.start_date || milestone.start || '', milestone.planned_end_date || milestone.end_date || milestone.end || ''];
                 })
                 : getFilteredPhases(selectedProject).map((phase, index) => {
                     const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, phase.planned_start_date || phase.start || '', phase.planned_end_date || phase.end || ''];
+                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, phase.actual_start_date || phase.planned_start_date || phase.start || '', phase.actual_end_date || phase.planned_end_date || phase.end || ''];
                 });
             const headers = timelineViewMode === 'timeline'
                 ? ['#', 'Milestone', 'Phase', 'Status', 'Start Planned Date', 'End Planned Date']
@@ -2553,8 +2532,8 @@
             return;
         }
 
-        const plannedStart = phase.planned_start_date ? String(phase.planned_start_date).slice(0, 10) : 'Not set';
-        const plannedEnd = phase.planned_end_date ? String(phase.planned_end_date).slice(0, 10) : 'Not set';
+        const plannedStart = phase.actual_start_date ? String(phase.actual_start_date).slice(0, 10) : (phase.planned_start_date ? String(phase.planned_start_date).slice(0, 10) : 'Not set');
+        const plannedEnd = phase.actual_end_date ? String(phase.actual_end_date).slice(0, 10) : (phase.planned_end_date ? String(phase.planned_end_date).slice(0, 10) : 'Not set');
         const status = phase.status ? String(phase.status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
 
         startEl.textContent = plannedStart;
@@ -2574,10 +2553,9 @@
         milestoneFormSnapshot = getMilestoneFormSnapshot();
     }
 
-    // Populates the "Milestone to Edit" dropdown for the given phase. Only shown in edit
-    // mode, and only when the phase has more than one milestone (otherwise there is
-    // nothing to disambiguate). Selecting a different option loads that milestone's data
-    // into the form so any milestone under the phase can be edited, not just the first one.
+    // Populates the milestone selector for the given phase. Returns the selected
+    // milestone so the form can load its data. The selector is hidden when there
+    // is only one milestone under the phase.
     function populateMilestoneExistingSelector(phase, selectedMilestoneId = '') {
         const wrap = document.getElementById('milestoneExistingSelectorWrap');
         const select = document.getElementById('milestoneExistingSelector');
@@ -2593,7 +2571,7 @@
 
         select.innerHTML = milestones.map((item) => {
             const id = item.milestone_id ?? item.id;
-            const label = item.milestone_name || 'Unnamed milestone';
+            const label = item.milestone_name || '';
             const dateLabel = item.start_date ? ` (${String(item.start_date).slice(0, 10)})` : '';
             const selectedAttr = String(selectedMilestoneId || '') === String(id || '') ? 'selected' : '';
             return `<option value="${escapeHtml(id)}" ${selectedAttr}>${escapeHtml(label + dateLabel)}</option>`;
@@ -2638,8 +2616,6 @@
             const milestones = getPhaseMilestones(phase);
             const milestone = milestones.find((item) => String(item.milestone_id ?? item.id) === String(milestoneId || '')) || milestones[0] || null;
 
-            // Shows the "Milestone to Edit" dropdown whenever the phase has more than one
-            // milestone, so any of them can be selected and edited (not just the first).
             populateMilestoneExistingSelector(phase, milestone?.milestone_id ?? milestone?.id ?? '');
 
             if (phase && milestone) {
@@ -2812,6 +2788,8 @@ let milestoneFormSnapshot = null;
             } else {
                 window.alert(validationMessage);
             }
+            submitButton.disabled = false;
+            submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
             return;
         }
 
