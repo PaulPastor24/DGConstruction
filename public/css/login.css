@@ -191,7 +191,7 @@ RIGHT FORM PANEL
 
 .role-tabs {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
     margin-bottom: 2rem;
     padding: 0.3rem;
@@ -464,7 +464,7 @@ RESPONSIVE
     }
 
     .role-tabs {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 6px;
         margin-bottom: 22px;
         padding: 6px;
