@@ -124,7 +124,7 @@ class User extends Authenticatable implements HasPasskeys
     public function getRoleBadgeAttribute()
     {
         return match($this->role) {
-            'engineer', 'staff', 'admin', 'administrator' => 'danger',
+            'engineer', 'admin', 'administrator' => 'danger',
             'supervisor' => 'warning',
             'client' => 'info',
             default => 'secondary',
@@ -146,7 +146,6 @@ class User extends Authenticatable implements HasPasskeys
     {
         return match($this->role) {
             'engineer' => 'Engineer/Administrator',
-            'staff' => 'Office Staff',
             'admin' => 'Admin',
             'administrator' => 'Administrator',
             'supervisor' => 'Site Supervisor',

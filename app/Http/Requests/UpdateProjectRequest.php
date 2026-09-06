@@ -16,7 +16,7 @@ class UpdateProjectRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $this->user() && $user && in_array($user->role, ['engineer', 'staff', 'admin', 'administrator'], true);
+        return $this->user() && $user && in_array($user->role, ['engineer', 'admin', 'administrator'], true);
     }
 
     /**

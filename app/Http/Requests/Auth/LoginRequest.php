@@ -45,7 +45,6 @@ class LoginRequest extends FormRequest
         $rawRole = trim(strtolower($this->input('role')));
         $inputRole = match($rawRole) {
             'engineer' => 'engineer',
-            'staff', 'office staff', 'office_staff' => 'staff',
             'supervisor', 'site supervisor', 'site_supervisor' => 'supervisor',
             'client' => 'client',
             default => $rawRole,

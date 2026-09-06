@@ -54,17 +54,6 @@ class DatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        DB::table('users')->insert([
-            'first_name' => 'Office',
-            'last_name' => 'Staff',
-            'name' => 'Office Staff',
-            'email' => 'staff@dg-corp.ph',
-            'password' => $password,
-            'role' => 'staff',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         $supervisorId = DB::table('users')->insertGetId([
             'first_name' => 'Site',
             'last_name' => 'Supervisor',

@@ -361,7 +361,6 @@
                     <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted">Role</label>
                         <select name="role" class="form-select">
-                            <option value="staff">Staff</option>
                             <option value="worker">Worker</option>
                             <option value="engineer">Engineer</option>
                             <option value="supervisor">Supervisor</option>

@@ -26,7 +26,7 @@ class AttendanceScheduleRule extends Model
         $normalizedRole = strtolower(trim($role));
 
         return match ($normalizedRole) {
-            'staff', 'admin', 'administrator', 'engineer' => [
+            'admin', 'administrator', 'engineer' => [
                 'role' => $normalizedRole,
                 'start_time' => '07:00:00',
                 'end_time' => '15:00:00',

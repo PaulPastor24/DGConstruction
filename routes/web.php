@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
 
     return match ($user->role) {
-        'engineer', 'staff', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
+        'engineer', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
         'supervisor' => redirect()->route('supervisor.dashboard'),
         'client' => redirect()->route('client.dashboard'),
         default => abort(403, 'Unauthorized role assignment.'),
@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
-Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(function () {
+Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
@@ -120,7 +120,7 @@ Route::middleware(['auth', 'role:engineer,staff,admin,administrator'])->group(fu
 });
 
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
-Route::middleware(['auth', 'role:supervisor,staff,admin,administrator'])->group(function () {
+Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
