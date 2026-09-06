@@ -19,8 +19,9 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // Start building query, eager-loading the client relationship
-        $query = User::with('client');
+        // The table does not render the client relationship. Keep the list
+        // query limited to users; the client relation is only used by search.
+        $query = User::query();
 
         // 1. Text Search Filter (first_name, last_name, email, and client company_name)
         if ($request->filled('search')) {
@@ -42,23 +43,32 @@ class UserController extends Controller
 
         // 3. Status Filter
         if ($request->filled('status')) {
-            $status = $request->input('status') === 'active' ? 1 : 0;
+            $status = $request->input('status') === 'active';
             $query->where('is_active', $status);
         }
 
         // 4. Per Page Configuration
-        $perPage = $request->input('per_page', 25);
+        $perPage = min(100, max(10, (int) $request->input('per_page', 25)));
 
         // Fetch paginated records ordered by recent
         $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        // Statistical Counts
-        $total_users = DB::table('users')->count();
-        $active_users_count = DB::table('users')->where('is_active', 1)->count();
-        $inactive_users_count = DB::table('users')->where('is_active', 0)->count();
-        $engineers_count = DB::table('users')->where('role', 'engineer')->count();
-        $supervisors_count = DB::table('users')->where('role', 'supervisor')->count();
-        $clients_count = DB::table('users')->where('role', 'client')->count();
+        // One aggregate query replaces six independent count queries.
+        $userStats = DB::table('users')
+            ->selectRaw('COUNT(*) as total_users')
+            ->selectRaw('SUM(CASE WHEN is_active IS TRUE THEN 1 ELSE 0 END) as active_users_count')
+            ->selectRaw('SUM(CASE WHEN is_active IS FALSE THEN 1 ELSE 0 END) as inactive_users_count')
+            ->selectRaw("SUM(CASE WHEN role = 'engineer' THEN 1 ELSE 0 END) as engineers_count")
+            ->selectRaw("SUM(CASE WHEN role = 'supervisor' THEN 1 ELSE 0 END) as supervisors_count")
+            ->selectRaw("SUM(CASE WHEN role = 'client' THEN 1 ELSE 0 END) as clients_count")
+            ->first();
+
+        $total_users = (int) ($userStats->total_users ?? 0);
+        $active_users_count = (int) ($userStats->active_users_count ?? 0);
+        $inactive_users_count = (int) ($userStats->inactive_users_count ?? 0);
+        $engineers_count = (int) ($userStats->engineers_count ?? 0);
+        $supervisors_count = (int) ($userStats->supervisors_count ?? 0);
+        $clients_count = (int) ($userStats->clients_count ?? 0);
 
         return view('admin.users.index', compact(
             'users',
@@ -157,19 +167,21 @@ class UserController extends Controller
             ];
             $finish(200, $payload);
 
-            // Notify admins about new user creation
-            try {
-                \App\Services\NotificationService::notifyAdmins([
-                    'type' => 'user',
-                    'title' => 'New User Created',
-                    'message' => "A new user '{$user->first_name} {$user->last_name}' was created.",
-                    'data' => ['module' => 'admin.users', 'user_id' => $user->user_id, 'recipient' => 'Admin'],
-                    'related_id' => $user->user_id,
-                    'related_type' => 'user',
-                ]);
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Failed to notify admins on new user creation: ' . $e->getMessage());
-            }
+            // Notifications do not need to delay the successful CRUD response.
+            dispatch(function () use ($user): void {
+                try {
+                    \App\Services\NotificationService::notifyAdmins([
+                        'type' => 'user',
+                        'title' => 'New User Created',
+                        'message' => "A new user '{$user->first_name} {$user->last_name}' was created.",
+                        'data' => ['module' => 'admin.users', 'user_id' => $user->user_id, 'recipient' => 'Admin'],
+                        'related_id' => $user->user_id,
+                        'related_type' => 'user',
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to notify admins on new user creation: ' . $e->getMessage());
+                }
+            })->afterResponse();
 
             // Always return JSON for AJAX requests (indicated by X-Requested-With header)
             if ($isAjax) {

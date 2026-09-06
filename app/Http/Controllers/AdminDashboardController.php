@@ -915,22 +915,22 @@ class AdminDashboardController extends Controller
     {
         $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy'])->findOrFail($reportId);
 
-        $materialUsage = $predefinedMaterialCategories = [];
-        if (Schema::hasTable('material_usages')) {
-            $materialUsage = DB::table('material_usages')->where('project_id', $report->project_id)->where('phase_id', $report->phase_id)->get();
-        }
+        $materialUsage = [];
 
         $attendanceSummary = null;
         try {
-            $attendanceRows = DB::table('attendance_logs')
+            $attendanceSummary = DB::table('attendance_logs')
                 ->where('project_id', $report->project_id)
                 ->whereDate('log_date', $report->report_date)
-                ->get();
+                ->selectRaw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present")
+                ->selectRaw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent")
+                ->selectRaw('COUNT(*) as total')
+                ->first();
 
-            $attendanceSummary = $predefinedMaterialCategories = [
-                'present' => $attendanceRows->where('status', 'present')->count(),
-                'absent' => $attendanceRows->where('status', 'absent')->count(),
-                'total' => $attendanceRows->count(),
+            $attendanceSummary = [
+                'present' => (int) ($attendanceSummary->present ?? 0),
+                'absent' => (int) ($attendanceSummary->absent ?? 0),
+                'total' => (int) ($attendanceSummary->total ?? 0),
             ];
         } catch (\Throwable $e) {
             $attendanceSummary = null;

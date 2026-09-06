@@ -412,26 +412,46 @@ class Project extends Model
 
     public function getPhaseCountAttribute(): int
     {
+        if (array_key_exists('phase_count', $this->attributes)) {
+            return (int) $this->attributes['phase_count'];
+        }
+
         return $this->phases()->count();
     }
 
     public function getMilestoneCountAttribute(): int
     {
+        if (array_key_exists('milestone_count', $this->attributes)) {
+            return (int) $this->attributes['milestone_count'];
+        }
+
         return $this->milestones()->count();
     }
 
     public function getReportCountAttribute(): int
     {
+        if (array_key_exists('report_count', $this->attributes)) {
+            return (int) $this->attributes['report_count'];
+        }
+
         return $this->reports()->count();
     }
 
     public function getMaterialCountAttribute(): int
     {
+        if (array_key_exists('material_count', $this->attributes)) {
+            return (int) $this->attributes['material_count'];
+        }
+
         return $this->projectMaterials()->count();
     }
 
     public function getAttendanceCountAttribute(): int
     {
+        if (array_key_exists('attendance_count', $this->attributes)) {
+            return (int) $this->attributes['attendance_count'];
+        }
+
         return $this->attendanceLogs()->count();
     }
 
@@ -446,6 +466,12 @@ class Project extends Model
      */
     public function getActiveSupervisorAttribute()
     {
+        if ($this->relationLoaded('supervisors')) {
+            return $this->supervisors->first(function ($supervisor) {
+                return (bool) ($supervisor->pivot?->is_active ?? false);
+            });
+        }
+
         return $this->supervisors()
             ->wherePivot('is_active', true)
             ->first();

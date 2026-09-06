@@ -23,7 +23,14 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::with(['client.user', 'engineer', 'supervisors', 'statusHistory.user']);
+        $query = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+            ->withCount([
+                'phases as phase_count',
+                'milestones as milestone_count',
+                'reports as report_count',
+                'projectMaterials as material_count',
+                'attendanceLogs as attendance_count',
+            ]);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -153,15 +160,23 @@ class ProjectController extends Controller
 
         $projects = $query->paginate(15)->appends($request->only(['search', 'status', 'client', 'supervisor', 'sort_by']));
 
+        $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        // Filter/search requests only need the table. Avoid rebuilding the
+        // archive modal, filter collections, and dashboard statistics here.
+        if ($isAjax) {
+            return response()->view('admin.projects.partials.table', compact('projects'));
+        }
+
         $stats = [
             'total' => DB::table('projects')->count(),
             'planning' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_PLANNING))->count(),
             'ongoing' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))->count(),
             'completed' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))->count(),
             'on_hold' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ON_HOLD))->count(),
-            'archived' => DB::table('projects')->where(function ($q) {
+            'archived' => DB::table('projects')->where(function ($q) use ($hasArchiveFlag) {
                 $q->where('status', 'archived');
-                if (Schema::hasColumn('projects', 'is_archived')) {
+                if ($hasArchiveFlag) {
                     $q->orWhereRaw('COALESCE(is_archived, 0) = 1');
                 }
             })->count(),
@@ -193,12 +208,6 @@ class ProjectController extends Controller
             ->where('is_active', true)
             ->orderBy('first_name', 'asc')
             ->get();
-
-        $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
-
-        if ($isAjax) {
-            return response()->view('admin.projects.partials.table', compact('projects'));
-        }
 
         // If we just redirected here after creating a project, load that project
         // so the success modal can display its details on top of the table page.

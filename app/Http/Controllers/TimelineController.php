@@ -151,6 +151,10 @@ class TimelineController extends Controller
             $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
             $phase->start = $phase->planned_start_date?->toDateString();
             $phase->end = $phase->planned_end_date?->toDateString();
+            $phase->planned_start_date_raw = $phase->planned_start_date?->toDateString();
+            $phase->planned_end_date_raw = $phase->planned_end_date?->toDateString();
+            $phase->actual_start_date_raw = $phase->actual_start_date?->toDateString();
+            $phase->actual_end_date_raw = $phase->actual_end_date?->toDateString();
             $phase->progress = $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
             $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
             $phase->milestone_count = (int) ($phase->milestones_count ?? 0);
@@ -186,6 +190,8 @@ class TimelineController extends Controller
                         ?: (data_get($milestone, 'actual_date') ? Carbon::parse(data_get($milestone, 'actual_date'))->toDateString() : (data_get($milestone, 'actual_end_date') ? Carbon::parse(data_get($milestone, 'actual_end_date'))->toDateString() : null)),
                     'planned_start_date' => $phase->planned_start_date?->toDateString(),
                     'planned_end_date' => $phase->planned_end_date?->toDateString(),
+                    'actual_start_date' => $phase->actual_start_date?->toDateString(),
+                    'actual_end_date' => $phase->actual_end_date?->toDateString(),
                     'is_completed' => (bool) $milestone->is_completed,
                     'is_delayed' => (bool) $milestone->is_delayed,
                     'status' => $milestone->is_completed ? 'completed' : ($milestone->is_delayed ? 'delayed' : 'upcoming'),

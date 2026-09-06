@@ -18,6 +18,7 @@ class Milestone extends Model
         'end_date',
         'is_completed',
         'is_delayed',
+        'progress_percentage',
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class Milestone extends Model
         'end_date' => 'date',
         'is_completed' => 'boolean',
         'is_delayed' => 'boolean',
+        'progress_percentage' => 'decimal:2',
     ];
 
     public function phase()

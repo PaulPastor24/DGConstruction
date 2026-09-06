@@ -155,6 +155,7 @@ class PhaseController extends Controller
                     }
                 }],
                 'notes' => 'nullable|string|max:5000',
+                'admin_progress_override' => 'nullable|numeric|min:0|max:100',
             ], [
                 'phase_name.required' => 'Please enter a phase name.',
                 'phase_order.required' => 'Please enter a phase order.',
@@ -186,6 +187,7 @@ class PhaseController extends Controller
                 'planned_end_date' => $validated['planned_end_date'],
                 'completion_percentage' => 0.00,
                 'status' => 'not_started',
+                'admin_progress_override' => $validated['admin_progress_override'] ?? null,
             ];
             if (Schema::hasColumn('construction_phases', 'depends_on_phase_id')) {
                 $phaseData['depends_on_phase_id'] = $validated['depends_on_phase_id'] ?? null;
@@ -340,6 +342,7 @@ class PhaseController extends Controller
                 'delay_reason' => 'nullable|in:weather,materials,permits,design_change,labor,equipment,other',
                 'delay_notes' => 'nullable|string|max:5000',
                 'notes' => 'nullable|string|max:5000',
+                'admin_progress_override' => 'nullable|numeric|min:0|max:100',
             ], [
                 'phase_name.required' => 'Please enter a phase name.',
                 'phase_order.required' => 'Please enter a phase order.',
@@ -523,6 +526,7 @@ class PhaseController extends Controller
                     'completion_percentage' => (float) $phase->progress_percentage,
                     'status' => $phase->status,
                     'project_name' => optional($project)->project_name ?? null,
+                    'admin_progress_override' => $phase->admin_progress_override ?? null,
                 ];
 
                 $autoCompleted = ($oldStatus !== 'completed' && $phase->status === 'completed' && $finalStatus !== $submittedStatus);

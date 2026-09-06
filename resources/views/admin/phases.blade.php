@@ -1443,6 +1443,14 @@
                             </div>
                         </div>
 
+                        <div class="row mt-3" id="overrideVisibleRow">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Admin Progress Override (%)</label>
+                                <input type="number" name="admin_progress_override" id="adminProgressOverrideInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="1" value="{{ old('admin_progress_override', $phase->admin_progress_override ?? '') }}" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Optional manual adjustment blended with milestone progress.</div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Modal Footer -->
@@ -2084,8 +2092,10 @@
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
+                        const container = document.querySelector('.swal2-container');
+                        if (container) container.style.setProperty('z-index', '2147483647', 'important');
                         const popup = document.querySelector('.swal2-popup');
-                        if (popup) popup.style.zIndex = '99999';
+                        if (popup) popup.style.setProperty('z-index', '2147483647', 'important');
                     }
                 });
             }
@@ -2140,11 +2150,6 @@
                 });
             } else {
                 phaseForm.setAttribute('action', createPhaseUrl);
-                if (loadingSwal) loadingSwal.close();
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
                 phaseForm.submit();
             }
         }
@@ -2195,6 +2200,8 @@
             if (delayReasonInput) delayReasonInput.value = payload?.delay_reason || '';
             if (delayNotesInput) delayNotesInput.value = payload?.delay_notes || '';
             if (phaseNotesInput) phaseNotesInput.value = payload?.notes || '';
+            const adminProgressOverrideInput = document.getElementById('adminProgressOverrideInput');
+            if (adminProgressOverrideInput) adminProgressOverrideInput.value = payload?.admin_progress_override ?? '';
             if (dependsOnPhaseInput) {
                 Array.from(dependsOnPhaseInput.options).forEach(function (option) {
                     option.disabled = Boolean(payload?.phase_id) && option.value === String(payload.phase_id);

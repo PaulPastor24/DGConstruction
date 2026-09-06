@@ -2679,6 +2679,8 @@
                 return `${storageBaseUrl}/${trimmed.replace(/^storage\//, '')}`;
             }
             let activeReportId = null;
+            let reportDetailsRequestToken = 0;
+            const reportDetailsCache = new Map();
             let debounceTimer;
             let removedAdminImageUrls = new Set();
             let removedOriginalImagePaths = new Set();
@@ -2967,6 +2969,9 @@
                         return response.json();
                     })
                     .then(payload => {
+                        (payload.reports || []).forEach(report => {
+                            reportDetailsCache.set(Number(report.id), report);
+                        });
                         updateSummary(payload.stats);
                         renderTable(payload.reports);
                         renderPhaseOptions(payload.phases);
@@ -3088,6 +3093,19 @@
             function loadReportDetails(reportId) {
                 setDetailsPanelOpen(true);
                 beginDetailsTransition();
+                const requestToken = ++reportDetailsRequestToken;
+                const cachedReport = reportDetailsCache.get(Number(reportId));
+                if (cachedReport) {
+                    renderDetailsPanel(cachedReport);
+                } else {
+                    detailsPanel.innerHTML = `
+                        <div class="sidebar-fallback-state report-details-loading" role="status" aria-live="polite">
+                            <span class="spinner-border text-success mb-3" role="status" aria-hidden="true"></span>
+                            <strong>Loading report details...</strong>
+                            <span class="small text-muted">Preparing the selected report.</span>
+                        </div>
+                    `;
+                }
                 fetch(`${detailsBaseUrl}/${reportId}/details`, { headers: { Accept: 'application/json' } })
                     .then(response => {
                         if (!response.ok) {
@@ -3096,12 +3114,21 @@
                         return response.json();
                     })
                     .then(payload => {
-                        if (!payload.success) return;
+                        if (requestToken !== reportDetailsRequestToken || activeReportId !== Number(reportId)) return;
+                        if (!payload.success) throw new Error('The report details could not be loaded.');
+                        reportDetailsCache.set(Number(reportId), payload.report);
                         renderDetailsPanel(payload.report);
                     })
-                    .catch(() => {
+                    .catch((error) => {
+                        if (requestToken !== reportDetailsRequestToken) return;
                         finishDetailsTransition();
-                        Swal.fire({ title: 'Unable to load report details', icon: 'error' });
+                        detailsPanel.innerHTML = `
+                            <div class="sidebar-fallback-state" role="alert">
+                                <i class="bi bi-exclamation-circle text-danger"></i>
+                                <strong>Unable to load report details.</strong>
+                                <span class="small text-muted">${error.message || 'Please try again.'}</span>
+                            </div>
+                        `;
                     });
             }
 

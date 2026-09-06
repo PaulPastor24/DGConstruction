@@ -1212,11 +1212,12 @@
                     text: (data && data.message) || 'User deleted successfully!',
                     icon: 'success',
                     confirmButtonColor: '#198754',
+                    timer: 900,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
                     allowOutsideClick: false
-                }).then((res) => {
-                    if (res.isConfirmed) {
-                        window.location.reload();
-                    }
+                }).then(() => {
+                    window.location.reload();
                 });
             })
             .catch(() => {
@@ -1411,12 +1412,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: (data && data.message) || 'User updated successfully!',
                     icon: 'success',
                     confirmButtonColor: '#198754',
+                    timer: 900,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
                     allowOutsideClick: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Reload the data view only after clicking "OK"
-                        window.location.reload();
-                    }
+                }).then(() => {
+                    window.location.reload();
                 });
             }, { once: true });
         })
@@ -1626,11 +1627,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: (data && data.message) || 'User created successfully!',
                     icon: 'success',
                     confirmButtonColor: '#198754',
+                    timer: 900,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
                     allowOutsideClick: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.reload();
-                    }
+                }).then(() => {
+                    window.location.reload();
                 });
             }, { once: true });
         })

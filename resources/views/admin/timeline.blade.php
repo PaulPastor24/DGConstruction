@@ -238,7 +238,7 @@
        Without this override, success/error alerts render but are invisible under the
        modal backdrop, making it look like nothing happened after Save. */
     .swal2-container {
-        z-index: 4000 !important;
+        z-index: 100000 !important;
     }
 
     .milestone-modal-card {
@@ -251,6 +251,19 @@
         margin: auto;
         transform: translateY(0);
         animation: milestone-modal-in 220ms ease-out;
+    }
+
+    .milestone-modal-readonly {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 0.88rem;
+        font-weight: 600;
     }
 
     @keyframes milestone-modal-in {
@@ -1744,6 +1757,21 @@
                 </div>
             </div>
 
+            <div id="milestonePhaseInfo" class="milestone-modal-section d-none">
+                <div class="milestone-modal-section-title">Selected Phase Schedule</div>
+                <p class="milestone-modal-section-copy">Use the selected phase schedule when setting milestone dates.</p>
+                <div class="milestone-modal-grid">
+                    <div class="milestone-modal-field">
+                        <label>Planned Start Date</label>
+                        <div id="milestonePhasePlannedStart" class="milestone-modal-readonly">Not set</div>
+                    </div>
+                    <div class="milestone-modal-field">
+                        <label>Planned End Date</label>
+                        <div id="milestonePhasePlannedEnd" class="milestone-modal-readonly">Not set</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="milestone-modal-section">
 
             <div class="milestone-modal-section">
@@ -1759,6 +1787,18 @@
                     <div class="milestone-modal-field">
                         <label for="milestoneEndDate">End Date</label>
                         <input id="milestoneEndDate" name="end_date" type="date" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="milestone-modal-section">
+                <div class="milestone-modal-section-title">Progress</div>
+                <p class="milestone-modal-section-copy">Set the milestone completion percentage.</p>
+
+                <div class="milestone-modal-grid">
+                    <div class="milestone-modal-field">
+                        <label for="milestoneProgress">Progress % <span class="milestone-modal-required">Required</span></label>
+                        <input id="milestoneProgress" name="progress_percentage" type="number" min="0" max="100" step="1" value="0" required>
                     </div>
                 </div>
             </div>
@@ -1886,7 +1926,12 @@
     }
 
     function getDisplayMilestoneName(milestone) {
-        return stripRedundantSequenceLabel(milestone?.milestone_name || milestone?.name || '') || '';
+        const name = milestone?.milestone_name
+            || milestone?.name
+            || milestone?.title
+            || milestone?.milestone?.milestone_name
+            || '';
+        return String(name).trim() || 'Unnamed milestone';
     }
 
     function toDateInputValue(value) {
@@ -1994,8 +2039,8 @@
     function buildGanttTasks(phases) {
         return phases.map((phase, index) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-            const start = toDateInputValue(phase.actual_start_date || phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
-            let end = toDateInputValue(phase.actual_end_date || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
+            const start = toDateInputValue(phase.actual_start_date_raw || phase.actual_start_date || phase.planned_start_date_raw || phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
+            let end = toDateInputValue(phase.actual_end_date_raw || phase.actual_end_date || phase.planned_end_date_raw || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
             if (!end && start) end = start;
             const milestones = Array.isArray(phase.milestones) ? phase.milestones.map((milestone, milestoneIndex) => ({
                 ...milestone,
@@ -2521,24 +2566,21 @@
 
     function updateMilestonePhaseInfo(phase) {
         const wrap = document.getElementById('milestonePhaseInfo');
-        const startEl = document.getElementById('milestonePhaseStart');
-        const endEl = document.getElementById('milestonePhaseEnd');
-        const statusEl = document.getElementById('milestonePhaseStatus');
+        const plannedStartEl = document.getElementById('milestonePhasePlannedStart');
+        const plannedEndEl = document.getElementById('milestonePhasePlannedEnd');
 
-        if (!wrap || !startEl || !endEl || !statusEl) return;
+        if (!wrap || !plannedStartEl || !plannedEndEl) return;
 
         if (!phase) {
             wrap.classList.add('d-none');
             return;
         }
 
-        const plannedStart = phase.actual_start_date ? String(phase.actual_start_date).slice(0, 10) : (phase.planned_start_date ? String(phase.planned_start_date).slice(0, 10) : 'Not set');
-        const plannedEnd = phase.actual_end_date ? String(phase.actual_end_date).slice(0, 10) : (phase.planned_end_date ? String(phase.planned_end_date).slice(0, 10) : 'Not set');
-        const status = phase.status ? String(phase.status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
+        const plannedStart = phase.planned_start_date_raw || phase.planned_start_date || 'Not set';
+        const plannedEnd = phase.planned_end_date_raw || phase.planned_end_date || 'Not set';
 
-        startEl.textContent = plannedStart;
-        endEl.textContent = plannedEnd;
-        statusEl.textContent = status;
+        plannedStartEl.textContent = String(plannedStart).slice(0, 10);
+        plannedEndEl.textContent = String(plannedEnd).slice(0, 10);
         wrap.classList.remove('d-none');
     }
 
@@ -2548,6 +2590,7 @@
         document.getElementById('milestoneName').value = milestone?.milestone_name || '';
         document.getElementById('milestoneStartDate').value = milestone?.start_date ? String(milestone.start_date).slice(0, 10) : '';
         document.getElementById('milestoneEndDate').value = milestone?.end_date ? String(milestone.end_date).slice(0, 10) : '';
+        document.getElementById('milestoneProgress').value = milestone?.progress_percentage ?? 0;
         document.getElementById('milestoneCompleted').value = milestone?.is_completed ? '1' : '0';
         document.getElementById('milestoneDelayed').value = milestone?.is_delayed ? '1' : '0';
         milestoneFormSnapshot = getMilestoneFormSnapshot();
@@ -2635,6 +2678,7 @@
             tomorrow.setDate(tomorrow.getDate() + 1);
             document.getElementById('milestoneStartDate').value = tomorrow.toISOString().slice(0, 10);
             document.getElementById('milestoneEndDate').value = '';
+            document.getElementById('milestoneProgress').value = 0;
             document.getElementById('milestoneCompleted').value = '0';
             document.getElementById('milestoneDelayed').value = '0';
             if (note) {
@@ -2692,15 +2736,15 @@ let milestoneFormSnapshot = null;
         }
 
         const phase = (getProjectPhasesForModal() || []).find((item) => String(item.phase_id ?? item.id) === String(phaseId)) || null;
-        if (phase && phase.planned_start_date_raw && phase.planned_end_date_raw) {
-            const phaseStart = phase.planned_start_date_raw;
-            const phaseEnd = phase.planned_end_date_raw;
+        if (phase) {
+            const phaseStart = phase.planned_start_date_raw || phase.planned_start_date || '';
+            const phaseEnd = phase.planned_end_date_raw || phase.planned_end_date || '';
 
-            if (plannedDate < phaseStart || plannedDate > phaseEnd) {
+            if (phaseStart && phaseEnd && (plannedDate < phaseStart || plannedDate > phaseEnd)) {
                 return 'Milestone start date must be within the selected phase schedule.';
             }
 
-            if (actualDate && (actualDate < phaseStart || actualDate > phaseEnd)) {
+            if (actualDate && phaseStart && phaseEnd && (actualDate < phaseStart || actualDate > phaseEnd)) {
                 return 'Milestone end date must be within the selected phase schedule.';
             }
         }
@@ -2778,6 +2822,8 @@ let milestoneFormSnapshot = null;
         const validationMessage = validateMilestoneForm();
 
         if (validationMessage) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
             if (window.Swal) {
                 Swal.fire({
                     title: 'Validation required',
@@ -2788,8 +2834,6 @@ let milestoneFormSnapshot = null;
             } else {
                 window.alert(validationMessage);
             }
-            submitButton.disabled = false;
-            submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
             return;
         }
 
@@ -2818,6 +2862,8 @@ let milestoneFormSnapshot = null;
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
+                    const container = document.querySelector('.swal2-container');
+                    if (container) container.style.setProperty('z-index', '2147483647', 'important');
                 }
             });
         }

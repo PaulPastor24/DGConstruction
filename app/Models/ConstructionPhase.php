@@ -35,6 +35,7 @@ class ConstructionPhase extends Model
         'delay_notes',
         'depends_on_phase_id',
         'notes',
+        'admin_progress_override',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class ConstructionPhase extends Model
         'actual_start_date' => 'date',
         'actual_end_date' => 'date',
         'completion_percentage' => 'decimal:2',
+        'admin_progress_override' => 'decimal:2',
     ];
 
     public function project()
@@ -118,17 +120,31 @@ class ConstructionPhase extends Model
     public function getProgressPercentageAttribute(): float
     {
         if (!Schema::hasTable('timeline_milestones')) {
-            return 0.0;
+            return (float) ($this->admin_progress_override ?? 0);
         }
 
         $milestones = $this->relationLoaded('milestones')
             ? $this->milestones
-            : $this->milestones()->get(['milestone_id', 'is_completed']);
+            : $this->milestones()->get(['milestone_id', 'is_completed', 'progress_percentage']);
+
         $total = $milestones->count();
 
-        return $total > 0
-            ? round(($milestones->where('is_completed', true)->count() / $total) * 100, 2)
-            : 0.0;
+        if ($total === 0) {
+            return (float) ($this->admin_progress_override ?? 0);
+        }
+
+        $totalProgress = $milestones->sum(function ($milestone) {
+            $progress = (float) ($milestone->progress_percentage ?? 0);
+            if ($milestone->is_completed) {
+                $progress = max($progress, 100.0);
+            }
+            return min($progress, 100.0);
+        });
+
+        $milestoneProgress = round($totalProgress / $total, 2);
+        $override = (float) ($this->admin_progress_override ?? $milestoneProgress);
+
+        return round(($milestoneProgress * 0.7) + ($override * 0.3), 2);
     }
 
     public function getMilestoneProgressSummaryAttribute(): string

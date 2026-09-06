@@ -69,6 +69,7 @@ class MilestoneController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'is_completed' => 'nullable|boolean',
             'is_delayed' => 'nullable|boolean',
+            'progress_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -127,6 +128,7 @@ class MilestoneController extends Controller
                 'end_date' => $validated['end_date'] ?? null,
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
+                'progress_percentage' => (float) ($validated['progress_percentage'] ?? 0),
             ]);
 
             $this->syncAffectedPhaseWorkflow($milestone);
@@ -237,6 +239,7 @@ class MilestoneController extends Controller
             'end_date' => 'required|date',
             'is_completed' => 'boolean',
             'is_delayed' => 'boolean',
+            'progress_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -268,6 +271,7 @@ class MilestoneController extends Controller
                 'end_date' => $validated['end_date'] ?? $milestone->end_date,
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
+                'progress_percentage' => (float) ($validated['progress_percentage'] ?? $milestone->progress_percentage),
             ]);
 
             $this->syncAffectedPhaseWorkflow($milestone, $oldPhaseId);
@@ -473,7 +477,10 @@ class MilestoneController extends Controller
             DB::beginTransaction();
 
             $milestoneName = $milestone->milestone_name;
+            $milestonePhaseId = $milestone->phase_id;
             $milestone->delete();
+
+            $this->syncAffectedPhaseWorkflow(new Milestone(['phase_id' => $milestonePhaseId]));
 
             $this->logAction(
                 'Milestone Deleted',
