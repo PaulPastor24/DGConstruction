@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -2033,6 +2034,42 @@ class AdminDashboardController extends Controller
         $user->save();
 
         return back()->with('success', 'Profile information updated successfully.');
+    }
+
+    public function updateProfilePhoto(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!Schema::hasColumn('users', 'profile_photo')) {
+            return back()->with('error', 'Profile photo storage is not available yet.');
+        }
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+        ]);
+
+        $newPhotoPath = $validated['profile_photo']->storePublicly('profile-photos', 'public');
+        if (!$newPhotoPath) {
+            return back()->with('error', 'The profile photo could not be stored. Please try again.');
+        }
+
+        $oldPhotoPath = $user->profile_photo;
+        $user->profile_photo = $newPhotoPath;
+        $user->save();
+
+        if ($oldPhotoPath) {
+            Storage::disk('public')->delete($oldPhotoPath);
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile photo updated successfully.',
+                'photo_url' => asset('storage/' . ltrim($newPhotoPath, '/')),
+            ]);
+        }
+
+        return back()->with('success', 'Profile photo updated successfully.');
     }
 
     public function updatePassword(Request $request)

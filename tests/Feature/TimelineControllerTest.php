@@ -70,6 +70,7 @@ class TimelineControllerTest extends TestCase
             $table->date('end_date')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->boolean('is_delayed')->default(false);
+            $table->string('status', 20)->default('pending');
             $table->timestamps();
         });
 

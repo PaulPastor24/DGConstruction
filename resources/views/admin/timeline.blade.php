@@ -347,6 +347,32 @@
         gap: 1rem;
     }
 
+    .milestone-schedule-status-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .milestone-schedule-status-row.is-create {
+        grid-template-columns: 1fr;
+    }
+
+    .milestone-schedule-box,
+    .milestone-status-box {
+        min-width: 0;
+        margin-bottom: 0;
+    }
+
+    .milestone-schedule-fields {
+        display: grid;
+        gap: 0.85rem;
+    }
+
+    .milestone-schedule-status-row.is-create .milestone-schedule-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .milestone-modal-field {
         display: flex;
         flex-direction: column;
@@ -525,6 +551,15 @@
     @media (max-width: 720px) {
         .milestone-modal-grid,
         .milestone-modal-status-group {
+            grid-template-columns: 1fr;
+        }
+
+        .milestone-schedule-status-row,
+        .milestone-schedule-status-row.is-create {
+            grid-template-columns: 1fr;
+        }
+
+        .milestone-schedule-status-row.is-create .milestone-schedule-fields {
             grid-template-columns: 1fr;
         }
     }
@@ -1772,35 +1807,38 @@
                 </div>
             </div>
 
-            <div class="milestone-modal-section">
+            <div class="milestone-schedule-status-row is-create" id="milestoneScheduleStatusRow">
+                <div class="milestone-modal-section milestone-schedule-box">
+                    <div class="milestone-modal-section-title">Schedule</div>
+                    <p class="milestone-modal-section-copy">Set the milestone dates.</p>
 
-            <div class="milestone-modal-section">
-                <div class="milestone-modal-section-title">Schedule</div>
-                <p class="milestone-modal-section-copy">Set the milestone dates.</p>
+                    <div class="milestone-schedule-fields">
+                        <div class="milestone-modal-field">
+                            <label for="milestoneStartDate">Start Date <span class="milestone-modal-required">Required</span></label>
+                            <input id="milestoneStartDate" name="start_date" type="date" required>
+                        </div>
 
-                <div class="milestone-modal-grid">
-                    <div class="milestone-modal-field">
-                        <label for="milestoneStartDate">Start Date <span class="milestone-modal-required">Required</span></label>
-                        <input id="milestoneStartDate" name="start_date" type="date" required>
+                        <div class="milestone-modal-field">
+                            <label for="milestoneEndDate">End Date</label>
+                            <input id="milestoneEndDate" name="end_date" type="date" required>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="milestone-modal-field">
-                        <label for="milestoneEndDate">End Date</label>
-                        <input id="milestoneEndDate" name="end_date" type="date" required>
-                    </div>
+                <div class="milestone-modal-section milestone-status-box" id="milestoneStatusSection">
+                <div class="milestone-modal-section-title">Status</div>
+                <p class="milestone-modal-section-copy">Update the milestone state. Completed milestones count toward phase progress.</p>
+
+                <div class="milestone-modal-field">
+                    <label for="milestoneStatus">Milestone Status <span class="milestone-modal-required">Required</span></label>
+                    <select id="milestoneStatus" name="status" class="form-select" style="height: 44px; border-radius: 10px;" required>
+                        <option value="pending">Pending - Not yet started</option>
+                        <option value="in_progress">In Progress - Work has started</option>
+                        <option value="completed">Completed - Fully delivered</option>
+                        <option value="delayed">Delayed - Behind schedule</option>
+                    </select>
                 </div>
             </div>
-
-            <div class="milestone-modal-section">
-                <div class="milestone-modal-section-title">Progress</div>
-                <p class="milestone-modal-section-copy">Set the milestone completion percentage.</p>
-
-                <div class="milestone-modal-grid">
-                    <div class="milestone-modal-field">
-                        <label for="milestoneProgress">Progress % <span class="milestone-modal-required">Required</span></label>
-                        <input id="milestoneProgress" name="progress_percentage" type="number" min="0" max="100" step="1" value="0" required>
-                    </div>
-                </div>
             </div>
 
             <input type="hidden" id="milestoneCompleted" name="is_completed" value="0">
@@ -1905,7 +1943,10 @@
 
     function formatDateFull(dateValue) {
         if (!dateValue) return 'Not set';
-        const date = new Date(dateValue);
+        const dateOnly = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const date = dateOnly
+            ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+            : new Date(dateValue);
         if (Number.isNaN(date.getTime())) return 'Not set';
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
@@ -2039,8 +2080,8 @@
     function buildGanttTasks(phases) {
         return phases.map((phase, index) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-            const start = toDateInputValue(phase.actual_start_date_raw || phase.actual_start_date || phase.planned_start_date_raw || phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
-            let end = toDateInputValue(phase.actual_end_date_raw || phase.actual_end_date || phase.planned_end_date_raw || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
+            const start = toDateInputValue(getPhaseActualOrPlannedStart(phase)) || '';
+            let end = toDateInputValue(getPhaseActualOrPlannedEnd(phase)) || '';
             if (!end && start) end = start;
             const milestones = Array.isArray(phase.milestones) ? phase.milestones.map((milestone, milestoneIndex) => ({
                 ...milestone,
@@ -2064,6 +2105,23 @@
                 phase_code: phase.phase_code || phase.code || ''
             };
         }).filter((task) => task.start_date);
+    }
+
+    function getPhaseActualOrPlannedStart(phase) {
+        return phase.actual_start_date_value || phase.actual_start_date_raw || phase.actual_start_date || phase.actual_start
+            || phase.planned_start_date_raw || phase.planned_start_date || phase.start || phase.start_date || phase.begin || '';
+    }
+
+    function getPhaseActualOrPlannedEnd(phase) {
+        return phase.actual_end_date_value || phase.actual_end_date_raw || phase.actual_end_date || phase.actual_end
+            || phase.planned_end_date_raw || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate || '';
+    }
+
+    function getMilestonePhaseSchedule(phase) {
+        return {
+            start: phase?.planned_start_date_raw || phase?.planned_start_date || '',
+            end: phase?.planned_end_date_raw || phase?.planned_end_date || ''
+        };
     }
 
     function initSelectedProjectGantt(tasks, project) {
@@ -2097,8 +2155,8 @@
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
             const phaseName = getDisplayPhaseName(phase);
-            const start = formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start || phase.start_date || phase.begin);
-            const end = formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
+            const start = formatDateFull(getPhaseActualOrPlannedStart(phase));
+            const end = formatDateFull(getPhaseActualOrPlannedEnd(phase));
             const statusLabel = status.replace('-', ' ');
 
             return `
@@ -2144,8 +2202,8 @@
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
             const phaseName = getDisplayPhaseName(phase);
-            const start = formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start);
-            const end = formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end);
+            const start = formatDateFull(getPhaseActualOrPlannedStart(phase));
+            const end = formatDateFull(getPhaseActualOrPlannedEnd(phase));
 
             return `
                 <article class="timeline-mobile-card">
@@ -2219,7 +2277,10 @@
                                 <span class="timeline-mobile-label">Action</span>
                                 <span class="timeline-mobile-value">Edit milestone</span>
                             </span>
-                            <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" aria-label="Edit milestone"><i class="bi bi-pencil"></i></button>
+                            <div class="action-icons-flex">
+                                <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" aria-label="Edit milestone"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="btn-icon-table text-danger" data-delete-milestone="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" data-milestone-name="${escapeHtml(getDisplayMilestoneName(milestone))}" aria-label="Delete milestone"><i class="bi bi-trash3"></i></button>
+                            </div>
                         </div>
                     </div>
                 </article>
@@ -2329,8 +2390,8 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td data-label="Start">${formatDateFull(phase.actual_start_date || phase.planned_start_date || phase.start)}</td>
-                                                    <td data-label="End">${formatDateFull(phase.actual_end_date || phase.planned_end_date || phase.end)}</td>
+                                                    <td data-label="Start">${formatDateFull(getPhaseActualOrPlannedStart(phase))}</td>
+                                                    <td data-label="End">${formatDateFull(getPhaseActualOrPlannedEnd(phase))}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
                                                     <td data-label="Progress">${Math.round(percentage)}%</td>
                                                 </tr>
@@ -2382,6 +2443,7 @@
                                                     <td data-label="Actions">
                                                         <div class="action-icons-flex">
                                                             <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}"><i class="bi bi-pencil"></i></button>
+                                                            <button type="button" class="btn-icon-table text-danger" data-delete-milestone="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" data-milestone-name="${escapeHtml(getDisplayMilestoneName(milestone))}" aria-label="Delete milestone"><i class="bi bi-trash3"></i></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -2449,6 +2511,13 @@
         document.querySelectorAll('[data-open-edit]').forEach((button) => {
             button.addEventListener('click', () => window.openMilestoneEditModal?.(button.getAttribute('data-open-edit'), button.getAttribute('data-milestone-id')));
         });
+        document.querySelectorAll('[data-delete-milestone]').forEach((button) => {
+            button.addEventListener('click', () => deleteTimelineMilestone(
+                button.getAttribute('data-delete-milestone'),
+                button.getAttribute('data-milestone-id'),
+                button.getAttribute('data-milestone-name') || 'this milestone'
+            ));
+        });
 
         const tasks = buildGanttTasks(filteredPhases);
         initSelectedProjectGantt(tasks, project);
@@ -2497,7 +2566,7 @@
                 })
                 : getFilteredPhases(selectedProject).map((phase, index) => {
                     const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, phase.actual_start_date || phase.planned_start_date || phase.start || '', phase.actual_end_date || phase.planned_end_date || phase.end || ''];
+                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, getPhaseActualOrPlannedStart(phase), getPhaseActualOrPlannedEnd(phase)];
                 });
             const headers = timelineViewMode === 'timeline'
                 ? ['#', 'Milestone', 'Phase', 'Status', 'Start Planned Date', 'End Planned Date']
@@ -2576,8 +2645,8 @@
             return;
         }
 
-        const plannedStart = phase.planned_start_date_raw || phase.planned_start_date || 'Not set';
-        const plannedEnd = phase.planned_end_date_raw || phase.planned_end_date || 'Not set';
+        const plannedStart = phase.actual_start_date_raw || phase.actual_start_date || phase.planned_start_date_raw || phase.planned_start_date || 'Not set';
+        const plannedEnd = phase.actual_end_date_raw || phase.actual_end_date || phase.planned_end_date_raw || phase.planned_end_date || 'Not set';
 
         plannedStartEl.textContent = String(plannedStart).slice(0, 10);
         plannedEndEl.textContent = String(plannedEnd).slice(0, 10);
@@ -2590,9 +2659,12 @@
         document.getElementById('milestoneName').value = milestone?.milestone_name || '';
         document.getElementById('milestoneStartDate').value = milestone?.start_date ? String(milestone.start_date).slice(0, 10) : '';
         document.getElementById('milestoneEndDate').value = milestone?.end_date ? String(milestone.end_date).slice(0, 10) : '';
-        document.getElementById('milestoneProgress').value = milestone?.progress_percentage ?? 0;
-        document.getElementById('milestoneCompleted').value = milestone?.is_completed ? '1' : '0';
-        document.getElementById('milestoneDelayed').value = milestone?.is_delayed ? '1' : '0';
+        const displayStatus = milestone?.display_status || milestone?.status || 'pending';
+        const statusSelect = document.getElementById('milestoneStatus');
+        if (statusSelect) statusSelect.value = displayStatus;
+        document.getElementById('milestoneCompleted').value = displayStatus === 'completed' ? '1' : '0';
+        document.getElementById('milestoneDelayed').value = displayStatus === 'delayed' ? '1' : '0';
+        document.getElementById('milestoneModalForm').dataset.originalStatus = displayStatus;
         milestoneFormSnapshot = getMilestoneFormSnapshot();
     }
 
@@ -2637,15 +2709,20 @@
         const submitButton = document.getElementById('milestoneSubmitBtn');
         const note = document.getElementById('milestoneModalNote');
         const existingWrap = document.getElementById('milestoneExistingSelectorWrap');
+        const statusSection = document.getElementById('milestoneStatusSection');
+        const scheduleStatusRow = document.getElementById('milestoneScheduleStatusRow');
 
         if (!backdrop || !form || !title || !subtitle || !submitButton) return;
 
         form.dataset.mode = mode;
+        form.dataset.originalStatus = 'pending';
         form.reset();
         milestoneFormSnapshot = null;
         document.getElementById('milestoneProjectId').value = selectedProject?.id || '';
         document.getElementById('milestoneId').value = '';
         existingWrap?.classList.add('d-none');
+        if (statusSection) statusSection.style.display = mode === 'edit' ? 'block' : 'none';
+        scheduleStatusRow?.classList.toggle('is-create', mode !== 'edit');
         populateMilestonePhaseOptions(phaseId || '');
         updateMilestonePhaseInfo(findPhaseInModal(document.getElementById('milestonePhaseId')?.value || ''));
         document.body.style.overflow = 'hidden';
@@ -2678,9 +2755,9 @@
             tomorrow.setDate(tomorrow.getDate() + 1);
             document.getElementById('milestoneStartDate').value = tomorrow.toISOString().slice(0, 10);
             document.getElementById('milestoneEndDate').value = '';
-            document.getElementById('milestoneProgress').value = 0;
             document.getElementById('milestoneCompleted').value = '0';
             document.getElementById('milestoneDelayed').value = '0';
+            document.getElementById('milestoneStatus').value = 'pending';
             if (note) {
                 note.querySelector('span').textContent = '';
             }
@@ -2700,14 +2777,42 @@
 
 let milestoneFormSnapshot = null;
 
+    function syncMilestoneStatus() {
+        const selectedStatus = document.getElementById('milestoneStatus')?.value || 'pending';
+        const completedInput = document.getElementById('milestoneCompleted');
+        const delayedInput = document.getElementById('milestoneDelayed');
+        if (!completedInput || !delayedInput) return;
+
+        completedInput.value = selectedStatus === 'completed' ? '1' : '0';
+        delayedInput.value = selectedStatus === 'delayed' ? '1' : '0';
+    }
+
+    document.getElementById('milestoneStatus')?.addEventListener('change', function () {
+        const newStatus = this.value;
+        const form = document.getElementById('milestoneModalForm');
+        const originalStatus = form?.dataset.originalStatus || 'pending';
+
+        if (originalStatus === 'completed' && newStatus !== 'completed') {
+            this.value = originalStatus;
+            Swal.fire({
+                title: 'Completed milestone locked',
+                text: 'A completed milestone cannot be moved back to Pending, In Progress, or Delayed.',
+                icon: 'warning',
+                confirmButtonColor: '#166534'
+            });
+            return;
+        }
+
+        syncMilestoneStatus();
+    });
+
     function getMilestoneFormSnapshot() {
         return {
             phaseId: document.getElementById('milestonePhaseId')?.value?.trim() || '',
             name: document.getElementById('milestoneName')?.value?.trim() || '',
             startDate: document.getElementById('milestoneStartDate')?.value?.trim() || '',
             endDate: document.getElementById('milestoneEndDate')?.value?.trim() || '',
-            completed: document.getElementById('milestoneCompleted')?.value || '0',
-            delayed: document.getElementById('milestoneDelayed')?.value || '0'
+            status: document.getElementById('milestoneStatus')?.value || 'pending',
         };
     }
 
@@ -2718,6 +2823,7 @@ let milestoneFormSnapshot = null;
         const actualDate = document.getElementById('milestoneEndDate')?.value?.trim() || '';
         const form = document.getElementById('milestoneModalForm');
         const mode = form?.dataset.mode || 'create';
+        const status = document.getElementById('milestoneStatus')?.value || 'pending';
 
         if (!phaseId) {
             return 'Please select the construction phase that owns this milestone.';
@@ -2731,14 +2837,19 @@ let milestoneFormSnapshot = null;
             return 'A planned date is required.';
         }
 
+        if (mode === 'edit' && !['pending', 'completed', 'delayed'].includes(status)) {
+            return 'Please select a valid milestone status.';
+        }
+
         if (actualDate && plannedDate && actualDate < plannedDate) {
             return 'End date cannot be earlier than the start date.';
         }
 
         const phase = (getProjectPhasesForModal() || []).find((item) => String(item.phase_id ?? item.id) === String(phaseId)) || null;
         if (phase) {
-            const phaseStart = phase.planned_start_date_raw || phase.planned_start_date || '';
-            const phaseEnd = phase.planned_end_date_raw || phase.planned_end_date || '';
+            const phaseSchedule = getMilestonePhaseSchedule(phase);
+            const phaseStart = String(phaseSchedule.start).slice(0, 10);
+            const phaseEnd = String(phaseSchedule.end).slice(0, 10);
 
             if (phaseStart && phaseEnd && (plannedDate < phaseStart || plannedDate > phaseEnd)) {
                 return 'Milestone start date must be within the selected phase schedule.';
@@ -2776,6 +2887,78 @@ let milestoneFormSnapshot = null;
     function getAdminUrl(path) {
         const basePath = getAppBasePath();
         return `${basePath.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+    }
+
+    async function deleteTimelineMilestone(phaseId, milestoneId, milestoneName) {
+        if (!selectedProject?.id || !phaseId || !milestoneId) return;
+
+        const confirmation = window.Swal
+            ? await Swal.fire({
+                title: 'Delete milestone?',
+                text: `"${milestoneName}" will be permanently removed and phase progress will be recalculated.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b'
+            })
+            : { isConfirmed: window.confirm(`Delete "${milestoneName}"?`) };
+
+        if (!confirmation.isConfirmed) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const formData = new FormData();
+        formData.set('_token', csrfToken);
+        formData.set('_method', 'DELETE');
+
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Deleting milestone...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+
+        try {
+            const url = getAdminUrl(`/admin/projects/${encodeURIComponent(selectedProject.id)}/phases/${encodeURIComponent(phaseId)}/milestones/${encodeURIComponent(milestoneId)}`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Unable to delete the milestone.');
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Deleted',
+                    text: payload.message || 'Milestone deleted successfully.',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    confirmButtonColor: '#166534'
+                });
+            }
+            await refreshTimelineFromServer();
+        } catch (error) {
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Delete failed',
+                    text: error.message || 'Unable to delete the milestone.',
+                    icon: 'error',
+                    confirmButtonColor: '#166534'
+                });
+            }
+        }
     }
 
     async function refreshTimelineFromServer() {
@@ -2838,8 +3021,10 @@ let milestoneFormSnapshot = null;
         }
 
         const formData = new FormData(form);
-        formData.set('is_completed', document.getElementById('milestoneCompleted').value === '1' ? '1' : '0');
-        formData.set('is_delayed', document.getElementById('milestoneDelayed').value === '1' ? '1' : '0');
+        const status = document.getElementById('milestoneStatus')?.value || 'pending';
+        formData.set('status', status);
+        formData.set('is_completed', status === 'completed' ? '1' : '0');
+        formData.set('is_delayed', status === 'delayed' ? '1' : '0');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
         let url = getAdminUrl('/admin/milestones');

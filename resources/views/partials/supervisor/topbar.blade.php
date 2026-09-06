@@ -24,8 +24,13 @@
             
             <div class="profile-dropdown-menu" id="profileDropdownMenu">
                 <div class="profile-card">
-                    <div class="profile-avatar">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}
+                    <div class="profile-avatar overflow-hidden">
+                        @if(auth()->user()->profile_photo)
+                            <img data-profile-photo src="{{ asset('storage/' . ltrim(auth()->user()->profile_photo, '/')) }}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            <img data-profile-photo src="" alt="Profile photo" class="d-none" style="width:100%;height:100%;object-fit:cover;">
+                            <span data-profile-initial>{{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}</span>
+                        @endif
                     </div>
                     <div class="profile-info">
                         <div class="profile-name">{{ auth()->user()->name ?? 'Supervisor' }}</div>

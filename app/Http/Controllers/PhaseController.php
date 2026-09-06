@@ -156,6 +156,16 @@ class PhaseController extends Controller
                 }],
                 'notes' => 'nullable|string|max:5000',
                 'admin_progress_override' => 'nullable|numeric|min:0|max:100',
+                'override_reason' => [
+                    'nullable',
+                    'string',
+                    'max:2000',
+                    function ($attribute, $value, $fail) use ($request): void {
+                        if ($request->filled('admin_progress_override') && trim((string) $value) === '') {
+                            $fail('Please provide a reason when setting a progress override.');
+                        }
+                    },
+                ],
             ], [
                 'phase_name.required' => 'Please enter a phase name.',
                 'phase_order.required' => 'Please enter a phase order.',
@@ -187,8 +197,23 @@ class PhaseController extends Controller
                 'planned_end_date' => $validated['planned_end_date'],
                 'completion_percentage' => 0.00,
                 'status' => 'not_started',
-                'admin_progress_override' => $validated['admin_progress_override'] ?? null,
             ];
+            if (Schema::hasColumn('construction_phases', 'admin_progress_override')) {
+                $phaseData['admin_progress_override'] = $validated['admin_progress_override'] ?? null;
+            }
+            if (Schema::hasColumn('construction_phases', 'override_reason')) {
+                $phaseData['override_reason'] = ($validated['admin_progress_override'] ?? null) !== null
+                    ? trim((string) ($validated['override_reason'] ?? ''))
+                    : null;
+            }
+            if (Schema::hasColumn('construction_phases', 'override_applied_at')) {
+                $phaseData['override_applied_at'] = ($validated['admin_progress_override'] ?? null) !== null ? now() : null;
+            }
+            if (Schema::hasColumn('construction_phases', 'override_applied_by')) {
+                $phaseData['override_applied_by'] = ($validated['admin_progress_override'] ?? null) !== null
+                    ? auth('web')->user()->user_id
+                    : null;
+            }
             if (Schema::hasColumn('construction_phases', 'depends_on_phase_id')) {
                 $phaseData['depends_on_phase_id'] = $validated['depends_on_phase_id'] ?? null;
             }
@@ -196,6 +221,7 @@ class PhaseController extends Controller
                 $phaseData['notes'] = $validated['notes'] ?? null;
             }
             $phase = ConstructionPhase::create($phaseData);
+            $phase->syncStatusFromMilestones();
             $project->syncStatusFromPhases();
 
             $this->logAction('Phase Created', "Phase '{$phase->phase_name}' created for project '{$project->project_name}'");
@@ -230,6 +256,13 @@ class PhaseController extends Controller
                     'milestone_progress_summary' => $phase->milestone_progress_summary,
                     'status' => $phase->status,
                     'project_name' => optional($project)->project_name ?? null,
+                    'admin_progress_override' => $phase->admin_progress_override !== null ? (float) $phase->admin_progress_override : null,
+                    'override_reason' => $phase->override_reason ?? null,
+                    'override_applied_at' => $phase->override_applied_at?->format('M d, Y h:i A'),
+                    'override_applied_by' => $phase->override_applied_by,
+                    'override_applied_by_name' => Schema::hasColumn('construction_phases', 'override_applied_by')
+                        ? $phase->overrideAppliedBy?->name
+                        : null,
                 ];
 
                 return response()->json([
@@ -343,6 +376,16 @@ class PhaseController extends Controller
                 'delay_notes' => 'nullable|string|max:5000',
                 'notes' => 'nullable|string|max:5000',
                 'admin_progress_override' => 'nullable|numeric|min:0|max:100',
+                'override_reason' => [
+                    'nullable',
+                    'string',
+                    'max:2000',
+                    function ($attribute, $value, $fail) use ($request): void {
+                        if ($request->filled('admin_progress_override') && trim((string) $value) === '') {
+                            $fail('Please provide a reason when setting a progress override.');
+                        }
+                    },
+                ],
             ], [
                 'phase_name.required' => 'Please enter a phase name.',
                 'phase_order.required' => 'Please enter a phase order.',
@@ -368,6 +411,12 @@ class PhaseController extends Controller
                 'planned_start_date' => $validated['planned_start_date'] ? \Illuminate\Support\Carbon::parse($validated['planned_start_date'])->toDateString() : null,
                 'planned_end_date' => $validated['planned_end_date'] ? \Illuminate\Support\Carbon::parse($validated['planned_end_date'])->toDateString() : null,
                 'status' => (string) ($validated['status'] ?? ''),
+                'admin_progress_override' => array_key_exists('admin_progress_override', $validated)
+                    ? ($validated['admin_progress_override'] === null || $validated['admin_progress_override'] === '' ? null : (float) $validated['admin_progress_override'])
+                    : ($phase->admin_progress_override !== null ? (float) $phase->admin_progress_override : null),
+                'override_reason' => array_key_exists('override_reason', $validated)
+                    ? trim((string) ($validated['override_reason'] ?? ''))
+                    : trim((string) ($phase->override_reason ?? '')),
             ];
 
             $normalizedCurrentValues = [
@@ -376,6 +425,8 @@ class PhaseController extends Controller
                 'planned_start_date' => $phase->planned_start_date ? \Illuminate\Support\Carbon::parse($phase->planned_start_date)->toDateString() : null,
                 'planned_end_date' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->toDateString() : null,
                 'status' => (string) $phase->status,
+                'admin_progress_override' => $phase->admin_progress_override !== null ? (float) $phase->admin_progress_override : null,
+                'override_reason' => trim((string) ($phase->override_reason ?? '')),
             ];
 
             if ($normalizedSubmittedValues === $normalizedCurrentValues) {
@@ -393,14 +444,14 @@ class PhaseController extends Controller
                 ]);
             }
 
-            if ($phase->progress_percentage >= 100 && $submittedStatus !== 'completed') {
-                $finalStatus = 'completed';
-            }
-
-            if ($phase->status === 'completed' && $finalStatus !== 'completed') {
+            if ($phase->status === 'completed' && $submittedStatus !== 'completed') {
                 throw ValidationException::withMessages([
                     'status' => ['Completed phases cannot be reverted to another status.'],
                 ]);
+            }
+
+            if ($phase->progress_percentage >= 100 && $submittedStatus !== 'completed') {
+                $finalStatus = 'completed';
             }
 
             $milestonesComplete = !Schema::hasTable('timeline_milestones')
@@ -442,6 +493,19 @@ class PhaseController extends Controller
 
             $validated['status'] = $finalStatus;
             $validated['depends_on_phase_id'] = $validated['depends_on_phase_id'] ?? null;
+            if (array_key_exists('admin_progress_override', $validated)) {
+                $overrideValue = $validated['admin_progress_override'];
+                if ($overrideValue !== null && $overrideValue !== '') {
+                    $validated['override_reason'] = trim((string) ($validated['override_reason'] ?? ''));
+                    $validated['override_applied_at'] = now();
+                    $validated['override_applied_by'] = auth('web')->user()->user_id;
+                } else {
+                    $validated['admin_progress_override'] = null;
+                    $validated['override_reason'] = null;
+                    $validated['override_applied_at'] = null;
+                    $validated['override_applied_by'] = null;
+                }
+            }
             if ($finalStatus === ConstructionPhase::STATUS_IN_PROGRESS && empty($validated['actual_start_date'])) {
                 $validated['actual_start_date'] = now()->toDateString();
             }
@@ -453,7 +517,7 @@ class PhaseController extends Controller
                 $validated['delay_notes'] = null;
             }
 
-            $optionalPhaseColumns = ['actual_start_date', 'actual_end_date', 'delay_reason', 'delay_notes', 'depends_on_phase_id', 'notes'];
+            $optionalPhaseColumns = ['actual_start_date', 'actual_end_date', 'delay_reason', 'delay_notes', 'depends_on_phase_id', 'notes', 'admin_progress_override', 'override_reason', 'override_applied_at', 'override_applied_by'];
             foreach ($optionalPhaseColumns as $optionalColumn) {
                 if (!Schema::hasColumn('construction_phases', $optionalColumn)) {
                     unset($validated[$optionalColumn]);
@@ -467,6 +531,7 @@ class PhaseController extends Controller
             $phase->fill($validated);
 
             $phase->save();
+            $phase->syncStatusFromMilestones();
             $project->syncStatusFromPhases();
 
             if ($oldStatus !== $phase->status) {
@@ -527,6 +592,12 @@ class PhaseController extends Controller
                     'status' => $phase->status,
                     'project_name' => optional($project)->project_name ?? null,
                     'admin_progress_override' => $phase->admin_progress_override ?? null,
+                    'override_reason' => $phase->override_reason ?? null,
+                    'override_applied_at' => $phase->override_applied_at?->format('M d, Y h:i A'),
+                    'override_applied_by' => $phase->override_applied_by,
+                    'override_applied_by_name' => Schema::hasColumn('construction_phases', 'override_applied_by')
+                        ? $phase->overrideAppliedBy?->name
+                        : null,
                 ];
 
                 $autoCompleted = ($oldStatus !== 'completed' && $phase->status === 'completed' && $finalStatus !== $submittedStatus);

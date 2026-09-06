@@ -2370,7 +2370,7 @@
 
             const editProjectSelect = modal.querySelector('#editProjectId-' + reportId);
             const editPhaseSelect = modal.querySelector('#editPhaseId-' + reportId);
-            const originalPhaseId = '{{ $report->phase_id }}';
+            const originalPhaseId = editPhaseSelect?.value || '';
 
             function loadEditProjectPhases(projectId) {
                 if (!editPhaseSelect) return;

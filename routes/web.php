@@ -82,6 +82,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
 
     Route::get('/admin/profile', [AdminDashboardController::class, 'profile'])->name('admin.profile');
     Route::put('/admin/profile', [AdminDashboardController::class, 'updateProfile'])->name('admin.profile.update');
+    Route::post('/admin/profile/photo', [AdminDashboardController::class, 'updateProfilePhoto'])->name('admin.profile.photo');
     Route::put('/admin/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::get('/admin/project-archives', [ProjectArchiveController::class, 'index'])->name('admin.project-archives.index');
@@ -151,6 +152,7 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
     Route::put('/supervisor/profile', [SupervisorController::class, 'updateProfile'])->name('supervisor.profile.update');
+    Route::post('/supervisor/profile/photo', [SupervisorController::class, 'updateProfilePhoto'])->name('supervisor.profile.photo');
     Route::put('/supervisor/profile/password', [SupervisorController::class, 'updatePassword'])->name('supervisor.profile.password');
 
     Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');

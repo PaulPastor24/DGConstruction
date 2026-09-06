@@ -27,6 +27,7 @@ class User extends Authenticatable implements HasPasskeys
         'role',
         'contact_number',
         'address',
+        'profile_photo',
         'is_active',
     ];
 

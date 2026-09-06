@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('projects:auto-hold-stale')->dailyAt('00:20')->withoutOverlapping();
+        $schedule->command('notifications:scan')->dailyAt('07:00')->withoutOverlapping();
+        $schedule->command('notify:phases-deadlines')->dailyAt('08:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

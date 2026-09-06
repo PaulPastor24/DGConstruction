@@ -478,28 +478,28 @@ class Project extends Model
     }
 
     /**
-     * Calculate progress automatically whether relations are eager-loaded or lazy-loaded
+     * Calculate overall project progress across every phase.
+     *
+     * Not-started phases remain part of the denominator, so a project with
+     * one phase at 65% and two phases at 0% correctly reports 21.67% overall.
      */
     public function getProgressPercentageAttribute()
     {
         $phases = $this->relationLoaded('phases') ? $this->phases : $this->phases()->get();
-        $weightedProgress = 0.0;
-        $totalWeight = 0.0;
-
-        foreach ($phases as $phase) {
-            $progress = (float) $phase->progress_percentage;
-            if (!$phase->actual_start_date && $progress <= 0) {
-                continue;
-            }
-
-            $weight = $phase->planned_start_date && $phase->planned_end_date
-                ? max(1, $phase->planned_start_date->diffInDays($phase->planned_end_date))
-                : 1;
-            $weightedProgress += $progress * $weight;
-            $totalWeight += $weight;
+        if ($phases->isEmpty()) {
+            return 0.0;
         }
 
-        return $totalWeight > 0 ? round($weightedProgress / $totalWeight, 2) : 0.0;
+        return round($phases->avg(fn ($phase) => (float) $phase->progress_percentage), 2);
+    }
+
+    /**
+     * Explicit project-level progress name for dashboards and management tables.
+     * This avoids confusing the project's overall value with a phase progress value.
+     */
+    public function getOverallProgressPercentageAttribute(): float
+    {
+        return (float) $this->progress_percentage;
     }
 
     /**

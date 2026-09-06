@@ -391,11 +391,6 @@
                                                     <span class="date-label text-muted">Actual Start:</span>
                                                     <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseActualStart ? \Carbon\Carbon::parse($currentPhaseActualStart)->format('M d, Y') : 'Pending' }}</span>
                                                 </div>
-                                                <div>
-                                                    <span class="dot-indicator blue-bg"></span>
-                                                    <span class="date-label text-muted">Actual End:</span>
-                                                    <span class="date-val fw-bold text-dark ms-1">{{ $currentPhaseActualEnd ? \Carbon\Carbon::parse($currentPhaseActualEnd)->format('M d, Y') : 'Pending' }}</span>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>

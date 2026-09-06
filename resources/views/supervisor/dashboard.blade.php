@@ -404,7 +404,7 @@
     </section>
 
     @php
-        $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject->phases->first())->phase_name ?? 'Mobilization';
+        $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject?->phases?->first())->phase_name ?? 'Mobilization';
         $projectTargetDate = optional($primaryProject->target_end_date);
         $daysRemaining = $projectTargetDate ? max(0, (int) round($projectTargetDate->diffInDays(now(), false))) : null;
         $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not specified';
@@ -433,9 +433,11 @@
         $nextUpcomingPhase = $phaseTimeline->first(function ($phaseItem) {
             return $phaseItem->status !== 'completed' && $phaseItem->status !== 'in_progress';
         })?->phase_name ?? 'Pending';
-        $upcomingMilestones = \App\Models\Milestone::whereHas('phase', function ($query) use ($primaryProject) {
-            $query->where('project_id', $primaryProject->project_id);
-        })->where('is_completed', false)->orderBy('start_date')->take(3)->get();
+        $upcomingMilestones = $primaryProject
+            ? \App\Models\Milestone::whereHas('phase', function ($query) use ($primaryProject) {
+                $query->where('project_id', $primaryProject->project_id);
+            })->where('is_completed', false)->orderBy('start_date')->take(3)->get()
+            : collect();
         $activityItems = collect();
         foreach ($pendingReports->take(4) as $report) {
             $activityItems->push([

@@ -31,7 +31,7 @@
                         $projectDaysLeft = $normalizedStatus === 'completed' ? 0 : ($project->target_end_date ? max(0, (int) now()->diffInDays($project->target_end_date, false)) : 0);
                         $projectStatusLabel = $project->workflow_status_label;
                         $projectStatusClass = $project->workflow_status_class;
-                        $projectProgressPct = number_format($project->progress_percentage ?? ($normalizedStatus === 'completed' ? 100 : ($normalizedStatus === 'planning' ? 25 : 65)), 0);
+                        $projectProgressPct = number_format($project->overall_progress_percentage, 0);
                         $projectProgressSubtitle = match ($normalizedStatus) {
                             'completed' => 'Completed',
                             'planning' => 'Site Preparation',

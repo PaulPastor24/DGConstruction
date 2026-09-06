@@ -1159,8 +1159,8 @@
                                     };
                                     $progressValue = (float) ($phase->progress_percentage ?? 0);
                                     $progressClass = $progressValue >= 100 ? 'bg-success' : ($phase->status === 'in_progress' ? 'bg-primary' : ($phase->status === 'delayed' ? 'bg-warning' : 'bg-secondary'));
-                                    $startDate = optional($phase->planned_start_date)->format('M d, Y') ?? 'Not set';
-                                    $endDate = optional($phase->planned_end_date)->format('M d, Y') ?? 'Not set';
+                                    $startDate = optional($phase->actual_start_date)->format('M d, Y') ?? optional($phase->planned_start_date)->format('M d, Y') ?? 'Not set';
+                                    $endDate = optional($phase->actual_end_date)->format('M d, Y') ?? optional($phase->planned_end_date)->format('M d, Y') ?? 'Not set';
                                     $milestoneSummary = $phase->milestone_progress_summary ?? '0/0 milestones';
                                     $milestonesPayload = $phase->milestones->map(function ($milestone) {
                                         $milestoneStatus = $milestone->is_completed ? 'Completed' : ($milestone->is_delayed ? 'Delayed' : 'Pending');
@@ -1186,6 +1186,11 @@
                                         'planned_end_date_raw' => optional($phase->planned_end_date)->format('Y-m-d') ?? '',
                                         'actual_start_date_raw' => optional($phase->actual_start_date)->format('Y-m-d') ?? '',
                                         'actual_end_date_raw' => optional($phase->actual_end_date)->format('Y-m-d') ?? '',
+                                        'admin_progress_override' => $phase->admin_progress_override !== null ? (float) $phase->admin_progress_override : null,
+                                        'override_reason' => $phase->override_reason,
+                                        'override_applied_at' => optional($phase->override_applied_at)->format('M d, Y h:i A'),
+                                        'override_applied_by' => $phase->override_applied_by,
+                                        'override_applied_by_name' => optional($phase->overrideAppliedBy)->name,
                                         'depends_on_phase_id' => $phase->depends_on_phase_id,
                                         'delay_reason' => $phase->delay_reason,
                                         'delay_notes' => $phase->delay_notes,
@@ -1443,11 +1448,16 @@
                             </div>
                         </div>
 
-                        <div class="row mt-3" id="overrideVisibleRow">
+                        <div class="row mt-3" id="overrideVisibleRow" style="display: none;">
                             <div class="col-12 col-md-6">
                                 <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Admin Progress Override (%)</label>
-                                <input type="number" name="admin_progress_override" id="adminProgressOverrideInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="1" value="{{ old('admin_progress_override', $phase->admin_progress_override ?? '') }}" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
-                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Optional manual adjustment blended with milestone progress.</div>
+                                <input type="number" name="admin_progress_override" id="adminProgressOverrideInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="1" value="" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Leave empty to use the binary milestone calculation.</div>
+                            </div>
+                            <div class="col-12 col-md-6" id="overrideReasonSection" style="display: none;">
+                                <label class="form-label mb-1 fw-semibold text-secondary" for="overrideReasonInput" style="font-size: 0.8rem;">Override Reason <span class="text-danger">*</span></label>
+                                <textarea name="override_reason" id="overrideReasonInput" class="form-control px-3 shadow-none bg-white border" rows="2" maxlength="2000" placeholder="Explain why the calculated progress is being overridden."></textarea>
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Required when an override is set.</div>
                             </div>
                         </div>
 
@@ -1842,6 +1852,13 @@
                             <div class="progress-bar ${escapeHtml(payload.progress_bar_class || 'bg-success')}" style="width: ${escapeHtml(payload.progress_percent || '0')}%;"></div>
                         </div>
                     </div>
+                    ${payload.admin_progress_override !== null && payload.admin_progress_override !== undefined ? `
+                        <div class="mt-2 p-2 rounded bg-info-subtle border border-info-subtle" style="font-size: 11px;">
+                            <strong>Manual override:</strong> ${escapeHtml(payload.admin_progress_override)}%
+                            <div class="text-muted mt-1">${escapeHtml(payload.override_reason || 'No reason provided')}</div>
+                            ${payload.override_applied_at ? `<div class="text-muted">Applied ${escapeHtml(payload.override_applied_at)}${payload.override_applied_by_name ? ` by ${escapeHtml(payload.override_applied_by_name)}` : ''}</div>` : ''}
+                        </div>
+                    ` : '<div class="text-muted mt-2" style="font-size: 11px;">Progress is calculated from completed milestones.</div>'}
                 </div>
 
                 <hr class="text-muted opacity-25">
@@ -2179,6 +2196,10 @@
             if (phaseStatusSection) {
                 phaseStatusSection.style.display = isEdit ? 'block' : 'none';
             }
+            const overrideVisibleRow = document.getElementById('overrideVisibleRow');
+            if (overrideVisibleRow) {
+                overrideVisibleRow.style.display = isEdit ? 'flex' : 'none';
+            }
             document.getElementById('statusSubtext').textContent = isEdit ? 'Set the current status of this phase' : 'Set the current status of this phase';
             document.getElementById('durationLabel').textContent = isEdit ? 'Duration (Calculated)' : 'Duration';
             document.getElementById('durationSubtext').textContent = isEdit ? '' : 'Duration will be calculated automatically';
@@ -2202,6 +2223,9 @@
             if (phaseNotesInput) phaseNotesInput.value = payload?.notes || '';
             const adminProgressOverrideInput = document.getElementById('adminProgressOverrideInput');
             if (adminProgressOverrideInput) adminProgressOverrideInput.value = payload?.admin_progress_override ?? '';
+            const overrideReasonInput = document.getElementById('overrideReasonInput');
+            if (overrideReasonInput) overrideReasonInput.value = payload?.override_reason || '';
+            updateOverrideVisibility();
             if (dependsOnPhaseInput) {
                 Array.from(dependsOnPhaseInput.options).forEach(function (option) {
                     option.disabled = Boolean(payload?.phase_id) && option.value === String(payload.phase_id);
@@ -2317,6 +2341,23 @@
             phaseForm.addEventListener('change', clearPhaseFormErrors);
         }
 
+        const adminProgressOverrideInput = document.getElementById('adminProgressOverrideInput');
+        const overrideReasonInput = document.getElementById('overrideReasonInput');
+        const overrideReasonSection = document.getElementById('overrideReasonSection');
+
+        function updateOverrideVisibility() {
+            const hasOverride = Boolean(adminProgressOverrideInput?.value.trim());
+            if (overrideReasonSection) overrideReasonSection.style.display = hasOverride ? 'block' : 'none';
+            if (overrideReasonInput) {
+                overrideReasonInput.required = hasOverride;
+                if (!hasOverride) overrideReasonInput.value = '';
+            }
+        }
+
+        adminProgressOverrideInput?.addEventListener('input', updateOverrideVisibility);
+        adminProgressOverrideInput?.addEventListener('change', updateOverrideVisibility);
+        updateOverrideVisibility();
+
         function mapStatusClassAndLabel(status) {
             switch (status) {
                 case 'completed': return { class: 'status-completed', label: 'Completed' };
@@ -2424,6 +2465,10 @@
                         planned_start_date_raw: phase.planned_start_date_raw,
                         planned_end_date_raw: phase.planned_end_date_raw,
                         completion_percentage_raw: phase.completion_percentage,
+                        admin_progress_override: phase.admin_progress_override ?? null,
+                        override_reason: phase.override_reason || '',
+                        override_applied_at: phase.override_applied_at || null,
+                        override_applied_by_name: phase.override_applied_by_name || null,
                         status: phase.status,
                     });
                     editBtn.dataset.phaseEdit = payload;

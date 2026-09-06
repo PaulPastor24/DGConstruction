@@ -18,7 +18,7 @@ class Milestone extends Model
         'end_date',
         'is_completed',
         'is_delayed',
-        'progress_percentage',
+        'status',
     ];
 
     protected $casts = [
@@ -26,8 +26,22 @@ class Milestone extends Model
         'end_date' => 'date',
         'is_completed' => 'boolean',
         'is_delayed' => 'boolean',
-        'progress_percentage' => 'decimal:2',
     ];
+
+    protected $appends = ['display_status'];
+
+    public function getDisplayStatusAttribute(): string
+    {
+        if ($this->is_completed) {
+            return 'completed';
+        }
+
+        if ($this->is_delayed) {
+            return 'delayed';
+        }
+
+        return $this->status ?? 'pending';
+    }
 
     public function phase()
     {

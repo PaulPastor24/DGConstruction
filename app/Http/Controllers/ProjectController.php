@@ -920,7 +920,7 @@ class ProjectController extends Controller
 
         $projects = Project::query()
             ->with(['phases' => function ($query) {
-                $query->orderBy('phase_order')->with('milestones');
+                $query->orderBy('phase_order')->with(['milestones', 'overrideAppliedBy']);
             }])
             ->orderBy('project_name')
             ->get();

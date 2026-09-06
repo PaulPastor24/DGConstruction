@@ -48,6 +48,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        .profile-photo-cancel { position: absolute; top: -4px; right: -4px; width: 28px; height: 28px; border: 2px solid #fff; border-radius: 50%; background: #dc3545; color: #fff; display: none; align-items: center; justify-content: center; z-index: 2; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+        .profile-photo-cancel.is-visible { display: inline-flex; }
+
         .badge-active {
             background-color: #e1f5fe;
             color: #0288d1;
@@ -211,8 +214,13 @@
                 <h5 class="fw-bold mb-4">Profile Summary</h5>
                 <div class="d-flex flex-column flex-sm-row gap-4 align-items-start">
                     <div class="ui-avatar-container">
-                        <div class="ui-avatar-large d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, #2F6B3C, #66BB6A); font-size: 2.5rem; font-weight: bold;">
-                            {{ strtoupper(substr($user->name ?? 'S', 0, 1)) }}
+                        <div class="ui-avatar-large d-flex align-items-center justify-content-center text-white overflow-hidden" style="background: linear-gradient(135deg, #2F6B3C, #66BB6A); font-size: 2.5rem; font-weight: bold;">
+                            @if($user->profile_photo)
+                                <img data-profile-photo src="{{ asset('storage/' . ltrim($user->profile_photo, '/')) }}" alt="Profile photo" class="w-100 h-100 object-fit-cover">
+                            @else
+                                <img data-profile-photo src="" alt="Profile photo" class="w-100 h-100 object-fit-cover d-none">
+                                <span data-profile-initial>{{ strtoupper(substr($user->name ?? 'S', 0, 1)) }}</span>
+                            @endif
                         </div>
                         <span class="ui-avatar-edit-badge">
                             <i class="bi bi-camera-fill text-muted-small"></i>
@@ -386,16 +394,27 @@
                 </div>
                 <p class="text-muted small text-start px-2 mb-4">Update your profile picture</p>
                 
-                <div class="my-3">
-                    <div class="ui-avatar-large mx-auto d-flex align-items-center justify-content-center text-white mb-3" style="background: linear-gradient(135deg, #2F6B3C, #66BB6A); font-size: 2.5rem; font-weight: bold; width: 100px; height: 100px;">
-                        {{ strtoupper(substr($user->name ?? 'S', 0, 1)) }}
+                <div class="my-3 position-relative d-inline-block">
+                    <div class="ui-avatar-large mx-auto d-flex align-items-center justify-content-center text-white mb-3 overflow-hidden" style="background: linear-gradient(135deg, #2F6B3C, #66BB6A); font-size: 2.5rem; font-weight: bold; width: 100px; height: 100px;">
+                        @if($user->profile_photo)
+                            <img data-profile-photo src="{{ asset('storage/' . ltrim($user->profile_photo, '/')) }}" alt="Profile photo" class="w-100 h-100 object-fit-cover">
+                        @else
+                            <img data-profile-photo src="" alt="Profile photo" class="w-100 h-100 object-fit-cover d-none">
+                            <span data-profile-initial>{{ strtoupper(substr($user->name ?? 'S', 0, 1)) }}</span>
+                        @endif
                     </div>
+                    <button type="button" class="profile-photo-cancel" data-profile-photo-cancel aria-label="Cancel selected profile photo"><i class="bi bi-x-lg"></i></button>
                 </div>
 
                 <div class="px-3">
-                    <button type="button" class="btn btn-sm btn-outline-success w-100 rounded-3 py-2 fw-semibold mb-2">
-                        <i class="bi bi-upload me-1"></i> Upload New Photo
-                    </button>
+                    <form id="profilePhotoForm" action="{{ route('supervisor.profile.photo') }}" method="POST" enctype="multipart/form-data" class="mb-2">
+                        @csrf
+                        <label for="profilePhotoInput" class="btn btn-sm btn-outline-success w-100 rounded-3 py-2 fw-semibold mb-0">
+                            <i class="bi bi-upload me-1"></i> Upload New Photo
+                        </label>
+                        <input type="file" name="profile_photo" id="profilePhotoInput" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                        <button type="submit" id="profilePhotoSubmit" class="btn btn-sm btn-success w-100 rounded-3 py-2 fw-semibold mt-2 d-none">Save Photo</button>
+                    </form>
                     <span class="text-muted d-block thread-safe-small" style="font-size: 0.75rem;">JPG, PNG or GIF. Max size of 2MB.</span>
                     <span class="text-muted d-block thread-safe-small" style="font-size: 0.75rem;">Recommended size: 400x400px</span>
                 </div>
@@ -555,6 +574,90 @@
                 passwordModal.show();
             });
         }
+
+        const profilePhotoInput = document.getElementById('profilePhotoInput');
+        const profilePhotoSubmit = document.getElementById('profilePhotoSubmit');
+        const profilePhotoForm = document.getElementById('profilePhotoForm');
+        const profilePhotoCancel = document.querySelector('[data-profile-photo-cancel]');
+        const savedPhotoSources = new Map();
+        document.querySelectorAll('[data-profile-photo]').forEach((image) => savedPhotoSources.set(image, image.getAttribute('src') || ''));
+        const setPhotoCancelVisible = (visible) => document.querySelectorAll('[data-profile-photo-cancel]').forEach((button) => {
+            button.classList.toggle('is-visible', visible);
+            button.classList.toggle('d-none', !visible);
+            button.hidden = !visible;
+            button.style.display = visible ? 'inline-flex' : 'none';
+        });
+        const restoreProfilePhoto = () => {
+            profilePhotoInput.value = '';
+            document.querySelectorAll('[data-profile-photo]').forEach((image) => { image.src = savedPhotoSources.get(image) || ''; image.classList.toggle('d-none', !image.src); });
+            document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.toggle('d-none', Array.from(savedPhotoSources.values()).some(Boolean)));
+            profilePhotoSubmit.classList.add('d-none');
+            setPhotoCancelVisible(false);
+        };
+        profilePhotoCancel?.addEventListener('click', restoreProfilePhoto);
+
+        profilePhotoInput?.addEventListener('change', function () {
+            const file = this.files?.[0];
+            const validType = file && /^image\/(jpeg|png|gif|webp)$/i.test(file.type);
+            const validSize = file && file.size <= 2 * 1024 * 1024;
+
+            if (!file) {
+                profilePhotoSubmit?.classList.add('d-none');
+                return;
+            }
+
+            if (!validType || !validSize) {
+                this.value = '';
+                profilePhotoSubmit?.classList.add('d-none');
+                Swal.fire({ icon: 'warning', title: 'Invalid profile photo', text: 'Choose an image up to 2MB.', confirmButtonColor: '#2F6B3C' });
+                return;
+            }
+
+            const previewUrl = URL.createObjectURL(file);
+            document.querySelectorAll('[data-profile-photo]').forEach((image) => { image.src = previewUrl; image.classList.remove('d-none'); });
+            document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.add('d-none'));
+            setPhotoCancelVisible(true);
+            profilePhotoSubmit?.classList.remove('d-none');
+        });
+
+        profilePhotoForm?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            if (!profilePhotoInput?.files?.[0]) return;
+
+            profilePhotoSubmit.disabled = true;
+            profilePhotoSubmit.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(this)
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.message || 'Unable to upload the profile photo.');
+                }
+
+                document.querySelectorAll('[data-profile-photo]').forEach((image) => {
+                    image.src = `${payload.photo_url}?v=${Date.now()}`;
+                    image.classList.remove('d-none');
+                });
+                document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.add('d-none'));
+                profilePhotoInput.value = '';
+                profilePhotoSubmit.classList.add('d-none');
+                setPhotoCancelVisible(false);
+                Swal.fire({ icon: 'success', title: 'Profile photo updated', text: payload.message, confirmButtonColor: '#2F6B3C' });
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Upload failed', text: error.message, confirmButtonColor: '#2F6B3C' });
+            } finally {
+                profilePhotoSubmit.disabled = false;
+                profilePhotoSubmit.textContent = 'Save Photo';
+            }
+        });
 
         @if(session('success'))
             Swal.fire({

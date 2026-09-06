@@ -47,6 +47,26 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        .profile-photo-cancel {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 28px;
+            height: 28px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            background: #dc3545;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,.2);
+        }
+
+        .profile-photo-cancel.is-visible { display: inline-flex; }
+
         .badge-role {
             background-color: var(--profile-brand-light);
             color: var(--profile-brand);
@@ -96,6 +116,19 @@
             border-radius: 16px;
             padding: 1.1rem 1.2rem;
             min-height: auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-grid {
+            align-items: stretch;
+        }
+
+        .info-item-value {
+            min-height: 24px;
+            overflow-wrap: anywhere;
         }
 
         .info-row + .info-row {
@@ -161,6 +194,43 @@
             font-weight: 600;
         }
 
+        #profileEditModal .form-control,
+        #passwordModal .form-control {
+            min-height: 44px;
+            height: 44px;
+            box-sizing: border-box;
+        }
+
+        #profileEditModal #first_name,
+        #profileEditModal #last_name,
+        #profileEditModal #email,
+        #profileEditModal #contact_number,
+        #profileEditModal #address {
+            height: 44px !important;
+            min-height: 44px !important;
+            box-sizing: border-box !important;
+        }
+
+        #profileEditModal .profile-edit-field {
+            display: flex;
+            flex-direction: column;
+            align-self: stretch;
+            min-height: 91px;
+        }
+
+        #profileEditModal .profile-edit-field .invalid-feedback {
+            min-height: 18px;
+        }
+
+        #profileEditModal .profile-edit-field > .form-control {
+            flex: 0 0 44px;
+        }
+
+        #profileEditModal textarea.form-control {
+            height: auto;
+            min-height: 88px;
+        }
+
         .btn-primary-soft {
             background: linear-gradient(135deg, #2a4028, #4b6b46);
             color: #fff;
@@ -169,6 +239,15 @@
 
         .btn-primary-soft:hover {
             background: linear-gradient(135deg, #1e3322, #3a5a38);
+            color: #ffffff !important;
+            border-color: #1e3322 !important;
+        }
+
+        #openPasswordModal:hover,
+        #openProfileModal:hover,
+        #profileEditModal .btn-primary-soft:hover,
+        #passwordModal .btn-primary-soft:hover {
+            color: #ffffff !important;
         }
 
         @media (max-width: 767px) {
@@ -193,8 +272,13 @@
                 <h5 class="fw-bold mb-4">Profile Summary</h5>
                 <div class="d-flex flex-column flex-sm-row gap-4 align-items-start">
                     <div class="ui-avatar-container">
-                        <div class="ui-avatar-large d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, #2a4028, #4b6b46); font-size: 2.5rem; font-weight: bold;">
-                            {{ strtoupper(substr($user->name ?? 'A', 0, 1)) }}
+                        <div class="ui-avatar-large d-flex align-items-center justify-content-center text-white overflow-hidden" style="background: linear-gradient(135deg, #2a4028, #4b6b46); font-size: 2.5rem; font-weight: bold;">
+                            @if($user->profile_photo)
+                                <img data-profile-photo src="{{ asset('storage/' . ltrim($user->profile_photo, '/')) }}" alt="Profile photo" class="w-100 h-100 object-fit-cover">
+                            @else
+                                <img data-profile-photo src="" alt="Profile photo" class="w-100 h-100 object-fit-cover d-none">
+                                <span data-profile-initial>{{ strtoupper(substr($user->name ?? 'A', 0, 1)) }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="flex-grow-1">
@@ -327,16 +411,27 @@
                 </div>
                 <p class="text-muted small text-start px-2 mb-4">Update your profile picture</p>
 
-                <div class="my-3">
-                    <div class="ui-avatar-large mx-auto d-flex align-items-center justify-content-center text-white mb-3" style="background: linear-gradient(135deg, #2a4028, #4b6b46); font-size: 2.5rem; font-weight: bold; width: 100px; height: 100px;">
-                        {{ strtoupper(substr($user->name ?? 'A', 0, 1)) }}
+                <div class="my-3 position-relative d-inline-block">
+                    <div class="ui-avatar-large mx-auto d-flex align-items-center justify-content-center text-white mb-3 overflow-hidden" style="background: linear-gradient(135deg, #2a4028, #4b6b46); font-size: 2.5rem; font-weight: bold; width: 100px; height: 100px;">
+                        @if($user->profile_photo)
+                            <img data-profile-photo src="{{ asset('storage/' . ltrim($user->profile_photo, '/')) }}" alt="Profile photo" class="w-100 h-100 object-fit-cover">
+                        @else
+                            <img data-profile-photo src="" alt="Profile photo" class="w-100 h-100 object-fit-cover d-none">
+                            <span data-profile-initial>{{ strtoupper(substr($user->name ?? 'A', 0, 1)) }}</span>
+                        @endif
                     </div>
+                    <button type="button" class="profile-photo-cancel" data-profile-photo-cancel aria-label="Cancel selected profile photo"><i class="bi bi-x-lg"></i></button>
                 </div>
 
                 <div class="px-3">
-                    <button type="button" class="btn btn-sm btn-outline-success w-100 rounded-3 py-2 fw-semibold mb-2">
+                    <form id="profilePhotoForm" action="{{ route('admin.profile.photo') }}" method="POST" enctype="multipart/form-data" class="mb-2">
+                        @csrf
+                        <label for="profilePhotoInput" class="btn btn-sm btn-outline-success w-100 rounded-3 py-2 fw-semibold mb-0">
                         <i class="bi bi-upload me-1"></i> Upload New Photo
-                    </button>
+                        </label>
+                        <input type="file" name="profile_photo" id="profilePhotoInput" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                        <button type="submit" id="profilePhotoSubmit" class="btn btn-sm btn-success w-100 rounded-3 py-2 fw-semibold mt-2 d-none">Uploading...</button>
+                    </form>
                     <span class="text-muted d-block" style="font-size: 0.75rem;">JPG, PNG or GIF. Max size of 2MB.</span>
                     <span class="text-muted d-block" style="font-size: 0.75rem;">Recommended size: 400x400px</span>
                 </div>
@@ -365,28 +460,28 @@
                     @csrf
                     @method('PUT')
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-6 profile-edit-field">
                             <label for="first_name" class="form-label">First Name</label>
                             <input type="text" name="first_name" id="first_name" value="{{ old('first_name', $firstName) }}" class="form-control @error('first_name') is-invalid @enderror" required>
                             @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 profile-edit-field">
                             <label for="last_name" class="form-label">Last Name</label>
                             <input type="text" name="last_name" id="last_name" value="{{ old('last_name', $lastName) }}" class="form-control @error('last_name') is-invalid @enderror" required>
                             @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 profile-edit-field">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" class="form-control @error('email') is-invalid @enderror" required>
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 profile-edit-field">
                             <label for="contact_number" class="form-label">Phone Number</label>
                             <input type="text" name="contact_number" id="contact_number" value="{{ old('contact_number', $user->contact_number) }}" class="form-control @error('contact_number') is-invalid @enderror">
                             @error('contact_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         @if($showAddressField)
-                        <div class="col-md-6">
+                        <div class="col-md-6 profile-edit-field">
                             <label for="address" class="form-label">Address</label>
                             <input type="text" name="address" id="address" value="{{ old('address', $user->address) }}" class="form-control @error('address') is-invalid @enderror">
                             @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -464,6 +559,104 @@
             });
         }
 
+        const profilePhotoInput = document.getElementById('profilePhotoInput');
+        const profilePhotoSubmit = document.getElementById('profilePhotoSubmit');
+        const profilePhotoForm = document.getElementById('profilePhotoForm');
+        const profilePhotoCancel = document.querySelector('[data-profile-photo-cancel]');
+        const savedPhotoSources = new Map();
+        document.querySelectorAll('[data-profile-photo]').forEach((image) => savedPhotoSources.set(image, image.getAttribute('src') || ''));
+        const setPhotoCancelVisible = (visible) => document.querySelectorAll('[data-profile-photo-cancel]').forEach((button) => {
+            button.classList.toggle('is-visible', visible);
+            button.classList.toggle('d-none', !visible);
+            button.hidden = !visible;
+            button.style.display = visible ? 'inline-flex' : 'none';
+        });
+
+        const restoreProfilePhoto = () => {
+            profilePhotoInput.value = '';
+            document.querySelectorAll('[data-profile-photo]').forEach((image) => {
+                image.src = savedPhotoSources.get(image) || '';
+                image.classList.toggle('d-none', !image.src);
+            });
+            document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.toggle('d-none', Array.from(savedPhotoSources.values()).some(Boolean)));
+            profilePhotoSubmit.classList.add('d-none');
+            setPhotoCancelVisible(false);
+        };
+
+        profilePhotoCancel?.addEventListener('click', restoreProfilePhoto);
+        if (profilePhotoInput && profilePhotoSubmit) {
+            profilePhotoInput.addEventListener('change', function () {
+                const file = this.files?.[0];
+                const validType = file && /^image\/(jpeg|png|gif|webp)$/i.test(file.type);
+                const validSize = file && file.size <= 2 * 1024 * 1024;
+
+                if (!file) {
+                    profilePhotoSubmit.classList.add('d-none');
+                    return;
+                }
+
+                if (!validType || !validSize) {
+                    this.value = '';
+                    profilePhotoSubmit.classList.add('d-none');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid profile photo',
+                        text: 'Choose a JPG, PNG, GIF, or WEBP image up to 2MB.',
+                        confirmButtonColor: '#2a4028'
+                    });
+                    return;
+                }
+
+                const previewUrl = URL.createObjectURL(file);
+                document.querySelectorAll('[data-profile-photo]').forEach((image) => { image.src = previewUrl; image.classList.remove('d-none'); });
+                document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.add('d-none'));
+                setPhotoCancelVisible(true);
+                profilePhotoSubmit.classList.remove('d-none');
+            });
+
+            profilePhotoForm?.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const file = profilePhotoInput.files?.[0];
+                if (!file) return;
+
+                profilePhotoSubmit.disabled = true;
+                profilePhotoSubmit.textContent = 'Uploading...';
+
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new FormData(this)
+                    });
+                    const payload = await response.json().catch(() => ({}));
+
+                    if (!response.ok || !payload.success) {
+                        const message = payload.message || (payload.errors ? Object.values(payload.errors).flat()[0] : 'Unable to upload the profile photo.');
+                        throw new Error(message);
+                    }
+
+                    document.querySelectorAll('[data-profile-photo]').forEach((image) => {
+                        image.src = `${payload.photo_url}?v=${Date.now()}`;
+                        image.classList.remove('d-none');
+                    });
+                    document.querySelectorAll('[data-profile-initial]').forEach((initial) => initial.classList.add('d-none'));
+                    profilePhotoInput.value = '';
+                    profilePhotoSubmit.classList.add('d-none');
+                    setPhotoCancelVisible(false);
+                    Swal.fire({ icon: 'success', title: 'Profile photo updated', text: payload.message, confirmButtonColor: '#2a4028' });
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Profile photo upload failed', text: error.message, confirmButtonColor: '#2a4028' });
+                } finally {
+                    profilePhotoSubmit.disabled = false;
+                    profilePhotoSubmit.textContent = 'Save Photo';
+                }
+            });
+        }
+
         @if(session('success'))
             Swal.fire({
                 icon: 'success',
@@ -485,10 +678,18 @@
         @if($errors->any())
             const hasPasswordErrors = @json($errors->has('current_password') || $errors->has('password') || $errors->has('password_confirmation'));
             const hasProfileErrors = @json($errors->has('first_name') || $errors->has('last_name') || $errors->has('email') || $errors->has('contact_number') || $errors->has('address'));
+            const hasPhotoErrors = @json($errors->has('profile_photo'));
             if (passwordModal && hasPasswordErrors) {
                 passwordModal.show();
             } else if (profileModal && hasProfileErrors) {
                 profileModal.show();
+            } else if (hasPhotoErrors) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Profile photo upload failed',
+                    text: @json($errors->first('profile_photo')),
+                    confirmButtonColor: '#2a4028'
+                });
             }
         @endif
     });

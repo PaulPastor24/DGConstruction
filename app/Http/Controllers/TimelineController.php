@@ -149,12 +149,19 @@ class TimelineController extends Controller
             };
             $phase->name = $phase->phase_name;
             $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
-            $phase->start = $phase->planned_start_date?->toDateString();
-            $phase->end = $phase->planned_end_date?->toDateString();
+            $phase->start = $phase->actual_start_date?->toDateString() ?? $phase->planned_start_date?->toDateString();
+            $phase->end = $phase->actual_end_date?->toDateString() ?? $phase->planned_end_date?->toDateString();
             $phase->planned_start_date_raw = $phase->planned_start_date?->toDateString();
             $phase->planned_end_date_raw = $phase->planned_end_date?->toDateString();
             $phase->actual_start_date_raw = $phase->actual_start_date?->toDateString();
             $phase->actual_end_date_raw = $phase->actual_end_date?->toDateString();
+            $phase->actual_start = $phase->actual_start_date?->toDateString();
+            $phase->actual_end = $phase->actual_end_date?->toDateString();
+            $phase->actual_start_date_value = $phase->actual_start_date?->toDateString();
+            $phase->actual_end_date_value = $phase->actual_end_date?->toDateString();
+            $phase->admin_progress_override_raw = $phase->admin_progress_override !== null
+                ? (float) $phase->admin_progress_override
+                : null;
             $phase->progress = $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
             $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
             $phase->milestone_count = (int) ($phase->milestones_count ?? 0);

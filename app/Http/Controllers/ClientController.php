@@ -62,7 +62,7 @@ class ClientController extends Controller
         $ongoingProjects = $projects->filter(fn ($p) => $p->status === 'ongoing')->count();
 
         $overallCompletion = $primaryProject
-            ? round($primaryProject->phases->avg('completion_percentage') ?? 0, 2)
+            ? round((float) $primaryProject->overall_progress_percentage, 2)
             : 0;
 
         $currentPhases = ConstructionPhase::query()
@@ -260,7 +260,8 @@ class ClientController extends Controller
             ->with(['project', 'phase', 'submittedBy'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('project_id');
+            ->groupBy('project_id')
+            ->map(fn ($reports) => $reports->take(5)->values());
 
         $milestonesByProject = Milestone::query()
             ->whereHas('phase', function ($q) use ($projectIdsForCarousel) {
@@ -288,13 +289,14 @@ class ClientController extends Controller
             return [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
-                'image' => $project->image_url ?? 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80',
+                'image' => $project->image_url
+                    ?: ($project->project_image ? asset('storage/' . ltrim($project->project_image, '/')) : 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80'),
                 'location' => $location !== '' ? $location : 'Location Pending',
                 'start_date' => optional($project->start_date)->format('M d, Y') ?? 'TBD',
                 'target_end_date' => optional($project->target_end_date)->format('M d, Y') ?? 'TBD',
                 'manager' => optional($project->engineer)->name ?? 'Unassigned',
                 'supervisor' => optional($activeSupervisor)->name ?? 'Not assigned',
-                'progress' => round($phases->avg('completion_percentage') ?? 0, 2),
+                'progress' => round((float) $project->overall_progress_percentage, 2),
                 'status_label' => $isDelayed ? 'Delayed' : 'On Track',
                 'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'phase' => optional($phases->firstWhere('status', 'in_progress'))->phase_name ?? 'Phase pending',
@@ -385,8 +387,18 @@ class ClientController extends Controller
             ->sortBy('start_date')
             ->first();
 
-        $currentPhase = $phases->firstWhere('status', 'in_progress');
-        $progress = round($phases->avg('completion_percentage') ?? 0, 2);
+        $currentPhase = $phases->firstWhere('status', 'in_progress')
+            ?? $phases->firstWhere('status', 'delayed')
+            ?? $phases->firstWhere('status', 'not_started')
+            ?? $phases->first();
+        $phaseStatus = $currentPhase?->status ?? 'not_started';
+        $phaseStatusLabel = match ($phaseStatus) {
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'delayed' => 'Delayed',
+            default => 'Pending',
+        };
+        $progress = round((float) $project->overall_progress_percentage, 2);
 
         if ($reports === null) {
             $reports = Report::where('project_id', $project->project_id)
@@ -453,7 +465,8 @@ class ClientController extends Controller
             'hero' => [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
-                'image' => $project->image_url ?? 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80',
+                'image' => $project->image_url
+                    ?: ($project->project_image ? asset('storage/' . ltrim($project->project_image, '/')) : 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80'),
                 'location' => $location !== '' ? $location : 'Location Pending',
                 'start_date' => optional($project->start_date)->format('M d, Y') ?? 'TBD',
                 'target_end_date' => optional($project->target_end_date)->format('M d, Y') ?? 'TBD',
@@ -463,10 +476,12 @@ class ClientController extends Controller
                 'status_label' => $isDelayed ? 'Delayed' : 'On Track',
                 'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
+                'phase_status' => $phaseStatusLabel,
                 'next_milestone_date' => optional($nextMilestone)->start_date?->format('M d, Y') ?? 'Pending',
             ],
             'stats' => [
                 'current_phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
+                'current_phase_status' => $phaseStatusLabel,
                 'schedule_health_label' => $isDelayed ? 'At Risk' : 'On Track',
                 'schedule_health_pill_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'schedule_health_at_risk' => $isDelayed,

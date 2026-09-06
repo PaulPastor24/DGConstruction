@@ -48,8 +48,12 @@
 
     <div class="sidebar-footer">
         <div class="user-card">
-            <div class="user-avatar">
-                {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+            <div class="user-avatar overflow-hidden">
+                @if(auth()->user()->profile_photo)
+                    <img src="{{ asset('storage/' . ltrim(auth()->user()->profile_photo, '/')) }}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">
+                @else
+                    {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                @endif
             </div>
             <div class="user-info">
                 <div class="user-name">{{ auth()->user()->name ?? 'Admin' }}</div>

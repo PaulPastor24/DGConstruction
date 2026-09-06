@@ -36,6 +36,9 @@ class ConstructionPhase extends Model
         'depends_on_phase_id',
         'notes',
         'admin_progress_override',
+        'override_reason',
+        'override_applied_at',
+        'override_applied_by',
     ];
 
     protected $casts = [
@@ -45,6 +48,7 @@ class ConstructionPhase extends Model
         'actual_end_date' => 'date',
         'completion_percentage' => 'decimal:2',
         'admin_progress_override' => 'decimal:2',
+        'override_applied_at' => 'datetime',
     ];
 
     public function project()
@@ -70,6 +74,11 @@ class ConstructionPhase extends Model
     public function dependents()
     {
         return $this->hasMany(self::class, 'depends_on_phase_id', 'phase_id');
+    }
+
+    public function overrideAppliedBy()
+    {
+        return $this->belongsTo(User::class, 'override_applied_by', 'user_id');
     }
 
     public function isLocked(): bool
@@ -105,27 +114,47 @@ class ConstructionPhase extends Model
 
     public function syncStatusFromMilestones(): void
     {
-        if (!$this->isReadyToComplete() || $this->status === self::STATUS_COMPLETED) {
+        if (!Schema::hasTable('timeline_milestones')) {
             return;
         }
 
-        $payload = ['status' => self::STATUS_COMPLETED];
-        if (Schema::hasColumn('construction_phases', 'actual_end_date')) {
-            $payload['actual_end_date'] = $this->actual_end_date?->toDateString() ?? now()->toDateString();
+        $progress = (float) $this->progress_percentage;
+        $payload = ['completion_percentage' => $progress];
+
+        if ($this->isReadyToComplete()) {
+            $payload['status'] = self::STATUS_COMPLETED;
+            if (Schema::hasColumn('construction_phases', 'actual_end_date')) {
+                $payload['actual_end_date'] = $this->actual_end_date?->toDateString() ?? now()->toDateString();
+            }
+        } elseif ($this->status === self::STATUS_COMPLETED) {
+            // A deleted or reset milestone must not leave its phase permanently completed.
+            $payload['status'] = $this->actual_start_date ? self::STATUS_IN_PROGRESS : self::STATUS_PENDING;
+            if (Schema::hasColumn('construction_phases', 'actual_end_date')) {
+                $payload['actual_end_date'] = null;
+            }
         }
 
-        $this->forceFill($payload)->save();
+        if ($this->getDirtyValues($payload)) {
+            $this->forceFill($payload)->save();
+        }
+    }
+
+    private function getDirtyValues(array $payload): array
+    {
+        return array_filter($payload, function ($value, $key) {
+            return $this->getAttribute($key) != $value;
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
     public function getProgressPercentageAttribute(): float
     {
-        if (!Schema::hasTable('timeline_milestones')) {
-            return (float) ($this->admin_progress_override ?? 0);
+        if (!$this->relationLoaded('milestones') && !Schema::hasTable('timeline_milestones')) {
+            return (float) ($this->admin_progress_override ?? $this->getRawOriginal('completion_percentage', 0));
         }
 
         $milestones = $this->relationLoaded('milestones')
             ? $this->milestones
-            : $this->milestones()->get(['milestone_id', 'is_completed', 'progress_percentage']);
+            : $this->milestones()->get(['milestone_id', 'is_completed']);
 
         $total = $milestones->count();
 
@@ -133,18 +162,11 @@ class ConstructionPhase extends Model
             return (float) ($this->admin_progress_override ?? 0);
         }
 
-        $totalProgress = $milestones->sum(function ($milestone) {
-            $progress = (float) ($milestone->progress_percentage ?? 0);
-            if ($milestone->is_completed) {
-                $progress = max($progress, 100.0);
-            }
-            return min($progress, 100.0);
-        });
+        if ($this->admin_progress_override !== null && $this->admin_progress_override !== '') {
+            return (float) $this->admin_progress_override;
+        }
 
-        $milestoneProgress = round($totalProgress / $total, 2);
-        $override = (float) ($this->admin_progress_override ?? $milestoneProgress);
-
-        return round(($milestoneProgress * 0.7) + ($override * 0.3), 2);
+        return round(($milestones->where('is_completed', true)->count() / $total) * 100, 2);
     }
 
     public function getMilestoneProgressSummaryAttribute(): string
