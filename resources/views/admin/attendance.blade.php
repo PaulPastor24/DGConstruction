@@ -177,6 +177,19 @@
 @endphp
 
 <div class="attendance-page">
+    <div class="attendance-print-header" aria-hidden="true">
+        <h1>Attendance Report</h1>
+        <p>Date: {{ $filters['date'] ? \Carbon\Carbon::parse($filters['date'])->format('F d, Y') : 'All Dates' }}</p>
+        @if(!empty($filters['project_id']) || !empty($filters['status']) || !empty($filters['biometric']) || !empty($filters['search']))
+            <p class="attendance-print-filters">
+                Filters:
+                {{ $filters['project_id'] ? 'Project selected' : '' }}
+                {{ $filters['status'] ? 'Status: ' . ucwords(str_replace('_', ' ', $filters['status'])) : '' }}
+                {{ $filters['biometric'] ? 'Biometric: ' . ucfirst($filters['biometric']) : '' }}
+                {{ $filters['search'] ? 'Search: ' . $filters['search'] : '' }}
+            </p>
+        @endif
+    </div>
 
     @if(session('success'))
         <div class="alert alert-success" role="alert">
@@ -270,6 +283,16 @@
                 </a>
             </div>
         </form>
+
+        <form method="POST" action="{{ route('admin.attendance.send-report') }}" class="mt-3">
+            @csrf
+            <input type="hidden" name="date" value="{{ $filters['date'] ?? now()->toDateString() }}">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-envelope"></i>
+                Send Attendance Report
+            </button>
+            <span class="text-muted small ms-2">Sends the selected date to active administrators.</span>
+        </form>
     </section>
 
     <div class="attendance-stat-grid">
@@ -352,7 +375,7 @@
         </button>
     </div>
 
-    <section class="card border-0 shadow-sm rounded-4 mb-4">
+    <section class="attendance-schedule-panel card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body">
             <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
                 <div>
@@ -451,7 +474,7 @@
         </div>
     </section>
 
-    <section class="attendance-issues-panel">
+    <section class="attendance-issues-panel attendance-no-print">
         <div class="issues-header">
             <div>
                 <h2>Attendance Issues / Exceptions</h2>
@@ -533,7 +556,7 @@
         @endif
     </section>
 
-    <section class="attendance-entry-panel">
+    <section class="attendance-entry-panel attendance-no-print">
         <section class="attendance-filter-card" style="margin-bottom: 1rem;">
             <div class="issues-header">
                 <div>
@@ -596,7 +619,7 @@
 
                 <div>
                     <h2>Attendance Records</h2>
-                    <p>Tap a summary card above to show the matching workers.</p>
+                    <p>Tap a summary card above to show the matching workers. Updates automatically every 30 seconds.</p>
                 </div>
             </div>
 
@@ -990,6 +1013,39 @@
         });
 
         applyTableFilters();
+
+        const attendanceRefreshInterval = 30000;
+        let hiddenAt = null;
+
+        function attendancePageIsBusy() {
+            return Boolean(
+                document.activeElement?.matches('input, select, textarea') ||
+                document.querySelector('.attendance-table details[open], .attendance-entry-panel details[open]')
+            );
+        }
+
+        function refreshAttendanceRecords() {
+            if (document.hidden || attendancePageIsBusy()) {
+                return;
+            }
+
+            window.location.reload();
+        }
+
+        window.setInterval(refreshAttendanceRecords, attendanceRefreshInterval);
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                hiddenAt = Date.now();
+                return;
+            }
+
+            if (hiddenAt && Date.now() - hiddenAt >= attendanceRefreshInterval) {
+                refreshAttendanceRecords();
+            }
+
+            hiddenAt = null;
+        });
     });
 </script>
 @endpush

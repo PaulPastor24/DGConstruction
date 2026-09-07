@@ -48,6 +48,10 @@ body {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
+.attendance-print-header {
+    display: none;
+}
+
 .attendance-hero {
     display: flex;
     align-items: flex-start;
@@ -947,9 +951,64 @@ RESPONSIVE
 }
 
 @media print {
+    @page {
+        size: landscape;
+        margin: 12mm;
+    }
+
     .attendance-filter-card,
-    .attendance-toolbar-actions {
+    .attendance-toolbar-actions,
+    .attendance-schedule-panel,
+    .attendance-no-print,
+    .attendance-table details,
+    .attendance-table form {
         display: none !important;
+    }
+
+    .attendance-print-header {
+        display: block;
+        margin-bottom: 14px;
+        color: #10271b;
+    }
+
+    .attendance-print-header h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+    }
+
+    .attendance-print-header p {
+        margin: 0;
+        font-size: 11px;
+    }
+
+    .attendance-print-filters {
+        margin-top: 4px !important;
+        color: #526258;
+    }
+
+    .attendance-panel {
+        border: 0;
+        box-shadow: none;
+    }
+
+    .attendance-toolbar {
+        margin-bottom: 8px;
+    }
+
+    .attendance-table {
+        width: 100%;
+        min-width: 100%;
+        font-size: 9px;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        padding: 6px 5px;
+    }
+
+    .attendance-table th:last-child,
+    .attendance-table td:last-child {
+        display: none;
     }
 
     .attendance-page {
@@ -1064,5 +1123,44 @@ RESPONSIVE
     .biometric-state {
         width: fit-content !important;
         max-width: 100% !important;
+    }
+}
+
+@media print {
+    .attendance-table,
+    .attendance-table thead,
+    .attendance-table tbody,
+    .attendance-table tr {
+        display: table !important;
+        width: 100% !important;
+    }
+
+    .attendance-table thead {
+        display: table-header-group !important;
+    }
+
+    .attendance-table tbody {
+        display: table-row-group !important;
+    }
+
+    .attendance-table tr {
+        display: table-row !important;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        display: table-cell !important;
+        padding: 6px 5px !important;
+    }
+
+    .attendance-table tbody td::before {
+        display: none !important;
+    }
+
+    .attendance-table tbody tr[data-attendance-row="1"] {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
     }
 }

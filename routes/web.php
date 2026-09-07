@@ -59,6 +59,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
+    Route::post('/admin/attendance/send-report', [AdminDashboardController::class, 'sendAttendanceReport'])->name('admin.attendance.send-report');
     Route::post('/admin/attendance', [AdminDashboardController::class, 'storeAttendance'])->name('admin.attendance.store');
     Route::put('/admin/attendance/{attendance}', [AdminDashboardController::class, 'updateAttendance'])->name('admin.attendance.update');
     Route::delete('/admin/attendance/{attendance}', [AdminDashboardController::class, 'destroyAttendance'])->name('admin.attendance.destroy');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\DailyAttendanceReport;
 use App\Models\AdminNotification;
 use App\Models\Attendance;
 use App\Models\AttendanceScheduleRule;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -1393,6 +1395,32 @@ class AdminDashboardController extends Controller
             'admin.attendance',
             compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues', 'scheduleRules')
         );
+    }
+
+    public function sendAttendanceReport(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => ['nullable', 'date'],
+        ]);
+        $date = Carbon::parse($validated['date'] ?? Carbon::today()->toDateString())->startOfDay();
+        $records = Attendance::with(['worker', 'deployment.project'])
+            ->whereDate('log_date', $date->toDateString())
+            ->orderBy('time_in')
+            ->get();
+
+        $admins = User::query()
+            ->whereIn('role', ['engineer', 'admin', 'administrator'])
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->get();
+
+        foreach ($admins as $admin) {
+            Mail::to($admin->email)->send(new DailyAttendanceReport($date, $records));
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', "Attendance report for {$date->toDateString()} sent to {$admins->count()} administrator(s).");
     }
 
     private function attendanceTimes(Request $request): array
