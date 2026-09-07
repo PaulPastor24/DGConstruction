@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleClientController extends Controller
@@ -12,7 +14,7 @@ class GoogleClientController extends Controller
     private function googleProvider()
     {
         return Socialite::driver('google')
-            ->redirectUrl(request()->getSchemeAndHttpHost().'/auth/google/callback');
+            ->redirectUrl(config('services.google.redirect'));
     }
 
     public function redirect()
@@ -26,9 +28,24 @@ class GoogleClientController extends Controller
             ->redirect();
     }
 
-    public function callback()
+    public function callback(Request $request)
     {
-        $googleUser = $this->googleProvider()->user();
+        if ($request->filled('error')) {
+            return redirect()->route('login')->with('error', 'Google sign-in was cancelled or denied.');
+        }
+
+        if (! $request->filled('code')) {
+            return redirect()->route('login')->with('error', 'Google sign-in did not return an authorization code. Please try again.');
+        }
+
+        try {
+            $googleUser = $this->googleProvider()->user();
+        } catch (\Throwable $exception) {
+            Log::warning('Google OAuth callback failed: '.$exception->getMessage());
+
+            return redirect()->route('login')->with('error', 'Google sign-in could not be completed. Please try again.');
+        }
+
         $user = User::where('email', $googleUser->getEmail())->first();
 
         if (! $user || $user->role !== 'client' || ! $user->is_active) {
