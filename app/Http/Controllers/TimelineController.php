@@ -79,9 +79,32 @@ class TimelineController extends Controller
     }
 
     /**
-     * Return refreshed project timeline data for the admin UI.
-     */
-    public function timelineData(Request $request, Project $project)
+      * Return refreshed project timeline data for the client UI.
+      */
+     public function clientTimelineData(Request $request, Project $project)
+     {
+         $user = Auth::user();
+         $client = $user->client;
+
+         if (!$client) {
+             abort(403, 'User is not associated with a client account');
+         }
+
+         $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+             ->where('project_id', $project->project_id)
+             ->where('client_id', $client->client_id)
+             ->firstOrFail();
+
+         return response()->json([
+             'success' => true,
+             'project' => $this->enrichProjectData($project),
+         ]);
+     }
+
+     /**
+      * Return refreshed project timeline data for the admin UI.
+      */
+     public function timelineData(Request $request, Project $project)
     {
         $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
             ->where('project_id', $project->project_id)
@@ -102,7 +125,9 @@ class TimelineController extends Controller
         
         $overallProgress = 0;
         if ($phases->isNotEmpty()) {
-            $overallProgress = round($phases->average('completion_percentage'), 1);
+            $overallProgress = round($phases->map(function ($phase) {
+                return $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
+            })->average(), 1);
         }
 
         $currentPhase = $phases->where('status', 'in_progress')->first() 
@@ -124,9 +149,20 @@ class TimelineController extends Controller
             };
             $phase->name = $phase->phase_name;
             $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
-            $phase->start = $phase->planned_start_date?->toDateString();
-            $phase->end = $phase->planned_end_date?->toDateString();
-            $phase->progress = (float) ($phase->completion_percentage ?? 0);
+            $phase->start = $phase->actual_start_date?->toDateString() ?? $phase->planned_start_date?->toDateString();
+            $phase->end = $phase->actual_end_date?->toDateString() ?? $phase->planned_end_date?->toDateString();
+            $phase->planned_start_date_raw = $phase->planned_start_date?->toDateString();
+            $phase->planned_end_date_raw = $phase->planned_end_date?->toDateString();
+            $phase->actual_start_date_raw = $phase->actual_start_date?->toDateString();
+            $phase->actual_end_date_raw = $phase->actual_end_date?->toDateString();
+            $phase->actual_start = $phase->actual_start_date?->toDateString();
+            $phase->actual_end = $phase->actual_end_date?->toDateString();
+            $phase->actual_start_date_value = $phase->actual_start_date?->toDateString();
+            $phase->actual_end_date_value = $phase->actual_end_date?->toDateString();
+            $phase->admin_progress_override_raw = $phase->admin_progress_override !== null
+                ? (float) $phase->admin_progress_override
+                : null;
+            $phase->progress = $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
             $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
             $phase->milestone_count = (int) ($phase->milestones_count ?? 0);
 
@@ -161,6 +197,8 @@ class TimelineController extends Controller
                         ?: (data_get($milestone, 'actual_date') ? Carbon::parse(data_get($milestone, 'actual_date'))->toDateString() : (data_get($milestone, 'actual_end_date') ? Carbon::parse(data_get($milestone, 'actual_end_date'))->toDateString() : null)),
                     'planned_start_date' => $phase->planned_start_date?->toDateString(),
                     'planned_end_date' => $phase->planned_end_date?->toDateString(),
+                    'actual_start_date' => $phase->actual_start_date?->toDateString(),
+                    'actual_end_date' => $phase->actual_end_date?->toDateString(),
                     'is_completed' => (bool) $milestone->is_completed,
                     'is_delayed' => (bool) $milestone->is_delayed,
                     'status' => $milestone->is_completed ? 'completed' : ($milestone->is_delayed ? 'delayed' : 'upcoming'),
@@ -210,6 +248,21 @@ class TimelineController extends Controller
             'upcomingPhases' => $upcomingPhases,
             'totalPhases' => $phases->count(),
         ];
+    }
+
+    private function normalizeCompletionPercentage($value)
+    {
+        $percentage = (float) $value;
+
+        if (!is_finite($percentage)) {
+            return 0.0;
+        }
+
+        if ($percentage <= 1) {
+            return $percentage * 100;
+        }
+
+        return min(100.0, max(0.0, $percentage));
     }
 
     private function calculateDurationDays($startDate, $endDate)

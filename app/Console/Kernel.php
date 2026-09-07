@@ -7,6 +7,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\NotifyPhaseDeadlines;
 use App\Console\Commands\ScanMilestonesAndMaterials;
 use App\Console\Commands\SendDailyAttendanceReport;
+use App\Console\Commands\AutoHoldStaleProjects;
 
 class Kernel extends ConsoleKernel
 {
@@ -14,6 +15,7 @@ class Kernel extends ConsoleKernel
         NotifyPhaseDeadlines::class,
         ScanMilestonesAndMaterials::class,
         SendDailyAttendanceReport::class,
+        AutoHoldStaleProjects::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -21,6 +23,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('notify:phases-deadlines')->dailyAt('08:00');
         $schedule->command('notifications:scan')->dailyAt('07:00');
         $schedule->command('attendance:daily-report')->dailyAt('18:00');
+        $schedule->command('projects:auto-hold-stale')->dailyAt('00:20')->withoutOverlapping();
     }
 
     protected function commands()

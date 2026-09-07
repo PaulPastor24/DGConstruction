@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use Mpdf\Mpdf;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfImageService;
 
 class ClientController extends Controller
 {
@@ -61,7 +62,7 @@ class ClientController extends Controller
         $ongoingProjects = $projects->filter(fn ($p) => $p->status === 'ongoing')->count();
 
         $overallCompletion = $primaryProject
-            ? round($primaryProject->phases->avg('completion_percentage') ?? 0, 2)
+            ? round((float) $primaryProject->overall_progress_percentage, 2)
             : 0;
 
         $currentPhases = ConstructionPhase::query()
@@ -259,7 +260,8 @@ class ClientController extends Controller
             ->with(['project', 'phase', 'submittedBy'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy('project_id');
+            ->groupBy('project_id')
+            ->map(fn ($reports) => $reports->take(5)->values());
 
         $milestonesByProject = Milestone::query()
             ->whereHas('phase', function ($q) use ($projectIdsForCarousel) {
@@ -287,13 +289,14 @@ class ClientController extends Controller
             return [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
-                'image' => $project->image_url ?? 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80',
+                'image' => $project->image_url
+                    ?: ($project->project_image ? asset('storage/' . ltrim($project->project_image, '/')) : 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80'),
                 'location' => $location !== '' ? $location : 'Location Pending',
                 'start_date' => optional($project->start_date)->format('M d, Y') ?? 'TBD',
                 'target_end_date' => optional($project->target_end_date)->format('M d, Y') ?? 'TBD',
                 'manager' => optional($project->engineer)->name ?? 'Unassigned',
                 'supervisor' => optional($activeSupervisor)->name ?? 'Not assigned',
-                'progress' => round($phases->avg('completion_percentage') ?? 0, 2),
+                'progress' => round((float) $project->overall_progress_percentage, 2),
                 'status_label' => $isDelayed ? 'Delayed' : 'On Track',
                 'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'phase' => optional($phases->firstWhere('status', 'in_progress'))->phase_name ?? 'Phase pending',
@@ -384,8 +387,18 @@ class ClientController extends Controller
             ->sortBy('start_date')
             ->first();
 
-        $currentPhase = $phases->firstWhere('status', 'in_progress');
-        $progress = round($phases->avg('completion_percentage') ?? 0, 2);
+        $currentPhase = $phases->firstWhere('status', 'in_progress')
+            ?? $phases->firstWhere('status', 'delayed')
+            ?? $phases->firstWhere('status', 'not_started')
+            ?? $phases->first();
+        $phaseStatus = $currentPhase?->status ?? 'not_started';
+        $phaseStatusLabel = match ($phaseStatus) {
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'delayed' => 'Delayed',
+            default => 'Pending',
+        };
+        $progress = round((float) $project->overall_progress_percentage, 2);
 
         if ($reports === null) {
             $reports = Report::where('project_id', $project->project_id)
@@ -452,7 +465,8 @@ class ClientController extends Controller
             'hero' => [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
-                'image' => $project->image_url ?? 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80',
+                'image' => $project->image_url
+                    ?: ($project->project_image ? asset('storage/' . ltrim($project->project_image, '/')) : 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80'),
                 'location' => $location !== '' ? $location : 'Location Pending',
                 'start_date' => optional($project->start_date)->format('M d, Y') ?? 'TBD',
                 'target_end_date' => optional($project->target_end_date)->format('M d, Y') ?? 'TBD',
@@ -462,10 +476,12 @@ class ClientController extends Controller
                 'status_label' => $isDelayed ? 'Delayed' : 'On Track',
                 'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
+                'phase_status' => $phaseStatusLabel,
                 'next_milestone_date' => optional($nextMilestone)->start_date?->format('M d, Y') ?? 'Pending',
             ],
             'stats' => [
                 'current_phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
+                'current_phase_status' => $phaseStatusLabel,
                 'schedule_health_label' => $isDelayed ? 'At Risk' : 'On Track',
                 'schedule_health_pill_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'schedule_health_at_risk' => $isDelayed,
@@ -702,7 +718,7 @@ class ClientController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('client.partials.project-gallery', compact('projects'))->render(),
-                'pagination' => view('vendor.pagination.bootstrap-5', ['paginator' => $projects])->render(),
+                'pagination' => view('vendor.pagination.bootstrap-5-limited', ['paginator' => $projects])->render(),
                 'total' => $projects->total(),
                 'count' => $projects->count(),
                 'from' => $projects->firstItem(),
@@ -752,14 +768,23 @@ class ClientController extends Controller
             // when the Reports page is opened without a filter we fall back to the
             // project the client last selected so the choice stays synchronized with
             // the Dashboard (and the rest of the Client portal) within the session.
-            if ($request->has('project_id')) {
-                $activeProjectId = $request->input('project_id') !== '' ? (int) $request->input('project_id') : null;
+            $requestedProjectId = $request->input('project_id');
+            $sessionProjectId = session('client_selected_project_id');
+
+            if ($request->has('project_id') && $requestedProjectId !== null && $requestedProjectId !== '') {
+                $activeProjectId = (int) $requestedProjectId;
+            } elseif ($request->has('project_id') && ($requestedProjectId === '' || $requestedProjectId === null)) {
+                $activeProjectId = null;
+                session()->forget('client_selected_project_id');
             } else {
-                $activeProjectId = session('client_selected_project_id');
+                $activeProjectId = $sessionProjectId !== null ? (int) $sessionProjectId : null;
             }
 
             if ($activeProjectId && $projects->contains('project_id', $activeProjectId)) {
                 $selectedProject = $projects->firstWhere('project_id', $activeProjectId);
+            } elseif ($activeProjectId !== null) {
+                $activeProjectId = null;
+                session()->forget('client_selected_project_id');
             }
 
             // Keep an explicit project choice sticky so navigating to other Client
@@ -773,12 +798,12 @@ class ClientController extends Controller
         $assignedProjectIds = $projects->pluck('project_id')->all();
 
         $reportsQuery = Report::query()
-            ->with(['project', 'phase', 'submittedBy'])
+            ->with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
             ->whereIn('project_id', $assignedProjectIds)
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)
-            ->when($selectedProject, function ($query) use ($selectedProject) {
-                $query->where('project_id', $selectedProject->project_id);
+            ->when($activeProjectId !== null, function ($query) use ($activeProjectId) {
+                $query->where('project_id', $activeProjectId);
             })
             ->when($request->filled('phase_id'), function ($query) use ($request) {
                 $query->where('phase_id', $request->phase_id);
@@ -790,12 +815,18 @@ class ClientController extends Controller
                 $query->whereDate('report_date', $request->report_date);
             });
 
-        $paginationParams = $request->only(['phase_id', 'status', 'report_date']);
+        $sort = $request->input('sort', 'newest') === 'oldest' ? 'oldest' : 'newest';
+        $paginationParams = $request->only(['phase_id', 'status', 'report_date', 'sort']);
+        $paginationParams['sort'] = $sort;
         if ($activeProjectId !== null) {
             $paginationParams['project_id'] = $activeProjectId;
         }
 
-        $reports = $reportsQuery->latest('report_date')->paginate(10)->appends($paginationParams);
+        $reports = $reportsQuery
+            ->orderBy('report_date', $sort === 'newest' ? 'desc' : 'asc')
+            ->orderBy('created_at', $sort === 'newest' ? 'desc' : 'asc')
+            ->paginate(10)
+            ->appends($paginationParams);
 
         if ($selectedProject) {
             $projectPhases = $selectedProject->phases()->orderBy('phase_order')->get();
@@ -846,7 +877,7 @@ class ClientController extends Controller
             abort(403, 'Client account not found');
         }
 
-        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
+        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy', 'phase.milestones'])
             ->where('report_id', $reportId)
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)
@@ -854,27 +885,77 @@ class ClientController extends Controller
                 $q->where('client_id', $client->client_id);
             })->firstOrFail();
 
-        // Reuse the supervisor PDF view if a client-specific PDF template is not present
-        $viewName = view()->exists('client.reports.pdf') ? 'client.reports.pdf' : 'supervisor.reports.pdf';
-        $html = view($viewName, compact('report'))->render();
+        session_write_close();
 
+        $viewName = view()->exists('client.reports.pdf') ? 'client.reports.pdf' : 'admin.reports.pdf';
         try {
-            if (class_exists('\\Mpdf\\Mpdf')) {
-                $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
-                $mpdf->WriteHTML($html);
-                $fileName = 'report_'.$report->report_id.'_'.date('Y-m-d').'.pdf';
-
-                return $mpdf->Output($fileName, 'D');
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
             }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView($viewName, compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
         } catch (\Throwable $e) {
-            Log::error('PDF generation failed (client): '.$e->getMessage());
+            Log::error('Client PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
+    }
+
+    public function downloadProjectImagesPdf(Project $project)
+    {
+        $user = auth('web')->user();
+        $client = $user?->client;
+
+        if (! $client) {
+            abort(403, 'Client account not found');
         }
 
-        $fileName = 'report_'.$report->report_id.'_'.date('Y-m-d').'.html';
+        if ($project->client_id !== $client->client_id) {
+            abort(403, 'Project does not belong to this client');
+        }
 
-        return response($html, 200, [
-            'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ]);
+        $project->load(['reports' => function ($q) {
+            $q->with(['phase', 'submittedBy'])
+                ->where('approval_status', 'approved')
+                ->where('is_published_to_client', true)
+                ->orderByDesc('report_date');
+        }]);
+
+        $reports = $project->reports;
+        session_write_close();
+
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = $reports->mapWithKeys(function ($report) use ($pdfImageService) {
+                $paths = collect(array_merge(
+                    (array) ($report->admin_site_images ?? []),
+                    (array) ($report->site_images ?? [])
+                ))->map(function ($path) {
+                    $path = ltrim((string) $path, '/');
+                    return str_starts_with($path, 'storage/') ? substr($path, 8) : $path;
+                })->filter()->unique()->values()->all();
+
+                return [$report->report_id => collect($paths)
+                    ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                    ->filter()
+                    ->values()];
+            });
+            $pdf = Pdf::loadView('admin.reports.images-pdf', compact('project', 'reports', 'reportPdfImages'));
+            $fileName = 'project-report-images-' . Str::slug($project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Client images PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 }

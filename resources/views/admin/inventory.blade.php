@@ -41,6 +41,41 @@
         color: var(--mi-accent);
     }
 
+    .inventory-green-theme .badge-in-use {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .inventory-green-theme .badge-lost {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .inventory-green-theme .badge-retired {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .inventory-green-theme .badge-loan-borrowed {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .inventory-green-theme .badge-deduction-pending {
+        background-color: #fff7ed;
+        color: #c2410c;
+    }
+
+    .inventory-green-theme .badge-deduction-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .inventory-green-theme .badge-deduction-cancelled {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
     .inventory-green-theme .badge-low-stock {
         background-color: #fff7ed;
         color: #c2410c;
@@ -712,14 +747,16 @@
 
     .inventory-green-theme #inventoryMaterialsTableBody,
     .inventory-green-theme #usageLogsTableBody,
-    .inventory-green-theme #expensesTableBody {
+    .inventory-green-theme #expensesTableBody,
+    .inventory-green-theme #toolsTableBody {
         display: block !important;
         width: 100% !important;
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody tr,
     .inventory-green-theme #usageLogsTableBody tr,
-    .inventory-green-theme #expensesTableBody tr {
+    .inventory-green-theme #expensesTableBody tr,
+    .inventory-green-theme #toolsTableBody tr {
         display: block !important;
         width: 100% !important;
         min-width: 0 !important;
@@ -749,7 +786,8 @@
 
     .inventory-green-theme #inventoryMaterialsTableBody td,
     .inventory-green-theme #usageLogsTableBody td,
-    .inventory-green-theme #expensesTableBody td {
+    .inventory-green-theme #expensesTableBody td,
+    .inventory-green-theme #toolsTableBody td {
         display: grid !important;
         grid-template-columns: 112px minmax(0, 1fr) !important;
         gap: 12px !important;
@@ -767,7 +805,8 @@
 
     .inventory-green-theme #inventoryMaterialsTableBody td::before,
     .inventory-green-theme #usageLogsTableBody td::before,
-    .inventory-green-theme #expensesTableBody td::before {
+    .inventory-green-theme #expensesTableBody td::before,
+    .inventory-green-theme #toolsTableBody td::before {
         display: block !important;
         color: #5f6f66 !important;
         font-size: 10px !important;
@@ -806,9 +845,20 @@
     .inventory-green-theme #expensesTableBody td:nth-child(7)::before { content: 'Total Expense' !important; }
     .inventory-green-theme #expensesTableBody td:nth-child(8)::before { content: 'Used By' !important; }
 
+    .inventory-green-theme #toolsTableBody td:nth-child(1)::before { content: 'Code' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(2)::before { content: 'Name' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(3)::before { content: 'Category' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(4)::before { content: 'Type' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(5)::before { content: 'Unit' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(6)::before { content: 'Condition' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(7)::before { content: 'Status' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(8)::before { content: 'Borrower' !important; }
+    .inventory-green-theme #toolsTableBody td:nth-child(9)::before { content: 'Actions' !important; }
+
     .inventory-green-theme #inventoryMaterialsTableBody td > *,
     .inventory-green-theme #usageLogsTableBody td > *,
-    .inventory-green-theme #expensesTableBody td > * {
+    .inventory-green-theme #expensesTableBody td > *,
+    .inventory-green-theme #toolsTableBody td > * {
         min-width: 0 !important;
         max-width: 100% !important;
         white-space: normal !important;
@@ -817,12 +867,14 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody td:last-child,
-    .inventory-green-theme #usageLogsTableBody td:last-child {
+    .inventory-green-theme #usageLogsTableBody td:last-child,
+    .inventory-green-theme #toolsTableBody td:last-child {
         align-items: center !important;
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody td:last-child .d-flex,
-    .inventory-green-theme #usageLogsTableBody td:last-child .d-flex {
+    .inventory-green-theme #usageLogsTableBody td:last-child .d-flex,
+    .inventory-green-theme #toolsTableBody td:last-child .d-flex {
         justify-content: flex-start !important;
         flex-wrap: wrap !important;
     }
@@ -1166,7 +1218,7 @@
 <div class="mi-page inventory-green-theme">
     @php
         $activeInventoryView = request('view', $activeView ?? 'inventory');
-        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests']) ? $activeInventoryView : 'inventory';
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
 
         $usageLogItems = collect();
         if (isset($usageLogs)) {
@@ -1326,12 +1378,61 @@
     @if($errors->any())
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                Swal.fire({
-                    title: 'Validation error',
-                    text: @json($errors->first()),
-                    icon: 'warning',
-                    confirmButtonColor: '#f59e0b'
+                const fieldToModal = {
+                    'name': 'addToolModal',
+                    'tool_code': 'addToolModal',
+                    'category': 'addToolModal',
+                    'type': 'addToolModal',
+                    'unit': 'addToolModal',
+                    'condition': 'addToolModal',
+                    'purchase_date': 'addToolModal',
+                    'purchase_price': 'addToolModal',
+                    'description': 'addToolModal',
+                    'worker_id': 'issueToolModal',
+                    'project_id': 'issueToolModal',
+                    'expected_return_date': 'issueToolModal',
+                    'condition_at_issue': 'issueToolModal',
+                    'notes': 'issueToolModal',
+                    'condition_at_return': 'returnToolModal',
+                    'remarks': 'returnToolModal',
+                    'amount': 'markLostModal',
+                    'reason': 'markLostModal',
+                };
+
+                const firstError = @json($errors->first());
+                const errorKeys = @json($errors->keys());
+                const errorMessages = @json($errors->all());
+
+                let targetModalId = null;
+                errorKeys.forEach(function (key) {
+                    if (fieldToModal[key] && !targetModalId) {
+                        targetModalId = fieldToModal[key];
+                    }
                 });
+
+                if (targetModalId) {
+                    const modal = document.getElementById(targetModalId);
+                    if (modal) {
+                        const errorContainer = modal.querySelector('.alert-danger');
+                        if (errorContainer) {
+                            errorContainer.innerHTML = errorMessages.map(function (msg) {
+                                return '<div>' + msg + '</div>';
+                            }).join('');
+                            errorContainer.classList.remove('d-none');
+                        }
+                        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+                        if (bsModal) {
+                            bsModal.show();
+                        }
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Validation error',
+                        text: firstError,
+                        icon: 'warning',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
             });
         </script>
     @endif
@@ -1354,6 +1455,11 @@
                         </li>
                         <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'tools' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="tools-view">
+                                <i class="bi bi-wrench me-1"></i><span class="tab-full">Tools & Equipments</span><span class="tab-short">Tools</span>
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
@@ -1907,6 +2013,240 @@
 
                     </div>
 
+                    <div id="tools-view" class="inventory-view-panel {{ $activeInventoryView !== 'tools' ? 'd-none' : '' }}">
+                        <!-- Tools Metrics -->
+                        <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon available">
+                                            <i class="bi bi-wrench"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Total Tools</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['total_tools'] }}</div>
+                                            <div class="text-muted mi-metric-caption">All registered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon available">
+                                            <i class="bi bi-check-circle"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Available</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['available'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Ready for issue</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon low-stock">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">In Use</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['in_use'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Currently borrowed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <div class="inventory-card-icon out-of-stock">
+                                            <i class="bi bi-x-circle"></i>
+                                        </div>
+                                        <div class="mi-metric-copy">
+                                            <div class="text-muted small fw-semibold">Lost</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['lost'] }}</div>
+                                            <div class="text-muted mi-metric-caption">Lost / Unrecovered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tools Search & Filters -->
+                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="tools-search-form">
+                            <input type="hidden" name="view" value="tools" id="tools-view-input">
+                            <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                                <input type="text" name="search" value="{{ $toolsSearch ?? $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search tools by name, code, or category...">
+                                <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="tool_category" class="form-select form-select-sm text-muted">
+                                    <option value="">All Categories</option>
+                                    @foreach($toolCategories as $cat)
+                                        <option value="{{ $cat }}" {{ ($toolCategory ?? '') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="tool_status" class="form-select form-select-sm text-muted">
+                                    <option value="">All Status</option>
+                                    <option value="available" {{ ($toolStatus ?? '') === 'available' ? 'selected' : '' }}>Available</option>
+                                    <option value="in_use" {{ ($toolStatus ?? '') === 'in_use' ? 'selected' : '' }}>In Use</option>
+                                    <option value="lost" {{ ($toolStatus ?? '') === 'lost' ? 'selected' : '' }}>Lost</option>
+                                    <option value="retired" {{ ($toolStatus ?? '') === 'retired' ? 'selected' : '' }}>Retired</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-12 col-12 inventory-action-stack">
+                                <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addToolModal">
+                                    <i class="bi bi-plus-lg me-1"></i> Add Tool
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Tools Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                    <tr>
+                                        <th class="border-0">Code</th>
+                                        <th class="border-0">Name</th>
+                                        <th class="border-0">Category</th>
+                                        <th class="border-0">Type</th>
+                                        <th class="border-0">Unit</th>
+                                        <th class="border-0">Condition</th>
+                                        <th class="border-0">Status</th>
+                                        <th class="border-0">Current Borrower</th>
+                                        <th class="border-0 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="toolsTableBody">
+                                    @forelse($tools as $tool)
+                                        @php
+                                            $toolBadgeClass = $tool->status_badge_class;
+                                            $toolStatusLabel = $tool->status_label;
+                                            $borrowerName = $tool->currentBorrower ? $tool->currentBorrower->full_name : '-';
+                                            $canIssue = in_array($tool->status, ['available']);
+                                            $canReturn = $tool->status === 'in_use';
+                                            $canMarkLost = $tool->status === 'in_use';
+                                            $hasActiveLoan = $tool->activeLoan()->exists();
+                                        @endphp
+                                        <tr data-tool-row="true"
+                                            data-tool-search="{{ strtolower(trim(($tool->name ?? '') . ' ' . ($tool->tool_code ?? '') . ' ' . ($tool->category ?? '') . ' ' . $toolStatusLabel)) }}"
+                                            data-tool-category="{{ $tool->category ?? 'General' }}"
+                                            data-tool-status="{{ $tool->status }}">
+                                            <td class="fw-semibold text-dark">{{ $tool->tool_code }}</td>
+                                            <td class="fw-semibold text-dark">{{ $tool->name }}</td>
+                                            <td class="text-muted">{{ $tool->category ?? 'General' }}</td>
+                                            <td class="text-muted">{{ ucfirst($tool->type) }}</td>
+                                            <td class="text-muted">{{ $tool->unit ?? '-' }}</td>
+                                            <td class="text-muted">{{ ucfirst($tool->condition ?? '-') }}</td>
+                                            <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $toolBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $toolStatusLabel }}</span></td>
+                                            <td class="text-muted">{{ $borrowerName }}</td>
+                                            <td>
+                                                <div class="d-flex justify-content-center gap-1 inventory-action-stack">
+                                                    @if($canIssue)
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
+                                                    @endif
+                                                    @if($canReturn)
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white btn-mark-lost-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Mark as lost"><i class="bi bi-exclamation-triangle"></i> Mark Lost</button>
+                                                    @endif
+                                                    <form method="POST" action="{{ route('admin.inventory.tools.destroy', $tool->id) }}" class="inventory-delete-form d-inline m-0">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete tool"><i class="bi bi-trash"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr id="toolsEmptyStateRow"><td colspan="9" class="text-center text-muted py-4">No tools or equipment registered yet.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Active Tool Loans -->
+                        @if($activeToolLoans->count() > 0)
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Code</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Project</th>
+                                            <th class="border-0">Expected Return</th>
+                                            <th class="border-0">Condition at Issue</th>
+                                            <th class="border-0">Borrowed At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($activeToolLoans as $loan)
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
+                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Tool Deduction Ledger -->
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i>Deduction Ledger</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Reason</th>
+                                            <th class="border-0">Amount</th>
+                                            <th class="border-0">Status</th>
+                                            <th class="border-0">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allToolDeductions as $deduction)
+                                            @php
+                                                $deductionBadgeClass = $deduction->status_badge_class;
+                                                $deductionStatusLabel = $deduction->status_label;
+                                            @endphp
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
+                                                <td class="fw-bold text-dark">₱{{ number_format($deduction->amount, 2) }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
+                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+            </div>
+
                     <div id="expenses-view" class="inventory-view-panel {{ $activeInventoryView !== 'expenses' ? 'd-none' : '' }}">
                         <div class="mi-filter-card p-3 mb-3">
                             <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="expenses-filter-form">
@@ -2334,7 +2674,19 @@
                                         <label class="form-label-custom">Category</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-tags input-icon-left"></i>
-                                            <input type="text" id="receiveStockMaterialCategoryInput" name="category" class="control-field-input" placeholder="Category" value="{{ old('category') }}">
+                                            <select name="category" class="control-field-input" id="receiveStockMaterialCategoryInput">
+                                                <option value="">Select category</option>
+                                                @foreach($predefinedMaterialCategories as $cat)
+                                                    <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                @endforeach
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="custom-category-input d-none mt-2" id="receiveStockCustomCategoryWrapper">
+                                            <div class="input-container-group">
+                                                <i class="bi bi-pencil-square input-icon-left"></i>
+                                                <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="receiveStockCustomCategoryInput" value="{{ old('custom_category') }}">
+                                            </div>
                                         </div>
                                         <div class="form-input-hint">Material category — stored in materials table.</div>
                                         </div>
@@ -2491,7 +2843,19 @@
                                 <label class="form-label-custom">Category</label>
                                 <div class="input-container-group">
                                     <i class="bi bi-tags input-icon-left"></i>
-                                    <input type="text" name="category" class="control-field-input" placeholder="e.g. Masonry">
+                                    <select name="category" class="control-field-input" id="addMaterialCategorySelect">
+    <option value="">Select category</option>
+    @foreach($predefinedMaterialCategories as $cat)
+        <option value="{{ $cat }}">{{ $cat }}</option>
+    @endforeach
+    <option value="Other">Other</option>
+</select>
+<div class="custom-category-input d-none mt-2" id="addMaterialCustomCategoryWrapper">
+    <div class="input-container-group">
+        <i class="bi bi-pencil-square input-icon-left"></i>
+        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+    </div>
+</div>
                                 </div>
                                 <div class="form-input-hint">Optional classification for grouping.</div>
                             </div>
@@ -2622,7 +2986,16 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Category</label>
-                            <input type="text" name="category" class="form-control" value="{{ old('category', $material->category ?? '') }}">
+                            <select name="category" class="form-control" id="editMaterialCategorySelect">
+                                <option value="">Select category</option>
+                                @foreach($predefinedMaterialCategories as $cat)
+                                    <option value="{{ $cat }}" {{ old('category', $material->category ?? '') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="custom-category-input d-none mt-2" id="editMaterialCustomCategoryWrapper">
+                                <input type="text" name="custom_category" class="form-control" placeholder="Enter custom category" id="editMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Unit</label>
@@ -2718,6 +3091,427 @@
     </div>
 </div>
 
+<!-- Add Tool Modal -->
+<div class="modal fade modal-receive-stock" id="addToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Register New Tool / Equipment</h4>
+                        <p class="modal-subtitle mb-0">Add a new tool or equipment to the inventory.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="{{ route('admin.inventory.tools.store') }}" class="receive-stock-form-main" id="addToolForm">
+                    @csrf
+                    <div class="alert alert-danger add-tool-errors d-none" role="alert"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Tool Name<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-wrench input-icon-left"></i>
+                                    <input type="text" name="name" class="control-field-input" placeholder="e.g. Concrete Vibrator" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Tool Code<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-upc-scan input-icon-left"></i>
+                                    <input type="text" name="tool_code" class="control-field-input" placeholder="e.g. TL-001" required>
+                                </div>
+                                <div class="form-input-hint">Unique code for this tool (e.g. TL-001, EQ-001).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Category</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-tags input-icon-left"></i>
+                                    <select name="category" class="control-field-input" id="toolCategorySelect" required>
+                                        <option value="">Select category</option>
+                                        @foreach($predefinedToolCategories as $cat)
+                                            <option value="{{ $cat }}">{{ $cat }}</option>
+                                        @endforeach
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="custom-category-input d-none mt-2" id="customCategoryWrapper">
+                                    <div class="input-container-group">
+                                        <i class="bi bi-pencil-square input-icon-left"></i>
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="customCategoryInput" value="{{ old('custom_category') }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Type<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-diagram-3 input-icon-left"></i>
+                                    <select name="type" class="control-field-input" required>
+                                        <option value="tool">Tool</option>
+                                        <option value="equipment">Equipment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Unit</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-rulers input-icon-left"></i>
+                                    <input type="text" name="unit" class="control-field-input" placeholder="e.g. Piece, Set">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition" class="control-field-input">
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Purchase Date</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-calendar3 input-icon-left"></i>
+                                    <input type="date" name="purchase_date" class="control-field-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Purchase Price (₱)</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-currency-peso input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0" name="purchase_price" class="control-field-input" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Description</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="description" rows="3" class="control-field-input" placeholder="Enter tool description..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Register Tool
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Tool Modal -->
+<div class="modal fade modal-receive-stock" id="issueToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-arrow-up-right-square"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Issue Tool</h4>
+                        <p class="modal-subtitle mb-0">Assign this tool to a worker.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="issueToolForm">
+                    @csrf
+                    <div class="alert alert-danger issue-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-4 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="issueToolName">-</div>
+                            </div>
+                            <div class="col-sm-4 meta-item text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="issueToolCode">-</div>
+                            </div>
+                            <div class="col-sm-4 text-sm-center">
+                                <div class="meta-label">Status</div>
+                                <div class="mt-1">
+                                    <span class="badge-status-pill" id="issueToolStatusBadge">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Active Worker<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-person input-icon-left"></i>
+                                    <select name="worker_id" class="control-field-input" required>
+                                        <option value="">Select worker</option>
+                                        @foreach(\App\Models\Worker::where('is_active', true)->orderBy('first_name')->get() as $workerOption)
+                                            <option value="{{ $workerOption->worker_id }}">{{ $workerOption->full_name }} @if($workerOption->trade)({{ $workerOption->trade }})@endif</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Project (Optional)</label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-building input-icon-left"></i>
+                                    <select name="project_id" class="control-field-input">
+                                        <option value="">No project</option>
+                                        @foreach($projects as $projectOption)
+                                            @php $pid = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id'); $pname = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed'; @endphp
+                                            <option value="{{ $pid }}">{{ $pname }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Expected Return Date</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-calendar3 input-icon-left"></i>
+                                    <input type="date" name="expected_return_date" class="control-field-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition at Issue<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition_at_issue" class="control-field-input" required>
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Notes</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="notes" rows="3" class="control-field-input" placeholder="Optional notes about this issue..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit">
+                            <i class="bi bi-check-circle"></i> Confirm Issue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Return Tool Modal -->
+<div class="modal fade modal-receive-stock" id="returnToolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-arrow-down-left-square"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Return Tool</h4>
+                        <p class="modal-subtitle mb-0">Record the return of this tool.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="returnToolForm">
+                    @csrf
+                    <div class="alert alert-danger return-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-6 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="returnToolName">-</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="returnToolCode">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Condition at Return<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-check-circle input-icon-left"></i>
+                                    <select name="condition_at_return" class="control-field-input" required>
+                                        <option value="good">Good</option>
+                                        <option value="fair">Fair</option>
+                                        <option value="poor">Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Remarks</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="remarks" rows="3" class="control-field-input" placeholder="Optional remarks..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit" style="background-color: #059669; border-color: #059669;">
+                            <i class="bi bi-check-circle"></i> Confirm Return
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mark Lost Modal -->
+<div class="modal fade modal-receive-stock" id="markLostModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container" style="background-color: #d1fae5; color: #065f46;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0">Mark Tool as Lost</h4>
+                        <p class="modal-subtitle mb-0">Record a lost/damaged tool and create a deduction entry.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <form method="POST" action="" class="receive-stock-form-main" id="markLostToolForm">
+                    @csrf
+                    <div class="alert alert-danger mark-lost-tool-errors d-none" role="alert"></div>
+                    <div class="meta-info-card mb-3">
+                        <div class="row g-2 text-center text-sm-start">
+                            <div class="col-sm-6 meta-item">
+                                <div class="meta-label">Tool</div>
+                                <div class="meta-value" id="lostToolName">-</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-center">
+                                <div class="meta-label">Code</div>
+                                <div class="meta-value" id="lostToolCode">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Deduction Amount (₱)<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-currency-peso input-icon-left"></i>
+                                    <input type="number" step="0.01" min="0.01" name="amount" class="control-field-input" placeholder="0.00" required>
+                                </div>
+                                <div class="form-input-hint">Must be greater than ₱0.00.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Reason<span class="required-asterisk">*</span></label>
+                                <div class="input-container-group select-caret-wrapper">
+                                    <i class="bi bi-exclamation-triangle input-icon-left"></i>
+                                    <select name="reason" class="control-field-input" required>
+                                        <option value="lost">Lost</option>
+                                        <option value="damaged_beyond_repair">Damaged Beyond Repair</option>
+                                        <option value="stolen">Stolen</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-group-wrapper mb-0">
+                                <label class="form-label-custom">Remarks</label>
+                                <div class="input-container-group">
+                                    <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
+                                    <textarea name="remarks" rows="3" class="control-field-input" placeholder="Additional details..." style="padding-top: 0.55rem; resize: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-action-row border-top pt-3 pb-2">
+                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-action-submit" style="background-color: #059669; border-color: #059669;">
+                            <i class="bi bi-check-circle"></i> Confirm Mark Lost
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -2737,7 +3531,7 @@
                 link.classList.toggle('border-2', isActive);
             });
 
-            document.querySelectorAll('#inventory-view-input, #usage-view-input, #requests-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+            document.querySelectorAll('#inventory-view-input, #usage-view-input, #requests-view-input, #tools-view-input, #expenses-view input[name="view"]').forEach(function (input) {
                 input.value = getPanelViewValue(targetId);
             });
         }
@@ -2776,6 +3570,10 @@
 
             if (panelId === 'requests-view') {
                 return 'requests';
+            }
+
+            if (panelId === 'tools-view') {
+                return 'tools';
             }
 
             return 'inventory';
@@ -2847,6 +3645,10 @@
                 if (panelId === 'expenses-view') {
                     applyExpenseFilters();
                 }
+
+                if (panelId === 'tools-view') {
+                    bindToolModalHandlers();
+                }
             } catch (error) {
                 console.error(error);
                 window.location.href = url.toString();
@@ -2856,7 +3658,7 @@
         }
 
         function bindSmoothInventoryForms() {
-            document.querySelectorAll('#inventory-search-form, #usage-search-form').forEach(function (form) {
+            document.querySelectorAll('#inventory-search-form, #usage-search-form, #tools-search-form').forEach(function (form) {
                 if (form.dataset.smoothBound === '1') {
                     return;
                 }
@@ -2895,7 +3697,7 @@
         }
 
         function bindInventoryPagination() {
-            document.querySelectorAll('#inventory-view .pagination a, #usage-view .pagination a').forEach(function (link) {
+            document.querySelectorAll('#inventory-view .pagination a, #usage-view .pagination a, #tools-view .pagination a').forEach(function (link) {
                 if (link.dataset.smoothBound === '1') {
                     return;
                 }
@@ -3340,20 +4142,38 @@
             });
         }
 
-        document.querySelectorAll('.inventory-delete-form').forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                Swal.fire({
-                    title: 'Remove specific record profile?',
-                    text: 'This operation is absolute and cannot be instantly undone.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Delete Structural Entry'
-                }).then(function (result) {
-                    if (result.isConfirmed) { form.submit(); }
-                });
+        document.addEventListener('click', function (event) {
+            const deleteButton = event.target.closest('.inventory-delete-form button[type="submit"]');
+            if (!deleteButton) {
+                return;
+            }
+
+            event.preventDefault();
+            const form = deleteButton.closest('form');
+            
+            Swal.fire({
+                title: 'Remove this tool/equipment?',
+                text: 'This operation is absolute and cannot be instantly undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait while the record is being removed.',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: function () {
+                            Swal.showLoading();
+                        }
+                    });
+                    form.submit();
+                }
             });
         });
 
@@ -3379,6 +4199,101 @@
         bindModalFormLoading(document.getElementById('allocateMaterialForm'));
         bindModalFormLoading(document.querySelector('#addMaterialModal form'));
         bindModalFormLoading(document.querySelector('#editMaterialModal{{ $material->id }} form'));
+        bindModalFormLoading(document.getElementById('addToolForm'));
+        bindModalFormLoading(document.getElementById('issueToolForm'));
+        bindModalFormLoading(document.getElementById('returnToolForm'));
+        bindModalFormLoading(document.getElementById('markLostToolForm'));
+
+        function bindToolModalHandlers() {
+            document.querySelectorAll('.btn-issue-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('issueToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/issue');
+                    const nameEl = document.getElementById('issueToolName');
+                    const codeEl = document.getElementById('issueToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('issueToolModal'));
+                    if (modal) modal.show();
+                });
+            });
+
+            document.querySelectorAll('.btn-return-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('returnToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/return');
+                    const nameEl = document.getElementById('returnToolName');
+                    const codeEl = document.getElementById('returnToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('returnToolModal'));
+                    if (modal) modal.show();
+                });
+            });
+
+            document.querySelectorAll('.btn-mark-lost-tool').forEach(function (btn) {
+                btn.onclick = null;
+                btn.addEventListener('click', function () {
+                    const toolId = btn.getAttribute('data-tool-id');
+                    const toolName = btn.getAttribute('data-tool-name');
+                    const toolCode = btn.getAttribute('data-tool-code');
+                    const form = document.getElementById('markLostToolForm');
+                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/lost');
+                    const nameEl = document.getElementById('lostToolName');
+                    const codeEl = document.getElementById('lostToolCode');
+                    if (nameEl) nameEl.textContent = toolName || '-';
+                    if (codeEl) codeEl.textContent = toolCode || '-';
+                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('markLostModal'));
+                    if (modal) modal.show();
+                });
+            });
+        }
+
+        bindToolModalHandlers();
+
+        const toolCategorySelect = document.getElementById('toolCategorySelect');
+        const customCategoryWrapper = document.getElementById('customCategoryWrapper');
+        const customCategoryInput = document.getElementById('customCategoryInput');
+
+        if (toolCategorySelect && customCategoryWrapper && customCategoryInput) {
+            toolCategorySelect.addEventListener('change', function () {
+                const isOther = this.value === 'Other';
+                customCategoryWrapper.classList.toggle('d-none', !isOther);
+                if (!isOther) {
+                    customCategoryInput.value = '';
+                }
+                customCategoryInput.required = isOther;
+            });
+        }
+
+        function bindMaterialCategoryToggle(selectId, wrapperId, inputId) {
+            const select = document.getElementById(selectId);
+            const wrapper = document.getElementById(wrapperId);
+            const input = document.getElementById(inputId);
+
+            if (!select || !wrapper || !input) return;
+
+            select.addEventListener('change', function () {
+                const isOther = this.value === 'Other';
+                wrapper.classList.toggle('d-none', !isOther);
+                if (!isOther) {
+                    input.value = '';
+                }
+                input.required = isOther;
+            });
+        }
+
+        bindMaterialCategoryToggle('receiveStockMaterialCategoryInput', 'receiveStockCustomCategoryWrapper', 'receiveStockCustomCategoryInput');
+        bindMaterialCategoryToggle('addMaterialCategorySelect', 'addMaterialCustomCategoryWrapper', 'addMaterialCustomCategoryInput');
+        bindMaterialCategoryToggle('editMaterialCategorySelect', 'editMaterialCustomCategoryWrapper', 'editMaterialCustomCategoryInput');
 
         function attachModalPaginationHandlers() {
             document.querySelectorAll('.modal .pagination a').forEach(function (link) {

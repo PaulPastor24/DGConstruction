@@ -424,13 +424,15 @@
         background-position: right 0.7rem center;
         background-size: 0.9rem;
         color: #0f172a;
-        min-width: 220px;
-        padding: 0.55rem 2.1rem 0.55rem 0.85rem;
+        min-width: 160px;
+        max-width: 100%;
+        padding: 0.4rem 1.8rem 0.4rem 0.7rem;
         cursor: pointer;
         border: 1px solid #e2e8f0;
         border-radius: 999px;
         box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
         transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        font-size: 13px;
     }
     .project-select:hover {
         background-color: #f1f5f9;
@@ -530,6 +532,19 @@
         border-radius: 12px;
         box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
     }
+
+    .swal2-container {
+        z-index: 99999 !important;
+    }
+
+    .modal {
+        z-index: 1040 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1030 !important;
+    }
+
     .phase-searchable-select.is-open .phase-searchable-dropdown {
         display: block;
     }
@@ -648,6 +663,23 @@
         width: 100% !important;
         max-width: 100% !important;
         flex: none !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 > .col:nth-child(5) {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    #pg-phases .card.p-3 .d-flex.gap-2.justify-content-end .btn {
+        justify-content: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 12px !important;
+        white-space: normal !important;
     }
 
     #pg-phases .metric-card {
@@ -900,10 +932,27 @@
     }
 
     #pg-phases .phase-table .action-cell {
-        display: grid !important;
-        grid-template-columns: 118px minmax(0, 1fr) !important;
+        display: flex !important;
         align-items: center !important;
-        justify-content: initial !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 6px 0 !important;
+    }
+
+    #pg-phases .phase-table .action-cell::before {
+        display: none !important;
+    }
+
+    #pg-phases .phase-table .action-cell .btn {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        font-size: 13px !important;
     }
 }
 
@@ -921,7 +970,7 @@
                 </div>
                 <div>
                     <label class="text-muted d-block uppercase tracking-wider mb-1" style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em;">Select Project</label>
-                    <select class="fw-semibold text-dark project-select" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 15px;">
+                     <select class="fw-semibold text-dark project-select" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 13px;">
                         @foreach($projects as $projectOption)
                             <option value="{{ $projectOption->project_id }}" {{ ($selectedProject && $selectedProject->project_id == $projectOption->project_id) ? 'selected' : '' }}>
                                 {{ $projectOption->project_name }}
@@ -1108,10 +1157,11 @@
                                         'not_started' => 'Pending',
                                         default => ucfirst(str_replace('_', ' ', $phase->status)),
                                     };
-                                    $progressValue = (float) ($phase->completion_percentage ?? 0);
+                                    $progressValue = (float) ($phase->progress_percentage ?? 0);
                                     $progressClass = $progressValue >= 100 ? 'bg-success' : ($phase->status === 'in_progress' ? 'bg-primary' : ($phase->status === 'delayed' ? 'bg-warning' : 'bg-secondary'));
-                                    $startDate = optional($phase->planned_start_date)->format('M d, Y') ?? 'Not set';
-                                    $endDate = optional($phase->planned_end_date)->format('M d, Y') ?? 'Not set';
+                                    $startDate = optional($phase->actual_start_date)->format('M d, Y') ?? optional($phase->planned_start_date)->format('M d, Y') ?? 'Not set';
+                                    $endDate = optional($phase->actual_end_date)->format('M d, Y') ?? optional($phase->planned_end_date)->format('M d, Y') ?? 'Not set';
+                                    $milestoneSummary = $phase->milestone_progress_summary ?? '0/0 milestones';
                                     $milestonesPayload = $phase->milestones->map(function ($milestone) {
                                         $milestoneStatus = $milestone->is_completed ? 'Completed' : ($milestone->is_delayed ? 'Delayed' : 'Pending');
                                         $milestoneClass = $milestone->is_completed ? 'text-success' : ($milestone->is_delayed ? 'text-danger' : 'text-muted');
@@ -1134,18 +1184,30 @@
                                         'planned_end_date' => $endDate,
                                         'planned_start_date_raw' => optional($phase->planned_start_date)->format('Y-m-d') ?? '',
                                         'planned_end_date_raw' => optional($phase->planned_end_date)->format('Y-m-d') ?? '',
+                                        'actual_start_date_raw' => optional($phase->actual_start_date)->format('Y-m-d') ?? '',
+                                        'actual_end_date_raw' => optional($phase->actual_end_date)->format('Y-m-d') ?? '',
+                                        'admin_progress_override' => $phase->admin_progress_override !== null ? (float) $phase->admin_progress_override : null,
+                                        'override_reason' => $phase->override_reason,
+                                        'override_applied_at' => optional($phase->override_applied_at)->format('M d, Y h:i A'),
+                                        'override_applied_by' => $phase->override_applied_by,
+                                        'override_applied_by_name' => optional($phase->overrideAppliedBy)->name,
+                                        'depends_on_phase_id' => $phase->depends_on_phase_id,
+                                        'delay_reason' => $phase->delay_reason,
+                                        'delay_notes' => $phase->delay_notes,
+                                        'notes' => $phase->notes,
                                         'completion_percentage' => number_format($progressValue, 0),
                                         'completion_percentage_raw' => $progressValue,
                                         'progress_value' => number_format($progressValue, 0),
                                         'progress_percent' => min(100, max(0, $progressValue)),
                                         'progress_bar_class' => $progressClass,
+                                        'milestone_progress_summary' => $milestoneSummary,
                                         'description' => $phase->description ?? 'No description available for this phase yet.',
                                         'milestones' => $milestonesPayload,
                                         'updated_at' => optional($phase->updated_at)->format('M d, Y h:i A') ?? 'Not available',
                                         'project_name' => optional($phase->project)->project_name ?? optional($selectedProject)->project_name ?? 'N/A',
                                     ];
                                 @endphp
-                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $phase->status }}" data-phase-progress="{{ (float) ($phase->completion_percentage ?? 0) }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
+                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $phase->status }}" data-phase-progress="{{ (float) ($phase->progress_percentage ?? 0) }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
                                     <td class="ps-4 text-center">
                                         <div class="order-badge bg-forest-light text-forest-green mx-auto">{{ $phase->phase_order }}</div>
                                     </td>
@@ -1274,6 +1336,16 @@
                                     <input name="phase_order" id="phaseOrderInput" type="number" min="1" class="form-control px-3 shadow-none bg-white border" placeholder="Enter order number" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" required>
                                     <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Set the sequence of this phase</div>
                                 </div>
+                                <div class="col-12">
+                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Predecessor Phase</label>
+                                    <select name="depends_on_phase_id" id="dependsOnPhaseInput" class="form-select px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                        <option value="">No dependency</option>
+                                        @foreach((optional($selectedProject)->phases ?? collect())->sortBy('phase_order') as $dependencyPhase)
+                                            <option value="{{ $dependencyPhase->phase_id }}">Phase {{ $dependencyPhase->phase_order }}: {{ $dependencyPhase->phase_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Only earlier phases can be selected. This phase will wait until the chosen predecessor is completed.</div>
+                                </div>
                             </div>
                         </div>
 
@@ -1294,6 +1366,14 @@
                                 <div class="col-12 col-md-6">
                                     <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Planned End Date <span class="text-danger">*</span></label>
                                     <input type="date" name="planned_end_date" id="plannedEndDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;" required>
+                                </div>
+                                <div class="col-12 col-md-6" id="actualStartDateColumn" style="display: none;">
+                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Actual Start Date</label>
+                                    <input type="date" name="actual_start_date" id="actualStartDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                </div>
+                                <div class="col-12 col-md-6" id="actualEndDateColumn" style="display: none;">
+                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Actual End Date</label>
+                                    <input type="date" name="actual_end_date" id="actualEndDateInput" class="form-control px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label mb-1 fw-semibold text-secondary" id="durationLabel" style="font-size: 0.8rem;">Duration</label>
@@ -1323,14 +1403,35 @@
                                     </select>
                                     <div class="form-text mt-1 text-muted" id="statusSubtext" style="font-size: 0.75rem;">Set the current status of this phase</div>
                                 </div>
+                                <div class="col-12" id="delayDetailsColumn" style="display: none;">
+                                    <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Delay Reason <span class="text-danger">*</span></label>
+                                    <select name="delay_reason" id="delayReasonInput" class="form-select px-3 shadow-none bg-white border" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                        <option value="">Select a reason</option>
+                                        <option value="weather">Weather</option>
+                                        <option value="materials">Materials</option>
+                                        <option value="permits">Permits</option>
+                                        <option value="design_change">Design change</option>
+                                        <option value="labor">Labor</option>
+                                        <option value="equipment">Equipment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <textarea name="delay_notes" id="delayNotesInput" class="form-control mt-2 px-3 shadow-none bg-white border" rows="2" maxlength="5000" placeholder="Add delay details"></textarea>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Phase Notes</label>
+                            <textarea name="notes" id="phaseNotesInput" class="form-control px-3 shadow-none bg-white border" rows="2" maxlength="5000" placeholder="Add site notes, issues, or decisions"></textarea>
                         </div>
 
                         <div class="row mt-3" id="completionVisibleRow" style="display: none;">
                             <div class="col-12 col-md-6">
-                                <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Progress (%)</label>
-                                <input type="number" name="completion_percentage" id="completionPercentageInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="0.01" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
-                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Admin can manually set phase progress.</div>
+                                <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Progress (Milestone-Based)</label>
+                                <div class="form-control px-3 shadow-none bg-light border" style="height: 44px; border-radius: 8px; font-size: 0.88rem; display: flex; align-items: center;">
+                                    <span id="milestoneProgressSummary" class="text-dark fw-semibold">0/0 milestones</span>
+                                </div>
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Progress is calculated from milestone completion.</div>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label mb-2 fw-semibold text-secondary" style="font-size: 0.8rem;">Progress Preview</label>
@@ -1344,6 +1445,19 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3" id="overrideVisibleRow" style="display: none;">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label mb-1 fw-semibold text-secondary" style="font-size: 0.8rem;">Admin Progress Override (%)</label>
+                                <input type="number" name="admin_progress_override" id="adminProgressOverrideInput" class="form-control px-3 shadow-none bg-white border" min="0" max="100" step="1" value="" style="height: 44px; border-radius: 8px; font-size: 0.88rem;">
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Leave empty to use the binary milestone calculation.</div>
+                            </div>
+                            <div class="col-12 col-md-6" id="overrideReasonSection" style="display: none;">
+                                <label class="form-label mb-1 fw-semibold text-secondary" for="overrideReasonInput" style="font-size: 0.8rem;">Override Reason <span class="text-danger">*</span></label>
+                                <textarea name="override_reason" id="overrideReasonInput" class="form-control px-3 shadow-none bg-white border" rows="2" maxlength="2000" placeholder="Explain why the calculated progress is being overridden."></textarea>
+                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">Required when an override is set.</div>
                             </div>
                         </div>
 
@@ -1738,6 +1852,13 @@
                             <div class="progress-bar ${escapeHtml(payload.progress_bar_class || 'bg-success')}" style="width: ${escapeHtml(payload.progress_percent || '0')}%;"></div>
                         </div>
                     </div>
+                    ${payload.admin_progress_override !== null && payload.admin_progress_override !== undefined ? `
+                        <div class="mt-2 p-2 rounded bg-info-subtle border border-info-subtle" style="font-size: 11px;">
+                            <strong>Manual override:</strong> ${escapeHtml(payload.admin_progress_override)}%
+                            <div class="text-muted mt-1">${escapeHtml(payload.override_reason || 'No reason provided')}</div>
+                            ${payload.override_applied_at ? `<div class="text-muted">Applied ${escapeHtml(payload.override_applied_at)}${payload.override_applied_by_name ? ` by ${escapeHtml(payload.override_applied_by_name)}` : ''}</div>` : ''}
+                        </div>
+                    ` : '<div class="text-muted mt-2" style="font-size: 11px;">Progress is calculated from completed milestones.</div>'}
                 </div>
 
                 <hr class="text-muted opacity-25">
@@ -1787,6 +1908,11 @@
         const plannedEndDateInput = document.getElementById('plannedEndDateInput');
         const actualStartDateInput = document.getElementById('actualStartDateInput');
         const actualEndDateInput = document.getElementById('actualEndDateInput');
+        const dependsOnPhaseInput = document.getElementById('dependsOnPhaseInput');
+        const delayDetailsColumn = document.getElementById('delayDetailsColumn');
+        const delayReasonInput = document.getElementById('delayReasonInput');
+        const delayNotesInput = document.getElementById('delayNotesInput');
+        const phaseNotesInput = document.getElementById('phaseNotesInput');
         const actualStartDateColumn = document.getElementById('actualStartDateColumn');
         const actualEndDateColumn = document.getElementById('actualEndDateColumn');
         const completionVisibleRow = document.getElementById('completionVisibleRow');
@@ -1983,6 +2109,10 @@
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
+                        const container = document.querySelector('.swal2-container');
+                        if (container) container.style.setProperty('z-index', '2147483647', 'important');
+                        const popup = document.querySelector('.swal2-popup');
+                        if (popup) popup.style.setProperty('z-index', '2147483647', 'important');
                     }
                 });
             }
@@ -2037,11 +2167,6 @@
                 });
             } else {
                 phaseForm.setAttribute('action', createPhaseUrl);
-                if (loadingSwal) loadingSwal.close();
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
                 phaseForm.submit();
             }
         }
@@ -2071,6 +2196,10 @@
             if (phaseStatusSection) {
                 phaseStatusSection.style.display = isEdit ? 'block' : 'none';
             }
+            const overrideVisibleRow = document.getElementById('overrideVisibleRow');
+            if (overrideVisibleRow) {
+                overrideVisibleRow.style.display = isEdit ? 'flex' : 'none';
+            }
             document.getElementById('statusSubtext').textContent = isEdit ? 'Set the current status of this phase' : 'Set the current status of this phase';
             document.getElementById('durationLabel').textContent = isEdit ? 'Duration (Calculated)' : 'Duration';
             document.getElementById('durationSubtext').textContent = isEdit ? '' : 'Duration will be calculated automatically';
@@ -2086,13 +2215,30 @@
             phaseNameInput.value = payload?.phase_name || '';
             phaseOrderInput.value = isEdit ? (payload?.phase_order || '') : getNextPhaseOrder();
             phaseStatusInput.value = payload?.status || 'not_started';
+            if (dependsOnPhaseInput) dependsOnPhaseInput.value = payload?.depends_on_phase_id || '';
+            if (actualStartDateInput) actualStartDateInput.value = payload?.actual_start_date_raw || '';
+            if (actualEndDateInput) actualEndDateInput.value = payload?.actual_end_date_raw || '';
+            if (delayReasonInput) delayReasonInput.value = payload?.delay_reason || '';
+            if (delayNotesInput) delayNotesInput.value = payload?.delay_notes || '';
+            if (phaseNotesInput) phaseNotesInput.value = payload?.notes || '';
+            const adminProgressOverrideInput = document.getElementById('adminProgressOverrideInput');
+            if (adminProgressOverrideInput) adminProgressOverrideInput.value = payload?.admin_progress_override ?? '';
+            const overrideReasonInput = document.getElementById('overrideReasonInput');
+            if (overrideReasonInput) overrideReasonInput.value = payload?.override_reason || '';
+            updateOverrideVisibility();
+            if (dependsOnPhaseInput) {
+                Array.from(dependsOnPhaseInput.options).forEach(function (option) {
+                    option.disabled = Boolean(payload?.phase_id) && option.value === String(payload.phase_id);
+                });
+            }
             currentPhaseStatus = payload?.status || null;
             plannedStartDateInput.value = payload?.planned_start_date_raw || '';
             plannedEndDateInput.value = payload?.planned_end_date_raw || '';
             const completionValue = Number(payload?.completion_percentage_raw ?? 0);
             activeCompletionValue = completionValue;
-            if (completionPercentageInput) {
-                completionPercentageInput.value = completionValue;
+            const milestoneProgressSummary = document.getElementById('milestoneProgressSummary');
+            if (milestoneProgressSummary) {
+                milestoneProgressSummary.textContent = payload?.milestone_progress_summary || '0/0 milestones';
             }
             if (completionPercentageBar) {
                 completionPercentageBar.style.width = `${completionValue}%`;
@@ -2121,6 +2267,7 @@
 
             if (phaseStatusInput) {
                 previousStatusValue = phaseStatusInput.value;
+                if (delayDetailsColumn) delayDetailsColumn.style.display = phaseStatusInput.value === 'delayed' ? 'block' : 'none';
             }
 
             phaseModalInstance.show();
@@ -2156,26 +2303,9 @@
         });
         plannedEndDateInput.addEventListener('change', calculateDuration);
 
-        function updateCompletionDisplay(value) {
-            const percentage = Math.min(100, Math.max(0, Number(value || 0)));
-            if (completionPercentageBar) {
-                completionPercentageBar.style.width = `${percentage}%`;
-                completionPercentageBar.setAttribute('aria-valuenow', String(percentage));
-            }
-            if (completionPercentageLabel) {
-                completionPercentageLabel.textContent = `${Math.round(percentage)}%`;
-            }
-        }
-
-        if (completionPercentageInput) {
-            completionPercentageInput.addEventListener('input', function () {
-                updateCompletionDisplay(this.value);
-                activeCompletionValue = Number(this.value || 0);
-            });
-        }
-
         if (phaseStatusInput) {
             phaseStatusInput.addEventListener('change', function (ev) {
+                if (delayDetailsColumn) delayDetailsColumn.style.display = ev.target.value === 'delayed' ? 'block' : 'none';
                 const newVal = ev.target.value;
                 const currentProgress = Number(activeCompletionValue || 0);
 
@@ -2210,6 +2340,23 @@
             phaseForm.addEventListener('input', clearPhaseFormErrors);
             phaseForm.addEventListener('change', clearPhaseFormErrors);
         }
+
+        const adminProgressOverrideInput = document.getElementById('adminProgressOverrideInput');
+        const overrideReasonInput = document.getElementById('overrideReasonInput');
+        const overrideReasonSection = document.getElementById('overrideReasonSection');
+
+        function updateOverrideVisibility() {
+            const hasOverride = Boolean(adminProgressOverrideInput?.value.trim());
+            if (overrideReasonSection) overrideReasonSection.style.display = hasOverride ? 'block' : 'none';
+            if (overrideReasonInput) {
+                overrideReasonInput.required = hasOverride;
+                if (!hasOverride) overrideReasonInput.value = '';
+            }
+        }
+
+        adminProgressOverrideInput?.addEventListener('input', updateOverrideVisibility);
+        adminProgressOverrideInput?.addEventListener('change', updateOverrideVisibility);
+        updateOverrideVisibility();
 
         function mapStatusClassAndLabel(status) {
             switch (status) {
@@ -2318,6 +2465,10 @@
                         planned_start_date_raw: phase.planned_start_date_raw,
                         planned_end_date_raw: phase.planned_end_date_raw,
                         completion_percentage_raw: phase.completion_percentage,
+                        admin_progress_override: phase.admin_progress_override ?? null,
+                        override_reason: phase.override_reason || '',
+                        override_applied_at: phase.override_applied_at || null,
+                        override_applied_by_name: phase.override_applied_by_name || null,
                         status: phase.status,
                     });
                     editBtn.dataset.phaseEdit = payload;

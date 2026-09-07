@@ -10,6 +10,7 @@ use App\Models\Report;
 use App\Models\SupervisorNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -93,11 +94,19 @@ class AppServiceProvider extends ServiceProvider
             $unread = 0;
             if ($user) {
                 try {
-                    if (\Illuminate\Support\Facades\Schema::hasTable('admin_notifications')) {
-                        $unread = AdminNotification::query()
-                            ->where('admin_id', $user->user_id)
-                            ->where('is_read', false)
-                            ->count('*');
+                    $hasAdminNotifications = Cache::rememberForever('schema.admin_notifications.exists', function () {
+                        return \Illuminate\Support\Facades\Schema::hasTable('admin_notifications');
+                    });
+
+                    if ($hasAdminNotifications) {
+                        $unread = Cache::remember(
+                            "admin_notifications.unread.{$user->user_id}",
+                            now()->addSeconds(10),
+                            fn () => AdminNotification::query()
+                                ->where('admin_id', $user->user_id)
+                                ->where('is_read', false)
+                                ->count()
+                        );
                     }
                 } catch (\Throwable $e) {
                     $unread = 0;

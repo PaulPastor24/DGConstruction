@@ -156,7 +156,7 @@
             });
         @endif
 
-        @if($errors->any())
+        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any())
             Swal.fire({
                 icon: 'error',
                 title: 'Validation Error',

@@ -9,6 +9,7 @@ use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MilestoneController extends Controller
 {
@@ -84,6 +85,14 @@ class MilestoneController extends Controller
 
         $validated = $validator->validated();
 
+        if (($validated['is_completed'] ?? false) && ($validated['is_delayed'] ?? false)) {
+            $message = 'A milestone cannot be both completed and delayed.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message, 'errors' => ['is_completed' => [$message]]], 422);
+            }
+            return back()->withErrors(['is_completed' => $message])->withInput();
+        }
+
         $project = Project::findOrFail($validated['project_id']);
         $this->authorizeProject($project);
 
@@ -92,8 +101,11 @@ class MilestoneController extends Controller
             ->where('project_id', $validated['project_id'])
             ->firstOrFail();
 
-        if ($phase->planned_start_date && $phase->planned_end_date) {
-            if ($validated['start_date'] < $phase->planned_start_date || $validated['start_date'] > $phase->planned_end_date) {
+        $phaseStartDate = $phase->planned_start_date?->toDateString();
+        $phaseEndDate = $phase->planned_end_date?->toDateString();
+
+        if ($phaseStartDate && $phaseEndDate) {
+            if ($validated['start_date'] < $phaseStartDate || $validated['start_date'] > $phaseEndDate) {
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
@@ -104,7 +116,7 @@ class MilestoneController extends Controller
                 return back()->withErrors(['start_date' => 'Milestone start date must be within the phase schedule.'])->withInput();
             }
 
-            if ($validated['end_date'] < $phase->planned_start_date || $validated['end_date'] > $phase->planned_end_date) {
+            if ($validated['end_date'] < $phaseStartDate || $validated['end_date'] > $phaseEndDate) {
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
@@ -127,6 +139,8 @@ class MilestoneController extends Controller
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
+
+            $this->syncAffectedPhaseWorkflow($milestone);
 
             // Notify client about new milestone
             try {
@@ -232,8 +246,7 @@ class MilestoneController extends Controller
             'milestone_name' => 'required|string|max:200',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'is_completed' => 'boolean',
-            'is_delayed' => 'boolean',
+            'status' => 'required|in:pending,in_progress,completed,delayed',
         ]);
 
         if ($validator->fails()) {
@@ -249,12 +262,54 @@ class MilestoneController extends Controller
         }
 
         $validated = $validator->validated();
+        $newStatus = $validated['status'];
+
+        $allowedTransitions = [
+            'pending' => ['pending', 'in_progress', 'completed', 'delayed'],
+            'in_progress' => ['in_progress', 'completed', 'delayed', 'pending'],
+            'delayed' => ['delayed', 'in_progress', 'completed', 'pending'],
+            'completed' => ['completed'],
+        ];
+
+        $currentStatus = $milestone->is_completed
+            ? 'completed'
+            : ($milestone->is_delayed ? 'delayed' : ($milestone->status ?: 'pending'));
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            $message = "A " . $currentStatus . " milestone cannot be changed to " . $newStatus . ".";
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return back()->withErrors(['status' => $message])->withInput();
+        }
+
+        $phaseStartDate = $phase->planned_start_date?->toDateString();
+        $phaseEndDate = $phase->planned_end_date?->toDateString();
+        if ($phaseStartDate && $phaseEndDate) {
+            if ($validated['start_date'] < $phaseStartDate || $validated['start_date'] > $phaseEndDate) {
+                $message = 'Milestone start date must be within the selected phase schedule.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['start_date' => $message])->withInput();
+            }
+            if ($validated['end_date'] < $phaseStartDate || $validated['end_date'] > $phaseEndDate) {
+                $message = 'Milestone end date must be within the selected phase schedule.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['end_date' => $message])->withInput();
+            }
+        }
+
+        $isCompleted = $newStatus === 'completed';
+        $isDelayed = $newStatus === 'delayed';
 
         try {
             DB::beginTransaction();
 
 
-            $oldStatus = $milestone->is_completed;
+            $oldStatus = $milestone->display_status;
             $oldDelayed = $milestone->is_delayed;
             $oldPhaseId = $milestone->phase_id;
 
@@ -263,9 +318,12 @@ class MilestoneController extends Controller
                 'milestone_name' => $validated['milestone_name'],
                 'start_date' => $validated['start_date'] ?? $milestone->start_date,
                 'end_date' => $validated['end_date'] ?? $milestone->end_date,
-                'is_completed' => (bool) ($validated['is_completed'] ?? false),
-                'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
+                'status' => $newStatus,
+                'is_completed' => $isCompleted,
+                'is_delayed' => $isDelayed,
             ]);
+
+            $this->syncAffectedPhaseWorkflow($milestone, $oldPhaseId);
 
             // Log status changes
             $changes = [];
@@ -302,7 +360,11 @@ class MilestoneController extends Controller
             DB::commit();
 
             if ($request->ajax()) {
-                return response()->json(['success' => true, 'message' => 'Milestone updated successfully']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Milestone updated successfully',
+                    'phase' => $this->phaseProgressPayload($milestone->phase),
+                ]);
             }
 
             return redirect()
@@ -341,8 +403,11 @@ class MilestoneController extends Controller
             $milestone->update([
                 'is_completed' => true,
                 'is_delayed' => false,
+                'status' => 'completed',
                 'end_date' => now()->toDateString(),
             ]);
+
+            $this->syncAffectedPhaseWorkflow($milestone);
 
             $this->logAction(
                 'Milestone Completed',
@@ -367,7 +432,11 @@ class MilestoneController extends Controller
 
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Milestone marked as completed']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Milestone marked as completed',
+                'phase' => $this->phaseProgressPayload($milestone->phase),
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Milestone completion failed: ' . $e->getMessage());
@@ -458,7 +527,10 @@ class MilestoneController extends Controller
             DB::beginTransaction();
 
             $milestoneName = $milestone->milestone_name;
+            $milestonePhaseId = $milestone->phase_id;
             $milestone->delete();
+
+            $this->syncAffectedPhaseWorkflow(new Milestone(['phase_id' => $milestonePhaseId]));
 
             $this->logAction(
                 'Milestone Deleted',
@@ -466,6 +538,16 @@ class MilestoneController extends Controller
             );
 
             DB::commit();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                $phase = ConstructionPhase::query()->find($milestonePhaseId);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Milestone deleted successfully',
+                    'phase' => $this->phaseProgressPayload($phase),
+                ]);
+            }
 
             return redirect()
                 ->route('admin.milestones.index', [$projectId, $phaseId])
@@ -485,6 +567,35 @@ class MilestoneController extends Controller
         if ($project->engineer_id !== auth('web')->user()->user_id) {
             abort(403, 'Unauthorized to manage milestones for this project');
         }
+    }
+
+    private function syncAffectedPhaseWorkflow(Milestone $milestone, ?int $oldPhaseId = null): void
+    {
+        $phaseIds = array_unique(array_filter([(int) $milestone->phase_id, $oldPhaseId]));
+
+        foreach ($phaseIds as $phaseId) {
+            $phase = ConstructionPhase::query()->find($phaseId);
+            if (!$phase) {
+                continue;
+            }
+
+            $phase->syncStatusFromMilestones();
+            Project::query()->find($phase->project_id)?->syncStatusFromPhases();
+        }
+    }
+
+    private function phaseProgressPayload(?ConstructionPhase $phase): ?array
+    {
+        if (!$phase) {
+            return null;
+        }
+
+        return [
+            'phase_id' => $phase->phase_id,
+            'status' => $phase->status,
+            'completion_percentage' => (float) $phase->progress_percentage,
+            'milestone_progress_summary' => $phase->milestone_progress_summary,
+        ];
     }
 
     /**

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Mpdf\Mpdf;
@@ -67,9 +68,34 @@ class SupervisorController extends Controller
         return $time->lte($presentCutoff) ? 'present' : 'late';
     }
 
+    private function normalizeAttendanceTimeValue($value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($trimmed)->format('H:i:s');
+        } catch (\Throwable $error) {
+            return null;
+        }
+    }
+
     private function formatAttendanceRecord($record): array
     {
         $record = (array) $record;
+
+        $overtimeMinutes = Attendance::calculateOvertimeMinutes(
+            $record['log_date'] ?? null,
+            $record['time_in'] ?? null,
+            $record['time_out'] ?? null
+        );
 
         return [
             'log_id' => $record['log_id'] ?? null,
@@ -85,6 +111,9 @@ class SupervisorController extends Controller
             'status' => $record['status'] ?? 'present',
             'remarks' => $record['remarks'] ?? null,
             'biometric_matched' => $record['biometric_matched'] ?? 0,
+            'overtime_minutes' => $overtimeMinutes,
+            'overtime_hours' => round($overtimeMinutes / 60, 2),
+            'overtime_label' => Attendance::formatOvertimeLabel($overtimeMinutes),
         ];
     }
 
@@ -199,6 +228,11 @@ class SupervisorController extends Controller
             'worker_id' => ['required', 'integer'],
             'log_date' => ['required', 'date'],
             'action' => ['nullable', 'string'],
+            'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'break_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'break_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'manual' => ['nullable', 'boolean'],
         ]);
 
         $worker = DB::table('workers')
@@ -213,8 +247,13 @@ class SupervisorController extends Controller
         }
 
         $action = $validated['action'] ?? 'time_in';
+        $manualMode = $request->boolean('manual');
         $date = $validated['log_date'];
         $now = now('Asia/Manila');
+        $requestedTimeIn = $this->normalizeAttendanceTimeValue($request->input('time_in'));
+        $requestedBreakOut = $this->normalizeAttendanceTimeValue($request->input('break_out'));
+        $requestedBreakIn = $this->normalizeAttendanceTimeValue($request->input('break_in'));
+        $requestedTimeOut = $this->normalizeAttendanceTimeValue($request->input('time_out'));
 
         $existingLog = DB::table('attendance_logs')
             ->where('worker_id', $validated['worker_id'])
@@ -222,17 +261,18 @@ class SupervisorController extends Controller
             ->first();
 
         if (! $existingLog) {
-            $status = $this->computeTimeInStatus($now, $worker->schedule_start ?: '07:00:00');
+            $timeInValue = $requestedTimeIn ?? $now->format('H:i:s');
+            $status = $this->computeTimeInStatus($timeInValue, $worker->schedule_start ?: '07:00:00');
 
             DB::table('attendance_logs')->insert([
                 'worker_id' => $validated['worker_id'],
                 'deployment_id' => 1,
                 'recorded_by' => Auth::id(),
                 'log_date' => $date,
-                'time_in' => $now->format('H:i:s'),
-                'break_out' => null,
-                'break_in' => null,
-                'time_out' => null,
+                'time_in' => $timeInValue,
+                'break_out' => $manualMode && $requestedBreakOut ? $requestedBreakOut : null,
+                'break_in' => $manualMode && $requestedBreakIn ? $requestedBreakIn : null,
+                'time_out' => $manualMode && $requestedTimeOut ? $requestedTimeOut : null,
                 'status' => $status,
                 'remarks' => $status === 'late'
                     ? 'Late time-in. Time-in after 8:30 AM.'
@@ -242,6 +282,28 @@ class SupervisorController extends Controller
             ]);
         } else {
             $updates = [];
+
+            if ($manualMode) {
+                if ($requestedTimeIn) {
+                    $updates['time_in'] = $requestedTimeIn;
+                }
+
+                if ($requestedBreakOut) {
+                    $updates['break_out'] = $requestedBreakOut;
+                }
+
+                if ($requestedBreakIn) {
+                    $updates['break_in'] = $requestedBreakIn;
+                }
+
+                if ($requestedTimeOut) {
+                    $updates['time_out'] = $requestedTimeOut;
+                }
+
+                if (! empty($updates)) {
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Manual attendance values updated.');
+                }
+            }
 
             if ($action === 'break_out') {
                 if (! $existingLog->time_in) {
@@ -256,7 +318,7 @@ class SupervisorController extends Controller
                     ], 422);
                 }
 
-                $updates['break_out'] = $now->format('H:i:s');
+                $updates['break_out'] = $requestedBreakOut ?? $now->format('H:i:s');
                 $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break out recorded.');
             }
 
@@ -276,7 +338,7 @@ class SupervisorController extends Controller
                 $breakOutDateTime = Carbon::parse($date.' '.$existingLog->break_out);
                 $breakMinutes = $breakOutDateTime->diffInMinutes($now);
 
-                $updates['break_in'] = $now->format('H:i:s');
+                $updates['break_in'] = $requestedBreakIn ?? $now->format('H:i:s');
 
                 if ($breakMinutes > (int) ($worker->break_minutes ?: 60)) {
                     $updates['status'] = 'late';
@@ -308,11 +370,21 @@ class SupervisorController extends Controller
                     ], 422);
                 }
 
-                $updates['time_out'] = $now->format('H:i:s');
+                $updates['time_out'] = $requestedTimeOut ?? $now->format('H:i:s');
                 $updates['overtime_minutes'] = $now->gt($timeOutAllowed)
                     ? $timeOutAllowed->diffInMinutes($now)
                     : 0;
                 $updates['remarks'] = trim(($existingLog->remarks ?? '').' Time out recorded.');
+
+                $overtimeMinutes = Attendance::calculateOvertimeMinutes(
+                    $date,
+                    $existingLog->time_in,
+                    $updates['time_out']
+                );
+
+                if ($overtimeMinutes > 0) {
+                    $updates['remarks'] = trim(($updates['remarks'] ?? '').' '.Attendance::formatOvertimeLabel($overtimeMinutes).'.');
+                }
             }
 
             if (! empty($updates)) {
@@ -782,10 +854,6 @@ class SupervisorController extends Controller
 
         $user->fill($validated);
 
-        if (Schema::hasColumn('users', 'name')) {
-            $user->name = trim(($validated['first_name'] ?? $user->first_name).' '.($validated['last_name'] ?? $user->last_name));
-        }
-
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
@@ -793,6 +861,42 @@ class SupervisorController extends Controller
         $user->save();
 
         return back()->with('success', 'Profile information updated successfully.');
+    }
+
+    public function updateProfilePhoto(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!Schema::hasColumn('users', 'profile_photo')) {
+            return back()->with('error', 'Profile photo storage is not available yet.');
+        }
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+        ]);
+
+        $newPhotoPath = $validated['profile_photo']->storePublicly('profile-photos', 'public');
+        if (!$newPhotoPath) {
+            return back()->with('error', 'The profile photo could not be stored. Please try again.');
+        }
+
+        $oldPhotoPath = $user->profile_photo;
+        $user->profile_photo = $newPhotoPath;
+        $user->save();
+
+        if ($oldPhotoPath) {
+            Storage::disk('public')->delete($oldPhotoPath);
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile photo updated successfully.',
+                'photo_url' => asset('storage/' . ltrim($newPhotoPath, '/')),
+            ]);
+        }
+
+        return back()->with('success', 'Profile photo updated successfully.');
     }
 
     public function updatePassword(Request $request)

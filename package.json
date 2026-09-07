@@ -7,6 +7,8 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@capacitor/android": "^8.4.2",
+        "@capacitor/cli": "^8.4.2",
         "@tailwindcss/forms": "^0.5.2",
         "@tailwindcss/vite": "^4.0.0",
         "alpinejs": "^3.4.2",

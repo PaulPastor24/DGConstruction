@@ -9,7 +9,7 @@
 --}}
 @php
     $isModal = $isModal ?? true;
-    $isArchived = strtolower((string) ($project->status ?? '')) === 'archived';
+    $isArchived = $project->workflowStatus() === \App\Models\Project::STATUS_ARCHIVED;
     $pdActiveSupervisor = $project->active_supervisor;
     $pdStart = $project->start_date;
     $pdTargetEnd = $project->target_end_date;
@@ -22,27 +22,12 @@
     $pdCompletionReady = $project->completion_readiness_badge_class === 'success';
     $pdSetupReady = $project->setup_status_badge_class === 'success';
     $pdPhasePercent = $project->phase_count > 0 ? round(($pdCompletedPhases / max(1, $project->phase_count)) * 100) : 0;
-    $pdStoredStatus = strtolower((string) ($project->getRawOriginal('status') ?? $project->status ?? 'planning'));
-    $pdNormalizedStatus = match ($pdStoredStatus) {
-        'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
-        'completed', 'complete', 'finished' => 'completed',
-        'on_hold', 'pending', 'planning', 'not_started', 'paused', 'delayed' => 'planning',
-        'archived' => 'archived',
-        default => 'planning',
-    };
-    $pdStatusLabel = match ($pdNormalizedStatus) {
-        'ongoing' => 'In Progress',
-        'completed' => 'Completed',
-        'archived' => 'Archived',
-        'planning' => 'Planning',
-        default => 'Planning',
-    };
-    $pdStatusBadgeClass = match ($pdNormalizedStatus) {
-        'ongoing' => 'success',
-        'completed' => 'success',
-        'archived' => 'warning',
-        default => 'warning',
-    };
+    $pdNormalizedStatus = $project->workflowStatus();
+    $pdStatusLabel = $project->workflow_status_label;
+    $pdStatusBadgeClass = in_array($pdNormalizedStatus, [
+        \App\Models\Project::STATUS_ONGOING,
+        \App\Models\Project::STATUS_COMPLETED,
+    ], true) ? 'success' : 'warning';
 @endphp
 
 <div class="ps-header">
@@ -108,7 +93,6 @@
                 <div class="ps-field-value"><i class="bi bi-calendar3"></i> Start: {{ $pdStart ? $pdStart->format('M d, Y') : 'Not set' }}</div>
                 <div class="ps-field-value"><i class="bi bi-calendar3"></i> Target: {{ $pdTargetEnd ? $pdTargetEnd->format('M d, Y') : 'Not set' }}</div>
                 <div class="ps-field-value"><i class="bi bi-clock-history"></i> Duration: {{ $pdDuration > 0 ? $pdDuration . ' days' : 'Not available' }}</div>
-                <div class="ps-field-value"><i class="bi bi-alarm"></i> Site Schedule: {{ $project->schedule_label }}</div>
             </div>
             <div class="ps-info-card">
                 <div class="ps-field-label">Delivery Snapshot</div>
@@ -207,6 +191,27 @@
                 <div class="ps-team-sub">{{ $pdActiveSupervisor?->email ?? 'No email' }}</div>
             </div>
         </div>
+    </div>
+
+    <div class="ps-section-card">
+        <div class="ps-section-head">
+            <h6>Status History</h6>
+            <span class="ps-readonly-pill">Audit Trail</span>
+        </div>
+        @forelse($project->statusHistory as $statusChange)
+            <div class="d-flex align-items-start gap-2 py-2 border-bottom">
+                <i class="bi bi-arrow-left-right text-success mt-1"></i>
+                <div class="small">
+                    <div class="fw-semibold">{{ $statusChange->from_status ? \App\Models\Project::statusLabel($statusChange->from_status) : 'Created' }} &rarr; {{ \App\Models\Project::statusLabel($statusChange->to_status) }}</div>
+                    <div class="text-muted">{{ $statusChange->user?->name ?? 'System' }} &middot; {{ $statusChange->created_at?->format('M d, Y h:i A') }}</div>
+                    @if($statusChange->reason)
+                        <div class="text-muted">Reason: {{ $statusChange->reason }}</div>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="small text-muted">No status changes recorded yet.</div>
+        @endforelse
     </div>
 </div>
 

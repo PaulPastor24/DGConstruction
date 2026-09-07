@@ -7,18 +7,21 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/css/admin-attendance.css',   
-                'resources/css/supervisor.css', 
-                'resources/js/admin-timeline.js' // ◄ Kept this from the remote branch so the timeline doesn't break
+                'resources/css/admin-attendance.css',
+                'resources/css/supervisor.css',
+                'resources/js/admin-timeline.js'
             ],
             refresh: true,
         }),
     ],
     server: {
-        allowedHosts: ['wriggle-drift-sesame.ngrok-free.dev'],
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
         hmr: {
-            host: 'wriggle-drift-sesame.ngrok-free.dev',
-            protocol: 'wss',
+            host: 'localhost',
+            port: 5173,
+            protocol: 'ws',
         },
     },
 });

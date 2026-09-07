@@ -23,34 +23,15 @@
 
                         $projectPhaseCount = $project->phase_count;
                         $projectMilestoneCount = $project->milestone_count;
-                        $projectApprovedReportsCount = $project->reports()->where('approval_status', 'approved')->count();
-                        $projectMaterialsCount = $project->projectMaterials()->count();
-                        $projectAttendanceCount = $project->attendanceLogs()->count();
+                        $projectReportsCount = $project->report_count;
+                        $projectMaterialsCount = $project->material_count;
+                        $projectAttendanceCount = $project->attendance_count;
                         $storedStatus = strtolower((string) ($project->getRawOriginal('status') ?? $project->status ?? 'planning'));
-                        $normalizedStatus = match ($storedStatus) {
-                            'in_progress', 'inprogress', 'ongoing', 'active' => 'ongoing',
-                            'completed', 'complete', 'finished' => 'completed',
-                            'on_hold' => 'on_hold',
-                            'pending', 'planning', 'not_started', 'paused', 'delayed' => 'planning',
-                            'archived' => 'archived',
-                            default => 'planning',
-                        };
+                        $normalizedStatus = $project->workflowStatus();
                         $projectDaysLeft = $normalizedStatus === 'completed' ? 0 : ($project->target_end_date ? max(0, (int) now()->diffInDays($project->target_end_date, false)) : 0);
-                        $projectStatusLabel = match ($normalizedStatus) {
-                            'ongoing' => 'In Progress',
-                            'on_hold' => 'On Hold',
-                            'completed' => 'Completed',
-                            'archived' => 'Archived',
-                            default => 'Planning',
-                        };
-                        $projectStatusClass = match ($normalizedStatus) {
-                            'ongoing' => 'in-progress',
-                            'on_hold' => 'on-hold',
-                            'completed' => 'completed',
-                            'archived' => 'completed',
-                            default => 'planning',
-                        };
-                        $projectProgressPct = number_format($project->progress_percentage ?? ($normalizedStatus === 'completed' ? 100 : ($normalizedStatus === 'planning' ? 25 : 65)), 0);
+                        $projectStatusLabel = $project->workflow_status_label;
+                        $projectStatusClass = $project->workflow_status_class;
+                        $projectProgressPct = number_format($project->overall_progress_percentage, 0);
                         $projectProgressSubtitle = match ($normalizedStatus) {
                             'completed' => 'Completed',
                             'planning' => 'Site Preparation',
@@ -130,13 +111,16 @@
                                         data-supervisor-name="{{ $project->active_supervisor->name ?? 'Juan Dela Cruz' }}"
                                         data-supervisor-id="{{ $project->active_supervisor->user_id ?? '' }}"
                                         data-client-name="{{ $project->client->user->name ?? 'Mr. & Mrs. Reyes' }}"
-                                        data-status="{{ $storedStatus }}"
+                                        data-status="{{ $normalizedStatus }}"
+                                        data-status-label="{{ $projectStatusLabel }}"
+                                        data-status-class="{{ $projectStatusClass }}"
+                                        data-status-transitions="{{ json_encode($project->allowedStatusTransitions()) }}"
                                         data-start-date="{{ $project->start_date ? $project->start_date->toDateString() : '' }}"
                                         data-target-end-date="{{ $project->target_end_date ? $project->target_end_date->toDateString() : '' }}"
                                         data-days-left="{{ $projectDaysLeft }}"
                                         data-phases="{{ $projectPhaseCount }}"
                                         data-milestones="{{ $projectMilestoneCount }}"
-                                        data-reports="{{ $projectApprovedReportsCount }}"
+                                        data-reports="{{ $projectReportsCount }}"
                                         data-materials="{{ $projectMaterialsCount }}"
                                         data-attendance="{{ $projectAttendanceCount }}"
                                         data-pct="{{ $projectProgressPct }}">

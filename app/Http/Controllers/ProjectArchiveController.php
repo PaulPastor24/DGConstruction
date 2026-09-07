@@ -35,27 +35,20 @@ class ProjectArchiveController extends Controller
         }
 
         $archives = $query->paginate(10)->withQueryString();
-        $filterClients = ProjectArchive::query()
-            ->whereNotNull('client_id')
-            ->with('client.user')
-            ->select('client_id')
-            ->distinct()
-            ->get()
-            ->map(fn ($archive) => $archive->client)
-            ->filter()
-            ->sortBy(fn ($client) => $client->company_name ?? '')
-            ->values();
+        $filterClients = Client::query()
+            ->whereIn('client_id', function ($q) {
+                $q->select('client_id')->from('project_archives')->whereNotNull('client_id')->distinct();
+            })
+            ->with('user')
+            ->orderBy('company_name')
+            ->get();
 
-        $filterEngineers = ProjectArchive::query()
-            ->whereNotNull('engineer_id')
-            ->with('engineer')
-            ->select('engineer_id')
-            ->distinct()
-            ->get()
-            ->map(fn ($archive) => $archive->engineer)
-            ->filter()
-            ->sortBy(fn ($engineer) => $engineer->full_name ?? $engineer->name ?? '')
-            ->values();
+        $filterEngineers = User::query()
+            ->whereIn('user_id', function ($q) {
+                $q->select('engineer_id')->from('project_archives')->whereNotNull('engineer_id')->distinct();
+            })
+            ->orderBy('first_name')
+            ->get(['user_id', 'first_name', 'last_name', 'email']);
 
         return view('admin.project_archives.index', compact('archives', 'filterClients', 'filterEngineers'));
     }

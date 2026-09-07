@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\TimelineController;
 use App\Models\ConstructionPhase;
 use App\Models\Milestone;
 use App\Models\Project;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Tests\TestCase;
@@ -16,6 +19,7 @@ class TimelineControllerTest extends TestCase
     {
         parent::setUp();
 
+        Schema::dropIfExists('system_logs');
         Schema::dropIfExists('timeline_milestones');
         Schema::dropIfExists('construction_phases');
         Schema::dropIfExists('projects');
@@ -66,7 +70,17 @@ class TimelineControllerTest extends TestCase
             $table->date('end_date')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->boolean('is_delayed')->default(false);
+            $table->string('status', 20)->default('pending');
             $table->timestamps();
+        });
+
+        Schema::create('system_logs', function (Blueprint $table) {
+            $table->id('log_id');
+            $table->bigInteger('user_id')->nullable();
+            $table->string('action');
+            $table->text('description')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->timestamp('created_at')->useCurrent();
         });
 
         Schema::create('project_supervisors', function (Blueprint $table) {
@@ -116,5 +130,76 @@ class TimelineControllerTest extends TestCase
         $this->assertCount(1, $data['milestones']);
         $this->assertSame('Excavation Complete', $data['milestones'][0]['milestone_name']);
         $this->assertSame('upcoming', $data['milestones'][0]['status']);
+    }
+
+    public function test_completing_final_milestone_completes_phase_and_project(): void
+    {
+        $engineer = User::create([
+            'name' => 'Milestone Engineer',
+            'email' => 'milestone-engineer@example.com',
+            'role' => 'engineer',
+        ]);
+        Auth::login($engineer);
+
+        $project = Project::create([
+            'project_name' => 'Completed Project',
+            'project_location' => 'Nairobi',
+            'engineer_id' => $engineer->user_id,
+            'status' => 'ongoing',
+        ]);
+        $phase = ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Final Inspection',
+            'phase_order' => 1,
+            'planned_start_date' => '2026-07-01',
+            'planned_end_date' => '2026-07-15',
+            'status' => 'in_progress',
+        ]);
+        $milestone = Milestone::create([
+            'phase_id' => $phase->phase_id,
+            'milestone_name' => 'Inspection Passed',
+            'start_date' => '2026-07-10',
+            'is_completed' => false,
+            'is_delayed' => false,
+        ]);
+
+        $response = (new MilestoneController())->complete($project->project_id, $phase->phase_id, $milestone->milestone_id);
+        $payload = $response->getData(true);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(100.0, (float) $payload['phase']['completion_percentage']);
+        $this->assertSame('1/1 milestones', $payload['phase']['milestone_progress_summary']);
+        $this->assertSame('completed', $phase->fresh()->status);
+        $this->assertSame('completed', $project->fresh()->status);
+        $this->assertNotNull($phase->fresh()->actual_end_date);
+        $this->assertNotNull($project->fresh()->actual_end_date);
+    }
+
+    public function test_enrich_project_data_normalizes_fractional_phase_progress_to_percentages(): void
+    {
+        $project = Project::create([
+            'project_name' => 'Beta Tower',
+            'project_location' => 'Nairobi',
+            'status' => 'in_progress',
+        ]);
+
+        ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Structure',
+            'phase_order' => 1,
+            'planned_start_date' => '2026-07-01',
+            'planned_end_date' => '2026-07-15',
+            'completion_percentage' => 0.25,
+            'status' => 'in_progress',
+        ]);
+
+        $controller = new TimelineController();
+        $method = new \ReflectionMethod($controller, 'enrichProjectData');
+        $method->setAccessible(true);
+
+        $data = $method->invoke($controller, $project);
+
+        $this->assertSame(25.0, round((float) $data['phases'][0]['progress'], 2));
+        $this->assertSame(25.0, round((float) $data['progress'], 2));
     }
 }

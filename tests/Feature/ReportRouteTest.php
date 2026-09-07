@@ -77,7 +77,7 @@ class ReportRouteTest extends TestCase
         $this->assertSame($engineer->user_id, $report->reviewed_by);
     }
 
-    public function test_approving_report_updates_phase_progress_without_accepting_manual_percentage_override(): void
+    public function test_approving_report_does_not_override_phase_progress(): void
     {
         /** @var User $engineer */
         $engineer = User::factory()->create(['role' => 'engineer']);
@@ -118,27 +118,15 @@ class ReportRouteTest extends TestCase
             'approval_status' => 'pending',
         ]);
 
-        DB::table('ai_analysis_results')->insert([
-            'report_id' => $report->report_id,
-            'phase_id' => $phase->phase_id,
-            'identified_activities' => 'Structural completion',
-            'computed_progress' => 40.00,
-            'confidence_score' => 95.00,
-            'raw_ai_output' => '{}',
-            'processed_at' => now(),
-        ]);
-
         $response = $this->actingAs($engineer)
             ->postJson(route('admin.reports.approve', ['id' => $report->report_id]), [
                 'approval_remarks' => 'Approved',
-                'completion_percentage' => 80,
             ]);
 
         $response->assertOk();
 
         $phase->refresh();
-        $this->assertGreaterThan(10, (float) $phase->completion_percentage);
-        $this->assertNotSame(80.0, (float) $phase->completion_percentage);
+        $this->assertSame(10.0, (float) $phase->completion_percentage);
     }
 
     public function test_creating_phase_sets_pending_status_and_zero_progress(): void

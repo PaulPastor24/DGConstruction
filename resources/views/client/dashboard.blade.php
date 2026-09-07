@@ -17,7 +17,17 @@
         $primaryProjectName = $primaryProjectName ?? optional($primaryProject)->project_name ?? 'No Project Assigned';
         $primaryLocation = trim((string) ($primaryProject?->project_location ?? $primaryProject?->location ?? $primaryProject?->location_address ?? ''));
         $nextMilestone = optional($upcomingMilestones)->first();
-        $currentPhaseName = optional($currentPhases->first())->phase_name ?? 'Phase pending';
+        $initialPhase = $primaryProject?->phases?->firstWhere('status', 'in_progress')
+            ?? $primaryProject?->phases?->firstWhere('status', 'delayed')
+            ?? $primaryProject?->phases?->firstWhere('status', 'not_started')
+            ?? $primaryProject?->phases?->first();
+        $currentPhaseName = optional($initialPhase)->phase_name ?? 'Phase pending';
+        $currentPhaseStatus = match (optional($initialPhase)->status) {
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'delayed' => 'Delayed',
+            default => 'Pending',
+        };
         $nextMilestoneName = optional($nextMilestone)->milestone_name ?? 'Milestone pending';
         $overviewSummary = "Project: {$primaryProjectName}. Progress: {$stats['overall_completion']}%. Current phase: {$currentPhaseName}. Next milestone: {$nextMilestoneName}.";
     @endphp
@@ -86,8 +96,7 @@
                         <span id="heroProgressBar" style="width: {{ $stats['overall_completion'] }}%"></span>
                     </div>
                     <div class="project-progress-meta">
-                        <span><i class="bi bi-flag-fill me-1"></i><span id="heroPhaseText">{{ $currentPhaseName }}</span></span>
-                        <span><i class="bi bi-calendar2-week me-1"></i><span id="heroMilestoneDate">{{ optional($nextMilestone)->start_date?->format('M d, Y') ?? 'Pending' }}</span></span>
+                        <span><i class="bi bi-flag-fill me-1"></i><span id="heroPhaseText">{{ $currentPhaseName }}</span><span class="ms-1 text-muted" id="heroPhaseStatus">({{ $currentPhaseStatus }})</span></span>
                     </div>
                 </div>
             </div>
@@ -150,7 +159,7 @@
                 <div>
                     <div class="metric-title">Latest Report Status</div>
                     <div class="metric-main-val text-success" id="metricLatestReportStatus" style="font-size: 1.25rem; font-weight:700; margin: 0.3rem 0;">
-                        {{ $recentReports->first()?->approval_status ?? 'Pending' }}
+                        {{ $recentReports->first()?->approval_status === 'approved' && $recentReports->first()?->is_published_to_client ? 'Published' : ($recentReports->first()?->approval_status === 'rejected' ? 'Returned' : 'No report') }}
                     </div>
                     <div class="metric-sub-text" id="metricLatestReportNote">{{ $recentReports->count() > 0 ? 'Last uploaded report' : 'No report submitted' }}</div>
                 </div>
@@ -277,7 +286,7 @@
         const heroProgressValue = document.getElementById('heroProgressValue');
         const heroProgressBar = document.getElementById('heroProgressBar');
         const heroPhaseText = document.getElementById('heroPhaseText');
-        const heroMilestoneDate = document.getElementById('heroMilestoneDate');
+        const heroPhaseStatus = document.getElementById('heroPhaseStatus');
 
         const metricsRow = document.getElementById('dashboardMetricsRow');
         const metricCurrentPhase = document.getElementById('metricCurrentPhase');
@@ -320,7 +329,7 @@
             heroProgressValue.textContent = project.progress + '%';
             heroProgressBar.style.width = Math.max(0, Math.min(100, project.progress)) + '%';
             heroPhaseText.textContent = project.phase;
-            heroMilestoneDate.textContent = project.next_milestone_date;
+            if (heroPhaseStatus) heroPhaseStatus.textContent = `(${project.phase_status || 'Pending'})`;
 
             // Per-project cover image - swap instantly when the selected project changes.
             if (heroProjectImage) {

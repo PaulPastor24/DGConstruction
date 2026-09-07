@@ -65,7 +65,7 @@
         margin-bottom: 1.1rem;
     }
     .reports-header h1 {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 1.75rem;
         font-weight: 700;
         margin: 0 0 0.25rem 0;
@@ -110,7 +110,7 @@
         text-transform: uppercase;
     }
     .summary-info .value {
-        font-family: 'Syne', sans-serif;
+        font-family: 'DM Sans', sans-serif;
         font-size: 2rem;
         font-weight: 600;
         color: var(--theme-accent-strong);
@@ -1135,7 +1135,26 @@
         font-size: 1.1rem;
     }
 
+    /* Reports mobile responsive */
+    @media (max-width: 991.98px) {
+        .metrics-row-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .metrics-row-grid > *:nth-child(5) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            width: fit-content;
+        }
+        .reports-header h4,
+        .reports-header p,
+        .metric-info-text .stat-num,
+        .metric-info-text .stat-lbl {
+            font-family: 'DM Sans', sans-serif !important;
+        }
+    }
+
     .modal-image-grid {
+        position: relative;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 0.6rem;
@@ -1161,23 +1180,35 @@
         object-fit: cover;
         display: block;
     }
-    .modal-more-badge {
-        aspect-ratio: 1;
-        border-radius: 10px;
+    .modal-gallery-navigation {
+        position: absolute;
+        inset: 50% -16px auto;
+        display: flex;
+        justify-content: space-between;
+        transform: translateY(-50%);
+        pointer-events: none;
+        z-index: 3;
+    }
+    .modal-gallery-nav {
+        width: 38px;
+        height: 34px;
+        border-radius: 7px;
         background: #f1f5f9;
         border: 2px solid #e2e8f0;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
         color: #6b7280;
-        font-size: 0.85rem;
+        font-size: 1.2rem;
         transition: all 0.2s ease;
         cursor: pointer;
         padding: 0;
         font-family: inherit;
+        line-height: 1;
+        pointer-events: auto;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
     }
-    .modal-more-badge:hover {
+    .modal-gallery-nav:hover {
         background: #e8f0eb;
         border-color: #4DA078;
         color: var(--cms-green-dark);
@@ -1195,17 +1226,17 @@
         content: '';
         position: absolute;
         top: 16px;
-        left: 12%;
-        right: 12%;
+        left: calc(16.666% + 16px);
+        right: calc(16.666% + 16px);
         height: 3px;
         background: #d4e5d8;
         border-radius: 999px;
-        z-index: 1;
+        z-index: 0;
     }
     .modal-timeline-step {
         text-align: center;
         position: relative;
-        z-index: 2;
+        z-index: 1;
         flex: 1;
         min-width: 0;
     }
@@ -1222,6 +1253,8 @@
         font-size: 0.75rem;
         color: #94a3b8;
         transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
     }
     .modal-timeline-step.active .modal-timeline-icon {
         border-color: #4DA078;
@@ -1253,6 +1286,37 @@
         padding-top: 1.25rem;
         margin-top: 1.25rem;
         border-top: 1px solid #e8f0eb;
+    }
+
+    .modal-client-prep-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+        gap: 1rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e8f0eb;
+    }
+
+    .modal-client-prep-bottom .modal-progress-card {
+        height: 100%;
+        margin-bottom: 0 !important;
+    }
+
+    .modal-current-status-card {
+        width: min(100%, 420px);
+        margin-top: 1.25rem;
+    }
+
+    .modal-reviewed-edit-card {
+        margin-top: 1rem;
+        border-top: 1px solid #e8f0eb;
+        padding-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .modal-client-prep-bottom {
+            grid-template-columns: 1fr;
+        }
     }
     .btn-modal {
         padding: 0.65rem 1.5rem;
@@ -1380,6 +1444,11 @@
     }
     @media (max-width: 1100px) {
         .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .summary-card:nth-child(5) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            width: fit-content;
+        }
         .top-toolbar { flex-direction: column; align-items: stretch; }
         .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; flex: 1 1 100%; }
         .toolbar-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
@@ -1482,7 +1551,7 @@
 
         .card-table-title {
             color: #14532d !important;
-            font-family: 'Syne', 'Plus Jakarta Sans', sans-serif !important;
+            font-family: 'DM Sans', 'Plus Jakarta Sans', sans-serif !important;
             font-size: 15px !important;
             line-height: 1.2 !important;
         }
@@ -1599,36 +1668,6 @@
 
         .reports-table tbody td[data-label="ID"]::before {
             display: none !important;
-        }
-
-        /* Title uses the full card width so it does not feel squeezed left. */
-        .reports-table tbody td[data-label="Report Title"] {
-            display: block !important;
-            padding: 0 48px 13px 0 !important;
-            margin: 0 0 8px !important;
-            border-bottom: 1px solid #edf3ef !important;
-        }
-
-        .reports-table tbody td[data-label="Report Title"]::before {
-            content: "Report" !important;
-            display: block !important;
-            margin-bottom: 6px !important;
-            color: #64748b !important;
-            font-size: 9.5px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.075em !important;
-            text-transform: uppercase !important;
-        }
-
-        .reports-table tbody td[data-label="Report Title"] .cell-bold,
-        .reports-table tbody td[data-label="Report Title"] span,
-        .reports-table tbody td[data-label="Report Title"] strong {
-            display: block !important;
-            color: #0f172a !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            line-height: 1.35 !important;
-            letter-spacing: -0.01em !important;
         }
 
         .reports-table tbody td[data-label="Project"],
@@ -1811,6 +1850,10 @@
             background: #d64545 !important;
         }
 
+        #pg-reports .summary-card:nth-child(5) {
+            grid-column: 1 / -1 !important;
+        }
+
         #pg-reports .summary-info {
             min-width: 0 !important;
             width: 100% !important;
@@ -1945,13 +1988,8 @@
             letter-spacing: 0.075em !important;
         }
 
-        #pg-reports .reports-table tbody td[data-label="Report Title"] {
-            padding-right: 2.85rem !important;
-        }
-
-        #pg-reports .reports-table tbody td[data-label="Report Title"] .cell-bold {
-            font-size: 0.94rem !important;
-            line-height: 1.34 !important;
+        #pg-reports .reports-table tbody td[data-label="ID"] {
+            display: none !important;
         }
 
         #pg-reports .status-pill {
@@ -2186,11 +2224,6 @@
 
 @section('content')
 <div id="pg-reports" class="reports-mobile-admin-page">
-    <!-- Title Header -->
-    <div class="reports-header">
-        <h1>Reports</h1>
-        <p>Review, approve, and manage accomplishment reports submitted by supervisors.</p>
-    </div>
 
     <!-- Summary Row Block -->
     <div class="summary-grid">
@@ -2284,6 +2317,14 @@
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
+
+                @if(request('project_id'))
+                    <div class="toolbar-group">
+                        <a href="{{ route('admin.reports.imagesPdf', request('project_id')) }}" class="btn-export" target="_blank">
+                            <i class="bi bi-images"></i> Export Project Images
+                        </a>
+                    </div>
+                @endif
             </div>
 
         <!-- Left Part Element: Table Core Panel -->
@@ -2299,7 +2340,6 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Report Title</th>
                             <th>Project</th>
                             <th>Phase</th>
                             <th>Supervisor</th>
@@ -2312,9 +2352,6 @@
                         @forelse($reports as $report)
                             <tr data-report-id="{{ $report->report_id }}">
                                 <td class="cell-bold" data-label="ID">{{ $report->report_id }}</td>
-                                <td data-label="Report Title">
-                                    <span class="cell-bold">{{ $report->report_title }}</span>
-                                </td>
                                 <td data-label="Project">{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
                                 <td data-label="Phase">{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
                                 <td data-label="Supervisor">
@@ -2329,6 +2366,7 @@
                                 <td data-label="Actions">
                                     <div class="action-icons-group">
                                         <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
+                                        <a href="{{ route('admin.reports.downloadPdf', $report->report_id) }}" class="btn-icon-action" title="Export PDF"><i class="bi bi-download"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -2391,7 +2429,6 @@
                                 $reportStatusLabel = $selectedReport->status_label ?? 'Pending Review';
                                 $reportStatusClass = $selectedReport->status_badge_class ?? 'pending';
                                 $reportId = 'RPT-2026-' . str_pad($selectedReport->report_id, 4, '0', STR_PAD_LEFT);
-                                $completionPercentage = round((float) ($selectedReport->accomplishment_percentage ?? optional($selectedReport->phase)->completion_percentage ?? 0), 2);
                             @endphp
                             <div class="row gx-3 gy-3">
                                 <div class="col-12 col-xl-7">
@@ -2458,21 +2495,26 @@
                                     <div class="modal-sidebar-card mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div class="fw-bold" style="color: var(--cms-green-dark); font-size: 0.9rem;">Site Images</div>
-                                            <div class="small text-muted">{{ count((array) ($selectedReport->site_images ?? [])) }} uploaded</div>
+                                            <div class="small text-muted">{{ count((array) (($selectedReport->approval_status ?? 'pending') === 'pending' ? ($selectedReport->site_images ?? []) : ($selectedReport->admin_site_images ?? []))) }} uploaded</div>
                                         </div>
                                         @php
-                                            $images = (array) ($selectedReport->site_images ?? []);
+                                            $images = ($selectedReport->approval_status ?? 'pending') === 'pending'
+                                                ? (array) ($selectedReport->site_images ?? [])
+                                                : (array) ($selectedReport->admin_site_images ?? []);
                                             $fullImageUrls = collect($images)->filter(fn($img) => is_string($img) && $img !== '')->map(fn($img) => asset('storage/' . ltrim($img, '/')))->values();
                                         @endphp
                                         @if($fullImageUrls->isNotEmpty())
-                                            <div class="modal-image-grid mb-3" data-gallery='{{ $fullImageUrls->toJson() }}'>
-                                                @foreach($fullImageUrls->take(4) as $imageUrl)
+                                            <div class="modal-image-grid mb-3" data-gallery='{{ $fullImageUrls->toJson() }}' data-gallery-offset="0">
+                                                @foreach($fullImageUrls->take(8) as $imageUrl)
                                                     <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
                                                         <img src="{{ $imageUrl }}" alt="Site image">
                                                     </button>
                                                 @endforeach
-                                                @if($fullImageUrls->count() > 4)
-                                                    <button type="button" class="modal-more-badge lightbox-trigger" data-full-image="{{ $fullImageUrls->get(4) }}" aria-label="View all site images">+{{ $fullImageUrls->count() - 4 }}</button>
+                                                @if($fullImageUrls->count() > 8)
+                                                    <div class="modal-gallery-navigation" aria-label="More site images">
+                                                        <button type="button" class="modal-gallery-nav" data-gallery-direction="prev" aria-label="Previous site images">&lt;</button>
+                                                        <button type="button" class="modal-gallery-nav" data-gallery-direction="next" aria-label="Next site images">&gt;</button>
+                                                    </div>
                                                 @endif
                                             </div>
                                         @else
@@ -2494,37 +2536,6 @@
                                                 <div class="modal-timeline-label">Approved</div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="modal-progress-card mb-3">
-                                        <div class="modal-progress-header">
-                                            <div>
-                                                <div class="modal-progress-title">Completion Percentage</div>
-                                                <div class="text-muted small">Official phase progress</div>
-                                            </div>
-                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
-                                        </div>
-                                        <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="modal-progress-card mb-3">
-                                        <div class="modal-progress-header">
-                                            <div>
-                                                <div class="modal-progress-title">Progress Approval</div>
-                                                <div class="text-muted small">Supervisor suggested progress</div>
-                                            </div>
-                                            <span class="modal-progress-pct">{{ $completionPercentage }}%</span>
-                                        </div>
-                                        <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                            <div class="progress-bar" style="width: {{ $completionPercentage }}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                        </div>
-                                        @if($selectedReport->status === 'pending')
-                                            <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
-                                            <input type="number" id="adminProgressOverride" class="form-control mt-1" value="{{ $completionPercentage }}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
-                                            <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
-                                        @endif
                                     </div>
 
                                     @if($selectedReport->status === 'pending')
@@ -2668,8 +2679,12 @@
                 return `${storageBaseUrl}/${trimmed.replace(/^storage\//, '')}`;
             }
             let activeReportId = null;
+            let reportDetailsRequestToken = 0;
+            const reportDetailsCache = new Map();
             let debounceTimer;
             let removedAdminImageUrls = new Set();
+            let removedOriginalImagePaths = new Set();
+            let includedOriginalImagePaths = new Set();
 
             function pauseModalFocusTrap() {
                 const modal = bootstrap.Modal.getInstance(reportDetailsModal);
@@ -2839,6 +2854,32 @@
                 `;
             }
 
+            function renderAdminGalleryPage(gallery, offset, container) {
+                const pageSize = 8;
+                const total = gallery.length;
+                if (!total) return;
+                const pageCount = Math.ceil(total / pageSize);
+                const currentPage = Math.floor(offset / pageSize);
+                const pageOffset = ((currentPage % pageCount) + pageCount) % pageCount * pageSize;
+                const visibleImages = gallery.slice(pageOffset, pageOffset + pageSize);
+                const navigation = container.querySelector('.modal-gallery-navigation');
+
+                container.querySelectorAll('.modal-image-thumb').forEach(button => button.remove());
+                visibleImages.forEach(imageUrl => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'modal-image-thumb lightbox-trigger';
+                    button.dataset.fullImage = imageUrl;
+                    button.setAttribute('aria-label', 'Preview site image');
+                    const image = document.createElement('img');
+                    image.src = imageUrl;
+                    image.alt = 'Site image';
+                    button.appendChild(image);
+                    container.insertBefore(button, navigation);
+                });
+                container.dataset.galleryOffset = String(pageOffset);
+            }
+
             function galleryFromTrigger(triggerEl, imageUrl) {
                 const container = triggerEl?.closest('[data-gallery]');
                 if (container) {
@@ -2856,6 +2897,23 @@
 
             document.body.addEventListener('click', function (event) {
                 const target = event.target;
+                const galleryButton = target.closest('.modal-gallery-nav');
+                if (galleryButton) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const container = galleryButton.closest('.modal-image-grid');
+                    if (!container) return;
+                    let gallery = [];
+                    try {
+                        gallery = JSON.parse(container.getAttribute('data-gallery') || '[]');
+                    } catch (error) {
+                        return;
+                    }
+                    const currentOffset = Number(container.dataset.galleryOffset || 0);
+                    const direction = galleryButton.dataset.galleryDirection === 'next' ? 1 : -1;
+                    renderAdminGalleryPage(gallery, currentOffset + direction * 8, container);
+                    return;
+                }
                 if (target.matches('.previewable-image') || target.closest('.lightbox-trigger')) {
                     const trigger = target.closest('.lightbox-trigger');
                     const imageUrl = target.matches('.previewable-image') ? target.src : (trigger?.dataset?.fullImage || trigger?.querySelector('img')?.src);
@@ -2911,6 +2969,9 @@
                         return response.json();
                     })
                     .then(payload => {
+                        (payload.reports || []).forEach(report => {
+                            reportDetailsCache.set(Number(report.id), report);
+                        });
                         updateSummary(payload.stats);
                         renderTable(payload.reports);
                         renderPhaseOptions(payload.phases);
@@ -2978,14 +3039,13 @@
 
             function renderTable(reports) {
                 if (!reports.length) {
-                    tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">No accomplishment reports found.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No accomplishment reports found.</td></tr>`;
                     return;
                 }
 
                 tableBody.innerHTML = reports.map(report => `
                     <tr data-report-id="${report.id}">
                         <td class="cell-bold" data-label="ID">${report.report_id}</td>
-                        <td data-label="Report Title"><span class="cell-bold">${report.report_title}</span></td>
                         <td data-label="Project">${report.project_name}</td>
                         <td data-label="Phase">${report.phase_name}</td>
                         <td data-label="Supervisor"><div class="user-cell"><span>${report.supervisor_name}</span></div></td>
@@ -2994,6 +3054,7 @@
                         <td data-label="Actions">
                             <div class="action-icons-group">
                                 <button type="button" class="btn-icon-action js-view-report" data-report-id="${report.id}" title="View Details"><i class="bi bi-eye"></i></button>
+                                <a href="/admin/reports/${report.id}/download-pdf" class="btn-icon-action" title="Export PDF" target="_blank"><i class="bi bi-download"></i></a>
                             </div>
                         </td>
                     </tr>
@@ -3032,6 +3093,19 @@
             function loadReportDetails(reportId) {
                 setDetailsPanelOpen(true);
                 beginDetailsTransition();
+                const requestToken = ++reportDetailsRequestToken;
+                const cachedReport = reportDetailsCache.get(Number(reportId));
+                if (cachedReport) {
+                    renderDetailsPanel(cachedReport);
+                } else {
+                    detailsPanel.innerHTML = `
+                        <div class="sidebar-fallback-state report-details-loading" role="status" aria-live="polite">
+                            <span class="spinner-border text-success mb-3" role="status" aria-hidden="true"></span>
+                            <strong>Loading report details...</strong>
+                            <span class="small text-muted">Preparing the selected report.</span>
+                        </div>
+                    `;
+                }
                 fetch(`${detailsBaseUrl}/${reportId}/details`, { headers: { Accept: 'application/json' } })
                     .then(response => {
                         if (!response.ok) {
@@ -3040,12 +3114,21 @@
                         return response.json();
                     })
                     .then(payload => {
-                        if (!payload.success) return;
+                        if (requestToken !== reportDetailsRequestToken || activeReportId !== Number(reportId)) return;
+                        if (!payload.success) throw new Error('The report details could not be loaded.');
+                        reportDetailsCache.set(Number(reportId), payload.report);
                         renderDetailsPanel(payload.report);
                     })
-                    .catch(() => {
+                    .catch((error) => {
+                        if (requestToken !== reportDetailsRequestToken) return;
                         finishDetailsTransition();
-                        Swal.fire({ title: 'Unable to load report details', icon: 'error' });
+                        detailsPanel.innerHTML = `
+                            <div class="sidebar-fallback-state" role="alert">
+                                <i class="bi bi-exclamation-circle text-danger"></i>
+                                <strong>Unable to load report details.</strong>
+                                <span class="small text-muted">${error.message || 'Please try again.'}</span>
+                            </div>
+                        `;
                     });
             }
 
@@ -3054,19 +3137,41 @@
                 report = {
                     ...report,
                     site_images: Array.isArray(report.site_images) ? report.site_images.filter(Boolean).map(resolveImageUrl) : [],
-                    admin_site_images: Array.isArray(report.admin_site_images) ? report.admin_site_images.filter(Boolean).map(resolveImageUrl) : []
+                    admin_site_images: Array.isArray(report.admin_site_images) ? report.admin_site_images.filter(Boolean).map(resolveImageUrl) : [],
+                    site_image_paths: Array.isArray(report.site_image_paths) ? report.site_image_paths.filter(Boolean) : [],
+                    admin_site_image_paths: Array.isArray(report.admin_site_image_paths) ? report.admin_site_image_paths.filter(Boolean) : []
                 };
-                const progressValue = Math.min(Math.max(Number(report.completion_percentage || 0), 0), 100);
-                const attachmentImages = Array.isArray(report.site_images) ? report.site_images.filter(Boolean) : [];
+                const reportImageEntries = [];
+                const seenReportImagePaths = new Set();
+                report.admin_site_images.forEach((image, index) => {
+                    const path = report.admin_site_image_paths[index] || image;
+                    if (!seenReportImagePaths.has(path)) {
+                        seenReportImagePaths.add(path);
+                        reportImageEntries.push({ image, path, clientVisible: true });
+                    }
+                });
+                report.site_images.forEach((image, index) => {
+                    const path = report.site_image_paths[index] || image;
+                    if (!seenReportImagePaths.has(path)) {
+                        seenReportImagePaths.add(path);
+                        reportImageEntries.push({ image, path, clientVisible: false });
+                    }
+                });
+                const attachmentImages = report.status === 'pending'
+                    ? (Array.isArray(report.site_images) ? report.site_images.filter(Boolean) : [])
+                    : (Array.isArray(report.admin_site_images) ? report.admin_site_images.filter(Boolean) : []);
                 const attachmentCount = attachmentImages.length;
                 const attachmentMarkup = attachmentCount ? `
-                    <div class="modal-image-grid mb-3" data-gallery='${JSON.stringify(attachmentImages).replace(/'/g, "&#39;")}'>
-                        ${attachmentImages.slice(0, 4).map(image => `
+                    <div class="modal-image-grid mb-3" data-gallery='${JSON.stringify(attachmentImages).replace(/'/g, "&#39;")}' data-gallery-offset="0">
+                        ${attachmentImages.slice(0, 8).map(image => `
                             <button type="button" class="modal-image-thumb lightbox-trigger" data-full-image="${image}" aria-label="Preview site image">
                                 <img src="${image}" alt="Site image">
                             </button>
                         `).join('')}
-                        ${attachmentCount > 4 ? `<button type="button" class="modal-more-badge lightbox-trigger" data-full-image="${attachmentImages[4]}" aria-label="View all site images">+${attachmentCount - 4}</button>` : ''}
+                        ${attachmentCount > 8 ? `<div class="modal-gallery-navigation" aria-label="More site images">
+                            <button type="button" class="modal-gallery-nav" data-gallery-direction="prev" aria-label="Previous site images">&lt;</button>
+                            <button type="button" class="modal-gallery-nav" data-gallery-direction="next" aria-label="Next site images">&gt;</button>
+                        </div>` : ''}
                     </div>
                 ` : '<div class="text-muted small border rounded-3 p-3 mb-3" style="background: #f8faf9;">No site images were attached to this report.</div>';
 
@@ -3157,39 +3262,25 @@
                                 </div>
                             </div>
 
-                            <div class="modal-progress-card mb-3">
-                                <div class="modal-progress-header">
-                                    <div>
-                                        <div class="modal-progress-title">Completion Percentage</div>
-                                        <div class="text-muted small">Official phase progress</div>
+                            ${report.status !== 'pending' ? `
+                                <div class="modal-progress-card modal-current-status-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="modal-section-title mb-0" style="margin-top:0; border:none; padding-bottom:0;">Current Status</div>
+                                        <span class="status-pill ${report.status === 'approved' && report.is_published_to_client ? 'published' : report.status === 'approved' ? 'approved' : 'rejected'} p-2 mt-1 d-inline-block">${report.status_label || (report.status === 'approved' ? 'Approved' : 'Rejected')}</span>
                                     </div>
-                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
+                                    <div class="text-muted small">${report.is_published_to_client ? 'This report is currently published to the client.' : 'This report is not published to the client.'}</div>
+                                    <button type="button" class="btn btn-sm mt-2 js-edit-reviewed-report" data-report-id="${report.id}" style="background-color:#166534; color:#fff; border-color:#166534; font-weight:700; width:100%;">
+                                        <i class="bi bi-pencil-square"></i> Edit Report &amp; Visibility
+                                    </button>
                                 </div>
-                                <div class="progress" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                </div>
-                            </div>
+                            ` : ''}
 
-                            <div class="modal-progress-card mb-3">
-                                <div class="modal-progress-header">
-                                    <div>
-                                        <div class="modal-progress-title">Progress Approval</div>
-                                        <div class="text-muted small">Supervisor suggested progress</div>
-                                    </div>
-                                    <span class="modal-progress-pct">${progressValue.toFixed(0)}%</span>
-                                </div>
-                                <div class="progress mb-3" style="height: 10px; background-color: #e8f0eb; border-radius: 999px; border: 1px solid #d4e5d8;">
-                                    <div class="progress-bar" style="width: ${progressValue}%; background: linear-gradient(90deg, #4DA078, #82DB72); border-radius: 999px;"></div>
-                                </div>
-                                ${report.status === 'pending' ? `
-                                    <label for="adminProgressOverride" class="text-muted small" style="font-weight:600;">Official Progress (%) — Admin Override</label>
-                                    <input type="number" id="adminProgressOverride" class="form-control mt-1" value="${progressValue}" min="0" max="100" step="0.01" style="max-width: 140px; border-radius: 8px; border: 1px solid #d4e5d8;">
-                                    <span class="text-muted small">Adjust if the supervisor's suggestion needs correction.</span>
-                                ` : ''}
-                            </div>
+                        </div>
+                    </div>
 
                             ${report.status === 'pending' ? `
-                                <div class="modal-progress-card mb-3">
+                                <div class="modal-client-prep-bottom">
+                                <div class="modal-progress-card">
                                     <div class="modal-section-title">Prepare for Client Viewing</div>
                                     <div class="text-muted small mb-3">This text will replace the original report content shown to the client. Leave blank to keep the original report text.</div>
                                     <div class="mb-3">
@@ -3203,40 +3294,24 @@
                                         <span class="text-muted small">Select images to add to the client-facing report.</span>
                                     </div>
 
-                                    ${(Array.isArray(report.admin_site_images) && report.admin_site_images.length > 0) ? `
-                                        <div class="mb-3">
-                                            <label class="text-muted small" style="font-weight:600;">Current Client Images</label>
-                                            <div class="d-flex flex-wrap gap-2 mt-2" id="adminImagesContainer">
-                                                ${report.admin_site_images.map((img, idx) => `
-                                                    <div class="position-relative admin-image-wrapper" style="width: 80px; height: 80px;" data-image-url="${img}">
-                                                        <img src="${img}" alt="Admin image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
-                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                    ` : ''}
-
                                     ${(Array.isArray(report.site_images) && report.site_images.length > 0) ? `
                                         <div class="mb-3">
-                                            <label class="text-muted small" style="font-weight:600;">Original Report Images</label>
+                                            <label class="text-muted small" style="font-weight:600;">Report Images</label>
+                                            <div class="text-muted small mt-1">These are the images associated with this report.</div>
                                             <div class="d-flex flex-wrap gap-2 mt-2" id="originalImagesContainer">
-                                                ${report.site_images.map((img, idx) => `
-                                                    <div class="position-relative" style="width: 80px; height: 80px;" data-image-url="${img}">
-                                                        <img src="${img}" alt="Original image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded original-image-preview" style="cursor: pointer; opacity: 0.7;">
-                                                        <button type="button" class="btn btn-sm btn-success position-absolute bottom-0 start-0 p-0 use-original-image" style="width: 20px; height: 20px; font-size: 0.65rem; line-height: 1;" title="Use this image">+</button>
+                                                ${reportImageEntries.map(entry => `
+                                                    <div class="position-relative ${entry.clientVisible ? 'admin-image-wrapper' : ''}" style="width: 80px; height: 80px;" data-image-url="${entry.image}" data-image-path="${entry.path}">
+                                                        <img src="${entry.image}" alt="Report image" class="w-100 h-100 object-fit-cover border rounded ${entry.clientVisible ? 'admin-image-preview' : 'original-image-preview'}" style="cursor: pointer; opacity: ${entry.clientVisible ? '1' : '0.7'};">
+                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 ${entry.clientVisible ? 'admin-remove-image' : 'remove-original-image'}" data-image-path="${entry.path}" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
                                                     </div>
                                                 `).join('')}
                                             </div>
                                         </div>
                                     ` : ''}
 
-                                    <button type="button" class="btn btn-sm btn-outline-primary js-prepare-report" data-report-id="${report.id}">
-                                        <i class="bi bi-save"></i> Save Preparation
-                                    </button>
                                 </div>
 
-                                <div class="modal-progress-card mb-3">
+                                <div class="modal-progress-card">
                                     <div class="modal-section-title">Publishing Decision</div>
                                     <div class="mb-3">
                                         <label class="text-muted small" style="font-weight:600;">Choose how to handle this report:</label>
@@ -3266,28 +3341,20 @@
                                         <label class="text-muted small" style="font-weight:600;">Rejection Remarks</label>
                                         <textarea id="rejectionRemarks" class="form-control mt-1" rows="2" placeholder="Enter the reason for rejection..."></textarea>
                                     </div>
+                                    <div class="modal-action-row mt-3">
+                                        <button type="button" class="btn-modal btn-modal-secondary js-cancel-client-decision" style="background:#ffffff; color:#166534; border:1px solid #166534;">
+                                            Cancel
+                                        </button>
+                                        <button type="button" class="btn-modal btn-modal-approve js-submit-report" data-report-id="${report.id}" style="background-color: #166534; color: #ffffff; border-color: #166534;">
+                                            <i class="bi bi-check2"></i> Submit
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <div class="modal-action-row">
-                                    <button type="button" class="btn-modal btn-modal-approve js-submit-report" data-report-id="${report.id}" style="background-color: #166534; color: #ffffff; border-color: #166534;">
-                                        <i class="bi bi-check2"></i> Submit
-                                    </button>
                                 </div>
                             ` : `
-                                <div class="modal-progress-card mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div class="modal-section-title mb-0" style="margin-top:0; border:none; padding-bottom:0;">Current Status</div>
-                                        <span class="status-pill ${report.status === 'approved' && report.is_published_to_client ? 'published' : report.status === 'approved' ? 'approved' : 'rejected'} p-2 mt-1 d-inline-block">${report.status_label || (report.status === 'approved' ? 'Approved' : 'Rejected')}</span>
-                                    </div>
-                                    <div class="text-muted small">${report.is_published_to_client ? 'This report is currently published to the client.' : 'This report is not published to the client.'}</div>
-                                    <button type="button" class="btn btn-sm mt-2 js-edit-reviewed-report" data-report-id="${report.id}" style="background-color:#166534; color:#fff; border-color:#166534; font-weight:700; width:100%;">
-                                        <i class="bi bi-pencil-square"></i> Edit Report &amp; Visibility
-                                    </button>
-                                </div>
-
-                                <div class="modal-progress-card mb-3" id="editReviewedSection-${report.id}" style="display:none;">
-                                    <div class="modal-section-title">Edit Report Content</div>
-                                    <div class="text-muted small mb-3">Modify the report content, images, and publish settings. Changes will be saved without resetting the approval status.</div>
+                                <div class="modal-progress-card modal-reviewed-edit-card" id="editReviewedSection-${report.id}" style="display:none;">
+                                    <div class="modal-section-title">Prepare for Client Viewing</div>
+                                    <div class="text-muted small mb-3">Update the client-facing text, images, and visibility without changing the report approval status.</div>
                                     <div class="mb-3">
                                         <label class="text-muted small" style="font-weight:600;">Admin Report Text</label>
                                         <textarea id="adminClientText-${report.id}" class="form-control mt-1" rows="4" placeholder="Edit the client-facing report text...">${report.admin_report_text || report.report_text || ''}</textarea>
@@ -3297,16 +3364,18 @@
                                         <label class="text-muted small" style="font-weight:600;">Add Images</label>
                                         <input type="file" id="adminImageUpload-${report.id}" class="form-control mt-1" accept="image/*" multiple>
                                         <span class="text-muted small">Select images to add to the client-facing report.</span>
+                                        <div id="adminUploadPreview-${report.id}" class="d-flex flex-wrap gap-2 mt-2"></div>
                                     </div>
 
-                                    ${(Array.isArray(report.admin_site_images) && report.admin_site_images.length > 0) ? `
+                                    ${(Array.isArray(report.site_images) && report.site_images.length > 0) ? `
                                         <div class="mb-3">
-                                            <label class="text-muted small" style="font-weight:600;">Current Client Images</label>
-                                            <div class="d-flex flex-wrap gap-2 mt-2" id="adminImagesContainer">
-                                                ${report.admin_site_images.map((img, idx) => `
-                                                    <div class="position-relative admin-image-wrapper" style="width: 80px; height: 80px;" data-image-url="${img}">
-                                                        <img src="${img}" alt="Admin image ${idx + 1}" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
-                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
+                                            <label class="text-muted small" style="font-weight:600;">Report Images</label>
+                                            <div class="text-muted small mt-1">These are the images associated with this report.</div>
+                                            <div class="d-flex flex-wrap gap-2 mt-2" id="originalImagesContainer">
+                                                ${reportImageEntries.map(entry => `
+                                                    <div class="position-relative ${entry.clientVisible ? 'admin-image-wrapper' : ''}" style="width: 80px; height: 80px;" data-image-url="${entry.image}" data-image-path="${entry.path}">
+                                                        <img src="${entry.image}" alt="Report image" class="w-100 h-100 object-fit-cover border rounded ${entry.clientVisible ? 'admin-image-preview' : 'original-image-preview'}" style="cursor: pointer; opacity: ${entry.clientVisible ? '1' : '0.7'};">
+                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 ${entry.clientVisible ? 'admin-remove-image' : 'remove-original-image'}" data-image-path="${entry.path}" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
                                                     </div>
                                                 `).join('')}
                                             </div>
@@ -3344,8 +3413,8 @@
                 detailsPanel.querySelector('.js-submit-report')?.addEventListener('click', function () {
                     handleSubmit(Number(this.dataset.reportId));
                 });
-                detailsPanel.querySelector('.js-prepare-report')?.addEventListener('click', function () {
-                    handlePrepare(Number(this.dataset.reportId));
+                detailsPanel.querySelector('.js-cancel-client-decision')?.addEventListener('click', function () {
+                    closeDetailsPanel();
                 });
 
                 // Edit reviewed report - show the edit section
@@ -3405,15 +3474,21 @@
                 });
 
                 removedAdminImageUrls = new Set();
+                removedOriginalImagePaths = new Set();
+                includedOriginalImagePaths = new Set(report.status === 'pending' && Array.isArray(report.site_image_paths)
+                    ? report.site_image_paths
+                    : []);
+                window.reviewedClientImagePaths = new Set(Array.isArray(report.admin_site_image_paths) ? report.admin_site_image_paths : []);
 
                 detailsPanel.querySelectorAll('.admin-remove-image').forEach(btn => {
                     btn.addEventListener('click', function (event) {
                         event.stopPropagation();
                         const wrapper = this.closest('.admin-image-wrapper');
                         if (wrapper) {
-                            const imageUrl = wrapper.getAttribute('data-image-url');
-                            if (imageUrl) {
-                                removedAdminImageUrls.add(imageUrl);
+                            const imagePath = wrapper.getAttribute('data-image-path');
+                            if (imagePath) {
+                                removedAdminImageUrls.add(imagePath);
+                                window.reviewedClientImagePaths.delete(imagePath);
                             }
                             wrapper.remove();
                         }
@@ -3448,38 +3523,64 @@
                     });
                 });
 
-                detailsPanel.querySelectorAll('.use-original-image').forEach(btn => {
+                detailsPanel.querySelectorAll('.remove-original-image').forEach(btn => {
                     btn.addEventListener('click', function (event) {
                         event.stopPropagation();
                         const imageUrl = this.getAttribute('data-image-url');
-                        const adminImagesContainer = document.getElementById('adminImagesContainer');
-                        if (adminImagesContainer && imageUrl) {
-                            const newWrapper = document.createElement('div');
-                            newWrapper.className = 'position-relative admin-image-wrapper';
-                            newWrapper.style.cssText = 'width: 80px; height: 80px;';
-                            newWrapper.setAttribute('data-image-url', imageUrl);
-                            newWrapper.innerHTML = `
-                                <img src="${imageUrl}" alt="Admin image" class="w-100 h-100 object-fit-cover border rounded admin-image-preview" style="cursor: pointer;">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0 admin-remove-image" style="width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;" title="Remove image">&times;</button>
-                            `;
-                            adminImagesContainer.appendChild(newWrapper);
-
-                            newWrapper.querySelector('.admin-remove-image').addEventListener('click', function (e) {
-                                e.stopPropagation();
-                                newWrapper.remove();
-                            });
-                            newWrapper.querySelector('.admin-image-preview').addEventListener('click', function (e) {
-                                e.stopPropagation();
-                                openLightbox(imageUrl);
-                            });
+                        const wrapper = this.closest('[data-image-url]');
+                        const imagePath = this.getAttribute('data-image-path');
+                        if (imagePath) {
+                            includedOriginalImagePaths.delete(imagePath);
+                            removedAdminImageUrls.add(imagePath);
+                            removedOriginalImagePaths.add(imagePath);
+                            window.reviewedClientImagePaths.delete(imagePath);
                         }
+                        wrapper?.remove();
                     });
                 });
 
                 const adminImageUpload = document.getElementById('adminImageUpload');
                 if (adminImageUpload) {
+                    let adminSelectedFiles = [];
                     const uploadLabel = adminImageUpload.parentElement.querySelector('label');
                     const originalLabelText = uploadLabel?.textContent || '';
+
+                    const syncAdminImageInput = () => {
+                        const transfer = new DataTransfer();
+                        adminSelectedFiles.forEach(file => transfer.items.add(file));
+                        adminImageUpload.files = transfer.files;
+                    };
+
+                    const renderAdminUploadPreviews = () => {
+                        document.getElementById('adminUploadPreview')?.remove();
+                        if (!adminSelectedFiles.length) return;
+                        const previewContainer = document.createElement('div');
+                        previewContainer.className = 'd-flex flex-wrap gap-2 mt-2';
+                        previewContainer.id = 'adminUploadPreview';
+                        adminSelectedFiles.forEach((file, index) => {
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'position-relative';
+                            wrapper.style.cssText = 'width: 80px; height: 80px;';
+                            const image = document.createElement('img');
+                            image.src = URL.createObjectURL(file);
+                            image.alt = file.name;
+                            image.className = 'w-100 h-100 object-fit-cover border rounded';
+                            const remove = document.createElement('button');
+                            remove.type = 'button';
+                            remove.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0';
+                            remove.style.cssText = 'width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;';
+                            remove.innerHTML = '&times;';
+                            remove.title = 'Remove image';
+                            remove.addEventListener('click', () => {
+                                adminSelectedFiles.splice(index, 1);
+                                syncAdminImageInput();
+                                renderAdminUploadPreviews();
+                            });
+                            wrapper.append(image, remove);
+                            previewContainer.appendChild(wrapper);
+                        });
+                        adminImageUpload.parentElement.appendChild(previewContainer);
+                    };
 
                     adminImageUpload.addEventListener('change', function () {
                         const files = Array.from(this.files || []);
@@ -3490,41 +3591,90 @@
                             return;
                         }
 
-                        const previewContainer = document.createElement('div');
-                        previewContainer.className = 'd-flex flex-wrap gap-2 mt-2';
-                        previewContainer.id = 'adminUploadPreview';
-
-                        files.forEach(file => {
-                            const reader = new FileReader();
-                            reader.onload = function (e) {
-                                const wrapper = document.createElement('div');
-                                wrapper.className = 'position-relative';
-                                wrapper.style.cssText = 'width: 80px; height: 80px;';
-                                wrapper.innerHTML = `
-                                    <img src="${e.target.result}" alt="New upload" class="w-100 h-100 object-fit-cover border rounded" style="cursor: pointer;">
-                                    <span class="badge bg-success position-absolute bottom-0 start-0" style="font-size: 0.6rem;">NEW</span>
-                                `;
-                                previewContainer.appendChild(wrapper);
-
-                                wrapper.querySelector('img').addEventListener('click', function (ev) {
-                                    ev.stopPropagation();
-                                    openLightbox(e.target.result);
-                                });
-                            };
-                            reader.readAsDataURL(file);
-                        });
-
-                        const existingPreview = document.getElementById('adminUploadPreview');
-                        if (existingPreview) {
-                            existingPreview.remove();
+                        const invalidFiles = files.filter(file => !/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024);
+                        if (invalidFiles.length > 0 || adminSelectedFiles.length + files.length > 20) {
+                            Swal.fire({
+                                title: 'Invalid client images',
+                                text: adminSelectedFiles.length + files.length > 20 ? 'You can add up to 20 images.' : 'Images must be JPEG, PNG, or WEBP files up to 5MB each.',
+                                icon: 'warning',
+                                confirmButtonColor: '#166534'
+                            });
+                            this.value = '';
+                            return;
                         }
 
-                        adminImageUpload.parentElement.appendChild(previewContainer);
+                        files.forEach(file => {
+                            if (!adminSelectedFiles.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) {
+                                adminSelectedFiles.push(file);
+                            }
+                        });
+                        syncAdminImageInput();
+                        renderAdminUploadPreviews();
 
                         if (uploadLabel) {
                             uploadLabel.textContent = `${files.length} file(s) selected — click to change`;
                         }
                     });
+                }
+
+                const reviewedImageUpload = document.getElementById('adminImageUpload-' + report.id);
+                if (reviewedImageUpload) {
+                    let reviewedSelectedFiles = [];
+                    const reviewedPreview = document.getElementById('adminUploadPreview-' + report.id);
+                    const syncReviewedFiles = () => {
+                        const transfer = new DataTransfer();
+                        reviewedSelectedFiles.forEach(file => transfer.items.add(file));
+                        reviewedImageUpload.files = transfer.files;
+                    };
+                    const renderReviewedPreviews = () => {
+                        if (!reviewedPreview) return;
+                        reviewedPreview.innerHTML = '';
+                        reviewedSelectedFiles.forEach((file, index) => {
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'position-relative';
+                            wrapper.style.cssText = 'width: 80px; height: 80px;';
+                            const image = document.createElement('img');
+                            image.src = URL.createObjectURL(file);
+                            image.alt = file.name;
+                            image.className = 'w-100 h-100 object-fit-cover border rounded';
+                            const remove = document.createElement('button');
+                            remove.type = 'button';
+                            remove.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 p-0';
+                            remove.style.cssText = 'width: 20px; height: 20px; font-size: 0.7rem; line-height: 1;';
+                            remove.innerHTML = '&times;';
+                            remove.title = 'Remove image';
+                            remove.addEventListener('click', () => {
+                                reviewedSelectedFiles.splice(index, 1);
+                                syncReviewedFiles();
+                                renderReviewedPreviews();
+                            });
+                            wrapper.append(image, remove);
+                            reviewedPreview.appendChild(wrapper);
+                        });
+                    };
+                    reviewedImageUpload.addEventListener('change', function () {
+                        const files = Array.from(this.files || []);
+                        const invalid = files.some(file => !/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024);
+                        if (invalid || reviewedSelectedFiles.length + files.length > 20) {
+                            Swal.fire({
+                                title: 'Invalid client images',
+                                text: reviewedSelectedFiles.length + files.length > 20 ? 'You can add up to 20 images.' : 'Images must be JPEG, PNG, or WEBP files up to 5MB each.',
+                                icon: 'warning',
+                                confirmButtonColor: '#166534'
+                            });
+                            this.value = '';
+                            return;
+                        }
+                        files.forEach(file => {
+                            if (!reviewedSelectedFiles.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) {
+                                reviewedSelectedFiles.push(file);
+                            }
+                        });
+                        syncReviewedFiles();
+                        renderReviewedPreviews();
+                    });
+                    reviewedImageUpload.dataset.selectedFilesKey = report.id;
+                    window['reviewedSelectedFiles_' + report.id] = reviewedSelectedFiles;
                 }
 
                 finishDetailsTransition();
@@ -3539,8 +3689,6 @@
                     return Swal.fire({ title: 'Cannot Submit', text: 'This report has already been rejected.', icon: 'warning' });
                 }
 
-                const progressInput = document.getElementById('adminProgressOverride');
-                const approvedProgress = progressInput ? Math.min(100, Math.max(0, Number(progressInput.value) || 0)) : 0;
                 const adminClientText = document.getElementById('adminClientText')?.value?.trim() || '';
                 const selectedChoice = document.querySelector('input[name="publishChoice"]:checked')?.value || 'display';
                 const remarksInput = document.getElementById('rejectionRemarks');
@@ -3562,6 +3710,7 @@
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: confirmColor,
                     cancelButtonColor: '#6c757d',
+                    reverseButtons: true,
                     didOpen: pauseModalFocusTrap
                 }).then((result) => {
                     if (!result.isConfirmed) {
@@ -3602,10 +3751,10 @@
                     } else {
                         const formData = new FormData();
                         formData.append('approval_remarks', adminClientText);
-                        formData.append('accomplishment_percentage', approvedProgress);
                         formData.append('publish_to_client', selectedChoice === 'display' ? 1 : 0);
                         formData.append('admin_report_text', adminClientText);
-                        formData.append('admin_explanation', adminClientText);
+                        const adminExplanation = document.getElementById('adminClientText')?.value?.trim() || '';
+                        formData.append('admin_explanation', adminExplanation);
 
                         const imageUpload = document.getElementById('adminImageUpload');
                         if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
@@ -3616,6 +3765,8 @@
 
                         const removedAdminImages = Array.from(removedAdminImageUrls);
                         removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+                        Array.from(removedOriginalImagePaths).forEach(path => formData.append('remove_site_images[]', path));
+                        Array.from(includedOriginalImagePaths).forEach(path => formData.append('include_original_images[]', path));
 
                         fetch(`${detailsBaseUrl}/${reportId}/approve`, {
                             method: 'POST',
@@ -3672,19 +3823,21 @@
 
                     const formData = new FormData();
                     formData.append('admin_report_text', adminReportText);
-                    formData.append('admin_explanation', adminReportText);
+                    const adminExplanation = document.getElementById(`adminClientText-${reportId}`)?.value?.trim() || '';
+                    formData.append('admin_explanation', adminExplanation);
                     formData.append('publish_to_client', publishToClient);
                     formData.append('is_published_to_client', publishToClient);
 
-                    const imageUpload = document.getElementById(`adminImageUpload-${reportId}`);
-                    if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
-                        Array.from(imageUpload.files).forEach(file => {
+                    const reviewedSelectedFiles = window['reviewedSelectedFiles_' + reportId] || [];
+                    reviewedSelectedFiles.forEach(file => {
                             formData.append('admin_site_images[]', file);
-                        });
-                    }
+                    });
 
                     const removedAdminImages = Array.from(removedAdminImageUrls);
                     removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
+                    Array.from(removedOriginalImagePaths).forEach(path => formData.append('remove_site_images[]', path));
+                    Array.from(includedOriginalImagePaths).forEach(path => formData.append('include_original_images[]', path));
+                    Array.from(window.reviewedClientImagePaths || []).forEach(path => formData.append('client_image_paths[]', path));
 
                     fetch(`${detailsBaseUrl}/${reportId}/update`, {
                         method: 'POST',
@@ -3719,68 +3872,6 @@
                         .catch(error => {
                             Swal.close();
                             Swal.fire({ title: 'Save Failed', text: error.message || 'Unable to save changes.', icon: 'error' });
-                            resumeModalFocusTrap();
-                        });
-                });
-            }
-
-            function handlePrepare(reportId) {
-                const adminClientText = document.getElementById('adminClientText')?.value?.trim() || '';
-
-                Swal.fire({
-                    title: 'Save Preparation?',
-                    text: 'This will save your edits without finalizing the approval decision.',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Save',
-                    cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#1c6b43',
-                    cancelButtonColor: '#6c757d',
-                    didOpen: pauseModalFocusTrap
-                }).then((result) => {
-                    if (!result.isConfirmed) {
-                        resumeModalFocusTrap();
-                        return;
-                    }
-                    Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-
-                    const formData = new FormData();
-                    formData.append('admin_report_text', adminClientText);
-                    formData.append('admin_explanation', adminClientText);
-
-                    const imageUpload = document.getElementById('adminImageUpload');
-                    if (imageUpload && imageUpload.files && imageUpload.files.length > 0) {
-                        Array.from(imageUpload.files).forEach(file => {
-                            formData.append('admin_site_images[]', file);
-                        });
-                    }
-
-                    const removedAdminImages = Array.from(removedAdminImageUrls);
-                    removedAdminImages.forEach(img => formData.append('remove_admin_images[]', img));
-
-                    fetch(`${detailsBaseUrl}/${reportId}/prepare`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: formData
-                    })
-                        .then(async response => {
-                            const payload = await response.json().catch(() => ({}));
-                            if (!response.ok || !payload.success) {
-                                throw new Error(payload.message || 'Unable to save preparation.');
-                            }
-                            return payload;
-                        })
-                        .then(payload => {
-                            Swal.close();
-                            Swal.fire({ title: 'Saved', text: payload.message || 'Preparation saved.', icon: 'success', confirmButtonColor: '#1c6b43' });
-                            resumeModalFocusTrap();
-                        })
-                        .catch(error => {
-                            Swal.close();
-                            Swal.fire({ title: 'Save Failed', text: error.message || 'Unable to save preparation.', icon: 'error' });
                             resumeModalFocusTrap();
                         });
                 });
@@ -3822,6 +3913,14 @@
             // Automatically refresh the report list whenever a filter state exists.
             loadReports();
 
+            // Silent auto-reload every 5 seconds so newly submitted reports appear in real time.
+            setInterval(function () {
+                if (reportDetailsModal && reportDetailsModal.classList.contains('show')) {
+                    return;
+                }
+                loadReports();
+            }, 5000);
+
             // Open report details modal when a report row or view button is clicked
             tableBody.querySelectorAll('.js-view-report').forEach(button => {
                 button.addEventListener('click', function () {
@@ -3857,3 +3956,4 @@
     </script>
 </div>
 @endsection
+

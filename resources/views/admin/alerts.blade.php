@@ -159,6 +159,63 @@
         border-color: var(--ug-accent) !important;
     }
 
+    #pg-alerts .pagination .page-link {
+        color: var(--ug-accent) !important;
+        border-color: rgba(25, 135, 84, 0.35) !important;
+        background-color: #ffffff !important;
+    }
+
+    #pg-alerts .pagination .page-link:hover {
+        color: #ffffff !important;
+        background-color: var(--ug-accent) !important;
+        border-color: var(--ug-accent) !important;
+    }
+
+    #pg-alerts .pagination .page-item.active .page-link {
+        color: #ffffff !important;
+        background-color: var(--ug-accent) !important;
+        border-color: var(--ug-accent) !important;
+    }
+
+    #pg-alerts .pagination .page-item.disabled .page-link {
+        color: #94a3b8 !important;
+        background-color: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    #pg-alerts .notif-details-col {
+        display: none;
+    }
+
+    #pg-alerts .notif-table-col {
+        flex: 0 0 100%;
+        max-width: 100%;
+        transition: flex-basis 0.35s ease, max-width 0.35s ease;
+    }
+
+    #pg-alerts .notif-table-col.has-selection {
+        flex-basis: 66.666667%;
+        max-width: 66.666667%;
+    }
+
+    #pg-alerts .notif-details-col.is-visible {
+        display: block;
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        animation: notification-details-reveal 0.3s ease-out both;
+    }
+
+    #pg-alerts #notifDetailsPanel {
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: flex-start;
+    }
+
+    @keyframes notification-details-reveal {
+        from { opacity: 0; transform: translateX(18px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
 
 
 /* =======================================================================
@@ -224,6 +281,25 @@
         padding-right: 10px !important;
     }
 
+    #pg-alerts #notifFilterForm .row.g-2 {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+
+    #pg-alerts #notifFilterForm .row.g-2 > .col-12,
+    #pg-alerts #notifFilterForm .row.g-2 > .col-6 {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+
+    #pg-alerts #notifFilterForm .row.g-2 > .col-12:first-child {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+
     #pg-alerts .row.g-4 {
         display: block !important;
     }
@@ -234,8 +310,19 @@
         max-width: 100% !important;
     }
 
+    #pg-alerts .notif-table-col.has-selection,
+    #pg-alerts .notif-details-col.is-visible {
+        flex-basis: 100% !important;
+        max-width: 100% !important;
+    }
+
     #pg-alerts .row.g-4 > .col-xl-4 {
         display: none !important;
+    }
+
+    #pg-alerts .row.g-4 > .notif-details-col.is-visible {
+        display: block !important;
+        animation: notification-details-reveal 0.3s ease-out both;
     }
 
     #pg-alerts .table-responsive {
@@ -313,6 +400,18 @@
     #pg-alerts .custom-admin-table td.text-end {
         text-align: left !important;
         padding-right: 0 !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td:nth-child(4),
+    #pg-alerts .custom-admin-table tbody td:nth-child(6) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #pg-alerts .custom-admin-table tbody td:nth-child(6) {
+        justify-content: flex-start !important;
     }
 }
 
@@ -433,7 +532,7 @@
     <div class="row g-4">
 
         <!-- Left Side: Interactive Table Panel -->
-        <div class="col-12 col-xl-8">
+        <div class="col-12 notif-table-col" id="notifTableColumn">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 custom-admin-table" style="font-size: 13px;">
@@ -557,8 +656,8 @@
         </div>
 
         <!-- Right Side: Real-time UI Details Panel -->
-        <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4 h-100" id="notifDetailsPanel">
+        <div class="col-12 col-xl-4 notif-details-col" id="notifDetailsColumn">
+            <div class="card border-0 shadow-sm rounded-4 p-4" id="notifDetailsPanel">
                 <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
                     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 15px;">
                         <i class="bi bi-bell" style="color: var(--ug-accent);"></i> Notification Details
@@ -609,7 +708,7 @@
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2 pt-3 mt-auto">
+                    <div class="d-flex gap-2 pt-3">
                         <button class="btn btn-success flex-grow-1 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3" style="font-size: 13px; background-color: var(--ug-accent); border-color: var(--ug-accent);" id="detailMarkReadBtn">
                             <i class="bi bi-check-lg"></i> Mark as Read
                         </button>
@@ -630,6 +729,19 @@
 document.addEventListener('DOMContentLoaded', function () {
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     let selectedId = null;
+    const tableColumn = document.getElementById('notifTableColumn');
+    const detailsColumn = document.getElementById('notifDetailsColumn');
+
+    function clearNotificationSelection() {
+        selectedId = null;
+        tableColumn?.classList.remove('has-selection');
+        detailsColumn?.classList.remove('is-visible');
+        document.getElementById('notifDetailsContent')?.classList.add('d-none');
+        document.getElementById('notifDetailsEmpty')?.classList.remove('d-none');
+        document.querySelectorAll('.notif-row.is-selected').forEach(function (selectedRow) {
+            selectedRow.classList.remove('is-selected');
+        });
+    }
 
     function postJson(url) {
         return fetch(url, {
@@ -674,6 +786,13 @@ document.addEventListener('DOMContentLoaded', function () {
         row.addEventListener('click', function () {
             selectedId = row.dataset.id;
 
+            tableColumn?.classList.add('has-selection');
+            detailsColumn?.classList.add('is-visible');
+            document.querySelectorAll('.notif-row.is-selected').forEach(function (selectedRow) {
+                selectedRow.classList.remove('is-selected');
+            });
+            row.classList.add('is-selected');
+
             document.getElementById('notifDetailsEmpty').classList.add('d-none');
             document.getElementById('notifDetailsContent').classList.remove('d-none');
 
@@ -710,6 +829,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     // ignore errors for now; user can still mark read manually
                 });
             }
+        });
+
+        row.addEventListener('dblclick', function (event) {
+            if (event.target.closest('.dropdown, a, button')) return;
+            clearNotificationSelection();
         });
     });
 

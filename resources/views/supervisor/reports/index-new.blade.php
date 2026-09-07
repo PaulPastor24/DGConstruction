@@ -101,16 +101,49 @@
 
         .report-detail-sidebar .img-thumbnail-grid {
             width: 100%;
-            max-width: 108px;
-            height: 88px;
-            min-width: 88px;
+            max-width: none;
+            height: 76px;
+            min-width: 0;
         }
 
-        .report-detail-sidebar .more-images-badge {
-            width: auto;
-            min-width: 108px;
-            background: #F1F5F9;
-            color: #166534;
+        .report-images-gallery {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .report-images-navigation {
+            position: absolute;
+            inset: 50% -18px auto;
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            transform: translateY(-50%);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .report-gallery-nav {
+            width: 38px;
+            height: 36px;
+            border: 1px solid #dbe4df;
+            border-radius: 7px;
+            background: #ffffff;
+            color: var(--cms-green-dark);
+            cursor: pointer;
+            line-height: 1;
+            font-size: 1.35rem;
+            padding: 0;
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+        }
+
+        .report-gallery-nav:hover {
+            background: var(--cms-green-light);
         }
 
         .drawer-section-title {
@@ -132,17 +165,9 @@
             border-radius: 6px;
         }
 
-        .more-images-badge {
-            width: 65px;
-            height: 65px;
-            background: #f0f0f0;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #555;
+        .lightbox-trigger {
+            cursor: pointer;
+            pointer-events: auto;
         }
 
         /* Progress Steps Timeline */
@@ -375,6 +400,61 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .cms-file-preview-thumb .remove-image-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(220, 38, 38, 0.9);
+            color: #fff;
+            font-size: 0.75rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            z-index: 2;
+        }
+
+        .cms-file-preview-thumb .remove-image-btn:hover {
+            background: rgba(185, 28, 28, 1);
+        }
+
+        .current-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+            gap: 18px 12px;
+        }
+
+        .current-image-item {
+            min-width: 0;
+            text-align: center;
+        }
+
+        .current-image-item img {
+            display: block;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 5px;
+            object-fit: cover;
+        }
+
+        .add-images-btn {
+            margin-top: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+
+        .swal2-actions-custom-gap {
+            gap: 10px;
         }
 
         .cms-modal .modal-footer {
@@ -823,13 +903,9 @@
             }
 
             .report-detail-sidebar .img-thumbnail-grid {
-                max-width: 80px !important;
+                max-width: none !important;
                 height: 64px !important;
-                min-width: 64px !important;
-            }
-
-            .report-detail-sidebar .more-images-badge {
-                min-width: 80px !important;
+                min-width: 0 !important;
             }
         }
 
@@ -886,6 +962,9 @@
         .image-lightbox img {
             max-width: 90%;
             max-height: 85vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             border-radius: 8px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
@@ -897,8 +976,54 @@
             background: rgba(255, 255, 255, 0.15);
             border: none;
             color: #fff;
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            line-height: 1;
+            font-family: Arial, sans-serif;
+            font-weight: 400;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            text-align: center;
+            transition: background 0.2s;
+            z-index: 5;
+            pointer-events: auto;
+        }
+
+        .image-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .image-lightbox-stage {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .image-lightbox-stage img,
+        .image-lightbox-nav,
+        .image-lightbox-counter {
+            pointer-events: auto;
+        }
+
+        .image-lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             font-size: 1.5rem;
             cursor: pointer;
@@ -906,10 +1031,32 @@
             align-items: center;
             justify-content: center;
             transition: background 0.2s;
+            z-index: 2;
         }
 
-        .image-lightbox-close:hover {
+        .image-lightbox-nav:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .image-lightbox-nav.prev {
+            left: 1rem;
+        }
+
+        .image-lightbox-nav.next {
+            right: 1rem;
+        }
+
+        .image-lightbox-counter {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 2;
         }
     </style>
 @endpush
@@ -924,7 +1071,7 @@
 
 <section class="report-filter-card p-3 mb-4">
     <form id="filterForm" method="GET" class="row g-3 align-items-end">
-        <div class="col-12 col-md-3">
+        <div class="col-6 col-md-3">
             <label class="form-label small fw-bold text-muted">Project</label>
             <select name="project_id" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="" {{ request('project_id') === null || request('project_id') === '' ? 'selected' : '' }}>All Projects</option>
@@ -933,7 +1080,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-6 col-md-3">
             <label class="form-label small fw-bold text-muted">Construction Phase</label>
             <select name="phase_id" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">All Phases</option>
@@ -942,7 +1089,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-6 col-md-2">
             <label class="form-label small fw-bold text-muted">Approval Status</label>
             <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                 <option value="">All Status</option>
@@ -951,7 +1098,17 @@
                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Returned</option>
             </select>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-2">
+            <label class="form-label small fw-bold text-muted">Sort By</label>
+            <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="newest" {{ request('sort') == 'newest' || request('sort') === null || request('sort') === '' ? 'selected' : '' }}>Newest First</option>
+                <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                <option value="project_asc" {{ request('sort') == 'project_asc' ? 'selected' : '' }}>Project A-Z</option>
+                <option value="project_desc" {{ request('sort') == 'project_desc' ? 'selected' : '' }}>Project Z-A</option>
+                <option value="status_asc" {{ request('sort') == 'status_asc' ? 'selected' : '' }}>Status A-Z</option>
+            </select>
+        </div>
+        <div class="col-6 offset-3 col-md-2 offset-md-0">
             <label class="form-label small fw-bold text-muted">Report Date</label>
             <input type="date" name="report_date" value="{{ request('report_date') }}" class="form-control form-control-sm" onchange="this.form.submit()" />
         </div>
@@ -967,46 +1124,42 @@
             <div>
                 <div class="text-muted small fw-bold">Total Reports</div>
                 <h4 class="mb-0 fw-bold">{{ $totalCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">All time</span>
             </div>
         </div>
     </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-warning-subtle text-warning">
-                <i class="bi bi-clock"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Pending Review</div>
-                <h4 class="mb-0 fw-bold">{{ $pendingCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($pendingCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-success-subtle text-success">
-                <i class="bi bi-check-circle"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Approved Reports</div>
-                <h4 class="mb-0 fw-bold">{{ $approvedCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($approvedCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-sm-6 col-xl-3">
-        <div class="metric-card p-3 d-flex align-items-center gap-3">
-            <div class="metric-icon-wrapper bg-danger-subtle text-danger">
-                <i class="bi bi-x-circle"></i>
-            </div>
-            <div>
-                <div class="text-muted small fw-bold">Rejected Reports</div>
-                <h4 class="mb-0 fw-bold">{{ $rejectedCount }}</h4>
-                <span class="text-muted" style="font-size: 0.75rem;">{{ $totalCount > 0 ? round(($rejectedCount/$totalCount)*100, 2) : 0 }}% of total</span>
-            </div>
-        </div>
-    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-warning-subtle text-warning">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Pending Review</div>
+                                <h4 class="mb-0 fw-bold">{{ $pendingCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-success-subtle text-success">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Approved Reports</div>
+                                <h4 class="mb-0 fw-bold">{{ $approvedCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6 col-xl-3">
+                        <div class="metric-card p-3 d-flex align-items-center gap-3">
+                            <div class="metric-icon-wrapper bg-danger-subtle text-danger">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small fw-bold">Rejected Reports</div>
+                                <h4 class="mb-0 fw-bold">{{ $rejectedCount }}</h4>
+                            </div>
+                        </div>
+                    </div>
 </div>
 
 <section class="main-report-card p-0 overflow-hidden mb-4">
@@ -1026,13 +1179,14 @@
                     <th>Phase</th>
                     <th>Submitted By</th>
                     <th>Status</th>
+                    <th>Images</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @if($reports->isEmpty())
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No configuration records matched your parameters.</td>
+                        <td colspan="7" class="text-center py-4 text-muted">No configuration records matched your parameters.</td>
                     </tr>
                 @else
                     @foreach($reports as $report)
@@ -1043,11 +1197,12 @@
                                 'rejected' => 'status-pill status-pill-error',
                                 default => 'status-pill status-pill-pending',
                             };
+                            $isNew = $loop->first && $status === 'pending';
                         @endphp
                         <tr>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->report_date)->format('M d, Y') ?? 'N/A' }}</div>
-                                <div class="text-muted small">{{ optional($report->report_date)->format('h:i A') ?? '' }}</div>
+                                <div class="text-muted small">{{ optional($report->created_at)->format('h:i A') ?? '' }}</div>
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ optional($report->project)->project_name ?? 'Unknown' }}</div>
@@ -1068,34 +1223,50 @@
                                 </div>
                             </td>
                             <td>
+                                @if($isNew)
+                                    <span class="badge bg-success me-1" style="font-size: 0.65rem; text-transform: uppercase;">New</span>
+                                @endif
                                 <span class="status-pill {{ $pillClass }}">{{ $status }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $imageCount = count((array) ($report->site_images ?? []));
+                                @endphp
+                                @if($imageCount > 0)
+                                    <span class="badge bg-success-subtle text-success" style="font-size: 0.75rem;">
+                                        <i class="bi bi-image"></i> {{ $imageCount }}
+                                    </span>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
                                     <button class="btn btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#reportDetailsModal-{{ $report->report_id }}" style="background: white; color: var(--cms-green-dark); transition: all 0.2s ease;" onmouseover="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1.2)';" onmouseout="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1)';">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm download-report-btn" data-report-id="{{ $report->report_id }}" style="background: white; color: var(--cms-green-dark); transition: all 0.2s ease;" onmouseover="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1.2)';" onmouseout="this.style.color='var(--cms-green-dark)'; this.style.transform='scale(1)';">
-                                        <i class="bi bi-download"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
 
                         @php
-                            $siteImages = is_array($report->site_images) ? $report->site_images : [];
+                            $siteImages = is_array($report->site_images)
+                                ? $report->site_images
+                                : (json_decode((string) $report->site_images, true) ?: []);
                             $siteImageUrls = collect($siteImages)
                                 ->map(function ($path) {
                                     if (!$path) {
                                         return null;
                                     }
-                                    return asset('storage/' . ltrim($path, '/'));
+                                    return str_starts_with($path, 'http://') || str_starts_with($path, 'https://')
+                                        ? $path
+                                        : asset('storage/' . ltrim($path, '/'));
                                 })
                                 ->filter()
                                 ->values();
                             $timelineStatus = $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : 'current');
                         @endphp
-                        <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
+                            <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-report-status="{{ $status }}" data-gallery='@json($siteImageUrls->map(fn($url) => $url)->values())' tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                             <div class="modal-dialog modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark);">
@@ -1123,15 +1294,15 @@
                                                     <div class="row g-3 mb-4 small">
                                                         <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Project</div>
-                                                            <div class="text-dark">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
+                                                            <div class="text-dark js-detail-project">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
                                                         </div>
                                                         <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Construction Phase</div>
-                                                            <div class="text-dark">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
+                                                            <div class="text-dark js-detail-phase">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
                                                         </div>
                                                         <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Report Date</div>
-                                                            <div class="text-dark">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
+                                                            <div class="text-dark js-detail-date">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
                                                         </div>
                                                         <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
                                                             <div class="fw-semibold text-muted mb-1">Submitted By</div>
@@ -1139,9 +1310,62 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
-                                                        <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
-                                                        <p class="mb-0 text-dark small">{{ $report->report_text ?? 'No description logs reported.' }}</p>
+                                                    <div class="js-report-view-section">
+                                                        <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
+                                                            <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
+                                                            <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->report_text ?? 'No description logs reported.' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="js-edit-form" id="editForm-{{ $report->report_id }}" style="display: none;">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Report Date</label>
+                                                            <input type="datetime-local" id="editReportDate-{{ $report->report_id }}" class="form-control form-control-sm" max="{{ now()->format('Y-m-d\TH:i') }}" value="{{ optional($report->report_date)->format('Y-m-d\TH:i') ?? '' }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Project</label>
+                                                            <select id="editProjectId-{{ $report->report_id }}" class="form-select form-select-sm edit-project-select">
+                                                                @foreach($assignedProjects as $project)
+                                                                    <option value="{{ $project->project_id }}" {{ $report->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Phase</label>
+                                                            <select id="editPhaseId-{{ $report->report_id }}" class="form-select form-select-sm edit-phase-select" required>
+                                                                @foreach($projectPhases as $phase)
+                                                                    <option value="{{ $phase->phase_id }}" {{ $report->phase_id == $phase->phase_id ? 'selected' : '' }}>{{ $phase->phase_name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Accomplishment Summary</label>
+                                                            <textarea id="editReportText-{{ $report->report_id }}" rows="4" class="form-control form-control-sm">{{ $report->report_text ?? '' }}</textarea>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Add Images</label>
+                                                            <input type="file" id="editReportImages-{{ $report->report_id }}" class="d-none edit-report-images" multiple accept="image/png,image/jpeg,image/jpg,image/webp">
+                                                            <button type="button" class="btn btn-sm btn-outline-success js-add-edit-images">
+                                                                <i class="bi bi-plus-lg"></i> Add Images
+                                                            </button>
+                                                            <div id="editSelectedImagesContainer-{{ $report->report_id }}" class="cms-file-preview-grid" style="margin-top: 10px;"></div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold text-muted">Original Report Images</label>
+                                                            <div id="currentImagesContainer-{{ $report->report_id }}" class="current-images-grid">
+                                                                @if(!empty($report->site_images))
+                                                                    @foreach($report->site_images as $img)
+                                                                        <div class="current-image-item">
+                                                                            <img src="{{ str_starts_with($img, 'http://') || str_starts_with($img, 'https://') ? $img : asset('storage/' . ltrim($img, '/')) }}" class="object-fit-cover border rounded" alt="Original report image">
+                                                                            <div class="form-check mt-1">
+                                                                                <input class="form-check-input js-remove-image-checkbox" type="checkbox" value="{{ $img }}" style="width: 12px; height: 12px;">
+                                                                                <label class="form-check-label small" style="font-size: 0.65rem;">Remove</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endforeach
+                                                                @endif
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     <div class="row g-3 mb-3">
@@ -1175,14 +1399,33 @@
                                                     @if($siteImageUrls->isEmpty())
                                                         <div class="text-muted small border rounded-3 p-3" style="background: #f9fafb;">No site images were attached to this report.</div>
                                                     @else
-                                                        <div class="d-flex flex-wrap gap-2 mb-4">
-                                                            @foreach($siteImageUrls->take(4) as $imageUrl)
-                                                                <button type="button" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" aria-label="Preview site image">
+                                                        <div class="report-images-gallery mb-2" data-gallery='@json($siteImageUrls->map(fn($url) => $url)->values())' data-gallery-offset="0">
+                                                            @foreach($siteImageUrls->take(8) as $imageUrl)
+                                                                <button type="button" class="img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger" style="background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;" data-full-image="{{ $imageUrl }}" data-gallery='@json($siteImageUrls->map(fn($url) => $url)->values())' aria-label="Preview site image">
                                                                     <img src="{{ $imageUrl }}" alt="Site image" class="w-100 h-100 object-fit-cover">
                                                                 </button>
                                                             @endforeach
-                                                            @if($siteImageUrls->count() > 4)
-                                                                <div class="more-images-badge d-flex align-items-center justify-content-center" style="background: #f9fafb; border: 2px solid #e5e7eb; color: #6b7280;">+{{ $siteImageUrls->count() - 4 }} more</div>
+                                                        @if($siteImageUrls->count() > 8)
+                                                            <div class="report-images-navigation" aria-label="More site images">
+                                                                <button type="button" class="report-gallery-nav" data-gallery-direction="prev" aria-label="Previous site images">&lt;</button>
+                                                                <button type="button" class="report-gallery-nav" data-gallery-direction="next" aria-label="Next site images">&gt;</button>
+                                                            </div>
+                                                        @endif
+                                                        </div>
+                                                    @endif
+
+                                                    @if($status === 'approved')
+                                                        <div class="modal-progress-card mb-3">
+                                                            <div class="modal-section-title">Client Visibility</div>
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <span class="text-muted small">Status</span>
+                                                                <span class="status-pill {{ $report->is_published_to_client ? 'published' : 'approved' }} p-2 mt-1 d-inline-block">{{ $report->is_published_to_client ? 'Published to Client' : 'Approved (Hidden)' }}</span>
+                                                            </div>
+                                                            @if($report->published_at)
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span class="text-muted small">Published At</span>
+                                                                    <span class="small text-dark">{{ $report->published_at->format('M d, Y h:i A') }}</span>
+                                                                </div>
                                                             @endif
                                                         </div>
                                                     @endif
@@ -1192,22 +1435,43 @@
                                                         <div class="timeline-step active">
                                                             <div class="timeline-icon"><i class="bi bi-check"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Submitted</div>
+                                                            <div class="text-muted" style="font-size:0.65rem;">{{ $report->created_at->format('M d, Y h:i A') }}</div>
                                                         </div>
                                                         <div class="timeline-step {{ $status !== 'pending' ? 'active' : 'current' }}">
                                                             <div class="timeline-icon"><i class="bi bi-clock"></i></div>
                                                             <div class="fw-bold" style="font-size:0.75rem;">Under Review</div>
+                                                            @if($report->reviewed_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->reviewed_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
                                                         <div class="timeline-step {{ $status === 'approved' ? 'active' : '' }}">
                                                             <div class="timeline-icon"><i class="bi bi-circle"></i></div>
-                                                            <div class="fw-bold" style="font-size:0.75rem;">Approved</div>
+                                                            <div class="fw-bold" style="font-size:0.75rem;">{{ $status === 'approved' ? 'Approved' : ucfirst($status) }}</div>
+                                                            @if($status === 'approved' && $report->approved_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->approved_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
+                                                            @if($status === 'rejected' && $report->rejected_at)
+                                                                <div class="text-muted" style="font-size:0.65rem;">{{ $report->rejected_at->format('M d, Y h:i A') }}</div>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="d-flex justify-content-center" style="padding-top: 2rem; margin-top: 2rem; border-top: 2px solid var(--cms-green-muted);">
-                                                    <button class="btn btn-cms-primary download-report-btn" data-report-id="{{ $report->report_id }}">
-                                                        <i class="bi bi-download me-2"></i> Download PDF
-                                                    </button>
+                                                <div class="d-flex justify-content-center align-items-center" style="padding-top: 1.25rem; margin-top: 1.25rem; border-top: 2px solid var(--cms-green-muted);">
+                                                    <div class="d-inline-flex gap-2 justify-content-center">
+                                                        <button type="button" class="btn btn-sm btn-success js-edit-pending-report" style="display: {{ in_array($status, ['pending', 'rejected'], true) ? 'inline-flex' : 'none' }};">
+                                                            <i class="bi bi-pencil-square me-1"></i>Edit
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-success js-export-pending-report" style="display: none;">
+                                                            <i class="bi bi-download me-1"></i>Export PDF
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary js-cancel-edit-pending" style="display: none;">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-success js-save-edit-pending" style="display: none;">
+                                                            <i class="bi bi-check2 me-1"></i>Save Changes
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1353,7 +1617,7 @@
                                 @else
                                     <option value="" disabled>Select assigned project...</option>
                                     @foreach($assignedProjects as $project)
-                                        <option value="{{ $project->project_id }}" {{ optional($modalProject ?? $selectedProject)->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                                        <option value="{{ $project->project_id }}" data-phases='@json($project->phases->values())' {{ optional($modalProject ?? $selectedProject)->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
                                     @endforeach
                                 @endif
                             </select>
@@ -1363,7 +1627,7 @@
                             <select name="phase_id" id="modal_phase_id" class="form-select cms-form-control" required>
                                 <option value="" selected disabled>{{ $projectPhases->isEmpty() ? 'Select project first...' : 'Select construction phase...' }}</option>
                                 @foreach($projectPhases as $phase)
-                                    <option value="{{ $phase->phase_id }}" data-completion-percentage="{{ $phase->completion_percentage ?? 0 }}">{{ $phase->phase_name }}</option>
+                                    <option value="{{ $phase->phase_id }}" data-completion-percentage="{{ $phase->completion_percentage ?? 0 }}" {{ $phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100 ? 'disabled' : '' }}>{{ $phase->phase_name }}{{ $phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100 ? ' (Completed)' : '' }}</option>
                                 @endforeach
                             </select>
                             @if($projectPhases->isEmpty())
@@ -1383,13 +1647,16 @@
                     <div class="cms-form-section-header">Upload Site Images <span class="text-muted">(Optional)</span></div>
                     <div class="row">
                         <div class="col-12 cms-form-group">
-                            <div id="imageUploadZone" class="cms-file-upload-zone" onclick="document.getElementById('modal_report_images').click()">
+                            <div id="imageUploadZone" class="cms-file-upload-zone">
                                 <div id="uploadPromptText">
                                     <div class="cms-file-upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
                                     <h6 class="fw-bold text-dark mb-1" style="font-size: 0.92rem;">Click to upload or drag files here</h6>
-                                    <p class="text-muted mb-0 small">Supports PNG, JPG, JPEG, WEBP formats up to 5MB per image.</p>
+                                    <p class="text-muted mb-0 small">Up to 20 images. Supports PNG, JPG, JPEG, WEBP formats up to 5MB per image.</p>
                                 </div>
                                 <div id="selectedImagesContainer" class="cms-file-preview-grid"></div>
+                                <button type="button" class="btn btn-sm btn-outline-success add-images-btn">
+                                    <i class="bi bi-plus-lg"></i> Add Images
+                                </button>
                                 <input type="file" name="site_images[]" id="modal_report_images" class="d-none" multiple accept="image/png,image/jpeg,image/jpg,image/webp" />
                             </div>
                         </div>
@@ -1410,7 +1677,12 @@
 {{-- Image Lightbox Modal --}}
 <div class="image-lightbox" id="reportImageLightbox" role="dialog" aria-modal="true" aria-label="Image preview">
     <button type="button" class="image-lightbox-close" id="lightboxCloseBtn" aria-label="Close preview">&times;</button>
-    <img src="" alt="Site image preview" id="lightboxImage">
+    <div class="image-lightbox-stage">
+        <button type="button" class="image-lightbox-nav prev" id="lightboxPrevBtn" aria-label="Previous image" hidden>‹</button>
+        <img src="" alt="Site image preview" id="lightboxImage">
+        <button type="button" class="image-lightbox-nav next" id="lightboxNextBtn" aria-label="Next image" hidden>›</button>
+        <div class="image-lightbox-counter" id="lightboxCounter" hidden></div>
+    </div>
 </div>
 
 @endsection
@@ -1423,12 +1695,22 @@
             document.body.appendChild(modal);
         });
 
+        const lightbox = document.getElementById('reportImageLightbox');
+        if (lightbox) {
+            document.body.appendChild(lightbox);
+        }
+
         const modalProjectSelect = document.getElementById('modal_project_id');
         const modalPhaseSelect = document.getElementById('modal_phase_id');
         const imageInput = document.getElementById('modal_report_images');
         const previewContainer = document.getElementById('selectedImagesContainer');
+        const uploadZone = document.getElementById('imageUploadZone');
         const filterForm = document.getElementById('filterForm');
         const createReportForm = document.getElementById('createReportForm');
+
+        if (!modalProjectSelect || !modalPhaseSelect || !imageInput || !uploadZone) {
+            console.error('Create report modal elements not found');
+        }
 
         const phasesApiRouteTemplate = '{{ route('supervisor.api.reports.phases', ['project_id' => 'PROJECT_ID']) }}';
         const phasePlaceholder = '<option value="" selected disabled>Select construction phase...</option>';
@@ -1450,8 +1732,11 @@
             modalPhaseSelect.style.cursor = 'not-allowed';
         }
 
-        function renderPhaseOptions(phases) {
+        function renderPhaseOptions(phases, editableOnly = false) {
             modalPhaseSelect.innerHTML = phasePlaceholder;
+            if (editableOnly) {
+                phases = phases.filter(phase => phase.status !== 'completed' && Number(phase.completion_percentage ?? 0) < 100);
+            }
             if (!phases || phases.length === 0) {
                 modalPhaseSelect.innerHTML = emptyPlaceholder;
                 enablePhaseSelect();
@@ -1460,40 +1745,66 @@
             phases.forEach(phase => {
                 const option = document.createElement('option');
                 option.value = phase.phase_id;
-                option.textContent = phase.phase_name;
+                const isCompleted = phase.status === 'completed' || Number(phase.completion_percentage ?? 0) >= 100;
+                option.textContent = isCompleted ? `${phase.phase_name} (Completed)` : phase.phase_name;
+                option.disabled = isCompleted;
+                option.dataset.completionPercentage = phase.completion_percentage ?? 0;
                 modalPhaseSelect.appendChild(option);
             });
             enablePhaseSelect();
         }
 
         function loadProjectPhases(projectId) {
+            console.log('loadProjectPhases called with:', projectId);
+            if (!projectId) {
+                disablePhaseSelect();
+                return;
+            }
+
             modalPhaseSelect.innerHTML = loadingPlaceholder;
             enablePhaseSelect();
 
-            const endpoint = phasesApiRouteTemplate.replace('PROJECT_ID', encodeURIComponent(projectId));
+            const endpoint = phasesApiRouteTemplate.replace('PROJECT_ID', encodeURIComponent(projectId)) + '?editable=1&t=' + Date.now();
+            console.log('Fetching phases from:', endpoint);
 
             fetch(endpoint, {
-                headers: {
-                    'Accept': 'application/json'
-                }
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
             })
                 .then(response => {
+                    console.log('Phase API response status:', response.status, response.statusText);
                     if (!response.ok) {
-                        throw new Error('Phase load failed');
+                        throw new Error('Phase load failed: ' + response.status);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Phase API response data:', data);
                     if (data.success && Array.isArray(data.phases)) {
-                        renderPhaseOptions(data.phases);
+                        console.log('Rendering phases:', data.phases.length);
+                        renderPhaseOptions(data.phases, true);
                         return;
                     }
                     modalPhaseSelect.innerHTML = errorPlaceholder;
                     enablePhaseSelect();
+                    console.error('Unexpected phase response:', data);
                 })
-                .catch(() => {
-                    modalPhaseSelect.innerHTML = errorPlaceholder;
-                    enablePhaseSelect();
+                .catch(error => {
+                    const selectedProject = modalProjectSelect.options[modalProjectSelect.selectedIndex];
+                    let fallbackPhases = [];
+                    try {
+                        fallbackPhases = JSON.parse(selectedProject?.dataset?.phases || '[]');
+                    } catch (parseError) {
+                        console.error('Invalid phase fallback data:', parseError);
+                    }
+
+                    if (fallbackPhases.length > 0) {
+                        renderPhaseOptions(fallbackPhases, true);
+                    } else {
+                        modalPhaseSelect.innerHTML = errorPlaceholder;
+                        enablePhaseSelect();
+                    }
+                    console.error('Phase load error:', error);
                 });
         }
 
@@ -1509,6 +1820,7 @@
         if (modalProjectSelect) {
             modalProjectSelect.addEventListener('change', function() {
                 const projectId = this.value;
+                console.log('Project selected:', projectId, 'Project name:', this.options[this.selectedIndex]?.textContent);
                 if (!projectId) {
                     disablePhaseSelect();
                     return;
@@ -1521,7 +1833,9 @@
             modalPhaseSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
                 const completionPercentage = selectedOption?.dataset?.completionPercentage ?? 0;
-                updateCurrentPhaseProgress({ completion_percentage: completionPercentage, phase_name: selectedOption?.textContent || 'this phase' });
+                if (typeof updateCurrentPhaseProgress === 'function') {
+                    updateCurrentPhaseProgress({ completion_percentage: completionPercentage, phase_name: selectedOption?.textContent || 'this phase' });
+                }
             });
         }
 
@@ -1535,10 +1849,48 @@
         initializePhaseDropdown();
 
         let selectedFiles = [];
-        const uploadZone = document.getElementById('imageUploadZone');
         const uploadPromptText = document.getElementById('uploadPromptText');
+        const maxImageSize = 5 * 1024 * 1024;
+        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+        function validateImageFiles(files, maxCount) {
+            const validFiles = [];
+            const invalidFiles = [];
+
+            Array.from(files || []).forEach(file => {
+                if (!allowedImageTypes.includes(file.type)) {
+                    invalidFiles.push(`${file.name}: unsupported image type`);
+                    return;
+                }
+                if (file.size > maxImageSize) {
+                    invalidFiles.push(`${file.name}: larger than 5MB`);
+                    return;
+                }
+                validFiles.push(file);
+            });
+
+            if (validFiles.length > maxCount) {
+                invalidFiles.push(`Only ${maxCount} images can be selected.`);
+                validFiles.splice(maxCount);
+            }
+
+            if (invalidFiles.length > 0) {
+                Swal.fire({
+                    title: 'Invalid image selection',
+                    html: invalidFiles.slice(0, 4).join('<br>'),
+                    icon: 'warning',
+                    confirmButtonColor: '#166534',
+                });
+            }
+
+            return validFiles;
+        }
 
         function renderImagePreviews(files) {
+            if (!previewContainer || !uploadZone) {
+                return;
+            }
+
             previewContainer.innerHTML = '';
             if (!files || files.length === 0) {
                 uploadZone.classList.remove('has-images');
@@ -1546,7 +1898,7 @@
             }
 
             uploadZone.classList.add('has-images');
-            Array.from(files).forEach(file => {
+            Array.from(files).forEach((file, index) => {
                 if (!file.type.startsWith('image/')) {
                     return;
                 }
@@ -1562,10 +1914,29 @@
                 label.className = 'preview-label';
                 label.textContent = file.name;
 
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-image-btn';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.title = 'Remove image';
+                removeBtn.setAttribute('aria-label', 'Remove image');
+                removeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    removeFile(index);
+                });
+
                 previewThumb.appendChild(img);
                 previewThumb.appendChild(label);
+                previewThumb.appendChild(removeBtn);
                 previewContainer.appendChild(previewThumb);
             });
+        }
+
+        function removeFile(index) {
+            if (index >= 0 && index < selectedFiles.length) {
+                selectedFiles.splice(index, 1);
+                updateImageInputFiles();
+            }
         }
 
         function updateImageInputFiles() {
@@ -1576,10 +1947,9 @@
         }
 
         function handleFiles(files) {
-            Array.from(files).forEach(file => {
-                if (!file.type.startsWith('image/')) {
-                    return;
-                }
+            const availableSlots = 20 - selectedFiles.length;
+            const validFiles = validateImageFiles(files, Math.max(0, availableSlots));
+            validFiles.forEach(file => {
                 const exists = selectedFiles.some(existing => existing.name === file.name && existing.size === file.size && existing.type === file.type);
                 if (!exists) {
                     selectedFiles.push(file);
@@ -1588,11 +1958,20 @@
             updateImageInputFiles();
         }
 
-        imageInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                handleFiles(Array.from(this.files));
+            });
+        }
 
         if (uploadZone) {
+            uploadZone.addEventListener('click', function(e) {
+                if (e.target === imageInput) return;
+                if (e.target.closest('.add-images-btn')) return;
+                if (e.target.closest('.remove-image-btn')) return;
+                imageInput.click();
+            });
+
             uploadZone.addEventListener('dragenter', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1614,6 +1993,17 @@
                 uploadZone.classList.remove('dragover');
                 if (e.dataTransfer && e.dataTransfer.files.length) {
                     handleFiles(e.dataTransfer.files);
+                }
+            });
+        }
+
+        const addImagesBtn = document.querySelector('.add-images-btn');
+        if (addImagesBtn) {
+            addImagesBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (imageInput) {
+                    imageInput.click();
                 }
             });
         }
@@ -1655,9 +2045,11 @@
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: '#166534',
                     cancelButtonColor: '#6c757d',
+                    reverseButtons: true,
                     customClass: {
                         confirmButton: 'btn-cms-primary',
-                        cancelButton: 'btn-cms-secondary'
+                        cancelButton: 'btn-cms-secondary',
+                        actions: 'swal2-actions-custom-gap'
                     },
                     buttonsStyling: false,
                 }).then(result => {
@@ -1678,6 +2070,7 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'X-Requested-With': 'XMLHttpRequest',
                         },
                         body: formData,
                     })
@@ -1703,7 +2096,12 @@
                                 icon: 'success',
                                 confirmButtonColor: '#166534',
                             }).then(() => {
-                                window.location.reload();
+                                const createModalEl = document.getElementById('createReportModal');
+                                if (createModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                    const modal = bootstrap.Modal.getInstance(createModalEl);
+                                    if (modal) modal.hide();
+                                }
+                                window.location.href = '{{ route('supervisor.reports') }}';
                             });
                         })
                         .catch(error => {
@@ -1715,8 +2113,8 @@
                                 confirmButtonColor: '#c92a2a',
                             });
                         });
+                    });
                 });
-            });
         }
 
         if (filterForm) {
@@ -1729,13 +2127,57 @@
         }
 
         // Image lightbox for report details modal
-        const lightbox = document.getElementById('reportImageLightbox');
         const lightboxImage = document.getElementById('lightboxImage');
         const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+        const lightboxPrevBtn = document.getElementById('lightboxPrevBtn');
+        const lightboxNextBtn = document.getElementById('lightboxNextBtn');
+        const lightboxCounter = document.getElementById('lightboxCounter');
 
-        function openLightbox(imageUrl) {
-            if (!lightbox || !lightboxImage) return;
+        let lightboxGallery = [];
+        let lightboxIndex = 0;
+        let lightboxTouchStartX = 0;
+
+        function renderLightboxImage() {
+            const total = lightboxGallery.length;
+            const imageUrl = lightboxGallery[lightboxIndex];
+            if (!lightboxImage || !imageUrl) return;
+
+            lightboxImage.onerror = function () {
+                lightboxImage.onerror = null;
+                lightboxImage.alt = 'Image failed to load';
+            };
             lightboxImage.src = imageUrl;
+
+            const showNav = total > 1;
+            if (lightboxPrevBtn) lightboxPrevBtn.hidden = !showNav;
+            if (lightboxNextBtn) lightboxNextBtn.hidden = !showNav;
+            if (lightboxCounter) {
+                lightboxCounter.hidden = !showNav;
+                lightboxCounter.textContent = `${lightboxIndex + 1} / ${total}`;
+            }
+        }
+
+        function lightboxShowNext() {
+            if (!lightboxGallery.length) return;
+            lightboxIndex = (lightboxIndex + 1) % lightboxGallery.length;
+            renderLightboxImage();
+        }
+
+        function lightboxShowPrev() {
+            if (!lightboxGallery.length) return;
+            lightboxIndex = (lightboxIndex - 1 + lightboxGallery.length) % lightboxGallery.length;
+            renderLightboxImage();
+        }
+
+        function openLightbox(imageUrl, gallery, index) {
+            if (!lightbox || !lightboxImage || !imageUrl || typeof imageUrl !== 'string' || imageUrl.trim() === '') return;
+
+            lightboxGallery = Array.isArray(gallery) && gallery.length ? gallery.filter(Boolean) : [imageUrl];
+            lightboxIndex = Number.isInteger(index) && index >= 0 && index < lightboxGallery.length
+                ? index
+                : Math.max(0, lightboxGallery.indexOf(imageUrl));
+
+            renderLightboxImage();
             lightbox.classList.add('is-open');
             document.body.style.overflow = 'hidden';
         }
@@ -1747,30 +2189,460 @@
             if (lightboxImage) {
                 setTimeout(() => { lightboxImage.src = ''; }, 200);
             }
+            lightboxGallery = [];
+            lightboxIndex = 0;
+        }
+
+        function renderReportGalleryPage(gallery, offset, container) {
+            const pageSize = 8;
+            const total = gallery.length;
+            const pageOffset = total ? ((offset % total) + total) % total : 0;
+            const visibleImages = Array.from({ length: Math.min(pageSize, total) }, function (_, index) {
+                return gallery[(pageOffset + index) % total];
+            });
+
+            container.querySelectorAll('.img-thumbnail-grid').forEach(button => button.remove());
+            const navigation = container.querySelector('.report-images-navigation');
+            visibleImages.forEach(imageUrl => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'img-thumbnail-grid d-flex align-items-center justify-content-center overflow-hidden p-0 lightbox-trigger';
+                button.setAttribute('aria-label', 'Preview site image');
+                button.dataset.fullImage = imageUrl;
+                button.dataset.gallery = JSON.stringify(gallery);
+                button.style.cssText = 'background: #f9fafb; border: 2px solid #e5e7eb; width: 72px; height: 72px;';
+
+                const image = document.createElement('img');
+                image.src = imageUrl;
+                image.alt = 'Site image';
+                image.className = 'w-100 h-100 object-fit-cover';
+                button.appendChild(image);
+                container.insertBefore(button, navigation);
+            });
+            container.dataset.galleryOffset = String(pageOffset);
         }
 
         document.addEventListener('click', function(e) {
+            const galleryButton = e.target.closest('.report-gallery-nav');
+            if (galleryButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                const galleryContainer = galleryButton.closest('.report-images-gallery');
+                if (!galleryContainer) return;
+                let gallery = [];
+                try {
+                    gallery = JSON.parse(galleryContainer.dataset.gallery || '[]');
+                } catch (error) {
+                    return;
+                }
+                const currentOffset = Number(galleryContainer.dataset.galleryOffset || 0);
+                const pageCount = Math.ceil(gallery.length / 8);
+                const currentPage = Math.round(currentOffset / 8);
+                const pageStep = galleryButton.dataset.galleryDirection === 'next' ? 1 : -1;
+                const nextPage = (currentPage + pageStep + pageCount) % pageCount;
+                const nextOffset = nextPage * 8;
+                renderReportGalleryPage(gallery, nextOffset, galleryContainer);
+                return;
+            }
+
             const trigger = e.target.closest('.lightbox-trigger');
             if (trigger) {
                 const fullImage = trigger.dataset.fullImage || trigger.querySelector('img')?.src;
                 if (fullImage) {
-                    openLightbox(fullImage);
+                    let gallery = [fullImage];
+                    try {
+                        const galleryData = trigger.dataset.gallery || '[]';
+                        const parsed = JSON.parse(galleryData);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            gallery = parsed.filter(Boolean);
+                        }
+                    } catch (err) {
+                        gallery = [fullImage];
+                    }
+                    const idx = gallery.indexOf(fullImage);
+                    openLightbox(fullImage, gallery, idx >= 0 ? idx : 0);
                 }
             }
         });
 
         lightboxCloseBtn?.addEventListener('click', closeLightbox);
+        lightboxPrevBtn?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            lightboxShowPrev();
+        });
+        lightboxNextBtn?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            lightboxShowNext();
+        });
         lightbox?.addEventListener('click', function(e) {
             if (e.target === lightbox) {
                 closeLightbox();
             }
         });
 
+        lightbox?.addEventListener('touchstart', function (event) {
+            lightboxTouchStartX = event.changedTouches[0]?.screenX || 0;
+        }, { passive: true });
+
+        lightbox?.addEventListener('touchend', function (event) {
+            const touchEndX = event.changedTouches[0]?.screenX || 0;
+            const distance = touchEndX - lightboxTouchStartX;
+            if (Math.abs(distance) < 40) return;
+            if (distance < 0) {
+                lightboxShowNext();
+            } else {
+                lightboxShowPrev();
+            }
+        }, { passive: true });
+
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && lightbox?.classList.contains('is-open')) {
+            if (!lightbox?.classList.contains('is-open')) return;
+            if (e.key === 'Escape') {
                 closeLightbox();
+            } else if (e.key === 'ArrowRight') {
+                lightboxShowNext();
+            } else if (e.key === 'ArrowLeft') {
+                lightboxShowPrev();
             }
         });
+
+        // ===== SUPERVISOR EDIT PENDING REPORT =====
+        function initializeSupervisorEdit(reportId) {
+            const modal = document.getElementById('reportDetailsModal-' + reportId);
+            if (!modal) return;
+
+            const status = modal.dataset.reportStatus || 'pending';
+            const editBtn = modal.querySelector('.js-edit-pending-report');
+            const exportBtn = modal.querySelector('.js-export-pending-report');
+            const cancelBtn = modal.querySelector('.js-cancel-edit-pending');
+            const saveBtn = modal.querySelector('.js-save-edit-pending');
+            const viewSection = modal.querySelector('.js-report-view-section');
+            const editForm = modal.querySelector('.js-edit-form');
+
+            if (status === 'pending' || status === 'rejected') {
+                if (editBtn) editBtn.style.display = 'inline-flex';
+                if (exportBtn) exportBtn.style.display = 'inline-flex';
+            } else {
+                if (editBtn) editBtn.style.display = 'none';
+                if (exportBtn) exportBtn.style.display = status === 'approved' ? 'inline-flex' : 'none';
+            }
+
+            exportBtn?.addEventListener('click', function () {
+                window.open(`/supervisor/api/reports/${reportId}/download-pdf`, '_blank');
+            });
+
+            editBtn?.addEventListener('click', function () {
+                Swal.fire({
+                    title: 'Edit Report?',
+                    text: 'You are about to edit this report. Continue?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, edit',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#166534',
+                    cancelButtonColor: '#6c757d',
+                    reverseButtons: true,
+                }).then(result => {
+                    if (!result.isConfirmed) return;
+
+                    if (viewSection) viewSection.style.display = 'none';
+                    if (editForm) editForm.style.display = 'block';
+                    if (editBtn) editBtn.style.display = 'none';
+                    if (exportBtn) exportBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+                    if (saveBtn) saveBtn.style.display = 'inline-flex';
+
+                    const selectedProjectId = editProjectSelect?.value;
+                    if (selectedProjectId) {
+                        loadEditProjectPhases(selectedProjectId);
+                    }
+                });
+            });
+
+            cancelBtn?.addEventListener('click', function () {
+                if (viewSection) viewSection.style.display = 'block';
+                if (editForm) editForm.style.display = 'none';
+                if (editBtn) editBtn.style.display = 'inline-flex';
+                if (exportBtn) exportBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'none';
+            });
+
+            const editProjectSelect = modal.querySelector('#editProjectId-' + reportId);
+            const editPhaseSelect = modal.querySelector('#editPhaseId-' + reportId);
+            const originalPhaseId = editPhaseSelect?.value || '';
+
+            function loadEditProjectPhases(projectId) {
+                if (!editPhaseSelect) return;
+                editPhaseSelect.innerHTML = loadingPlaceholder;
+                editPhaseSelect.disabled = true;
+
+                const endpoint = phasesApiRouteTemplate.replace('PROJECT_ID', encodeURIComponent(projectId));
+
+                fetch(endpoint + '?editable=1', {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Phase load failed');
+                    return response.json();
+                })
+                .then(data => {
+                    editPhaseSelect.innerHTML = '';
+                    if (data.success && Array.isArray(data.phases) && data.phases.length > 0) {
+                        data.phases.forEach(phase => {
+                            const option = document.createElement('option');
+                            option.value = phase.phase_id;
+                            option.textContent = phase.phase_name;
+                            option.selected = String(phase.phase_id) === originalPhaseId;
+                            editPhaseSelect.appendChild(option);
+                        });
+                        editPhaseSelect.disabled = false;
+                    } else {
+                        editPhaseSelect.innerHTML = '<option value="" disabled>No phases available.</option>';
+                    }
+                })
+                .catch(() => {
+                    editPhaseSelect.innerHTML = '<option value="" disabled>Error loading phases.</option>';
+                });
+            }
+
+            editProjectSelect?.addEventListener('change', function () {
+                if (this.value) {
+                    loadEditProjectPhases(this.value);
+                }
+            });
+
+            const editImageInput = modal.querySelector('#editReportImages-' + reportId);
+            const editPreviewContainer = modal.querySelector('#editSelectedImagesContainer-' + reportId);
+            const addEditImagesButton = modal.querySelector('.js-add-edit-images');
+            let editSelectedFiles = [];
+
+            function updateEditImageInputFiles() {
+                if (!editImageInput || typeof DataTransfer === 'undefined') return;
+                const dataTransfer = new DataTransfer();
+                editSelectedFiles.forEach(file => dataTransfer.items.add(file));
+                editImageInput.files = dataTransfer.files;
+            }
+
+            function renderEditImagePreviews(files) {
+                if (!editPreviewContainer) return;
+                editPreviewContainer.innerHTML = '';
+                Array.from(files || []).forEach((file, index) => {
+                    if (!file.type.startsWith('image/')) return;
+                    const preview = document.createElement('div');
+                    preview.className = 'cms-file-preview-thumb';
+                    const image = document.createElement('img');
+                    image.src = URL.createObjectURL(file);
+                    image.alt = file.name;
+                    image.onload = () => URL.revokeObjectURL(image.src);
+                    const label = document.createElement('div');
+                    label.className = 'preview-label';
+                    label.textContent = file.name;
+
+                    const removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.className = 'remove-image-btn';
+                    removeButton.innerHTML = '&times;';
+                    removeButton.title = 'Remove image';
+                    removeButton.setAttribute('aria-label', 'Remove ' + file.name);
+                    removeButton.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        editSelectedFiles.splice(index, 1);
+                        updateEditImageInputFiles();
+                        renderEditImagePreviews(editSelectedFiles);
+                    });
+
+                    preview.append(image, label, removeButton);
+                    editPreviewContainer.appendChild(preview);
+                });
+            }
+
+            addEditImagesButton?.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                editImageInput?.click();
+            });
+            editImageInput?.addEventListener('change', function () {
+                const availableSlots = 20 - editSelectedFiles.length;
+                const incomingFiles = validateImageFiles(this.files, Math.max(0, availableSlots));
+                incomingFiles.forEach(file => {
+                    const exists = editSelectedFiles.some(existing =>
+                        existing.name === file.name &&
+                        existing.size === file.size &&
+                        existing.lastModified === file.lastModified
+                    );
+                    if (!exists) editSelectedFiles.push(file);
+                });
+                updateEditImageInputFiles();
+                renderEditImagePreviews(editSelectedFiles);
+            });
+
+            function renderCurrentImages(paths, urls) {
+                const container = modal.querySelector('#currentImagesContainer-' + reportId);
+                if (!container) return;
+                container.innerHTML = '';
+                (paths || []).forEach((path, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'current-image-item';
+                    const image = document.createElement('img');
+                    image.src = urls[index] || ('/storage/' + String(path).replace(/^\//, ''));
+                    image.alt = 'Current site image';
+                    image.className = 'object-fit-cover border rounded';
+                    const check = document.createElement('input');
+                    check.type = 'checkbox';
+                    check.className = 'form-check-input js-remove-image-checkbox';
+                    check.value = path;
+                    check.style.width = '12px';
+                    check.style.height = '12px';
+                    const label = document.createElement('label');
+                    label.className = 'form-check-label small';
+                    label.style.fontSize = '0.65rem';
+                    label.textContent = 'Remove';
+                    const checkWrap = document.createElement('div');
+                    checkWrap.className = 'form-check mt-1';
+                    checkWrap.append(check, label);
+                    item.append(image, checkWrap);
+                    container.appendChild(item);
+                });
+            }
+
+            saveBtn?.addEventListener('click', function () {
+                const reportText = modal.querySelector('#editReportText-' + reportId)?.value?.trim();
+                const reportDate = modal.querySelector('#editReportDate-' + reportId)?.value;
+                const projectId = modal.querySelector('#editProjectId-' + reportId)?.value;
+                const phaseId = modal.querySelector('#editPhaseId-' + reportId)?.value;
+
+                if (!reportText) {
+                    Swal.fire({ title: 'Validation Error', text: 'Report text is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!reportDate) {
+                    Swal.fire({ title: 'Validation Error', text: 'Report date is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                const selectedDate = new Date(reportDate);
+                if (Number.isNaN(selectedDate.getTime()) || selectedDate > new Date()) {
+                    Swal.fire({ title: 'Invalid Report Date', text: 'Report date cannot be in the future.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!projectId) {
+                    Swal.fire({ title: 'Validation Error', text: 'Project is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+                if (!phaseId) {
+                    Swal.fire({ title: 'Validation Error', text: 'Phase is required.', icon: 'warning', confirmButtonColor: '#c92a2a' });
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('project_id', projectId);
+                formData.append('phase_id', phaseId);
+                formData.append('report_date', reportDate);
+                formData.append('report_text', reportText);
+
+                editSelectedFiles.forEach(file => formData.append('site_images[]', file));
+
+                const removeImages = modal.querySelectorAll('.js-remove-image-checkbox:checked');
+                removeImages.forEach(cb => formData.append('remove_site_images[]', cb.value));
+
+                Swal.fire({
+                    title: 'Saving...',
+                    text: 'Please wait while your changes are saved.',
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                });
+
+                fetch(`/supervisor/reports/${reportId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || document.querySelector('meta[name=csrf-token]')?.content,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                })
+                .then(async response => {
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Failed to update report.');
+                    }
+                    return payload;
+                })
+                .then(payload => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Report Updated',
+                        text: payload.message || 'Report updated successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#166534',
+                    }).then(() => {
+                        window.location.hash = 'reportDetailsModal-' + reportId;
+                        window.location.reload();
+                    });
+
+                    if (payload.report) {
+                        const staticText = modal.querySelector('#staticReportText-' + reportId);
+                        if (staticText) staticText.textContent = payload.report.report_text;
+                        renderCurrentImages(payload.report.site_image_paths || [], payload.report.site_images || []);
+                        modal.querySelector('.js-detail-project').textContent = editProjectSelect.options[editProjectSelect.selectedIndex]?.textContent || '';
+                        modal.querySelector('.js-detail-phase').textContent = editPhaseSelect.options[editPhaseSelect.selectedIndex]?.textContent || '';
+                        modal.querySelector('.js-detail-date').textContent = payload.report.report_date;
+                    }
+
+                    if (viewSection) viewSection.style.display = 'block';
+                    if (editForm) editForm.style.display = 'none';
+                    if (editBtn) editBtn.style.display = 'inline-flex';
+                    if (exportBtn) exportBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
+                    if (saveBtn) saveBtn.style.display = 'none';
+                })
+                .catch(error => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Update Failed',
+                        text: error.message || 'Unable to update report. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#c92a2a',
+                    });
+                });
+            });
+        }
+
+        document.querySelectorAll('.report-details-modal').forEach(modal => {
+            const reportId = modal.id.replace('reportDetailsModal-', '');
+            initializeSupervisorEdit(reportId);
+        });
+
+        document.querySelectorAll('.report-details-modal .lightbox-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const fullImage = this.dataset.fullImage || this.querySelector('img')?.src;
+                if (!fullImage) return;
+
+                let gallery = [fullImage];
+                try {
+                    const galleryData = this.dataset.gallery || '[]';
+                    const parsed = JSON.parse(galleryData);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        gallery = parsed.filter(Boolean);
+                    }
+                } catch (err) {
+                    gallery = [fullImage];
+                }
+                const idx = gallery.indexOf(fullImage);
+                openLightbox(fullImage, gallery, idx >= 0 ? idx : 0);
+            });
+        });
+
+        const reportModalHash = window.location.hash.replace(/^#/, '');
+        if (reportModalHash.startsWith('reportDetailsModal-')) {
+            const reportModalToRestore = document.getElementById(reportModalHash);
+            if (reportModalToRestore && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(reportModalToRestore).show();
+                history.replaceState(null, document.title, window.location.pathname + window.location.search);
+            }
+        }
     });
 </script>
 @endpush

@@ -88,6 +88,9 @@ if (!document.getElementById('gantt-compact-styles')) {
             bottom: 0 !important;
             border-radius: 10px !important;
             box-sizing: border-box !important;
+            width: 0% !important;
+            max-width: 100% !important;
+            transition: width 180ms ease !important;
         }
         .gantt_task_progress::after {
             content: '' !important;
@@ -392,19 +395,26 @@ function refreshGanttView() {
 }
 
 function mapTasks(tasks) {
-    return (tasks || []).map((task, index) => ({
-        id: String(task.id ?? task.phase_id ?? `${task.project_id ?? 'project'}-${index}`),
-        text: task.text || task.name || 'Milestone',
-        start_date: task.start_date || task.start || '',
-        end_date: task.end_date || task.end || '',
-        progress: Number(task.progress) || 0,
-        custom_class: task.custom_class || task.status || 'upcoming',
-        type: task.type || (task.end_date || task.end ? 'task' : 'milestone'),
-        parent: task.parent ? String(task.parent) : 0,
-        open: true,
-        color: task.color || statusPalette[task.custom_class || task.status] || statusPalette.upcoming,
-        milestones: Array.isArray(task.milestones) ? task.milestones : []
-    })).filter(task => task.start_date);
+    return (tasks || []).map((task, index) => {
+        const rawProgress = Number(task.progress ?? 0);
+        const normalizedProgress = Number.isFinite(rawProgress)
+            ? (rawProgress <= 1 ? rawProgress * 100 : rawProgress)
+            : 0;
+
+        return {
+            id: String(task.id ?? task.phase_id ?? `${task.project_id ?? 'project'}-${index}`),
+            text: task.text || task.name || 'Milestone',
+            start_date: task.start_date || task.start || '',
+            end_date: task.end_date || task.end || '',
+            progress: Math.min(100, Math.max(0, normalizedProgress)) / 100,
+            custom_class: task.custom_class || task.status || 'upcoming',
+            type: task.type || (task.end_date || task.end ? 'task' : 'milestone'),
+            parent: task.parent ? String(task.parent) : 0,
+            open: true,
+            color: task.color || statusPalette[task.custom_class || task.status] || statusPalette.upcoming,
+            milestones: Array.isArray(task.milestones) ? task.milestones : []
+        };
+    }).filter((task) => task.start_date);
 }
 
 function adjustColor(color, amount) {
@@ -502,7 +512,8 @@ function applyTaskStyling() {
             }
             if (!task) return;
             const color = task.color || statusPalette[task.custom_class] || statusPalette.upcoming;
-            const progressPercent = Math.min(100, Math.max(0, Number(task.progress || 0) * 100));
+            const rawProgress = Number(task.progress ?? 0);
+            const progressPercent = Math.min(100, Math.max(0, rawProgress <= 1 ? rawProgress * 100 : rawProgress));
             const accentColor = adjustColor(color, -10);
             // Track (the full bar) uses a muted/lightened tint of the status color.
             const lineGradient = `linear-gradient(135deg, ${adjustColor(color, 70)} 0%, ${adjustColor(color, 55)} 100%)`;
@@ -534,6 +545,9 @@ function applyTaskStyling() {
                 progressEl.style.backgroundImage = progressGradient;
                 progressEl.style.borderColor = color;
                 progressEl.style.borderRadius = '10px';
+                progressEl.style.width = `${progressPercent}%`;
+                progressEl.style.maxWidth = '100%';
+                progressEl.setAttribute('data-progress', `${progressPercent}`);
             }
 
             let overlay = taskLine.querySelector('.gantt_progress_overlay');

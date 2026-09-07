@@ -11,8 +11,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
+use App\Services\PdfImageService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -113,10 +116,14 @@ class ReportController extends Controller
                 'approval_remarks' => 'nullable|string|max:1000',
                 'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
                 'admin_report_text' => 'nullable|string|max:10000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'remove_site_images' => 'nullable|array',
+                'remove_site_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
             ]);
         } catch (ValidationException $e) {
@@ -143,14 +150,47 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $includedOriginalImages = array_values(array_intersect(
+                (array) $request->input('include_original_images', []),
+                (array) ($report->site_images ?? [])
+            ));
+            $normalizeImagePath = static function ($image): string {
+                $image = (string) $image;
+                return str_contains($image, '/storage/')
+                    ? Str::after($image, '/storage/')
+                    : ltrim($image, '/');
+            };
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map(function ($image) {
+                    $image = (string) $image;
+                    return str_contains($image, '/storage/')
+                        ? Str::after($image, '/storage/')
+                        : ltrim($image, '/');
+                })
+                ->filter()
+                ->values()
+                ->all();
+            $removedSiteImages = collect($request->input('remove_site_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            if (!empty($removedSiteImages)) {
+                $remainingSiteImages = array_values(array_filter(
+                    (array) ($report->site_images ?? []),
+                    fn ($img) => !in_array($normalizeImagePath($img), $removedSiteImages, true)
+                ));
+            } else {
+                $remainingSiteImages = $report->site_images;
+            }
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
             if (!empty($removedImages)) {
                 $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
                     return !in_array($img, $removedImages);
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $updateData = [
                 'approval_status' => 'approved',
@@ -163,6 +203,7 @@ class ReportController extends Controller
                 'is_published_to_client' => $publishToClient,
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
                 'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'site_images' => !empty($remainingSiteImages) ? $remainingSiteImages : null,
                 'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
                 'published_at' => $publishToClient ? now() : null,
             ];
@@ -361,7 +402,7 @@ class ReportController extends Controller
             'report_date' => 'required|date',
             'report_text' => 'required|string|max:5000',
             'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
-            'site_images' => 'nullable|array|max:5',
+            'site_images' => 'nullable|array|max:20',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
@@ -369,10 +410,12 @@ class ReportController extends Controller
         $phase = ConstructionPhase::findOrFail($validated['phase_id']);
 
         if ($phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'This construction phase is already completed and cannot accept new reports.'], 422);
+            }
             return back()->withErrors(['phase_id' => 'This construction phase is already completed and cannot accept new reports.'])->withInput();
         }
 
-        // Verify supervisor is assigned to this project
         $this->authorizeSupervisor($project);
 
         try {
@@ -409,54 +452,10 @@ class ReportController extends Controller
                 "Report submitted for phase '{$phase->phase_name}' in project '{$project->project_name}'"
             );
 
-            // Notify admin(s) so the report shows up in the admin notifications panel
-            try {
-                NotificationService::notifyAdmins([
-                    'type' => 'report',
-                    'title' => 'New Report Submitted',
-                    'message' => "A new report has been submitted for project '{$project->project_name}' by {$report->submittedBy->name}",
-                    'data' => [
-                        'module' => 'admin.reports',
-                        'report_id' => $report->report_id,
-                        'project_id' => $project->project_id,
-                        'project_name' => $project->project_name,
-                        'recipient' => 'Admin',
-                    ],
-                    'related_id' => $report->report_id,
-                    'related_type' => 'report',
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to notify admin on report submission: ' . $e->getMessage());
-            }
-
-            // Notify the submitting supervisor
-            NotificationService::notifySupervisor(auth('web')->user()->user_id, [
-                'type' => 'report',
-                'title' => 'Report Submitted',
-                'message' => 'Accomplishment Report submitted successfully.',
-                'data' => ['module' => 'supervisor.reports', 'report_id' => $report->report_id],
-                'related_id' => $report->report_id,
-                'related_type' => 'report',
-            ]);
-
-            // Notify the client associated with the project
-            try {
-                $clientId = optional($project)->client_id;
-                if ($clientId) {
-                    NotificationService::notifyClient($clientId, [
-                        'type' => 'report',
-                        'title' => 'New Project Report',
-                        'message' => "A new accomplishment report has been submitted for project '{$project->project_name}'.",
-                        'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $project->project_id],
-                        'related_id' => $report->report_id,
-                        'related_type' => 'report',
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::error('Failed to notify client on report submission: ' . $e->getMessage());
-            }
-
             DB::commit();
+
+            $this->notifyOnReportSubmission($report, $project);
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'report_id' => $report->report_id]);
             }
@@ -465,7 +464,66 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Report submission failed: ' . $e->getMessage());
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+
             return back()->withErrors('Failed to submit report');
+        }
+    }
+
+    /**
+     * Send notifications after report is successfully saved
+     */
+    private function notifyOnReportSubmission(Report $report, Project $project): void
+    {
+        try {
+            NotificationService::notifyAdmins([
+                'type' => 'report',
+                'title' => 'New Report Submitted',
+                'message' => "A new report has been submitted for project '{$project->project_name}' by {$report->submittedBy->name}",
+                'data' => [
+                    'module' => 'admin.reports',
+                    'report_id' => $report->report_id,
+                    'project_id' => $project->project_id,
+                    'project_name' => $project->project_name,
+                    'recipient' => 'Admin',
+                ],
+                'related_id' => $report->report_id,
+                'related_type' => 'report',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify admin on report submission: ' . $e->getMessage());
+        }
+
+        try {
+            NotificationService::notifySupervisor($report->submitted_by, [
+                'type' => 'report',
+                'title' => 'Report Submitted',
+                'message' => 'Accomplishment Report submitted successfully.',
+                'data' => ['module' => 'supervisor.reports', 'report_id' => $report->report_id],
+                'related_id' => $report->report_id,
+                'related_type' => 'report',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify supervisor on report submission: ' . $e->getMessage());
+        }
+
+        try {
+            $clientId = optional($project)->client_id;
+            if ($clientId) {
+                NotificationService::notifyClient($clientId, [
+                    'type' => 'report',
+                    'title' => 'New Project Report',
+                    'message' => "A new accomplishment report has been submitted for project '{$project->project_name}'.",
+                    'data' => ['module' => 'client.reports', 'report_id' => $report->report_id, 'project_id' => $project->project_id],
+                    'related_id' => $report->report_id,
+                    'related_type' => 'report',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to notify client on report submission: ' . $e->getMessage());
         }
     }
 
@@ -484,10 +542,14 @@ class ReportController extends Controller
         try {
             $validated = $request->validate([
                 'admin_report_text' => 'nullable|string|max:10000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'remove_site_images' => 'nullable|array',
+                'remove_site_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
                 'admin_explanation' => 'nullable|string|max:2000',
                 'remove_existing_admin_images' => 'nullable|boolean',
             ]);
@@ -511,7 +573,21 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $includedOriginalImages = array_values(array_intersect(
+                (array) $request->input('include_original_images', []),
+                (array) ($report->site_images ?? [])
+            ));
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map(function ($image) {
+                    $image = (string) $image;
+                    return str_contains($image, '/storage/')
+                        ? Str::after($image, '/storage/')
+                        : ltrim($image, '/');
+                })
+                ->filter()
+                ->values()
+                ->all();
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
 
             if ($request->boolean('remove_existing_admin_images')) {
                 $existingAdminImages = [];
@@ -521,7 +597,7 @@ class ReportController extends Controller
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $report->update([
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
@@ -571,10 +647,14 @@ class ReportController extends Controller
             $validated = $request->validate([
                 'admin_report_text' => 'nullable|string|max:10000',
                 'admin_explanation' => 'nullable|string|max:2000',
-                'admin_site_images' => 'nullable|array|max:10',
+                'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
+                'include_original_images' => 'nullable|array|max:20',
+                'include_original_images.*' => 'string',
+                'client_image_paths' => 'nullable|array|max:20',
+                'client_image_paths.*' => 'string',
                 'is_published_to_client' => 'nullable|boolean',
                 'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             ]);
@@ -597,18 +677,57 @@ class ReportController extends Controller
             }
 
             $existingAdminImages = $report->admin_site_images ?? [];
-            $removedImages = $request->input('remove_admin_images', []);
+            $allowedClientImages = array_values(array_unique(array_merge(
+                (array) ($report->admin_site_images ?? []),
+                (array) ($report->site_images ?? [])
+            )));
+            $normalizeImagePath = static function ($image): string {
+                $image = (string) $image;
+                return str_contains($image, '/storage/')
+                    ? Str::after($image, '/storage/')
+                    : ltrim($image, '/');
+            };
+            $removedSiteImages = collect($request->input('remove_site_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            $remainingSiteImages = !empty($removedSiteImages)
+                ? array_values(array_filter(
+                    (array) ($report->site_images ?? []),
+                    fn ($img) => !in_array($normalizeImagePath($img), $removedSiteImages, true)
+                ))
+                : (array) ($report->site_images ?? []);
+            $existingAdminImages = array_values(array_map($normalizeImagePath, $existingAdminImages));
+            $allowedClientImages = array_values(array_map($normalizeImagePath, $allowedClientImages));
+            $includedOriginalImages = array_values(array_intersect(
+                array_map($normalizeImagePath, (array) $request->input('include_original_images', [])),
+                array_map($normalizeImagePath, (array) ($report->site_images ?? []))
+            ));
+            if ($request->has('client_image_paths')) {
+                $existingAdminImages = array_values(array_intersect(
+                    array_map($normalizeImagePath, (array) $request->input('client_image_paths', [])),
+                    $allowedClientImages
+                ));
+            }
+            $removedImages = collect($request->input('remove_admin_images', []))
+                ->map($normalizeImagePath)
+                ->filter()
+                ->values()
+                ->all();
+            $includedOriginalImages = array_values(array_diff($includedOriginalImages, $removedImages));
             if (!empty($removedImages)) {
                 $existingAdminImages = array_values(array_filter($existingAdminImages, function ($img) use ($removedImages) {
                     return !in_array($img, $removedImages);
                 }));
             }
 
-            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $adminImages)));
+            $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
             $updateData = [
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
                 'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
+                'site_images' => !empty($remainingSiteImages) ? $remainingSiteImages : null,
                 'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
             ];
 
@@ -667,7 +786,9 @@ class ReportController extends Controller
         // Get all projects assigned to supervisor
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
-        })->orderBy('project_name')->get();
+        })->with(['phases' => function ($query) {
+            $query->orderBy('phase_order', 'asc');
+        }])->orderBy('project_name')->get();
 
         if ($assignedProjects->isEmpty()) {
             $emptyReports = new LengthAwarePaginator([], 0, 10);
@@ -754,11 +875,32 @@ class ReportController extends Controller
             });
         }
 
+        // Apply sorting
+        $sort = $request->input('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':
+                $query->orderBy('report_date', 'asc')->orderBy('created_at', 'asc');
+                break;
+            case 'project_asc':
+                $query->orderBy(Project::select('project_name')->whereColumn('projects.project_id', 'accomplishment_reports.project_id'), 'asc')
+                      ->orderBy('report_date', 'desc');
+                break;
+            case 'project_desc':
+                $query->orderBy(Project::select('project_name')->whereColumn('projects.project_id', 'accomplishment_reports.project_id'), 'desc')
+                      ->orderBy('report_date', 'desc');
+                break;
+            case 'status_asc':
+                $query->orderBy('approval_status', 'asc')->orderBy('report_date', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('report_date', 'desc')->orderBy('created_at', 'desc');
+                break;
+        }
+
         // Get paginated reports
-        $reports = $query->orderBy('report_date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->appends($request->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']));
+        $reports = $query->paginate(10)
+            ->appends($request->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search', 'sort']));
 
         // Calculate statistics for selected project
         $statsQuery = Report::whereHas('project', function ($q) use ($selectedProject, $user) {
@@ -791,7 +933,7 @@ class ReportController extends Controller
     /**
      * Get phases for a project (AJAX)
      */
-    public function getProjectPhases($projectId)
+    public function getProjectPhases(Request $request, $projectId)
     {
         $user = auth('web')->user();
 
@@ -800,18 +942,26 @@ class ReportController extends Controller
                 $q->where('supervisor_id', $user->user_id);
             })->firstOrFail();
 
-        $phases = ConstructionPhase::query()->where('project_id', $projectId)
-            ->where(function ($q) {
-                $q->where('status', '!=', 'completed')
-                    ->where(function ($q2) {
-                        $q2->whereNull('completion_percentage')
-                            ->orWhere('completion_percentage', '<', 100);
-                    });
-            })
+        $phasesQuery = ConstructionPhase::query()->where('project_id', $projectId);
+
+        if ($request->boolean('editable')) {
+            $phasesQuery->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'completed');
+            })->where(function ($query) {
+                $query->whereNull('completion_percentage')
+                    ->orWhere('completion_percentage', '<', 100);
+            });
+        }
+
+        $phases = $phasesQuery
             ->orderBy('phase_order', 'asc')
             ->get(['phase_id', 'phase_name', 'phase_order', 'status', 'completion_percentage']);
 
-        return response()->json(['success' => true, 'phases' => $phases]);
+        return response()->json([
+            'success' => true,
+            'project_id' => (int) $project->project_id,
+            'phases' => $phases,
+        ]);
     }
 
     /**
@@ -846,10 +996,12 @@ class ReportController extends Controller
                 'approval_remarks' => $report->approval_remarks ?? 'No remarks',
                 'report_text' => $report->report_text,
                 'admin_report_text' => $report->admin_report_text,
+                'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_explanation' => $report->admin_explanation ?? '',
+                'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
@@ -868,8 +1020,9 @@ class ReportController extends Controller
     public function downloadReportPdf($reportId)
     {
         $user = auth('web')->user();
+        session_write_close();
 
-        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy'])
+        $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy', 'phase.milestones'])
             ->where('report_id', $reportId)
             ->whereHas('project', function ($q) use ($user) {
                 $q->whereHas('supervisors', function ($sq) use ($user) {
@@ -877,25 +1030,23 @@ class ReportController extends Controller
                 });
             })->firstOrFail();
 
-        $html = view('supervisor.reports.pdf', compact('report'))->render();
-
         try {
-            if (class_exists('\Mpdf\Mpdf')) {
-                $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10, 'margin_top' => 10, 'margin_bottom' => 10]);
-                $mpdf->WriteHTML($html);
-                $fileName = 'report_' . $report->report_id . '_' . date('Y-m-d') . '.pdf';
-                return $mpdf->Output($fileName, 'D');
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
             }
-        } catch (\Exception $e) {
-            Log::error('PDF generation failed: ' . $e->getMessage());
-        }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView('admin.reports.pdf', compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
 
-        // Fallback: return HTML as a downloadable attachment when mPDF is unavailable.
-        $fileName = 'report_' . $report->report_id . '_' . date('Y-m-d') . '.html';
-        return response($html, 200, [
-            'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-        ]);
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Supervisor PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 
     /**
@@ -935,8 +1086,8 @@ class ReportController extends Controller
     {
         $user = auth('web')->user();
 
-        // Engineer can view all reports
-        if ($user->role === 'engineer') {
+        // Admin-level roles can view all reports
+        if (in_array($user->role, ['engineer', 'admin', 'administrator'], true)) {
             return true;
         }
 
@@ -975,5 +1126,130 @@ class ReportController extends Controller
             'description' => $description,
             'ip_address' => request()->ip(),
         ]);
+    }
+
+    /**
+     * Supervisor edits their own pending or rejected report
+     */
+    public function updateSupervisorReport(Request $request, $reportId)
+    {
+        $user = auth('web')->user();
+        $report = Report::with(['project'])->where('report_id', $reportId)->firstOrFail();
+
+        if ($report->submitted_by !== $user->user_id) {
+            abort(403, 'You are not authorized to update this report.');
+        }
+
+        if (! in_array($report->approval_status, ['pending', 'rejected'], true)) {
+            return response()->json(['success' => false, 'message' => 'Only pending or rejected reports can be edited.'], 422);
+        }
+
+        $validated = $request->validate([
+            'project_id' => 'required|exists:projects,project_id',
+            'phase_id' => 'required|exists:construction_phases,phase_id',
+            'report_date' => ['required', 'date_format:Y-m-d\\TH:i', 'before_or_equal:now'],
+            'report_text' => 'required|string|max:5000',
+            'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
+            'site_images' => 'nullable|array|max:20',
+            'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'remove_site_images' => 'nullable|array',
+            'remove_site_images.*' => 'string',
+        ]);
+
+        $project = Project::query()
+            ->where('project_id', $validated['project_id'])
+            ->whereHas('supervisors', function ($query) use ($user) {
+                $query->where('supervisor_id', $user->user_id);
+            })
+            ->firstOrFail();
+
+        $phase = ConstructionPhase::query()
+            ->where('phase_id', $validated['phase_id'])
+            ->where('project_id', $project->project_id)
+            ->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'completed');
+            })
+            ->where(function ($query) {
+                $query->whereNull('completion_percentage')
+                    ->orWhere('completion_percentage', '<', 100);
+            })
+            ->first();
+
+        if (!$phase) {
+            return response()->json(['success' => false, 'message' => 'Select an unfinished phase belonging to the selected project.'], 422);
+        }
+
+        if (!$project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+            abort(403, 'You are not assigned to this project');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $images = [];
+            if ($request->hasFile('site_images')) {
+                foreach ($request->file('site_images') as $image) {
+                    $path = $image->store('reports', 'public');
+                    $images[] = $path;
+                }
+            }
+
+            $existingImages = $report->site_images ?? [];
+            $removedImages = $request->input('remove_site_images', []);
+            if (!empty($removedImages)) {
+                $existingImages = array_values(array_filter($existingImages, function ($img) use ($removedImages) {
+                    return !in_array($img, $removedImages);
+                }));
+            }
+
+            $finalImages = array_values(array_unique(array_merge($existingImages, $images)));
+
+            $updateData = [
+                'project_id' => $validated['project_id'],
+                'phase_id' => $validated['phase_id'],
+                'report_date' => $validated['report_date'],
+                'report_text' => $validated['report_text'],
+                'site_images' => !empty($finalImages) ? $finalImages : null,
+                'approval_status' => 'pending',
+                'approval_remarks' => null,
+                'is_published_to_client' => false,
+                'published_at' => null,
+                'accomplishment_percentage' => $request->filled('accomplishment_percentage')
+                    ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
+                    : $report->accomplishment_percentage,
+            ];
+
+            $report->update($updateData);
+
+            $this->logAction('Report Updated', "Report #{$report->report_id} updated by supervisor");
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Report updated successfully.',
+                    'report' => [
+                        'report_id' => $report->report_id,
+                        'project_id' => $report->project_id,
+                        'phase_id' => $report->phase_id,
+                        'report_date' => $report->report_date->format('M d, Y h:i A'),
+                        'report_text' => $report->report_text,
+                        'site_image_paths' => $finalImages,
+                        'site_images' => array_map(fn ($img) => asset('storage/' . ltrim($img, '/')), $finalImages),
+                        'accomplishment_percentage' => $report->accomplishment_percentage,
+                    ]
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Report updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Supervisor report update failed: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update report.'], 500);
+            }
+            return back()->withErrors('Failed to update report');
+        }
     }
 }

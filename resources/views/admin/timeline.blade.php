@@ -111,11 +111,20 @@
         width: 100%;
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 0.7rem 0.9rem;
+        padding: 0.5rem 0.7rem;
         background: #fff;
         color: var(--primary-text);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         outline: none;
+    }
+
+    .toolbar-select#projectSelector,
+    .toolbar-select#phaseFilterSelector,
+    .toolbar-select#statusFilterSelector {
+        padding: 0.4rem 2rem 0.4rem 0.7rem;
+        font-size: 0.82rem;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .toolbar-input:focus,
@@ -229,7 +238,7 @@
        Without this override, success/error alerts render but are invisible under the
        modal backdrop, making it look like nothing happened after Save. */
     .swal2-container {
-        z-index: 4000 !important;
+        z-index: 100000 !important;
     }
 
     .milestone-modal-card {
@@ -242,6 +251,19 @@
         margin: auto;
         transform: translateY(0);
         animation: milestone-modal-in 220ms ease-out;
+    }
+
+    .milestone-modal-readonly {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 0.88rem;
+        font-weight: 600;
     }
 
     @keyframes milestone-modal-in {
@@ -323,6 +345,32 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
+    }
+
+    .milestone-schedule-status-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .milestone-schedule-status-row.is-create {
+        grid-template-columns: 1fr;
+    }
+
+    .milestone-schedule-box,
+    .milestone-status-box {
+        min-width: 0;
+        margin-bottom: 0;
+    }
+
+    .milestone-schedule-fields {
+        display: grid;
+        gap: 0.85rem;
+    }
+
+    .milestone-schedule-status-row.is-create .milestone-schedule-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .milestone-modal-field {
@@ -505,6 +553,15 @@
         .milestone-modal-status-group {
             grid-template-columns: 1fr;
         }
+
+        .milestone-schedule-status-row,
+        .milestone-schedule-status-row.is-create {
+            grid-template-columns: 1fr;
+        }
+
+        .milestone-schedule-status-row.is-create .milestone-schedule-fields {
+            grid-template-columns: 1fr;
+        }
     }
 
     .timeline-card-header {
@@ -636,7 +693,7 @@
         border-radius: 18px;
         overflow: hidden;
         background: linear-gradient(180deg, #fcfdfa 0%, #ffffff 100%);
-        min-height: 0;
+        min-height: 420px;
     }
 
     .gantt-scroll-shell {
@@ -964,7 +1021,28 @@
 
     #dhtmlxGantt {
         width: 100%;
-        min-height: 0;
+        height: 420px;
+        min-height: 420px;
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #dhtmlxGantt * {
+        font-family: inherit;
+    }
+
+    .gantt_scale_cell,
+    .gantt_scale_cell_date,
+    .gantt_grid_data,
+    .gantt_grid_head_cell,
+    .gantt_task_content,
+    .gantt_task_progress,
+    .gantt_task_time,
+    .gantt_task_scale .gantt_scale_cell {
+        font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }
+
+    .gantt-scroll-shell {
+        min-height: 420px;
     }
 
     .table-wrapper {
@@ -1114,7 +1192,7 @@
         .toolbar-actions { flex-direction: column; align-items: stretch; }
         .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { width: 100%; flex: 1 1 auto; }
         .timeline-card { padding: 1rem; }
-        .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; }
+        .gantt-scroll-shell { max-height: 60vh; border-radius: 12px; min-height: 320px; }
         .gantt-shell { border-radius: 14px; }
         .view-toggle-group { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .view-toggle-btn { padding: 0.55rem 0.4rem; font-size: 0.74rem; text-align: center; }
@@ -1123,6 +1201,14 @@
         .gantt-mode-actions .btn-ghost,
         .gantt-mode-actions .toolbar-select.compact-select { flex: 1 1 0; min-width: 0; }
         .toolbar-select.compact-select { max-width: none; }
+        #projectSelector,
+        #phaseFilterSelector,
+        #statusFilterSelector {
+            font-size: 12px !important;
+            padding: 0.35rem 0.6rem !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
         .table-wrapper { overflow-x: hidden; }
         .standard-data-table,
         .standard-data-table thead,
@@ -1407,14 +1493,29 @@
             overflow: hidden !important;
             border-radius: 999px !important;
             background: #edf3ee !important;
+            position: relative !important;
+            display: block !important;
         }
 
         #pg-timeline .mobile-gantt-fill {
             display: block !important;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: var(--bar-width, 0%) !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
             height: 100% !important;
             border-radius: 999px !important;
             background: #365233 !important;
+            transition: width 0.4s ease !important;
         }
+
+        #pg-timeline .mobile-gantt-fill.status-completed { background: #166534 !important; }
+        #pg-timeline .mobile-gantt-fill.status-in-progress { background: #1565C0 !important; }
+        #pg-timeline .mobile-gantt-fill.status-upcoming { background: #B7791F !important; }
+        #pg-timeline .mobile-gantt-fill.status-delayed { background: #C62828 !important; }
+        #pg-timeline .mobile-gantt-fill.status-pending { background: #6B7280 !important; }
 
         #pg-timeline .mobile-gantt-percent {
             min-width: 42px !important;
@@ -1528,6 +1629,29 @@
             color: #10271b !important;
             font-size: 16px !important;
             font-weight: 800 !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-track {
+            width: 100% !important;
+            height: 8px !important;
+            display: block !important;
+            background: #edf3ee !important;
+            border-radius: 999px !important;
+            overflow: hidden !important;
+            margin-top: 6px !important;
+            position: relative !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-fill {
+            display: block !important;
+            position: relative !important;
+            width: var(--bar-width, 0%) !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: 100% !important;
+            background: #365233 !important;
+            border-radius: 999px !important;
+            transition: width 0.4s ease !important;
         }
 
         #pg-timeline .timeline-mobile-detail.status,
@@ -1666,46 +1790,55 @@
                         <input id="milestoneName" name="milestone_name" type="text" placeholder="Enter milestone name" required>
                     </div>
                 </div>
+            </div>
 
-                <div id="milestonePhaseInfo" class="milestone-modal-field d-none" style="margin-top: 0.75rem;">
-                    <label class="text-muted small">Selected Phase Schedule</label>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-calendar3 me-1"></i>
-                            <span id="milestonePhaseStart">--</span>
-                        </div>
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-calendar-check me-1"></i>
-                            <span id="milestonePhaseEnd">--</span>
-                        </div>
-                        <div class="badge bg-light text-dark border">
-                            <i class="bi bi-flag me-1"></i>
-                            <span id="milestonePhaseStatus">--</span>
-                        </div>
+            <div id="milestonePhaseInfo" class="milestone-modal-section d-none">
+                <div class="milestone-modal-section-title">Selected Phase Schedule</div>
+                <p class="milestone-modal-section-copy">Use the selected phase schedule when setting milestone dates.</p>
+                <div class="milestone-modal-grid">
+                    <div class="milestone-modal-field">
+                        <label>Planned Start Date</label>
+                        <div id="milestonePhasePlannedStart" class="milestone-modal-readonly">Not set</div>
                     </div>
-                </div>
-
-                <div id="milestoneExistingSelectorWrap" class="milestone-modal-field d-none" style="margin-top: 1rem;">
-                    <label for="milestoneExistingSelector">Milestone to Edit</label>
-                    <select id="milestoneExistingSelector"></select>
+                    <div class="milestone-modal-field">
+                        <label>Planned End Date</label>
+                        <div id="milestonePhasePlannedEnd" class="milestone-modal-readonly">Not set</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="milestone-modal-section">
-                <div class="milestone-modal-section-title">Schedule</div>
-                <p class="milestone-modal-section-copy">Set the milestone dates.</p>
+            <div class="milestone-schedule-status-row is-create" id="milestoneScheduleStatusRow">
+                <div class="milestone-modal-section milestone-schedule-box">
+                    <div class="milestone-modal-section-title">Schedule</div>
+                    <p class="milestone-modal-section-copy">Set the milestone dates.</p>
 
-                <div class="milestone-modal-grid">
-                    <div class="milestone-modal-field">
-                        <label for="milestoneStartDate">Start Date <span class="milestone-modal-required">Required</span></label>
-                        <input id="milestoneStartDate" name="start_date" type="date" required>
-                    </div>
+                    <div class="milestone-schedule-fields">
+                        <div class="milestone-modal-field">
+                            <label for="milestoneStartDate">Start Date <span class="milestone-modal-required">Required</span></label>
+                            <input id="milestoneStartDate" name="start_date" type="date" required>
+                        </div>
 
-                    <div class="milestone-modal-field">
-                        <label for="milestoneEndDate">End Date</label>
-                        <input id="milestoneEndDate" name="end_date" type="date" required>
+                        <div class="milestone-modal-field">
+                            <label for="milestoneEndDate">End Date</label>
+                            <input id="milestoneEndDate" name="end_date" type="date" required>
+                        </div>
                     </div>
                 </div>
+
+                <div class="milestone-modal-section milestone-status-box" id="milestoneStatusSection">
+                <div class="milestone-modal-section-title">Status</div>
+                <p class="milestone-modal-section-copy">Update the milestone state. Completed milestones count toward phase progress.</p>
+
+                <div class="milestone-modal-field">
+                    <label for="milestoneStatus">Milestone Status <span class="milestone-modal-required">Required</span></label>
+                    <select id="milestoneStatus" name="status" class="form-select" style="height: 44px; border-radius: 10px;" required>
+                        <option value="pending">Pending - Not yet started</option>
+                        <option value="in_progress">In Progress - Work has started</option>
+                        <option value="completed">Completed - Fully delivered</option>
+                        <option value="delayed">Delayed - Behind schedule</option>
+                    </select>
+                </div>
+            </div>
             </div>
 
             <input type="hidden" id="milestoneCompleted" name="is_completed" value="0">
@@ -1793,6 +1926,9 @@
     function clampPercentage(value) {
         const percentage = Number(value);
         if (!Number.isFinite(percentage)) return 0;
+        if (percentage <= 1) {
+            return Math.min(100, Math.max(0, percentage * 100));
+        }
         return Math.min(100, Math.max(0, percentage));
     }
 
@@ -1807,9 +1943,36 @@
 
     function formatDateFull(dateValue) {
         if (!dateValue) return 'Not set';
-        const date = new Date(dateValue);
+        const dateOnly = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const date = dateOnly
+            ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+            : new Date(dateValue);
         if (Number.isNaN(date.getTime())) return 'Not set';
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function stripRedundantSequenceLabel(value) {
+        const text = String(value ?? '').trim();
+        if (!text) return '';
+
+        return text
+            .replace(/^(PO\s*\d+|PO\d+|PHASE\s+\d+|MILESTONE\s+\d+)\s*[:\-]?\s*/i, '')
+            .replace(/^(?:Phase|Milestone)\s+\d+\s*[:\-]?\s*/i, '')
+            .replace(/^\d+\s*[:\-]?\s*/, '')
+            .trim();
+    }
+
+    function getDisplayPhaseName(phase) {
+        return stripRedundantSequenceLabel(phase?.phase_name || phase?.name || 'Unnamed phase') || 'Unnamed phase';
+    }
+
+    function getDisplayMilestoneName(milestone) {
+        const name = milestone?.milestone_name
+            || milestone?.name
+            || milestone?.title
+            || milestone?.milestone?.milestone_name
+            || '';
+        return String(name).trim() || 'Unnamed milestone';
     }
 
     function toDateInputValue(value) {
@@ -1917,8 +2080,8 @@
     function buildGanttTasks(phases) {
         return phases.map((phase, index) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-            const start = toDateInputValue(phase.planned_start_date || phase.start || phase.start_date || phase.begin) || '';
-            let end = toDateInputValue(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate) || '';
+            const start = toDateInputValue(getPhaseActualOrPlannedStart(phase)) || '';
+            let end = toDateInputValue(getPhaseActualOrPlannedEnd(phase)) || '';
             if (!end && start) end = start;
             const milestones = Array.isArray(phase.milestones) ? phase.milestones.map((milestone, milestoneIndex) => ({
                 ...milestone,
@@ -1944,15 +2107,32 @@
         }).filter((task) => task.start_date);
     }
 
-    function initDhtmlxGantt(tasks, project) {
-        if (window.initDhtmlxGantt) {
+    function getPhaseActualOrPlannedStart(phase) {
+        return phase.actual_start_date_value || phase.actual_start_date_raw || phase.actual_start_date || phase.actual_start
+            || phase.planned_start_date_raw || phase.planned_start_date || phase.start || phase.start_date || phase.begin || '';
+    }
+
+    function getPhaseActualOrPlannedEnd(phase) {
+        return phase.actual_end_date_value || phase.actual_end_date_raw || phase.actual_end_date || phase.actual_end
+            || phase.planned_end_date_raw || phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate || '';
+    }
+
+    function getMilestonePhaseSchedule(phase) {
+        return {
+            start: phase?.planned_start_date_raw || phase?.planned_start_date || '',
+            end: phase?.planned_end_date_raw || phase?.planned_end_date || ''
+        };
+    }
+
+    function initSelectedProjectGantt(tasks, project) {
+        if (window.initDhtmlxGantt && window.initDhtmlxGantt !== initSelectedProjectGantt) {
             window.initDhtmlxGantt(tasks, project);
             if (window.setDhtmlxScale) {
                 window.setDhtmlxScale(activeTimelineScale);
             }
             return;
         }
-        if (window.refreshDhtmlxGantt) {
+        if (window.refreshDhtmlxGantt && window.refreshDhtmlxGantt !== initSelectedProjectGantt) {
             window.refreshDhtmlxGantt(tasks);
             if (window.setDhtmlxScale) {
                 window.setDhtmlxScale(activeTimelineScale);
@@ -1974,10 +2154,9 @@
         const cards = items.map((phase) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-            const phaseCode = phase.phase_code || phase.code || 'Phase';
-            const start = formatDateFull(phase.planned_start_date || phase.start || phase.start_date || phase.begin);
-            const end = formatDateFull(phase.planned_end_date || phase.end || phase.end_date || phase.targetEndDate);
+            const phaseName = getDisplayPhaseName(phase);
+            const start = formatDateFull(getPhaseActualOrPlannedStart(phase));
+            const end = formatDateFull(getPhaseActualOrPlannedEnd(phase));
             const statusLabel = status.replace('-', ' ');
 
             return `
@@ -1985,7 +2164,6 @@
                     <div class="mobile-gantt-head">
                         <div>
                             <h4 class="mobile-gantt-title">${escapeHtml(phaseName)}</h4>
-                            <span class="mobile-gantt-code">${escapeHtml(phaseCode)}</span>
                         </div>
                         <span class="status-pill-badge ${status}">${escapeHtml(statusLabel)}</span>
                     </div>
@@ -2000,7 +2178,7 @@
                         </div>
                     </div>
                     <div class="mobile-gantt-progress-row">
-                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill" style="width:${percentage}%"></span></div>
+                        <div class="mobile-gantt-track"><span class="mobile-gantt-fill status-${status}" style="--bar-width:${Math.max(0, Math.min(100, percentage))}%; width:${Math.max(0, Math.min(100, percentage))}%;"></span></div>
                         <span class="mobile-gantt-percent">${Math.round(percentage)}%</span>
                     </div>
                 </article>
@@ -2020,23 +2198,19 @@
             return '<div class="timeline-empty-state">No phases match the current filters.</div>';
         }
 
-        return items.map((phase, index) => {
+        return items.map((phase) => {
             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-            const phaseCode = phase.phase_code || phase.code || 'Phase';
-            const start = formatDateFull(phase.planned_start_date || phase.start);
-            const end = formatDateFull(phase.planned_end_date || phase.end);
-            const number = startIndex + index;
+            const phaseName = getDisplayPhaseName(phase);
+            const start = formatDateFull(getPhaseActualOrPlannedStart(phase));
+            const end = formatDateFull(getPhaseActualOrPlannedEnd(phase));
 
             return `
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
-                        <span class="timeline-mobile-index">${number}</span>
                         <div class="timeline-mobile-title">
                             <h4>${escapeHtml(phaseName)}</h4>
                         </div>
-                        <span class="timeline-mobile-code">${escapeHtml(phaseCode)}</span>
                     </div>
                     <div class="timeline-mobile-detail-grid">
                         <div class="timeline-mobile-detail">
@@ -2053,6 +2227,9 @@
                         </div>
                         <div class="timeline-mobile-detail progress">
                             <span class="timeline-mobile-label">Progress</span>
+                            <div class="timeline-mobile-progress-track">
+                                <span class="timeline-mobile-progress-fill" style="--bar-width:${Math.max(0, Math.min(100, percentage))}%; width:${Math.max(0, Math.min(100, percentage))}%;"></span>
+                            </div>
                             <span class="timeline-mobile-value">${Math.round(percentage)}%</span>
                         </div>
                     </div>
@@ -2067,18 +2244,16 @@
             return '<div class="timeline-empty-state">No milestones match the current filters.</div>';
         }
 
-        return items.map((milestone, index) => {
+        return items.map((milestone) => {
             const status = getMilestoneStatus(milestone);
-            const number = startIndex + index;
-            const milestoneName = milestone.milestone_name || 'Unnamed milestone';
-            const phaseName = milestone.phase_name || 'Unnamed phase';
+            const milestoneName = getDisplayMilestoneName(milestone);
+            const phaseName = stripRedundantSequenceLabel(milestone.phase_name || 'Unnamed phase');
             const start = formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start);
             const end = formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end);
 
             return `
                 <article class="timeline-mobile-card">
                     <div class="timeline-mobile-head">
-                        <span class="timeline-mobile-index">${number}</span>
                         <div class="timeline-mobile-title">
                             <h4>${escapeHtml(milestoneName)}</h4>
                         </div>
@@ -2102,7 +2277,10 @@
                                 <span class="timeline-mobile-label">Action</span>
                                 <span class="timeline-mobile-value">Edit milestone</span>
                             </span>
-                            <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" aria-label="Edit milestone"><i class="bi bi-pencil"></i></button>
+                            <div class="action-icons-flex">
+                                <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" aria-label="Edit milestone"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="btn-icon-table text-danger" data-delete-milestone="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" data-milestone-name="${escapeHtml(getDisplayMilestoneName(milestone))}" aria-label="Delete milestone"><i class="bi bi-trash3"></i></button>
+                            </div>
                         </div>
                     </div>
                 </article>
@@ -2154,11 +2332,11 @@
                                         <button type="button" id="timelineZoomOutBtn" class="btn-ghost"><i class="bi bi-dash"></i></button>
                                         <button type="button" id="timelineTodayBtn" class="btn-ghost"><i class="bi bi-calendar2-week"></i> Today</button>
                                         <select id="timelineScaleSelector" class="toolbar-select compact-select">
-                                            <option value="day">Day</option>
-                                            <option value="week" selected>Week</option>
-                                            <option value="month">Month</option>
-                                            <option value="quarter">Quarter</option>
-                                            <option value="year">Year</option>
+                                            <option value="day" ${activeTimelineScale === 'day' ? 'selected' : ''}>Day</option>
+                                            <option value="week" ${activeTimelineScale === 'week' ? 'selected' : ''}>Week</option>
+                                            <option value="month" ${activeTimelineScale === 'month' ? 'selected' : ''}>Month</option>
+                                            <option value="quarter" ${activeTimelineScale === 'quarter' ? 'selected' : ''}>Quarter</option>
+                                            <option value="year" ${activeTimelineScale === 'year' ? 'selected' : ''}>Year</option>
                                         </select>
                                     </div>
                                 ` : ''}
@@ -2201,22 +2379,19 @@
                                         ${paginatedPhases.length ? paginatedPhases.map((phase, index) => {
                                             const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
                                             const percentage = clampPercentage(phase.completion_percentage ?? phase.progress ?? 0);
-                                            const phaseName = phase.phase_name || phase.name || 'Unnamed phase';
-                                            const phaseCode = phase.phase_code || phase.code || 'Phase';
+                                            const phaseName = getDisplayPhaseName(phase);
                                             return `
                                                 <tr class="timeline-phase-card">
                                                     <td data-label="#">${phasesFrom + index}</td>
                                                     <td data-label="Phase" class="timeline-title-cell">
                                                         <div class="timeline-title-row">
-                                                            <span class="timeline-number-chip">${phasesFrom + index}</span>
                                                             <div class="timeline-title-copy">
                                                                 <strong>${escapeHtml(phaseName)}</strong>
-                                                                <span class="timeline-code-chip">${escapeHtml(phaseCode)}</span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td data-label="Start">${formatDateFull(phase.planned_start_date || phase.start)}</td>
-                                                    <td data-label="End">${formatDateFull(phase.planned_end_date || phase.end)}</td>
+                                                    <td data-label="Start">${formatDateFull(getPhaseActualOrPlannedStart(phase))}</td>
+                                                    <td data-label="End">${formatDateFull(getPhaseActualOrPlannedEnd(phase))}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
                                                     <td data-label="Progress">${Math.round(percentage)}%</td>
                                                 </tr>
@@ -2256,19 +2431,19 @@
                                                     <td data-label="#">${timelineFrom + index}</td>
                                                     <td data-label="Milestone" class="timeline-title-cell">
                                                         <div class="timeline-title-row">
-                                                            <span class="timeline-number-chip">${timelineFrom + index}</span>
                                                             <div class="timeline-title-copy">
-                                                                <strong>${escapeHtml(milestone.milestone_name || 'Unnamed milestone')}</strong>
+                                                                <strong>${escapeHtml(getDisplayMilestoneName(milestone))}</strong>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td data-label="Phase">${escapeHtml(milestone.phase_name || 'Unnamed phase')}</td>
+                                                    <td data-label="Phase">${escapeHtml(stripRedundantSequenceLabel(milestone.phase_name || 'Unnamed phase'))}</td>
                                                     <td data-label="Start Planned Date">${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
                                                     <td data-label="End Planned Date">${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
                                                     <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
                                                     <td data-label="Actions">
                                                         <div class="action-icons-flex">
                                                             <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}"><i class="bi bi-pencil"></i></button>
+                                                            <button type="button" class="btn-icon-table text-danger" data-delete-milestone="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}" data-milestone-name="${escapeHtml(getDisplayMilestoneName(milestone))}" aria-label="Delete milestone"><i class="bi bi-trash3"></i></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -2336,9 +2511,16 @@
         document.querySelectorAll('[data-open-edit]').forEach((button) => {
             button.addEventListener('click', () => window.openMilestoneEditModal?.(button.getAttribute('data-open-edit'), button.getAttribute('data-milestone-id')));
         });
+        document.querySelectorAll('[data-delete-milestone]').forEach((button) => {
+            button.addEventListener('click', () => deleteTimelineMilestone(
+                button.getAttribute('data-delete-milestone'),
+                button.getAttribute('data-milestone-id'),
+                button.getAttribute('data-milestone-name') || 'this milestone'
+            ));
+        });
 
         const tasks = buildGanttTasks(filteredPhases);
-        initDhtmlxGantt(tasks, project);
+        initSelectedProjectGantt(tasks, project);
     }
 
     function attachTimelineControls() {
@@ -2360,15 +2542,31 @@
 
         document.getElementById('timelineZoomInBtn')?.addEventListener('click', () => window.setDhtmlxZoom?.('in'));
         document.getElementById('timelineZoomOutBtn')?.addEventListener('click', () => window.setDhtmlxZoom?.('out'));
+        
+        const scaleSelector = document.getElementById('timelineScaleSelector');
+        if (scaleSelector && !scaleSelector.dataset.bound) {
+            scaleSelector.dataset.bound = 'true';
+            scaleSelector.addEventListener('change', function () {
+                const scale = this.value || 'week';
+                activeTimelineScale = scale;
+                if (window.setDhtmlxScale) {
+                    window.setDhtmlxScale(scale);
+                }
+                if (selectedProject) {
+                    renderTimeline(selectedProject);
+                }
+            });
+        }
+        
         document.getElementById('exportTimelineBtn')?.addEventListener('click', () => {
             const rows = timelineViewMode === 'timeline'
                 ? getFilteredMilestones(selectedProject).map((milestone, index) => {
                     const status = getMilestoneStatus(milestone);
-                    return [index + 1, milestone.milestone_name || 'Unnamed milestone', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.start_date || milestone.start || '', milestone.planned_end_date || milestone.end_date || milestone.end || ''];
+                    return [index + 1, milestone.milestone_name || '', milestone.phase_name || 'Unnamed phase', status, milestone.planned_start_date || milestone.start_date || milestone.start || '', milestone.planned_end_date || milestone.end_date || milestone.end || ''];
                 })
                 : getFilteredPhases(selectedProject).map((phase, index) => {
                     const status = normalizeStatus(phase.display_status ?? phase.status ?? 'planning');
-                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, phase.planned_start_date || phase.start || '', phase.planned_end_date || phase.end || ''];
+                    return [index + 1, phase.phase_name || phase.name || 'Unnamed phase', phase.phase_code || 'Phase', status, getPhaseActualOrPlannedStart(phase), getPhaseActualOrPlannedEnd(phase)];
                 });
             const headers = timelineViewMode === 'timeline'
                 ? ['#', 'Milestone', 'Phase', 'Status', 'Start Planned Date', 'End Planned Date']
@@ -2437,24 +2635,21 @@
 
     function updateMilestonePhaseInfo(phase) {
         const wrap = document.getElementById('milestonePhaseInfo');
-        const startEl = document.getElementById('milestonePhaseStart');
-        const endEl = document.getElementById('milestonePhaseEnd');
-        const statusEl = document.getElementById('milestonePhaseStatus');
+        const plannedStartEl = document.getElementById('milestonePhasePlannedStart');
+        const plannedEndEl = document.getElementById('milestonePhasePlannedEnd');
 
-        if (!wrap || !startEl || !endEl || !statusEl) return;
+        if (!wrap || !plannedStartEl || !plannedEndEl) return;
 
         if (!phase) {
             wrap.classList.add('d-none');
             return;
         }
 
-        const plannedStart = phase.planned_start_date ? String(phase.planned_start_date).slice(0, 10) : 'Not set';
-        const plannedEnd = phase.planned_end_date ? String(phase.planned_end_date).slice(0, 10) : 'Not set';
-        const status = phase.status ? String(phase.status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
+        const plannedStart = phase.actual_start_date_raw || phase.actual_start_date || phase.planned_start_date_raw || phase.planned_start_date || 'Not set';
+        const plannedEnd = phase.actual_end_date_raw || phase.actual_end_date || phase.planned_end_date_raw || phase.planned_end_date || 'Not set';
 
-        startEl.textContent = plannedStart;
-        endEl.textContent = plannedEnd;
-        statusEl.textContent = status;
+        plannedStartEl.textContent = String(plannedStart).slice(0, 10);
+        plannedEndEl.textContent = String(plannedEnd).slice(0, 10);
         wrap.classList.remove('d-none');
     }
 
@@ -2464,15 +2659,18 @@
         document.getElementById('milestoneName').value = milestone?.milestone_name || '';
         document.getElementById('milestoneStartDate').value = milestone?.start_date ? String(milestone.start_date).slice(0, 10) : '';
         document.getElementById('milestoneEndDate').value = milestone?.end_date ? String(milestone.end_date).slice(0, 10) : '';
-        document.getElementById('milestoneCompleted').value = milestone?.is_completed ? '1' : '0';
-        document.getElementById('milestoneDelayed').value = milestone?.is_delayed ? '1' : '0';
+        const displayStatus = milestone?.display_status || milestone?.status || 'pending';
+        const statusSelect = document.getElementById('milestoneStatus');
+        if (statusSelect) statusSelect.value = displayStatus;
+        document.getElementById('milestoneCompleted').value = displayStatus === 'completed' ? '1' : '0';
+        document.getElementById('milestoneDelayed').value = displayStatus === 'delayed' ? '1' : '0';
+        document.getElementById('milestoneModalForm').dataset.originalStatus = displayStatus;
         milestoneFormSnapshot = getMilestoneFormSnapshot();
     }
 
-    // Populates the "Milestone to Edit" dropdown for the given phase. Only shown in edit
-    // mode, and only when the phase has more than one milestone (otherwise there is
-    // nothing to disambiguate). Selecting a different option loads that milestone's data
-    // into the form so any milestone under the phase can be edited, not just the first one.
+    // Populates the milestone selector for the given phase. Returns the selected
+    // milestone so the form can load its data. The selector is hidden when there
+    // is only one milestone under the phase.
     function populateMilestoneExistingSelector(phase, selectedMilestoneId = '') {
         const wrap = document.getElementById('milestoneExistingSelectorWrap');
         const select = document.getElementById('milestoneExistingSelector');
@@ -2488,7 +2686,7 @@
 
         select.innerHTML = milestones.map((item) => {
             const id = item.milestone_id ?? item.id;
-            const label = item.milestone_name || 'Unnamed milestone';
+            const label = item.milestone_name || '';
             const dateLabel = item.start_date ? ` (${String(item.start_date).slice(0, 10)})` : '';
             const selectedAttr = String(selectedMilestoneId || '') === String(id || '') ? 'selected' : '';
             return `<option value="${escapeHtml(id)}" ${selectedAttr}>${escapeHtml(label + dateLabel)}</option>`;
@@ -2511,15 +2709,20 @@
         const submitButton = document.getElementById('milestoneSubmitBtn');
         const note = document.getElementById('milestoneModalNote');
         const existingWrap = document.getElementById('milestoneExistingSelectorWrap');
+        const statusSection = document.getElementById('milestoneStatusSection');
+        const scheduleStatusRow = document.getElementById('milestoneScheduleStatusRow');
 
         if (!backdrop || !form || !title || !subtitle || !submitButton) return;
 
         form.dataset.mode = mode;
+        form.dataset.originalStatus = 'pending';
         form.reset();
         milestoneFormSnapshot = null;
         document.getElementById('milestoneProjectId').value = selectedProject?.id || '';
         document.getElementById('milestoneId').value = '';
         existingWrap?.classList.add('d-none');
+        if (statusSection) statusSection.style.display = mode === 'edit' ? 'block' : 'none';
+        scheduleStatusRow?.classList.toggle('is-create', mode !== 'edit');
         populateMilestonePhaseOptions(phaseId || '');
         updateMilestonePhaseInfo(findPhaseInModal(document.getElementById('milestonePhaseId')?.value || ''));
         document.body.style.overflow = 'hidden';
@@ -2533,8 +2736,6 @@
             const milestones = getPhaseMilestones(phase);
             const milestone = milestones.find((item) => String(item.milestone_id ?? item.id) === String(milestoneId || '')) || milestones[0] || null;
 
-            // Shows the "Milestone to Edit" dropdown whenever the phase has more than one
-            // milestone, so any of them can be selected and edited (not just the first).
             populateMilestoneExistingSelector(phase, milestone?.milestone_id ?? milestone?.id ?? '');
 
             if (phase && milestone) {
@@ -2556,6 +2757,7 @@
             document.getElementById('milestoneEndDate').value = '';
             document.getElementById('milestoneCompleted').value = '0';
             document.getElementById('milestoneDelayed').value = '0';
+            document.getElementById('milestoneStatus').value = 'pending';
             if (note) {
                 note.querySelector('span').textContent = '';
             }
@@ -2575,14 +2777,42 @@
 
 let milestoneFormSnapshot = null;
 
+    function syncMilestoneStatus() {
+        const selectedStatus = document.getElementById('milestoneStatus')?.value || 'pending';
+        const completedInput = document.getElementById('milestoneCompleted');
+        const delayedInput = document.getElementById('milestoneDelayed');
+        if (!completedInput || !delayedInput) return;
+
+        completedInput.value = selectedStatus === 'completed' ? '1' : '0';
+        delayedInput.value = selectedStatus === 'delayed' ? '1' : '0';
+    }
+
+    document.getElementById('milestoneStatus')?.addEventListener('change', function () {
+        const newStatus = this.value;
+        const form = document.getElementById('milestoneModalForm');
+        const originalStatus = form?.dataset.originalStatus || 'pending';
+
+        if (originalStatus === 'completed' && newStatus !== 'completed') {
+            this.value = originalStatus;
+            Swal.fire({
+                title: 'Completed milestone locked',
+                text: 'A completed milestone cannot be moved back to Pending, In Progress, or Delayed.',
+                icon: 'warning',
+                confirmButtonColor: '#166534'
+            });
+            return;
+        }
+
+        syncMilestoneStatus();
+    });
+
     function getMilestoneFormSnapshot() {
         return {
             phaseId: document.getElementById('milestonePhaseId')?.value?.trim() || '',
             name: document.getElementById('milestoneName')?.value?.trim() || '',
             startDate: document.getElementById('milestoneStartDate')?.value?.trim() || '',
             endDate: document.getElementById('milestoneEndDate')?.value?.trim() || '',
-            completed: document.getElementById('milestoneCompleted')?.value || '0',
-            delayed: document.getElementById('milestoneDelayed')?.value || '0'
+            status: document.getElementById('milestoneStatus')?.value || 'pending',
         };
     }
 
@@ -2593,6 +2823,7 @@ let milestoneFormSnapshot = null;
         const actualDate = document.getElementById('milestoneEndDate')?.value?.trim() || '';
         const form = document.getElementById('milestoneModalForm');
         const mode = form?.dataset.mode || 'create';
+        const status = document.getElementById('milestoneStatus')?.value || 'pending';
 
         if (!phaseId) {
             return 'Please select the construction phase that owns this milestone.';
@@ -2606,20 +2837,25 @@ let milestoneFormSnapshot = null;
             return 'A planned date is required.';
         }
 
+        if (mode === 'edit' && !['pending', 'completed', 'delayed'].includes(status)) {
+            return 'Please select a valid milestone status.';
+        }
+
         if (actualDate && plannedDate && actualDate < plannedDate) {
             return 'End date cannot be earlier than the start date.';
         }
 
         const phase = (getProjectPhasesForModal() || []).find((item) => String(item.phase_id ?? item.id) === String(phaseId)) || null;
-        if (phase && phase.planned_start_date_raw && phase.planned_end_date_raw) {
-            const phaseStart = phase.planned_start_date_raw;
-            const phaseEnd = phase.planned_end_date_raw;
+        if (phase) {
+            const phaseSchedule = getMilestonePhaseSchedule(phase);
+            const phaseStart = String(phaseSchedule.start).slice(0, 10);
+            const phaseEnd = String(phaseSchedule.end).slice(0, 10);
 
-            if (plannedDate < phaseStart || plannedDate > phaseEnd) {
+            if (phaseStart && phaseEnd && (plannedDate < phaseStart || plannedDate > phaseEnd)) {
                 return 'Milestone start date must be within the selected phase schedule.';
             }
 
-            if (actualDate && (actualDate < phaseStart || actualDate > phaseEnd)) {
+            if (actualDate && phaseStart && phaseEnd && (actualDate < phaseStart || actualDate > phaseEnd)) {
                 return 'Milestone end date must be within the selected phase schedule.';
             }
         }
@@ -2651,6 +2887,78 @@ let milestoneFormSnapshot = null;
     function getAdminUrl(path) {
         const basePath = getAppBasePath();
         return `${basePath.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+    }
+
+    async function deleteTimelineMilestone(phaseId, milestoneId, milestoneName) {
+        if (!selectedProject?.id || !phaseId || !milestoneId) return;
+
+        const confirmation = window.Swal
+            ? await Swal.fire({
+                title: 'Delete milestone?',
+                text: `"${milestoneName}" will be permanently removed and phase progress will be recalculated.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b'
+            })
+            : { isConfirmed: window.confirm(`Delete "${milestoneName}"?`) };
+
+        if (!confirmation.isConfirmed) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const formData = new FormData();
+        formData.set('_token', csrfToken);
+        formData.set('_method', 'DELETE');
+
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Deleting milestone...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+
+        try {
+            const url = getAdminUrl(`/admin/projects/${encodeURIComponent(selectedProject.id)}/phases/${encodeURIComponent(phaseId)}/milestones/${encodeURIComponent(milestoneId)}`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Unable to delete the milestone.');
+            }
+
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Deleted',
+                    text: payload.message || 'Milestone deleted successfully.',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    confirmButtonColor: '#166534'
+                });
+            }
+            await refreshTimelineFromServer();
+        } catch (error) {
+            if (window.Swal) {
+                Swal.fire({
+                    title: 'Delete failed',
+                    text: error.message || 'Unable to delete the milestone.',
+                    icon: 'error',
+                    confirmButtonColor: '#166534'
+                });
+            }
+        }
     }
 
     async function refreshTimelineFromServer() {
@@ -2697,6 +3005,8 @@ let milestoneFormSnapshot = null;
         const validationMessage = validateMilestoneForm();
 
         if (validationMessage) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
             if (window.Swal) {
                 Swal.fire({
                     title: 'Validation required',
@@ -2711,8 +3021,10 @@ let milestoneFormSnapshot = null;
         }
 
         const formData = new FormData(form);
-        formData.set('is_completed', document.getElementById('milestoneCompleted').value === '1' ? '1' : '0');
-        formData.set('is_delayed', document.getElementById('milestoneDelayed').value === '1' ? '1' : '0');
+        const status = document.getElementById('milestoneStatus')?.value || 'pending';
+        formData.set('status', status);
+        formData.set('is_completed', status === 'completed' ? '1' : '0');
+        formData.set('is_delayed', status === 'delayed' ? '1' : '0');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
         let url = getAdminUrl('/admin/milestones');
@@ -2735,6 +3047,8 @@ let milestoneFormSnapshot = null;
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
+                    const container = document.querySelector('.swal2-container');
+                    if (container) container.style.setProperty('z-index', '2147483647', 'important');
                 }
             });
         }

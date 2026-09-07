@@ -14,7 +14,7 @@ class UpdateUserRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $this->user() && $user && $user->role === 'engineer';
+        return $this->user() && $user && in_array($user->role, ['engineer', 'admin', 'administrator'], true);
     }
 
     /**
@@ -58,7 +58,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($this->route('user')?->user_id, 'user_id'),
             ],
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()],
-            'role' => ['required', 'string', Rule::in(['engineer', 'supervisor', 'client'])],
+            'role' => ['required', 'string', Rule::in(['engineer', 'admin', 'administrator', 'supervisor', 'client'])],
             'contact_number' => [
                 'nullable',
                 'string',

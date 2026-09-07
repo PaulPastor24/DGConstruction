@@ -529,6 +529,109 @@
         color: #111827;
     }
 
+    .sidebar-history-panel {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 20px;
+    }
+
+    .sidebar-history-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #374151;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .sidebar-history-toggle:focus-visible {
+        outline: 2px solid #166534;
+        outline-offset: 3px;
+        border-radius: 4px;
+    }
+
+    .sidebar-history-toggle > span:first-child {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .sidebar-history-toggle .sidebar-history-caption {
+        margin-left: auto;
+    }
+
+    .sidebar-history-arrow {
+        width: 12px;
+        color: #64748b;
+        font-size: 11px;
+        transition: transform 0.28s ease;
+    }
+
+    .sidebar-history-toggle[aria-expanded="true"] .sidebar-history-arrow {
+        transform: rotate(180deg);
+    }
+
+    .sidebar-history-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    .sidebar-history-caption {
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .sidebar-history-list {
+        max-height: 0;
+        overflow-y: auto;
+        opacity: 0;
+        margin-top: 0;
+        transition: max-height 0.32s ease, opacity 0.24s ease, margin-top 0.32s ease;
+    }
+
+    .sidebar-history-list.is-expanded {
+        max-height: 180px;
+        margin-top: 8px;
+        opacity: 1;
+    }
+
+    .sidebar-history-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .sidebar-history-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .sidebar-history-transition {
+        color: #166534;
+        font-weight: 700;
+    }
+
+    .sidebar-history-meta,
+    .sidebar-history-reason {
+        color: #64748b;
+    }
+
     .sidebar-actions-footer-row {
         display: flex;
         justify-content: center;
@@ -1174,9 +1277,20 @@
             </div>
         </div>
 
+        <div class="sidebar-history-panel">
+            <button type="button" class="sidebar-history-toggle" id="sideStatusHistoryToggle" aria-expanded="false" aria-controls="sideStatusHistory">
+                <span>Status History</span>
+                <span class="sidebar-history-caption">Audit Trail</span>
+                <span class="sidebar-history-arrow" aria-hidden="true">▼</span>
+            </button>
+            <div id="sideStatusHistory" class="sidebar-history-list" aria-hidden="true">
+                <div class="small text-muted">No status changes recorded yet.</div>
+            </div>
+        </div>
+
         <div class="sidebar-actions-footer-row">
             <button type="button" id="sideEditProjectBtn" class="btn btn-sm" style="border:1px solid #bfdbfe; color:#1d4ed8; background:#eff6ff;"><i class="bi bi-pencil"></i> Edit Project</button>
-            <form id="sideArchiveForm" action="{{ route('admin.projects.archive', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-project-confirm="archive" data-confirm-title="Archive Project?" data-confirm-text="This project will be removed from the Active Project list. All construction history, reports, phases, milestones, attendance, and materials will remain available." data-confirm-button="Archive" data-cancel-button="Cancel">
+            <form id="sideArchiveForm" action="{{ route('admin.projects.archive', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-no-global-loading="true" data-project-confirm="archive" data-confirm-title="Archive Project?" data-confirm-text="This project will be removed from the Active Project list. All construction history, reports, phases, milestones, attendance, and materials will remain available." data-confirm-button="Archive" data-cancel-button="Cancel">
                 @csrf
                 @method('PATCH')
                 <button type="submit" class="btn btn-sm" style="border:1px solid #c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-archive"></i> Archive</button>
@@ -1212,12 +1326,13 @@
                         <label class="form-label small text-muted mb-1">Client</label>
                         <select id="projectArchiveClientFilter" class="form-select">
                             <option value="">All Clients</option>
-                            @foreach(($archives ?? collect())->filter(fn ($archive) => !empty($archive->client_id))->map(fn ($archive) => $archive->client)->filter()->unique('client_id')->sortBy(fn ($client) => $client->company_name ?? '')->values() as $client)
+                            @foreach(($archiveClients ?? collect()) as $client)
                                 @php
                                     $clientOptionLabel = trim((string) ($client->company_name ?? ''));
                                     if ($clientOptionLabel === '' || strtolower($clientOptionLabel) === 'd&g construction corp') {
-                                        $clientOptionLabel = 'Client';
+                                        $clientOptionLabel = trim((string) ($client->user?->name ?? ''));
                                     }
+                                    $clientOptionLabel = $clientOptionLabel !== '' ? $clientOptionLabel : 'Client #' . $client->client_id;
                                 @endphp
                                 <option value="{{ $client->client_id }}">{{ $clientOptionLabel }}</option>
                             @endforeach
@@ -1227,12 +1342,13 @@
                         <label class="form-label small text-muted mb-1">Engineer</label>
                         <select id="projectArchiveEngineerFilter" class="form-select">
                             <option value="">All Engineers</option>
-                            @foreach(($archives ?? collect())->filter(fn ($archive) => !empty($archive->engineer_id))->map(fn ($archive) => $archive->engineer)->filter()->unique('user_id')->sortBy(fn ($engineer) => $engineer->full_name ?? $engineer->name ?? '')->values() as $engineer)
+                            @foreach(($archiveEngineers ?? collect()) as $engineer)
                                 @php
-                                    $engineerOptionLabel = trim((string) ($engineer->full_name ?? $engineer->name ?? ''));
+                                    $engineerOptionLabel = trim((string) ($engineer->name ?? ''));
                                     if ($engineerOptionLabel === '' || strtolower($engineerOptionLabel) === 'lead engineer') {
-                                        $engineerOptionLabel = 'Engineer';
+                                        $engineerOptionLabel = trim((string) (($engineer->first_name ?? '') . ' ' . ($engineer->last_name ?? '')));
                                     }
+                                    $engineerOptionLabel = $engineerOptionLabel !== '' ? $engineerOptionLabel : 'Engineer #' . $engineer->user_id;
                                 @endphp
                                 <option value="{{ $engineer->user_id }}">{{ $engineerOptionLabel }}</option>
                             @endforeach
@@ -1258,18 +1374,20 @@
                                 @php
                                     $archiveClientLabel = trim((string) ($archive->client?->company_name ?? ''));
                                     if ($archiveClientLabel === '' || strtolower($archiveClientLabel) === 'd&g construction corp') {
-                                        $archiveClientLabel = null;
+                                        $archiveClientLabel = trim((string) ($archive->client?->user?->name ?? ''));
                                     }
+                                    $archiveClientLabel = $archiveClientLabel !== '' ? $archiveClientLabel : 'Client #' . ($archive->client_id ?: 'Unknown');
 
                                     $archiveClientContact = trim((string) ($archive->client?->user?->name ?? ''));
                                     if ($archiveClientContact === '' || strtolower($archiveClientContact) === 'd&g construction corp') {
                                         $archiveClientContact = null;
                                     }
 
-                                    $archiveEngineerLabel = trim((string) ($archive->engineer?->full_name ?: $archive->engineer?->name ?? ''));
+                                    $archiveEngineerLabel = trim((string) ($archive->engineer?->name ?? ''));
                                     if ($archiveEngineerLabel === '' || strtolower($archiveEngineerLabel) === 'lead engineer') {
-                                        $archiveEngineerLabel = null;
+                                        $archiveEngineerLabel = trim((string) (($archive->engineer?->first_name ?? '') . ' ' . ($archive->engineer?->last_name ?? '')));
                                     }
+                                    $archiveEngineerLabel = $archiveEngineerLabel !== '' ? $archiveEngineerLabel : 'Engineer #' . ($archive->engineer_id ?: 'Unknown');
 
                                     $archiveEngineerEmail = trim((string) ($archive->engineer?->email ?? ''));
                                     if ($archiveEngineerEmail === '' || strtolower($archiveEngineerEmail) === 'lead engineer') {
@@ -1279,7 +1397,7 @@
                                 <tr class="archive-row"
                                     data-client-id="{{ $archive->client_id ?: '' }}"
                                     data-engineer-id="{{ $archive->engineer_id ?: '' }}"
-                                    data-search="{{ strtolower(($archive->project_name ?? '') . ' ' . ($archive->project_location ?: '') . ' ' . ($archive->client?->company_name ?: '') . ' ' . ($archive->client?->user?->first_name ?: '') . ' ' . ($archive->client?->user?->last_name ?: '') . ' ' . ($archive->engineer?->first_name ?: '') . ' ' . ($archive->engineer?->last_name ?: '') . ' ' . ($archive->engineer?->name ?: '')) }}">
+                                    data-search="{{ trim(strtolower(($archive->project_name ?? '') . ' ' . ($archive->project_location ?: '') . ' ' . ($archive->client?->company_name ?: '') . ' ' . ($archive->client?->user?->first_name ?: '') . ' ' . ($archive->client?->user?->last_name ?: '') . ' ' . ($archive->engineer?->first_name ?: '') . ' ' . ($archive->engineer?->last_name ?: '') . ' ' . ($archive->engineer?->name ?: ''))) }}">
                                     <td>
                                         <div class="fw-semibold text-dark">{{ $archive->project_name }}</div>
                                         <div class="small text-muted">#{{ $archive->project_id }}</div>
@@ -1301,7 +1419,7 @@
                                     <td>{{ $archive->archived_at ? $archive->archived_at->format('M d, Y H:i') : '—' }}</td>
                                     <td>
                                         @if($archive->project)
-                                            <form action="{{ route('admin.projects.restore', $archive->project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel">
+                                            <form action="{{ route('admin.projects.restore', $archive->project) }}" method="POST" class="d-inline project-action-form" data-no-global-loading="true" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
@@ -1505,34 +1623,6 @@
                             </div>
                         </div>
 
-                        <div class="modal-grid-2 mt-3">
-                            <div>
-                                <label for="modal_time_in" class="form-label modal-custom-label">Site Time In</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
-                                       id="modal_time_in"
-                                       name="time_in"
-                                       value="{{ old('time_in') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
-                                @error('time_in')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="modal_time_out" class="form-label modal-custom-label">Site Time Out</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
-                                       id="modal_time_out"
-                                       name="time_out"
-                                       value="{{ old('time_out') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
-                                @error('time_out')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
                         <div class="d-none">
                             <label for="modal_status" class="form-label modal-custom-label">Project Status <span class="text-danger">*</span></label>
                             <select class="form-select modal-custom-input w-100" id="modal_status" name="status" required>
@@ -1729,34 +1819,6 @@
                             </div>
                         </div>
 
-                        <div class="modal-grid-2 mt-3">
-                            <div>
-                                <label for="edit_time_in" class="form-label modal-custom-label">Site Time In</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_in') is-invalid @enderror"
-                                       id="edit_time_in"
-                                       name="time_in"
-                                       value="{{ old('time_in', '') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance start time for this project.</div>
-                                @error('time_in')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="edit_time_out" class="form-label modal-custom-label">Site Time Out</label>
-                                <input type="time"
-                                       class="form-control modal-custom-input w-100 @error('time_out') is-invalid @enderror"
-                                       id="edit_time_out"
-                                       name="time_out"
-                                       value="{{ old('time_out', '') }}">
-                                <div class="form-text small text-muted mt-1">Daily attendance end time for this project.</div>
-                                @error('time_out')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
                         <div class="mt-3">
                             <label for="edit_status" class="form-label modal-custom-label">Project Status <span class="text-danger">*</span></label>
                             <select class="form-select modal-custom-input w-100 @error('status') is-invalid @enderror" id="edit_status" name="status" required>
@@ -1767,6 +1829,19 @@
                             </select>
                             <div class="form-text small text-muted mt-1" id="editStatusHelpText">Choose the project’s current lifecycle state. Completed projects cannot be moved back to planning or in progress.</div>
                             @error('status')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mt-3 d-none" id="editHoldReasonGroup">
+                            <label for="edit_hold_reason" class="form-label modal-custom-label">Reason for On Hold <span class="text-danger">*</span></label>
+                            <textarea class="form-control modal-custom-input w-100 @error('hold_reason') is-invalid @enderror"
+                                      id="edit_hold_reason"
+                                      name="hold_reason"
+                                      rows="2"
+                                      maxlength="2000"
+                                      placeholder="Explain why construction is temporarily stopped">{{ old('hold_reason', '') }}</textarea>
+                            @error('hold_reason')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -1881,10 +1956,6 @@
                                 <div>
                                     <div class="ps-field-label">Duration</div>
                                     <div class="ps-field-value"><i class="bi bi-clock-history"></i> {{ $psDuration > 0 ? $psDuration . ' days' : 'Not available' }}</div>
-                                </div>
-                                <div>
-                                    <div class="ps-field-label">Last Updated</div>
-                                    <div class="ps-field-value"><i class="bi bi-calendar3"></i> {{ $newProject->updated_at ? $newProject->updated_at->format('M d, Y h:i A') : 'N/A' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -2772,6 +2843,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.filterArchivedProjects();
+    const projectArchivesModal = document.getElementById('projectArchivesModal');
+    if (projectArchivesModal) {
+        projectArchivesModal.addEventListener('show.bs.modal', function () {
+            const searchInput = document.getElementById('projectArchiveSearch');
+            const clientFilter = document.getElementById('projectArchiveClientFilter');
+            const engineerFilter = document.getElementById('projectArchiveEngineerFilter');
+            if (searchInput) searchInput.value = '';
+            if (clientFilter) clientFilter.value = '';
+            if (engineerFilter) engineerFilter.value = '';
+            window.projectArchiveVisibleRows = [];
+            window.projectArchiveCurrentPage = 1;
+            window.filterArchivedProjects();
+        });
+    }
     const editProjectModalEl = document.getElementById('editProjectModal');
     const editProjectForm = document.getElementById('editProjectForm');
     const editProjectIdInput = document.getElementById('editProjectId');
@@ -3143,10 +3228,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const startDateInput = document.getElementById('edit_start_date');
         const targetEndDateInput = document.getElementById('edit_target_end_date');
         const actualEndDateInput = document.getElementById('edit_actual_end_date');
-        const timeInInput = document.getElementById('edit_time_in');
-        const timeOutInput = document.getElementById('edit_time_out');
         const supervisorSelect = document.getElementById('edit_supervisor_id');
         const statusSelect = document.getElementById('edit_status');
+        const holdReasonGroup = document.getElementById('editHoldReasonGroup');
+        const holdReasonInput = document.getElementById('edit_hold_reason');
         const modalTitle = document.getElementById('editProjectModalLabel');
 
         if (!form || !modalEl || !project) return;
@@ -3154,12 +3239,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const explicitLocation = triggerBtn ? (triggerBtn.getAttribute('data-project-location') || '') : '';
         const projectLocationValue = explicitLocation || project.project_location || project.location || '';
         const currentStatus = String(project.status || 'planning').toLowerCase();
+        const allowedTransitions = JSON.parse(triggerBtn?.getAttribute('data-status-transitions') || '["planning"]');
 
         form.action = buildAdminProjectsUrl(project.project_id);
         if (projectIdInput) projectIdInput.value = project.project_id || '';
         if (projectNameInput) projectNameInput.value = project.project_name || '';
         if (projectLocationInput) projectLocationInput.value = projectLocationValue;
         if (descriptionInput) descriptionInput.value = project.description || '';
+        if (holdReasonInput) holdReasonInput.value = project.hold_reason || '';
 
         const editImagePreview = document.getElementById('editProjectImagePreview');
         const editImagePreviewImg = editImagePreview ? editImagePreview.querySelector('img') : null;
@@ -3179,12 +3266,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startDateInput) startDateInput.value = project.start_date ? project.start_date.split('T')[0] : '';
         if (targetEndDateInput) targetEndDateInput.value = project.target_end_date ? project.target_end_date.split('T')[0] : '';
         if (actualEndDateInput) actualEndDateInput.value = project.actual_end_date ? project.actual_end_date.split('T')[0] : '';
-        if (timeInInput) timeInInput.value = project.time_in || '';
-        if (timeOutInput) timeOutInput.value = project.time_out || '';
         if (supervisorSelect) supervisorSelect.value = supervisorId || '';
         if (statusSelect) {
+            statusSelect.disabled = false;
             Array.from(statusSelect.options).forEach(function(option) {
-                option.disabled = false;
+                option.disabled = !allowedTransitions.includes(option.value);
             });
 
             const helpText = document.getElementById('editStatusHelpText');
@@ -3194,36 +3280,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (currentStatus === 'archived') {
                 statusSelect.value = 'planning';
-                Array.from(statusSelect.options).forEach(function(option) {
-                    option.disabled = true;
-                });
+                Array.from(statusSelect.options).forEach(function(option) { option.disabled = true; });
                 statusSelect.disabled = true;
                 if (helpText) helpText.textContent = 'Archived projects are read-only and cannot be edited.';
             } else if (currentStatus === 'completed') {
-                Array.from(statusSelect.options).forEach(function(option) {
-                    if (option.value !== 'completed') {
-                        option.disabled = true;
-                    }
-                });
                 statusSelect.value = 'completed';
                 if (helpText) helpText.textContent = 'This project is already completed. Only the completion record can be updated.';
             } else if (currentStatus === 'ongoing') {
-                Array.from(statusSelect.options).forEach(function(option) {
-                    if (option.value === 'planning') {
-                        option.disabled = true;
-                    }
-                });
                 statusSelect.value = 'ongoing';
                 if (helpText) helpText.textContent = 'Projects in progress can remain in progress or be marked on hold/completed.';
             } else {
-                Array.from(statusSelect.options).forEach(function(option) {
-                    if (option.value === 'planning') {
-                        option.disabled = false;
-                    }
-                });
-                statusSelect.value = currentStatus || 'planning';
-                if (helpText) helpText.textContent = 'Planning projects can move forward to in progress. Completion is only allowed after the project is already in progress.';
+                statusSelect.value = currentStatus === 'on_hold' ? 'on_hold' : 'planning';
+                if (helpText) helpText.textContent = currentStatus === 'on_hold'
+                    ? 'On-hold projects can remain on hold or return to planning.'
+                    : 'Planning projects can move forward to in progress. Completion is only allowed after the project is already in progress.';
             }
+
+            const updateHoldReasonVisibility = function () {
+                const isOnHold = statusSelect.value === 'on_hold';
+                holdReasonGroup?.classList.toggle('d-none', !isOnHold);
+                if (holdReasonInput) holdReasonInput.required = isOnHold;
+            };
+            statusSelect.addEventListener('change', updateHoldReasonVisibility);
+            updateHoldReasonVisibility();
         }
         if (modalTitle) modalTitle.textContent = 'Edit Project';
 
@@ -3251,6 +3330,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const sideMaterials = document.getElementById('sideMaterials');
         const sideAttendance = document.getElementById('sideAttendance');
         const sideDaysLeft = document.getElementById('sideDaysLeft');
+        const sideStatusHistory = document.getElementById('sideStatusHistory');
+        const sideStatusHistoryToggle = document.getElementById('sideStatusHistoryToggle');
         const sideEditProjectBtn = document.getElementById('sideEditProjectBtn');
         const sideArchiveForm = document.getElementById('sideArchiveForm');
         const sideDeleteForm = document.getElementById('sideDeleteForm');
@@ -3260,6 +3341,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const supervisorId = btn.getAttribute('data-supervisor-id');
         const clientName = btn.getAttribute('data-client-name');
         const status = btn.getAttribute('data-status');
+        const statusLabel = btn.getAttribute('data-status-label');
+        const statusClass = btn.getAttribute('data-status-class');
         const startDate = btn.getAttribute('data-start-date');
         const targetEndDate = btn.getAttribute('data-target-end-date');
         const daysLeft = btn.getAttribute('data-days-left');
@@ -3287,31 +3370,48 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sideMaterials) sideMaterials.textContent = materials ?? '0';
         if (sideAttendance) sideAttendance.textContent = attendance ?? '0';
         if (sideDaysLeft) sideDaysLeft.textContent = daysLeft ?? '0';
+
+        if (sideStatusHistory) {
+            const statusHistory = Array.isArray(project.status_history) ? project.status_history : [];
+            const escapeHistoryText = function (value) {
+                return String(value ?? '').replace(/[&<>'"]/g, function (character) {
+                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character];
+                });
+            };
+            const statusLabels = {
+                planning: 'Planning',
+                ongoing: 'In Progress',
+                completed: 'Completed',
+                on_hold: 'On Hold',
+                archived: 'Archived'
+            };
+            sideStatusHistory.innerHTML = statusHistory.length
+                ? statusHistory.map(function (entry) {
+                    const fromLabel = entry.from_status ? (statusLabels[entry.from_status] || escapeHistoryText(entry.from_status)) : 'Created';
+                    const toLabel = statusLabels[entry.to_status] || escapeHistoryText(entry.to_status) || 'Unknown';
+                    const userName = escapeHistoryText(entry.user?.name || 'System');
+                    const changedAt = escapeHistoryText(entry.created_at ? new Date(entry.created_at).toLocaleString() : 'Unknown time');
+                    return '<div class="sidebar-history-item">'
+                        + '<div class="sidebar-history-transition">' + fromLabel + ' &rarr; ' + toLabel + '</div>'
+                        + '<div class="sidebar-history-meta">' + userName + ' &middot; ' + changedAt + '</div>'
+                        + (entry.reason ? '<div class="sidebar-history-reason">Reason: ' + escapeHistoryText(entry.reason) + '</div>' : '')
+                        + '</div>';
+                }).join('')
+                : '<div class="small text-muted">No status changes recorded yet.</div>';
+        }
+            if (sideStatusHistory && sideStatusHistoryToggle) {
+                sideStatusHistory.classList.remove('is-expanded');
+                sideStatusHistory.setAttribute('aria-hidden', 'true');
+                sideStatusHistoryToggle.setAttribute('aria-expanded', 'false');
+            }
         if (sideProgressPctText) sideProgressPctText.textContent = pct + '%';
         if (sideProgressBarFill) sideProgressBarFill.style.width = pct + '%';
 
         const normalizedSidebarStatus = String(status || project.status || 'planning').toLowerCase();
 
         if (sideProjectStatus) {
-            if (normalizedSidebarStatus === 'ongoing' || normalizedSidebarStatus === 'in_progress' || normalizedSidebarStatus === 'inprogress' || normalizedSidebarStatus === 'active') {
-                sideProjectStatus.textContent = 'In Progress';
-                sideProjectStatus.className = 'status-pill in-progress';
-            } else if (normalizedSidebarStatus === 'on_hold' || normalizedSidebarStatus === 'pending') {
-                sideProjectStatus.textContent = 'On Hold';
-                sideProjectStatus.className = 'status-pill on-hold';
-            } else if (normalizedSidebarStatus === 'planning' || normalizedSidebarStatus === 'not_started' || normalizedSidebarStatus === 'paused' || normalizedSidebarStatus === 'delayed') {
-                sideProjectStatus.textContent = 'Planning';
-                sideProjectStatus.className = 'status-pill planning';
-            } else if (normalizedSidebarStatus === 'completed' || normalizedSidebarStatus === 'complete' || normalizedSidebarStatus === 'finished') {
-                sideProjectStatus.textContent = 'Completed';
-                sideProjectStatus.className = 'status-pill completed';
-            } else if (normalizedSidebarStatus === 'archived') {
-                sideProjectStatus.textContent = 'Archived';
-                sideProjectStatus.className = 'status-pill completed';
-            } else {
-                sideProjectStatus.textContent = 'Planning';
-                sideProjectStatus.className = 'status-pill completed';
-            }
+            sideProjectStatus.textContent = statusLabel || 'Planning';
+            sideProjectStatus.className = 'status-pill ' + (statusClass || 'planning');
         }
 
         if (sideEditProjectBtn) {
@@ -3328,14 +3428,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (sideArchiveForm) sideArchiveForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline-flex';
         if (sideDeleteForm) sideDeleteForm.style.display = normalizedSidebarStatus === 'archived' ? 'none' : 'inline-flex';
-        if (sideArchiveForm) {
-            const archiveAction = sideArchiveForm.getAttribute('action');
-            sideArchiveForm.setAttribute('action', archiveAction.replace('__PROJECT_ID__', project.project_id));
-        }
-        if (sideDeleteForm) {
-            const deleteAction = sideDeleteForm.getAttribute('action');
-            sideDeleteForm.setAttribute('action', deleteAction.replace('__PROJECT_ID__', project.project_id));
-        }
+        if (sideArchiveForm) sideArchiveForm.setAttribute('action', buildAdminProjectsUrl(project.project_id) + '/archive');
+        if (sideDeleteForm) sideDeleteForm.setAttribute('action', buildAdminProjectsUrl(project.project_id));
 
         if (sidebar) {
             sidebar.classList.remove('is-refreshing');
@@ -3372,6 +3466,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const sideProgressBarFill = document.getElementById('sideProgressBarFill');
     const sideDaysLeft = document.getElementById('sideDaysLeft');
     const sideEditProjectBtn = document.getElementById('sideEditProjectBtn');
+
+    const sideStatusHistoryToggle = document.getElementById('sideStatusHistoryToggle');
+    const sideStatusHistory = document.getElementById('sideStatusHistory');
+    if (sideStatusHistoryToggle && sideStatusHistory) {
+        sideStatusHistoryToggle.addEventListener('click', function () {
+            const isExpanded = sideStatusHistoryToggle.getAttribute('aria-expanded') === 'true';
+            sideStatusHistoryToggle.setAttribute('aria-expanded', String(!isExpanded));
+            sideStatusHistory.setAttribute('aria-hidden', String(isExpanded));
+            sideStatusHistory.classList.toggle('is-expanded', !isExpanded);
+        });
+    }
 
     if (closeBtn && sidebar) {
         closeBtn.addEventListener('click', closeProjectDetailsSidebar);

@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
     $user = Auth::user();
 
     return match ($user->role) {
-        'engineer' => redirect()->route('admin.dashboard'),
+        'engineer', 'admin', 'administrator' => redirect()->route('admin.dashboard'),
         'supervisor' => redirect()->route('supervisor.dashboard'),
         'client' => redirect()->route('client.dashboard'),
         default => abort(403, 'Unauthorized role assignment.'),
@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
-Route::middleware(['auth', 'role:engineer'])->group(function () {
+Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
@@ -46,6 +46,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::get('/admin/reports/data', [AdminDashboardController::class, 'reportsData'])->name('admin.reports.data');
     Route::get('/admin/reports/{id}/details', [AdminDashboardController::class, 'reportDetails'])->name('admin.reports.details');
     Route::get('/admin/reports/{id}/download-pdf', [AdminDashboardController::class, 'downloadReportPdf'])->name('admin.reports.downloadPdf');
+    Route::get('/admin/reports/{project}/images-pdf', [AdminDashboardController::class, 'downloadProjectImagesPdf'])->name('admin.reports.imagesPdf');
     Route::get('/admin/phases', [ProjectController::class, 'phaseManagement'])->name('admin.phases');
     Route::get('/admin/phases/export/csv', [PhasesExportController::class, 'exportCsv'])->name('admin.phases.export.csv');
     Route::get('/admin/phases/export/pdf', [PhasesExportController::class, 'exportPdf'])->name('admin.phases.export.pdf');
@@ -71,6 +72,12 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::post('/admin/inventory/requests/{materialRequest}/approve', [AdminDashboardController::class, 'approveMaterialRequest'])->name('admin.inventory.requests.approve');
     Route::post('/admin/inventory/requests/{materialRequest}/reject', [AdminDashboardController::class, 'rejectMaterialRequest'])->name('admin.inventory.requests.reject');
     Route::delete('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'destroyMaterial'])->name('admin.inventory.materials.destroy');
+    Route::post('/admin/inventory/tools', [AdminDashboardController::class, 'storeTool'])->name('admin.inventory.tools.store');
+    Route::post('/admin/inventory/tools/{tool}/issue', [AdminDashboardController::class, 'issueTool'])->name('admin.inventory.tools.issue');
+    Route::post('/admin/inventory/tools/{tool}/return', [AdminDashboardController::class, 'returnTool'])->name('admin.inventory.tools.return');
+    Route::post('/admin/inventory/tools/{tool}/lost', [AdminDashboardController::class, 'markLost'])->name('admin.inventory.tools.lost');
+    Route::delete('/admin/inventory/tools/{tool}', [AdminDashboardController::class, 'deleteTool'])->name('admin.inventory.tools.destroy');
+
     Route::get('/admin/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
     Route::put('/admin/alerts/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.alerts.update-settings');
     Route::post('/admin/notifications/{id}/mark-read', [AdminDashboardController::class, 'markNotificationRead'])->name('admin.notifications.markRead');
@@ -79,6 +86,7 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
 
     Route::get('/admin/profile', [AdminDashboardController::class, 'profile'])->name('admin.profile');
     Route::put('/admin/profile', [AdminDashboardController::class, 'updateProfile'])->name('admin.profile.update');
+    Route::post('/admin/profile/photo', [AdminDashboardController::class, 'updateProfilePhoto'])->name('admin.profile.photo');
     Route::put('/admin/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::get('/admin/project-archives', [ProjectArchiveController::class, 'index'])->name('admin.project-archives.index');
@@ -144,9 +152,11 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/reports/{id}', [ReportController::class, 'show'])->name('supervisor.reports.show');
     Route::post('/supervisor/reports/submit', [ReportController::class, 'submitReport'])->name('supervisor.reports.submit');
+    Route::post('/supervisor/reports/{id}/update', [ReportController::class, 'updateSupervisorReport'])->name('supervisor.reports.update');
 
     Route::get('/supervisor/profile', [SupervisorController::class, 'profile'])->name('supervisor.profile');
     Route::put('/supervisor/profile', [SupervisorController::class, 'updateProfile'])->name('supervisor.profile.update');
+    Route::post('/supervisor/profile/photo', [SupervisorController::class, 'updateProfilePhoto'])->name('supervisor.profile.photo');
     Route::put('/supervisor/profile/password', [SupervisorController::class, 'updatePassword'])->name('supervisor.profile.password');
 
     Route::get('/supervisor/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
@@ -168,6 +178,13 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
         ->name('supervisor.attendance.today');
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
+
+    Route::post('/supervisor/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
+        ->name('admin.attendance.schedules.store');
+    Route::put('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])
+        ->name('admin.attendance.schedules.update');
+    Route::delete('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
+        ->name('admin.attendance.schedules.destroy');
     Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
         ->name('supervisor.attendance.today');
 
@@ -189,9 +206,11 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/myprojects', [ClientController::class, 'myProjects'])->name('client.myprojects');
     Route::get('/client/projects/{project}', [ClientController::class, 'projectDetails'])->name('client.project.show');
     Route::get('/client/timeline', [TimelineController::class, 'clientTimeline'])->name('client.timeline');
+    Route::get('/client/timeline/data/{project}', [TimelineController::class, 'clientTimelineData'])->name('client.timeline.data');
     Route::get('/client/milestones', [TimelineController::class, 'clientTimeline'])->name('client.milestones');
     Route::get('/client/reports', [ClientController::class, 'updates'])->name('client.reports');
     Route::get('/client/reports/{id}/download-pdf', [ClientController::class, 'downloadReportPdf'])->name('client.reports.downloadPdf');
+    Route::get('/client/reports/{project}/images-pdf', [ClientController::class, 'downloadProjectImagesPdf'])->name('client.reports.imagesPdf');
     Route::get('/client/updates', [ClientController::class, 'updates'])->name('client.updates');
     Route::get('/client/notifications', [ClientController::class, 'notifications'])->name('client.notifications');
     Route::post('/client/notifications/{id}/mark-read', [ClientController::class, 'markNotificationRead'])->name('client.notifications.markRead');

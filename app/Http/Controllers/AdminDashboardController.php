@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AdminNotification;
 use App\Models\Attendance;
+use App\Models\AttendanceScheduleRule;
 use App\Models\ConstructionPhase;
 use App\Models\Material;
 use App\Models\MaterialDelivery;
@@ -12,6 +13,9 @@ use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\Report;
+use App\Models\Tool;
+use App\Models\ToolDeduction;
+use App\Models\ToolLoan;
 use App\Models\User;
 use App\Models\Worker;
 use App\Services\NotificationService;
@@ -23,9 +27,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfImageService;
 
 class AdminDashboardController extends Controller
 {
@@ -59,7 +67,7 @@ class AdminDashboardController extends Controller
             )
             : 0;
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'active_projects' => $activeProjectsCount,
 
             'projects_change_label' => $totalProjectsCount.
@@ -93,7 +101,7 @@ class AdminDashboardController extends Controller
 
         $activeProjects = collect();
 
-        $overallProgress = [
+        $overallProgress = $predefinedMaterialCategories = [
             'percentage' => 0,
             'on_track' => 0,
             'delayed' => 0,
@@ -220,7 +228,7 @@ class AdminDashboardController extends Controller
 
         $today = Carbon::today();
 
-        $attendance = [
+        $attendance = $predefinedMaterialCategories = [
             'present' => 0,
             'absent' => 0,
             'late' => 0,
@@ -246,7 +254,7 @@ class AdminDashboardController extends Controller
             $totalExpected =
                 $present + $absent + $late;
 
-            $attendance = [
+            $attendance = $predefinedMaterialCategories = [
                 'present' => $present,
                 'absent' => $absent,
                 'late' => $late,
@@ -281,8 +289,8 @@ class AdminDashboardController extends Controller
      */
     private function calculateMonthlyBurnRate(): array
     {
-        $months = [];
-        $bars = [];
+        $months = $predefinedMaterialCategories = [];
+        $bars = $predefinedMaterialCategories = [];
 
         for ($i = 4; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
@@ -291,7 +299,7 @@ class AdminDashboardController extends Controller
 
             $monthlyCost = rand(15, 85);
 
-            $bars[] = [
+            $bars[] = $predefinedMaterialCategories = [
                 'percentage' => $monthlyCost,
                 'is_active' => $i === 0,
             ];
@@ -321,7 +329,7 @@ class AdminDashboardController extends Controller
         $phases = collect();
         $milestones = collect();
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'phases_done' => 0,
             'phases_processing' => 0,
             'phases_upcoming' => 0,
@@ -356,8 +364,7 @@ class AdminDashboardController extends Controller
                 $selectedProject->id =
                     $selectedProject->project_id;
 
-                $selectedProject->name =
-                    $selectedProject->project_name;
+                $selectedProject->setAttribute('name', $selectedProject->project_name);
 
                 $phases = $selectedProject->phases
                     ->map(function ($phase) {
@@ -398,7 +405,7 @@ class AdminDashboardController extends Controller
                         ];
                     });
 
-                $stats = [
+                $stats = $predefinedMaterialCategories = [
                     'phases_done' => $selectedProject->phases
                         ->where(
                             'status',
@@ -475,7 +482,7 @@ class AdminDashboardController extends Controller
         $usageCategory = trim((string) $request->input('usage_category', ''));
         $usageStatus = trim((string) $request->input('usage_status', ''));
         $activeView = $request->input('view', 'inventory');
-        $activeView = in_array($activeView, ['inventory', 'usage', 'requests'], true) ? $activeView : 'inventory';
+        $activeView = in_array($activeView, ['inventory', 'usage', 'expenses', 'requests', 'tools'], true) ? $activeView : 'inventory';
         $searchForUsage = $search;
 
         $query = Material::query();
@@ -574,7 +581,7 @@ class AdminDashboardController extends Controller
         $availableMaterials = Material::where('current_stock', '>', 0, 'and')->count('*');
         $lowStockAlerts = Material::whereColumn('current_stock', '<=', 'minimum_stock_level', 'and')->where('current_stock', '>', 0, 'and')->count('*');
         $outOfStock = Material::where('current_stock', '<=', 0, 'and')->count('*');
-        $metrics = [
+        $metrics = $predefinedMaterialCategories = [
             'total_materials' => $totalMaterials,
             'available_materials' => $availableMaterials,
             'low_stock_alerts' => $lowStockAlerts,
@@ -618,12 +625,28 @@ class AdminDashboardController extends Controller
 
         $categories = Material::query()->distinct()->pluck('category')->filter()->sort()->values();
 
+        $predefinedMaterialCategories = [
+            'Cement & Concrete',
+            'Steel & Rebar',
+            'Lumber & Wood',
+            'Masonry & Blocks',
+            'Electrical',
+            'Plumbing',
+            'Paint & Finishing',
+            'Roofing',
+            'Aggregates & Sand',
+            'Structural Steel',
+            'Hardware & Fasteners',
+            'Safety Equipment',
+            'General',
+        ];
+
         $projects = Project::query()
             ->orderBy('project_name', 'asc')
             ->get(['project_id', 'project_name']);
 
         $materialRequests = collect();
-        $requestStats = [
+        $requestStats = $predefinedMaterialCategories = [
             'pending' => 0,
             'approved' => 0,
             'rejected' => 0,
@@ -648,7 +671,8 @@ class AdminDashboardController extends Controller
                         $projectQuery->where('project_name', 'like', '%'.$search.'%');
                     })
                     ->orWhereHas('requester', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', '%'.$search.'%');
+                        $userQuery->where('first_name', 'like', '%'.$search.'%')
+                            ->orWhere('last_name', 'like', '%'.$search.'%');
                     });
                 });
             }
@@ -657,14 +681,108 @@ class AdminDashboardController extends Controller
                 ->paginate(20)
                 ->appends($request->only(['search', 'request_status', 'view', 'category', 'stock_status']));
 
-            $requestStats = [
+            $requestStats = $predefinedMaterialCategories = [
                 'pending' => MaterialRequest::where('status', 'pending')->count(),
                 'approved' => MaterialRequest::where('status', 'approved')->count(),
                 'rejected' => MaterialRequest::where('status', 'rejected')->count(),
             ];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus'));
+        $toolLoans = collect();
+        $toolDeductions = collect();
+        $toolMetrics = $predefinedMaterialCategories = [
+            'total_tools' => 0,
+            'available' => 0,
+            'in_use' => 0,
+            'lost' => 0,
+        ];
+        $toolsSearch = $search;
+        $toolCategory = $request->input('tool_category', '');
+        $toolStatus = $request->input('tool_status', '');
+
+        if (Schema::hasTable('tools')) {
+            $toolsQuery = Tool::query()->with(['currentBorrower']);
+
+            if ($toolsSearch !== '') {
+                $toolsQuery->where(function ($q) use ($toolsSearch) {
+                    $q->where('name', 'like', '%'.$toolsSearch.'%')
+                        ->orWhere('tool_code', 'like', '%'.$toolsSearch.'%')
+                        ->orWhere('category', 'like', '%'.$toolsSearch.'%');
+                });
+            }
+
+            if ($toolCategory !== '') {
+                $toolsQuery->where('category', $toolCategory);
+            }
+
+            if ($toolStatus !== '' && in_array($toolStatus, ['available', 'in_use', 'lost', 'retired'], true)) {
+                $toolsQuery->where('status', $toolStatus);
+            }
+
+            $tools = $toolsQuery
+                ->orderByDesc('updated_at')
+                ->orderBy('name', 'asc')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $toolMetrics = $predefinedMaterialCategories = [
+                'total_tools' => Tool::count('*'),
+                'available' => Tool::where('status', 'available')->count('*'),
+                'in_use' => Tool::where('status', 'in_use')->count('*'),
+                'lost' => Tool::where('status', 'lost')->count('*'),
+            ];
+
+            $activeToolLoans = ToolLoan::query()
+                ->with(['tool', 'worker', 'project'])
+                ->where('status', 'borrowed')
+                ->orderByDesc('borrowed_at')
+                ->get();
+
+            $toolLoanHistory = ToolLoan::query()
+                ->with(['tool', 'worker'])
+                ->where('status', '!=', 'borrowed')
+                ->orderByDesc('returned_at')
+                ->orderByDesc('updated_at')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $allToolDeductions = ToolDeduction::query()
+                ->with(['tool', 'worker', 'approvedBy', 'loan'])
+                ->orderByDesc('created_at')
+                ->paginate(10)
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+
+            $toolCategories = Tool::query()->distinct()->pluck('category')->filter()->sort()->values();
+
+            $predefinedToolCategories = [
+                'Masonry & Concrete',
+                'Electrical',
+                'Plumbing',
+                'Carpentry',
+                'Painting & Finishing',
+                'Welding & Metal',
+                'Earthmoving & Excavation',
+                'Lifting & Rigging',
+                'Measuring & Layout',
+                'Safety & PPE',
+                'Power Tools',
+                'Hand Tools',
+                'Surveying',
+                'Formwork & Scaffolding',
+                'HVAC',
+                'General Purpose',
+            ];
+        } else {
+            $tools = collect();
+            $activeToolLoans = collect();
+            $toolLoanHistory = collect();
+            $allToolDeductions = collect();
+            $toolCategories = collect();
+            $predefinedToolCategories = [];
+            $predefinedMaterialCategories = [];
+        }
+
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**
@@ -732,7 +850,7 @@ class AdminDashboardController extends Controller
         $query = $this->buildReportQuery($request);
         $reports = $query->orderByDesc('created_at')->paginate(10)->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search']));
 
-        $payload = [
+        $payload = $predefinedMaterialCategories = [
             'reports' => $reports->getCollection()->map(function (Report $report) {
                 return [
                     'id' => $report->report_id,
@@ -759,7 +877,6 @@ class AdminDashboardController extends Controller
                     'approval_remarks' => $report->approval_remarks,
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                    'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                     'site_images' => array_values(array_filter(array_map(function ($image) {
                         return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                     }, (array) ($report->site_images ?? [])))),
@@ -800,21 +917,21 @@ class AdminDashboardController extends Controller
         $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy'])->findOrFail($reportId);
 
         $materialUsage = [];
-        if (Schema::hasTable('material_usages')) {
-            $materialUsage = DB::table('material_usages')->where('project_id', $report->project_id)->where('phase_id', $report->phase_id)->get();
-        }
 
         $attendanceSummary = null;
         try {
-            $attendanceRows = DB::table('attendance_logs')
+            $attendanceSummary = DB::table('attendance_logs')
                 ->where('project_id', $report->project_id)
                 ->whereDate('log_date', $report->report_date)
-                ->get();
+                ->selectRaw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present")
+                ->selectRaw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent")
+                ->selectRaw('COUNT(*) as total')
+                ->first();
 
             $attendanceSummary = [
-                'present' => $attendanceRows->where('status', 'present')->count(),
-                'absent' => $attendanceRows->where('status', 'absent')->count(),
-                'total' => $attendanceRows->count(),
+                'present' => (int) ($attendanceSummary->present ?? 0),
+                'absent' => (int) ($attendanceSummary->absent ?? 0),
+                'total' => (int) ($attendanceSummary->total ?? 0),
             ];
         } catch (\Throwable $e) {
             $attendanceSummary = null;
@@ -837,15 +954,16 @@ class AdminDashboardController extends Controller
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->admin_site_images ?? [])))),
+                'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_explanation' => $report->admin_explanation,
                 'is_published_to_client' => (bool) $report->is_published_to_client,
                 'approval_remarks' => $report->approval_remarks,
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                'completion_percentage' => round((float) ($report->accomplishment_percentage ?? optional($report->phase)->completion_percentage ?? 0), 2),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
                     return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
+                'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'material_usage' => $materialUsage,
                 'attendance_summary' => $attendanceSummary,
             ],
@@ -854,13 +972,64 @@ class AdminDashboardController extends Controller
 
     public function downloadReportPdf($reportId)
     {
-        $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy'])->findOrFail($reportId);
-        $pdfContents = $this->buildSimplePdf($report);
+        $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy', 'phase.milestones'])->findOrFail($reportId);
+        session_write_close();
 
-        return response($pdfContents, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="report-'.$report->report_id.'.pdf"',
-        ]);
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = collect((array) ($report->admin_site_images ?: $report->site_images ?: []))
+                ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                ->filter()
+                ->values();
+            $pdf = Pdf::loadView('admin.reports.pdf', compact('report', 'reportPdfImages'));
+            $fileName = 'project-progress-report-' . Str::slug($report->project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Admin PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
+    }
+
+    public function downloadProjectImagesPdf(Project $project)
+    {
+        $project->load(['reports' => function ($q) {
+            $q->with(['phase', 'submittedBy'])->orderByDesc('report_date');
+        }]);
+
+        $reports = $project->reports;
+        session_write_close();
+
+        try {
+            $pdfImageService = app(PdfImageService::class);
+            if (! $pdfImageService->canRenderImages()) {
+                return response('PDF image export requires the PHP GD extension. Restart Apache after enabling GD in php.ini.', 503);
+            }
+            $reportPdfImages = $reports->mapWithKeys(function ($report) use ($pdfImageService) {
+                $paths = collect(array_merge(
+                    (array) ($report->admin_site_images ?? []),
+                    (array) ($report->site_images ?? [])
+                ))->map(function ($path) {
+                    $path = ltrim((string) $path, '/');
+                    return str_starts_with($path, 'storage/') ? substr($path, 8) : $path;
+                })->filter()->unique()->values()->all();
+
+                return [$report->report_id => collect($paths)
+                    ->map(fn ($path) => $pdfImageService->toDataUri($path))
+                    ->filter()
+                    ->values()];
+            });
+            $pdf = Pdf::loadView('admin.reports.images-pdf', compact('project', 'reports', 'reportPdfImages'));
+            $fileName = 'project-report-images-' . Str::slug($project->project_name) . '.pdf';
+
+            return $pdf->download($fileName);
+        } catch (\Throwable $e) {
+            Log::error('Admin images PDF export failed: ' . $e->getMessage());
+            abort(500, 'Unable to generate PDF. Please try again.');
+        }
     }
 
     private function buildReportQuery(Request $request)
@@ -978,7 +1147,7 @@ class AdminDashboardController extends Controller
 
     private function buildSimplePdf(Report $report): string
     {
-        $lines = [
+        $lines = $predefinedMaterialCategories = [
             'D&G Construction Management System',
             'Accomplishment Report',
             '',
@@ -1004,7 +1173,7 @@ class AdminDashboardController extends Controller
         $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
         $stream = "BT\n/F1 10 Tf\n50 760 Td\n($escaped) Tj\nET";
 
-        $objects = [];
+        $objects = $predefinedMaterialCategories = [];
         $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
         $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
         $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
@@ -1012,7 +1181,7 @@ class AdminDashboardController extends Controller
         $objects[] = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
 
         $pdf = "%PDF-1.4\n";
-        $offsets = [0];
+        $offsets = $predefinedMaterialCategories = [0];
         foreach ($objects as $object) {
             $offsets[] = strlen($pdf);
             $pdf .= $object;
@@ -1043,7 +1212,11 @@ class AdminDashboardController extends Controller
             ? Project::query()->orderBy('project_name', 'asc')->get()
             : collect();
 
-        $filters = [
+        $scheduleRules = Schema::hasTable('attendance_schedule_rules')
+            ? AttendanceScheduleRule::query()->orderBy('role', 'asc')->get()
+            : collect();
+
+        $filters = $predefinedMaterialCategories = [
             'date' => $request->input('date', Carbon::today()->toDateString()),
             'project_id' => $request->input('project_id'),
             'status' => $request->input('status'),
@@ -1054,7 +1227,7 @@ class AdminDashboardController extends Controller
         if (! Schema::hasTable('attendance_logs')) {
             $logs = collect();
 
-            $stats = [
+            $stats = $predefinedMaterialCategories = [
                 'total' => 0,
                 'present' => 0,
                 'late' => 0,
@@ -1068,7 +1241,7 @@ class AdminDashboardController extends Controller
 
             return view(
                 'admin.attendance',
-                compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues')
+                compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues', 'scheduleRules')
             );
         }
 
@@ -1168,7 +1341,7 @@ class AdminDashboardController extends Controller
             }
         };
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'total' => $logs->count(),
 
             'present' => $logs
@@ -1218,7 +1391,7 @@ class AdminDashboardController extends Controller
 
         return view(
             'admin.attendance',
-            compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues')
+            compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues', 'scheduleRules')
         );
     }
 
@@ -1334,6 +1507,62 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Worker schedule updated.');
     }
 
+    public function storeAttendanceSchedule(Request $request)
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+            'break_start_time' => ['nullable', 'date_format:H:i'],
+            'break_end_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        if (! Schema::hasTable('attendance_schedule_rules')) {
+            return back()->with('error', 'Attendance schedule table is not available yet.');
+        }
+
+        AttendanceScheduleRule::updateOrCreate(
+            ['role' => strtolower($validated['role'])],
+            [
+                'start_time' => $validated['start_time'].':00',
+                'end_time' => $validated['end_time'].':00',
+                'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
+                'break_end_time' => ! empty($validated['break_end_time']) ? $validated['break_end_time'].':00' : null,
+                'is_active' => true,
+            ]
+        );
+
+        return back()->with('success', 'Attendance schedule saved successfully.');
+    }
+
+    public function updateAttendanceSchedule(Request $request, AttendanceScheduleRule $rule)
+    {
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+            'break_start_time' => ['nullable', 'date_format:H:i'],
+            'break_end_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $rule->update([
+            'role' => strtolower($validated['role']),
+            'start_time' => $validated['start_time'].':00',
+            'end_time' => $validated['end_time'].':00',
+            'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
+            'break_end_time' => ! empty($validated['break_end_time']) ? $validated['break_end_time'].':00' : null,
+        ]);
+
+        return back()->with('success', 'Attendance schedule updated successfully.');
+    }
+
+    public function destroyAttendanceSchedule(AttendanceScheduleRule $rule)
+    {
+        $rule->delete();
+
+        return back()->with('success', 'Attendance schedule deleted successfully.');
+    }
+
     /**
      * Display system alerts / admin notifications.
      */
@@ -1348,7 +1577,7 @@ class AdminDashboardController extends Controller
                 'query' => $request->query(),
             ]);
 
-            $summary = [
+            $summary = $predefinedMaterialCategories = [
                 'total_count' => 0,
                 'unread_count' => 0,
                 'sent_this_month' => 0,
@@ -1370,7 +1599,7 @@ class AdminDashboardController extends Controller
             ->whereIn('role', ['engineer', 'admin', 'administrator'])
             ->count();
 
-        $summary = [
+        $summary = $predefinedMaterialCategories = [
             'total_count' => $totalCount,
             'unread_count' => $unreadCount,
             'sent_this_month' => $sentThisMonth,
@@ -1508,8 +1737,8 @@ class AdminDashboardController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255', Rule::unique('materials', 'name')],
                 'category' => ['nullable', 'string', 'max:255'],
+                'custom_category' => ['nullable', 'string', 'max:255'],
                 'unit' => ['required', 'string', 'max:50'],
-                'current_stock' => ['required', 'numeric', 'min:0', 'max:1000000000'],
                 'minimum_stock_level' => ['required', 'numeric', 'min:0', 'max:1000000000'],
                 'supplier' => ['nullable', 'string', 'max:255'],
                 'description' => ['nullable', 'string'],
@@ -1523,15 +1752,23 @@ class AdminDashboardController extends Controller
 
             $validated['name'] = trim((string) ($validated['name'] ?? ''));
             $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
-            $validated['unit'] = trim((string) ($validated['unit'] ?? ''));
-            $validated['supplier'] = trim((string) ($validated['supplier'] ?? '')) ?: null;
-            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
+            $validated['custom_category'] = trim((string) ($validated['custom_category'] ?? '')) ?: null;
 
-            Material::create($validated);
+            if ($validated['category'] === 'Other') {
+                $validated['category'] = $validated['custom_category'] ?: 'General';
+            }
+
+            $validated['unit'] = trim((string) ($validated['unit'] ?? '')) ?: null;
+            Material::create([
+                'name' => $validated['name'],
+                'category' => $validated['category'],
+                'unit' => $validated['unit'],
+                'minimum_stock_level' => $validated['minimum_stock_level'],
+                'supplier' => $validated['supplier'] ?? null,
+                'description' => $validated['description'] ?? null,
+            ]);
 
             return redirect()->back()->with('success', 'Material added successfully.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Unable to add material right now. Please try again.')->withInput();
         }
@@ -1757,7 +1994,7 @@ class AdminDashboardController extends Controller
 
         $requests = $query->paginate(20)->appends($request->only(['status', 'search']));
 
-        $stats = [
+        $stats = $predefinedMaterialCategories = [
             'pending' => MaterialRequest::where('status', 'pending')->count(),
             'approved' => MaterialRequest::where('status', 'approved')->count(),
             'rejected' => MaterialRequest::where('status', 'rejected')->count(),
@@ -1914,6 +2151,42 @@ class AdminDashboardController extends Controller
         return back()->with('success', 'Profile information updated successfully.');
     }
 
+    public function updateProfilePhoto(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!Schema::hasColumn('users', 'profile_photo')) {
+            return back()->with('error', 'Profile photo storage is not available yet.');
+        }
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+        ]);
+
+        $newPhotoPath = $validated['profile_photo']->storePublicly('profile-photos', 'public');
+        if (!$newPhotoPath) {
+            return back()->with('error', 'The profile photo could not be stored. Please try again.');
+        }
+
+        $oldPhotoPath = $user->profile_photo;
+        $user->profile_photo = $newPhotoPath;
+        $user->save();
+
+        if ($oldPhotoPath) {
+            Storage::disk('public')->delete($oldPhotoPath);
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile photo updated successfully.',
+                'photo_url' => asset('storage/' . ltrim($newPhotoPath, '/')),
+            ]);
+        }
+
+        return back()->with('success', 'Profile photo updated successfully.');
+    }
+
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
@@ -1937,4 +2210,262 @@ class AdminDashboardController extends Controller
 
         return back()->with('success', 'Password updated successfully.');
     }
+
+    public function storeTool(Request $request)
+    {
+        if (! Schema::hasTable('tools')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'tool_code' => ['required', 'string', 'max:50', Rule::unique('tools', 'tool_code')],
+                'name' => ['required', 'string', 'max:255'],
+                'category' => ['nullable', 'string', 'max:255'],
+                'custom_category' => ['nullable', 'string', 'max:255'],
+                'type' => ['nullable', 'in:tool,equipment'],
+                'unit' => ['nullable', 'string', 'max:50'],
+                'condition' => ['nullable', 'in:good,fair,poor'],
+                'purchase_date' => ['nullable', 'date'],
+                'purchase_price' => ['nullable', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string'],
+            ], [
+                'tool_code.required' => 'Tool code is required.',
+                'tool_code.unique' => 'A tool with this code already exists.',
+                'name.required' => 'Tool name is required.',
+                'purchase_price.min' => 'Purchase price cannot be negative.',
+            ]);
+
+            $validated['tool_code'] = trim((string) ($validated['tool_code'] ?? ''));
+            $validated['name'] = trim((string) ($validated['name'] ?? ''));
+            $validated['category'] = trim((string) ($validated['category'] ?? '')) ?: null;
+            $validated['custom_category'] = trim((string) ($validated['custom_category'] ?? '')) ?: null;
+
+            if ($validated['category'] === 'Other') {
+                $validated['category'] = $validated['custom_category'] ?: 'General Purpose';
+            }
+
+            $validated['unit'] = trim((string) ($validated['unit'] ?? '')) ?: null;
+            $validated['description'] = trim((string) ($validated['description'] ?? '')) ?: null;
+
+            Tool::create($validated);
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool added successfully.');
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', 'Unable to add tool right now. Please try again.')->withInput();
+        }
+    }
+
+    public function issueTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        if ($tool->status === 'lost' || $tool->status === 'retired') {
+            return back()->with('error', 'Cannot issue a tool that is lost or retired.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->exists();
+
+        if ($activeLoan) {
+            return back()->with('error', 'This tool is already borrowed.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'worker_id' => ['required', 'integer', 'exists:workers,worker_id'],
+                'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
+                'expected_return_date' => ['nullable', 'date'],
+                'condition_at_issue' => ['required', 'in:good,fair,poor'],
+                'notes' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'worker_id.required' => 'Please select a worker.',
+                'worker_id.exists' => 'The selected worker does not exist.',
+                'condition_at_issue.required' => 'Please select the condition at issue.',
+            ]);
+
+            DB::beginTransaction();
+
+            $tool->update([
+                'status' => 'in_use',
+                'current_borrower_worker_id' => (int) $validated['worker_id'],
+            ]);
+
+            ToolLoan::create([
+                'tool_id' => $tool->id,
+                'worker_id' => (int) $validated['worker_id'],
+                'project_id' => $validated['project_id'] ?? null,
+                'expected_return_date' => $validated['expected_return_date'] ?? null,
+                'condition_at_issue' => $validated['condition_at_issue'],
+                'notes' => trim((string) ($validated['notes'] ?? '')),
+                'status' => 'borrowed',
+                'borrowed_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool issued successfully.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to issue tool right now. Please try again.');
+        }
+    }
+
+    public function returnTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->orderByDesc('borrowed_at')
+            ->first();
+
+        if (! $activeLoan) {
+            return back()->with('error', 'No active loan found for this tool.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'condition_at_return' => ['required', 'in:good,fair,poor'],
+                'remarks' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'condition_at_return.required' => 'Please select the condition at return.',
+            ]);
+
+            DB::beginTransaction();
+
+            $activeLoan->update([
+                'status' => 'returned',
+                'returned_at' => now(),
+                'condition_at_return' => $validated['condition_at_return'],
+            ]);
+
+            $tool->update([
+                'status' => 'available',
+                'current_borrower_worker_id' => null,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool returned successfully.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to return tool right now. Please try again.');
+        }
+    }
+
+    public function markLost(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tool_loans') || ! Schema::hasTable('tool_deductions')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        $activeLoan = ToolLoan::where('tool_id', $tool->id)
+            ->where('status', 'borrowed')
+            ->orderByDesc('borrowed_at')
+            ->first();
+
+        if (! $activeLoan) {
+            return back()->with('error', 'No active borrowed loan found for this tool.');
+        }
+
+        try {
+            $validated = $request->validate([
+                'amount' => ['required', 'numeric', 'min:0.01'],
+                'reason' => ['required', 'in:lost,damaged_beyond_repair,stolen'],
+                'remarks' => ['nullable', 'string', 'max:1000'],
+            ], [
+                'amount.required' => 'Please enter a deduction amount.',
+                'amount.min' => 'Deduction amount must be greater than ₱0.00.',
+                'reason.required' => 'Please select a reason.',
+            ]);
+
+            $amount = (float) $validated['amount'];
+
+            if ($amount <= 0) {
+                return back()->withErrors(['amount' => 'Deduction amount must be greater than ₱0.00.'])->withInput();
+            }
+
+            DB::beginTransaction();
+
+            $activeLoan->update([
+                'status' => 'lost',
+            ]);
+
+            $tool->update([
+                'status' => 'lost',
+                'current_borrower_worker_id' => null,
+            ]);
+
+            ToolDeduction::create([
+                'tool_loan_id' => $activeLoan->id,
+                'tool_id' => $tool->id,
+                'worker_id' => $activeLoan->worker_id,
+                'amount' => $amount,
+                'reason' => $validated['reason'],
+                'remarks' => trim((string) ($validated['remarks'] ?? '')),
+                'status' => 'approved',
+                'approved_by' => Auth::user()->user_id,
+                'approved_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool marked as lost and deduction recorded.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to mark tool as lost. Please try again.');
+        }
+    }
+
+    public function deleteTool(Request $request, Tool $tool)
+    {
+        if (! Schema::hasTable('tools')) {
+            return back()->with('error', 'Tools module is not initialized yet.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            if ($tool->activeLoan()->exists()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Cannot delete a tool with an active borrowed loan.');
+            }
+
+            ToolDeduction::where('tool_id', $tool->id)->update(['tool_id' => null]);
+            $tool->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.inventory', ['view' => 'tools'])->with('success', 'Tool deleted successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->with('error', 'Unable to delete tool right now. Please try again.');
+        }
+    }
 }
+
+
+
+

@@ -808,13 +808,14 @@
                                         <th class="pb-3 border-0 text-center">Break Out</th>
                                         <th class="pb-3 border-0 text-center">Break In</th>
                                         <th class="pb-3 border-0 text-center">Time Out</th>
+                                        <th class="pb-3 border-0 text-center">OT</th>
                                         <th class="pb-3 border-0 text-center">Status Log</th>
                                     </tr>
                                 </thead>
 
                                 <tbody id="attendanceLogTableBody">
                                     <tr id="emptyRowPlaceholder">
-                                        <td colspan="7" class="text-center py-5 text-muted fst-italic">
+                                        <td colspan="8" class="text-center py-5 text-muted fst-italic">
                                             <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
                                             No personnel checked in yet during this session.
                                         </td>
@@ -854,6 +855,24 @@
                         <input type="text" id="regFirstName" class="form-control" required placeholder="e.g. Juan">
                     </div>
 
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Specific Time In</label>
+                            <input type="time" id="manualTimeInInput" class="form-control" step="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Specific Time Out</label>
+                            <input type="time" id="manualTimeOutInput" class="form-control" step="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Specific Break Out</label>
+                            <input type="time" id="manualBreakOutInput" class="form-control" step="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-muted">Specific Break In</label>
+                            <input type="time" id="manualBreakInInput" class="form-control" step="1">
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted">Last Name</label>
                         <input type="text" id="regLastName" class="form-control" required placeholder="e.g. Dela Cruz">
@@ -1012,6 +1031,10 @@
         const manualAttendanceModal = document.getElementById('manualAttendanceModal');
         const manualWorkerSelect = document.getElementById('manualWorkerSelect');
         const manualActionSelect = document.getElementById('manualActionSelect');
+        const manualTimeInInput = document.getElementById('manualTimeInInput');
+        const manualTimeOutInput = document.getElementById('manualTimeOutInput');
+        const manualBreakOutInput = document.getElementById('manualBreakOutInput');
+        const manualBreakInInput = document.getElementById('manualBreakInInput');
         const manualReasonInput = document.getElementById('manualReasonInput');
         const manualAttendanceStatus = document.getElementById('manualAttendanceStatus');
         const btnSaveManualAttendance = document.getElementById('btnSaveManualAttendance');
@@ -1099,6 +1122,27 @@
 
             return `${h}:${minute} ${ampm}`;
         }
+        function formatOvertimeLabel(minutes) {
+            const totalMinutes = Number(minutes || 0);
+
+            if (totalMinutes <= 0) {
+                return '—';
+            }
+
+            const hours = Math.floor(totalMinutes / 60);
+            const remainingMinutes = totalMinutes % 60;
+            const parts = [];
+
+            if (hours > 0) {
+                parts.push(`${hours}h`);
+            }
+
+            if (remainingMinutes > 0 || parts.length === 0) {
+                parts.push(`${remainingMinutes}m`);
+            }
+
+            return `OT ${parts.join(' ')}`;
+        }
 
         function localTodayDateString() {
             const now = new Date();
@@ -1130,7 +1174,7 @@
         function renderEmptyAttendanceRow() {
             attendanceLogTableBody.innerHTML = `
                 <tr id="emptyRowPlaceholder">
-                    <td colspan="7" class="text-center py-5 text-muted fst-italic">
+                    <td colspan="8" class="text-center py-5 text-muted fst-italic">
                         <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
                         No personnel checked in yet during this session.
                     </td>
@@ -1254,6 +1298,11 @@
 
                     <td class="py-3 text-center" data-label="Time Out">
                         ${formatTime(record.time_out)}
+                    </td>
+                    <td class="py-3 text-center" data-label="OT">
+                        <span class="status-pill status-pill-default">
+                            ${escapeHtml(record.overtime_label || formatOvertimeLabel(record.overtime_minutes))}
+                        </span>
                     </td>
 
                     <td class="py-3 text-center" data-label="Status Log">
@@ -1460,7 +1509,7 @@
                 if (!silent) {
                     attendanceLogTableBody.innerHTML = `
                         <tr>
-                            <td colspan="7" class="text-danger text-center py-5">
+                            <td colspan="8" class="text-danger text-center py-5">
                                 ${escapeHtml(error.message || 'Error loading attendance.')}
                             </td>
                         </tr>
@@ -1664,7 +1713,11 @@
                         action: action,
                         manual: true,
                         biometric_matched: false,
-                        remarks: reason
+                        remarks: reason,
+                        time_in: manualTimeInInput?.value || null,
+                        break_out: manualBreakOutInput?.value || null,
+                        break_in: manualBreakInInput?.value || null,
+                        time_out: manualTimeOutInput?.value || null
                     })
                 });
 
@@ -1696,6 +1749,18 @@
                 `;
 
                 manualActionSelect.value = 'time_in';
+                if (manualTimeInInput) {
+                    manualTimeInInput.value = '';
+                }
+                if (manualTimeOutInput) {
+                    manualTimeOutInput.value = '';
+                }
+                if (manualBreakOutInput) {
+                    manualBreakOutInput.value = '';
+                }
+                if (manualBreakInInput) {
+                    manualBreakInInput.value = '';
+                }
                 if (manualReasonInput) {
                     manualReasonInput.value = '';
                 }

@@ -151,6 +151,7 @@
 @section('content')
 @php
     $logs = $logs ?? collect();
+    $scheduleRules = $scheduleRules ?? collect();
 
     $filters = $filters ?? [
         'date' => now()->toDateString(),
@@ -350,6 +351,105 @@
             </div>
         </button>
     </div>
+
+    <section class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">Attendance Schedule Rules</h5>
+                    <p class="text-muted mb-0">Set default start, end, and break times by role.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.attendance.schedules.store') }}" class="mb-4">
+                @csrf
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted">Role</label>
+                        <select name="role" class="form-select">
+                            <option value="worker">Worker</option>
+                            <option value="engineer">Engineer</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="client">Client</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted">Time In</label>
+                        <input type="time" name="start_time" class="form-control" value="07:00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted">Time Out</label>
+                        <input type="time" name="end_time" class="form-control" value="17:00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted">Break Out</label>
+                        <input type="time" name="break_start_time" class="form-control" value="12:00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted">Break In</label>
+                        <input type="time" name="break_end_time" class="form-control" value="13:00">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Save Rule</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Role</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Break Out</th>
+                            <th>Break In</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($scheduleRules as $rule)
+                            <tr>
+                                <form id="schedule-form-{{ $rule->id }}" method="POST" action="{{ route('admin.attendance.schedules.update', $rule->id) }}">
+                                    @csrf
+                                    @method('PUT')
+                                </form>
+                                <td>
+                                    <input form="schedule-form-{{ $rule->id }}" type="text" name="role" class="form-control form-control-sm" value="{{ $rule->role }}">
+                                </td>
+                                <td>
+                                    <input form="schedule-form-{{ $rule->id }}" type="time" name="start_time" class="form-control form-control-sm" value="{{ substr((string) $rule->start_time, 0, 5) }}">
+                                </td>
+                                <td>
+                                    <input form="schedule-form-{{ $rule->id }}" type="time" name="end_time" class="form-control form-control-sm" value="{{ substr((string) $rule->end_time, 0, 5) }}">
+                                </td>
+                                <td>
+                                    <input form="schedule-form-{{ $rule->id }}" type="time" name="break_start_time" class="form-control form-control-sm" value="{{ $rule->break_start_time ? substr((string) $rule->break_start_time, 0, 5) : '' }}">
+                                </td>
+                                <td>
+                                    <input form="schedule-form-{{ $rule->id }}" type="time" name="break_end_time" class="form-control form-control-sm" value="{{ $rule->break_end_time ? substr((string) $rule->break_end_time, 0, 5) : '' }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="submit" form="schedule-form-{{ $rule->id }}" class="btn btn-sm btn-outline-primary">Update</button>
+                                        <form method="POST" action="{{ route('admin.attendance.schedules.destroy', $rule->id) }}" onsubmit="return confirm('Delete this schedule rule?');" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No attendance rules configured yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
 
     <section class="attendance-issues-panel">
         <div class="issues-header">
@@ -599,6 +699,7 @@
                                 && in_array($status, ['present', 'late', 'half_day', 'half day'], true);
 
                             $breakExceeded = false;
+                            $overtimeLabel = $log->overtime_label ?? '—';
 
                             if ($log->break_out && $log->break_in) {
                                 try {
@@ -683,7 +784,13 @@
                             </td>
 
                             <td data-label="OT">
-                                {{ (int) ($log->overtime_minutes ?? 0) }} min
+                                @if(($log->overtime_minutes ?? 0) > 0)
+                                    <span class="attendance-status status-default">
+                                        {{ $overtimeLabel }}
+                                    </span>
+                                @else
+                                    —
+                                @endif
                             </td>
 
                             <td data-label="Status">
@@ -720,7 +827,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11">
+                            <td colspan="12">
                                 <div class="attendance-empty">
                                     <i class="bi bi-calendar-x"></i>
                                     <strong>No attendance records found</strong>

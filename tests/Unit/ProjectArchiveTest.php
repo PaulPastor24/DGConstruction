@@ -54,4 +54,14 @@ class ProjectArchiveTest extends TestCase
         $this->assertSame('Davao City', $archive->project_location);
         $this->assertSame('South Wing', $archive->project_name);
     }
+
+    public function test_status_changes_are_normalized_from_the_current_value_when_saved(): void
+    {
+        $project = new Project(['status' => 'planning']);
+
+        $project->status = 'in_progress';
+        Project::getEventDispatcher()->dispatch('eloquent.saving: ' . Project::class, $project);
+
+        $this->assertSame(Project::STATUS_ONGOING, $project->status);
+    }
 }
