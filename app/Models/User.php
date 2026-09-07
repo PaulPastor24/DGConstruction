@@ -23,6 +23,7 @@ class User extends Authenticatable implements HasPasskeys
         'first_name',
         'last_name',
         'email',
+        'google_id',
         'password',
         'role',
         'contact_number',

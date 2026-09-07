@@ -6,18 +6,21 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Console\Scheduling\Schedule;
 use App\Console\Commands\NotifyPhaseDeadlines;
 use App\Console\Commands\ScanMilestonesAndMaterials;
+use App\Console\Commands\SendDailyAttendanceReport;
 
 class Kernel extends ConsoleKernel
 {
     protected $commands = [
         NotifyPhaseDeadlines::class,
         ScanMilestonesAndMaterials::class,
+        SendDailyAttendanceReport::class,
     ];
 
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('notify:phases-deadlines')->dailyAt('08:00');
         $schedule->command('notifications:scan')->dailyAt('07:00');
+        $schedule->command('attendance:daily-report')->dailyAt('18:00');
     }
 
     protected function commands()

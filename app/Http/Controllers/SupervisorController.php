@@ -55,14 +55,14 @@ class SupervisorController extends Controller
         return $time->lte($presentCutoff) ? 'present' : 'late';
     }
 
-    private function computeTimeInStatus($timeIn): string
+    private function computeTimeInStatus($timeIn, string $scheduledStart = '07:00:00'): string
     {
         if (! $timeIn) {
             return 'absent';
         }
 
         $time = Carbon::parse($timeIn);
-        $presentCutoff = Carbon::parse($time->format('Y-m-d').' 08:30:59');
+        $presentCutoff = Carbon::parse($time->format('Y-m-d').' '.$scheduledStart)->addMinutes(30);
 
         return $time->lte($presentCutoff) ? 'present' : 'late';
     }
@@ -222,7 +222,7 @@ class SupervisorController extends Controller
             ->first();
 
         if (! $existingLog) {
-            $status = $this->computeTimeInStatus($now);
+            $status = $this->computeTimeInStatus($now, $worker->schedule_start ?: '07:00:00');
 
             DB::table('attendance_logs')->insert([
                 'worker_id' => $validated['worker_id'],
@@ -278,7 +278,7 @@ class SupervisorController extends Controller
 
                 $updates['break_in'] = $now->format('H:i:s');
 
-                if ($breakMinutes > 60) {
+                if ($breakMinutes > (int) ($worker->break_minutes ?: 60)) {
                     $updates['status'] = 'late';
                     $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break exceeded 1 hour.');
                 } else {
@@ -287,7 +287,8 @@ class SupervisorController extends Controller
             }
 
             if ($action === 'time_out') {
-                $timeOutAllowed = Carbon::parse($date.' 17:00:00');
+                $scheduledEnd = $worker->schedule_end ?: '17:00:00';
+                $timeOutAllowed = Carbon::parse($date.' '.$scheduledEnd);
 
                 if ($now->lt($timeOutAllowed)) {
                     return response()->json([
@@ -308,6 +309,9 @@ class SupervisorController extends Controller
                 }
 
                 $updates['time_out'] = $now->format('H:i:s');
+                $updates['overtime_minutes'] = $now->gt($timeOutAllowed)
+                    ? $timeOutAllowed->diffInMinutes($now)
+                    : 0;
                 $updates['remarks'] = trim(($existingLog->remarks ?? '').' Time out recorded.');
             }
 

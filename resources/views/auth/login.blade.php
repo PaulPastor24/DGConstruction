@@ -94,6 +94,10 @@
                 </button>
             </form>
 
+            <a href="{{ route('auth.google.redirect') }}" class="login-btn" style="display:block;text-align:center;text-decoration:none;margin-top:12px;background:#fff;color:#1f2937;border:1px solid #d1d5db;">
+                Continue with Google (Client)
+            </a>
+
             <div class="demo-credentials">
                 <div class="demo-title">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>

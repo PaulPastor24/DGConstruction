@@ -58,6 +58,10 @@ Route::middleware(['auth', 'role:engineer'])->group(function () {
     Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
+    Route::post('/admin/attendance', [AdminDashboardController::class, 'storeAttendance'])->name('admin.attendance.store');
+    Route::put('/admin/attendance/{attendance}', [AdminDashboardController::class, 'updateAttendance'])->name('admin.attendance.update');
+    Route::delete('/admin/attendance/{attendance}', [AdminDashboardController::class, 'destroyAttendance'])->name('admin.attendance.destroy');
+    Route::put('/admin/attendance/workers/{worker}/schedule', [AdminDashboardController::class, 'updateWorkerSchedule'])->name('admin.attendance.schedule.update');
     Route::get('/admin/inventory', [AdminDashboardController::class, 'inventory'])->name('admin.inventory');
     Route::post('/admin/inventory/materials', [AdminDashboardController::class, 'storeMaterial'])->name('admin.inventory.materials.store');
     Route::put('/admin/inventory/materials/{material}', [AdminDashboardController::class, 'updateMaterial'])->name('admin.inventory.materials.update');

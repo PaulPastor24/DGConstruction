@@ -13,6 +13,7 @@ use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\Report;
 use App\Models\User;
+use App\Models\Worker;
 use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1035,6 +1036,9 @@ class AdminDashboardController extends Controller
      */
     public function attendance(Request $request)
     {
+        $workers = Schema::hasTable('workers')
+            ? DB::table('workers')->where('is_active', true)->orderBy('first_name')->orderBy('last_name')->get()
+            : collect();
         $projects = Schema::hasTable('projects')
             ? Project::query()->orderBy('project_name', 'asc')->get()
             : collect();
@@ -1064,7 +1068,7 @@ class AdminDashboardController extends Controller
 
             return view(
                 'admin.attendance',
-                compact('logs', 'projects', 'filters', 'stats', 'issues')
+                compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues')
             );
         }
 
@@ -1214,8 +1218,120 @@ class AdminDashboardController extends Controller
 
         return view(
             'admin.attendance',
-            compact('logs', 'projects', 'filters', 'stats', 'issues')
+            compact('logs', 'projects', 'workers', 'filters', 'stats', 'issues')
         );
+    }
+
+    private function attendanceTimes(Request $request): array
+    {
+        return $request->validate([
+            'worker_id' => ['required', 'integer', 'exists:workers,worker_id'],
+            'deployment_id' => ['nullable', 'integer'],
+            'log_date' => ['required', 'date'],
+            'time_in' => ['nullable', 'date_format:H:i'],
+            'break_out' => ['nullable', 'date_format:H:i'],
+            'break_in' => ['nullable', 'date_format:H:i'],
+            'time_out' => ['nullable', 'date_format:H:i'],
+            'status' => ['required', 'string', 'max:30'],
+            'remarks' => ['nullable', 'string', 'max:2000'],
+        ]);
+    }
+
+    private function overtimeMinutes(array $data, $worker): int
+    {
+        if (empty($data['time_out'])) {
+            return 0;
+        }
+
+        $scheduledEnd = Carbon::parse($data['log_date'].' '.$worker->schedule_end);
+        $timeOut = Carbon::parse($data['log_date'].' '.$data['time_out']);
+
+        return $timeOut->gt($scheduledEnd) ? $scheduledEnd->diffInMinutes($timeOut) : 0;
+    }
+
+    private function attendanceStatus(array $data, $worker): string
+    {
+        if (empty($data['time_in'])) {
+            return 'absent';
+        }
+
+        $scheduledStart = Carbon::parse($data['log_date'].' '.$worker->schedule_start);
+        $timeIn = Carbon::parse($data['log_date'].' '.$data['time_in']);
+
+        return $timeIn->lte($scheduledStart->copy()->addMinutes(30)) ? 'present' : 'late';
+    }
+
+    private function deploymentForWorker(int $workerId, ?int $deploymentId = null): ?int
+    {
+        if ($deploymentId) {
+            return $deploymentId;
+        }
+
+        return DB::table('project_workers')
+            ->where('worker_id', $workerId)
+            ->where('is_active', true)
+            ->value('deployment_id')
+            ?? DB::table('project_workers')->where('worker_id', $workerId)->value('deployment_id');
+    }
+
+    public function storeAttendance(Request $request)
+    {
+        $data = $this->attendanceTimes($request);
+        $worker = DB::table('workers')->where('worker_id', $data['worker_id'])->first();
+        $deploymentId = $this->deploymentForWorker($data['worker_id'], $data['deployment_id'] ?? null);
+
+        if (! $deploymentId) {
+            return back()->withErrors(['worker_id' => 'The worker must be assigned to a project first.'])->withInput();
+        }
+
+        $data['status'] = $this->attendanceStatus($data, $worker);
+        $data['overtime_minutes'] = $this->overtimeMinutes($data, $worker);
+        $data['deployment_id'] = $deploymentId;
+        $data['recorded_by'] = Auth::id();
+        $data['created_at'] = now();
+        unset($data['worker_id']);
+
+        Attendance::create($data + ['worker_id' => $request->integer('worker_id')]);
+
+        return redirect()
+            ->route('admin.attendance', ['date' => $data['log_date']])
+            ->with('success', 'Attendance record created.');
+    }
+
+    public function updateAttendance(Request $request, Attendance $attendance)
+    {
+        $data = $this->attendanceTimes($request);
+        $worker = DB::table('workers')->where('worker_id', $data['worker_id'])->first();
+        $data['status'] = $this->attendanceStatus($data, $worker);
+        $data['overtime_minutes'] = $this->overtimeMinutes($data, $worker);
+        $data['deployment_id'] = $this->deploymentForWorker($data['worker_id'], $data['deployment_id'] ?? null)
+            ?? $attendance->deployment_id;
+        $data['recorded_by'] = Auth::id();
+
+        $attendance->update($data);
+
+        return back()->with('success', 'Attendance record updated.');
+    }
+
+    public function destroyAttendance(Attendance $attendance)
+    {
+        $attendance->delete();
+
+        return back()->with('success', 'Attendance record deleted.');
+    }
+
+    public function updateWorkerSchedule(Request $request, Worker $worker)
+    {
+        $data = $request->validate([
+            'role' => ['required', 'in:staff,worker'],
+            'schedule_start' => ['required', 'date_format:H:i'],
+            'schedule_end' => ['required', 'date_format:H:i', 'after:schedule_start'],
+            'break_minutes' => ['required', 'integer', 'min:0', 'max:480'],
+        ]);
+
+        $worker->update($data);
+
+        return back()->with('success', 'Worker schedule updated.');
     }
 
     /**

@@ -177,6 +177,12 @@
 
 <div class="attendance-page">
 
+    @if(session('success'))
+        <div class="alert alert-success" role="alert">
+            {{ session('success') }}
+        </div>
+    @endif
+
 
     <section class="attendance-filter-card">
         <form method="GET" action="{{ route('admin.attendance') }}" class="attendance-filter-form">
@@ -427,6 +433,60 @@
         @endif
     </section>
 
+    <section class="attendance-entry-panel">
+        <section class="attendance-filter-card" style="margin-bottom: 1rem;">
+            <div class="issues-header">
+                <div>
+                    <h2>Admin Attendance Entry</h2>
+                    <p>Set exact time in, break, and time out. OT is calculated from the worker schedule.</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('admin.attendance.store') }}" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:end;">
+                @csrf
+                <label>Worker<select name="worker_id" required style="width:100%;"><option value="">Select worker</option>@foreach($workers ?? [] as $worker)<option value="{{ $worker->worker_id }}">{{ $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? '')) }}</option>@endforeach</select></label>
+                <label>Date<input type="date" name="log_date" value="{{ $filters['date'] ?? now()->toDateString() }}" required style="width:100%;"></label>
+                <label>Time in<input type="time" name="time_in" style="width:100%;"></label>
+                <label>Break out<input type="time" name="break_out" style="width:100%;"></label>
+                <label>Break in<input type="time" name="break_in" style="width:100%;"></label>
+                <label>Time out<input type="time" name="time_out" style="width:100%;"></label>
+                <input type="hidden" name="status" value="present">
+                <input type="text" name="remarks" placeholder="Remarks" style="grid-column:span 5;">
+                <button type="submit" class="btn-filter-primary"><i class="bi bi-plus-circle"></i> Add attendance</button>
+            </form>
+            <details style="margin-top:12px;">
+                <summary style="cursor:pointer;font-weight:600;">Configure worker schedule</summary>
+                <form method="POST" action="#" id="workerScheduleForm" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px;align-items:end;">
+                    @csrf @method('PUT')
+                    <label>Worker
+                        <select id="scheduleWorker" required style="width:100%;">
+                            @foreach($workers ?? [] as $worker)
+                                @php
+                                    $workerRole = data_get($worker, 'role', 'worker');
+                                    $workerStart = data_get($worker, 'schedule_start', '07:00');
+                                    $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
+                                    $workerBreak = data_get($worker, 'break_minutes', 60);
+                                    $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
+                                @endphp
+                                <option value="{{ $worker->worker_id }}"
+                                        data-role="{{ $workerRole }}"
+                                        data-start="{{ $workerStart }}"
+                                        data-end="{{ $workerEnd }}"
+                                        data-break="{{ $workerBreak }}">
+                                    {{ $workerName }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label>Role<select name="role" id="scheduleRole" style="width:100%;"><option value="staff">Staff</option><option value="worker">Worker</option></select></label>
+                    <label>Start<input type="time" name="schedule_start" id="scheduleStart" required style="width:100%;"></label>
+                    <label>End<input type="time" name="schedule_end" id="scheduleEnd" required style="width:100%;"></label>
+                    <label>Break minutes<input type="number" name="break_minutes" id="scheduleBreak" min="0" max="480" required style="width:100%;"></label>
+                    <button type="submit" class="btn-filter-primary">Save schedule</button>
+                </form>
+            </details>
+        </section>
+    </section>
+
     <section class="attendance-panel">
         <div class="attendance-toolbar">
             <div class="attendance-toolbar-title">
@@ -480,10 +540,12 @@
                         <th>Break Out</th>
                         <th>Break In</th>
                         <th>Time Out</th>
+                        <th>OT</th>
                         <th>Status</th>
                         <th>Biometric</th>
                         <th>Recorded By</th>
                         <th>Remarks</th>
+                        <th>Admin</th>
                     </tr>
                 </thead>
 
@@ -574,6 +636,22 @@
                                         <div class="worker-secondary">
                                             {{ $workerPosition }}
                                         </div>
+                                        <details style="margin-top:6px;">
+                                            <summary style="cursor:pointer;font-size:.75rem;">Edit times</summary>
+                                            <form method="POST" action="{{ route('admin.attendance.update', $log) }}" style="display:grid;gap:4px;margin-top:6px;min-width:180px;">
+                                                @csrf @method('PUT')
+                                                <input type="hidden" name="worker_id" value="{{ $log->worker_id }}">
+                                                <input type="hidden" name="log_date" value="{{ $log->log_date ? \Carbon\Carbon::parse($log->log_date)->format('Y-m-d') : '' }}">
+                                                <input type="time" name="time_in" value="{{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('H:i') : '' }}">
+                                                <input type="time" name="break_out" value="{{ $log->break_out ? \Carbon\Carbon::parse($log->break_out)->format('H:i') : '' }}">
+                                                <input type="time" name="break_in" value="{{ $log->break_in ? \Carbon\Carbon::parse($log->break_in)->format('H:i') : '' }}">
+                                                <input type="time" name="time_out" value="{{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('H:i') : '' }}">
+                                                <input type="hidden" name="status" value="{{ $status }}">
+                                                <input type="text" name="remarks" value="{{ $log->remarks }}" placeholder="Remarks">
+                                                <button type="submit" class="btn-filter-primary">Save</button>
+                                            </form>
+                                            <form method="POST" action="{{ route('admin.attendance.destroy', $log) }}" onsubmit="return confirm('Delete this attendance record?');" style="margin-top:4px;">@csrf @method('DELETE')<button type="submit" class="btn-filter-secondary">Delete</button></form>
+                                        </details>
                                     </div>
                                 </div>
                             </td>
@@ -602,6 +680,10 @@
 
                             <td data-label="Time Out">
                                 {{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('h:i A') : '—' }}
+                            </td>
+
+                            <td data-label="OT">
+                                {{ (int) ($log->overtime_minutes ?? 0) }} min
                             </td>
 
                             <td data-label="Status">
@@ -653,18 +735,30 @@
     </section>
 
 </div>
+
+<script>
+    (() => {
+        const form = document.getElementById('workerScheduleForm');
+        const worker = document.getElementById('scheduleWorker');
+        if (!form || !worker) return;
+        const sync = () => {
+            const option = worker.options[worker.selectedIndex];
+            document.getElementById('scheduleRole').value = option.dataset.role || 'worker';
+            document.getElementById('scheduleStart').value = (option.dataset.start || '07:00').slice(0, 5);
+            document.getElementById('scheduleEnd').value = (option.dataset.end || '17:00').slice(0, 5);
+            document.getElementById('scheduleBreak').value = option.dataset.break || '60';
+            form.action = `${@json(url('/admin/attendance/workers'))}/${option.value}/schedule`;
+        };
+        worker.addEventListener('change', sync);
+        sync();
+    })();
+</script>
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const SILENT_RELOAD_INTERVAL = 5000; // 5 seconds for real-time admin attendance monitoring
-        const ATTENDANCE_PAGE_SELECTOR = '.attendance-page';
-        const FILTER_FORM_SELECTOR = '.attendance-filter-form';
-
         let activeStatFilter = 'all';
-        let isSilentReloading = false;
-        let silentReloadTimer = null;
 
         const filterLabels = {
             all: 'All Records',
@@ -752,166 +846,6 @@
             }
         }
 
-        function captureFilterFormInitialValues() {
-            const filterForm = document.querySelector(FILTER_FORM_SELECTOR);
-
-            if (!filterForm) {
-                return;
-            }
-
-            filterForm.querySelectorAll('input, select, textarea').forEach(function (field) {
-                field.dataset.initialValue = field.value ?? '';
-            });
-        }
-
-        function filterFormHasUnsavedChanges() {
-            const filterForm = document.querySelector(FILTER_FORM_SELECTOR);
-
-            if (!filterForm) {
-                return false;
-            }
-
-            const fields = filterForm.querySelectorAll('input, select, textarea');
-
-            for (const field of fields) {
-                const initialValue = field.dataset.initialValue ?? field.defaultValue ?? '';
-                const currentValue = field.value ?? '';
-
-                if (initialValue !== currentValue) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        function userIsEditing() {
-            const active = document.activeElement;
-
-            if (!active) {
-                return false;
-            }
-
-            return (
-                active.tagName === 'INPUT' ||
-                active.tagName === 'TEXTAREA' ||
-                active.tagName === 'SELECT' ||
-                active.isContentEditable
-            );
-        }
-
-        function modalIsOpen() {
-            return document.querySelector('.modal.show') !== null;
-        }
-
-        function shouldSkipSilentReload() {
-            return (
-                isSilentReloading ||
-                document.hidden ||
-                modalIsOpen() ||
-                userIsEditing() ||
-                filterFormHasUnsavedChanges()
-            );
-        }
-
-        function setLiveRefreshStatus(message, type = 'muted') {
-            let badge = document.getElementById('attendanceLiveRefreshStatus');
-            const toolbarActions = document.querySelector('.attendance-toolbar-actions');
-
-            if (!toolbarActions) {
-                return;
-            }
-
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.id = 'attendanceLiveRefreshStatus';
-                badge.className = 'attendance-live-refresh-status';
-                badge.style.fontSize = '12px';
-                badge.style.fontWeight = '700';
-                badge.style.whiteSpace = 'nowrap';
-                badge.style.display = 'inline-flex';
-                badge.style.alignItems = 'center';
-                badge.style.gap = '6px';
-                badge.style.color = '#64748b';
-                toolbarActions.prepend(badge);
-            }
-
-            const icon = type === 'success'
-                ? 'bi-arrow-repeat'
-                : (type === 'error' ? 'bi-wifi-off' : 'bi-broadcast');
-
-            badge.innerHTML = `<i class="bi ${icon}"></i> ${message}`;
-            badge.style.color = type === 'error' ? '#dc2626' : (type === 'success' ? '#166534' : '#64748b');
-        }
-
-        async function silentReloadAttendancePage() {
-            if (shouldSkipSilentReload()) {
-                return;
-            }
-
-            const currentPage = document.querySelector(ATTENDANCE_PAGE_SELECTOR);
-
-            if (!currentPage) {
-                return;
-            }
-
-            const quickSearchValue = getAttendanceSearch()?.value || '';
-            const currentScrollY = window.scrollY;
-
-            try {
-                isSilentReloading = true;
-                setLiveRefreshStatus('Updating...', 'muted');
-
-                const response = await fetch(window.location.href, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'text/html',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-Silent-Attendance-Reload': 'true'
-                    },
-                    cache: 'no-store',
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Unable to refresh attendance records.');
-                }
-
-                const html = await response.text();
-                const parser = new DOMParser();
-                const newDocument = parser.parseFromString(html, 'text/html');
-                const newPage = newDocument.querySelector(ATTENDANCE_PAGE_SELECTOR);
-
-                if (!newPage) {
-                    throw new Error('Attendance content was not found in the response.');
-                }
-
-                currentPage.replaceWith(newPage);
-
-                const refreshedSearch = getAttendanceSearch();
-
-                if (refreshedSearch) {
-                    refreshedSearch.value = quickSearchValue;
-                }
-
-                captureFilterFormInitialValues();
-                applyTableFilters();
-
-                window.scrollTo({
-                    top: currentScrollY,
-                    behavior: 'instant'
-                });
-
-                setLiveRefreshStatus('Live updating', 'success');
-                document.dispatchEvent(new CustomEvent('adminAttendanceSilentReloadComplete'));
-            } catch (error) {
-                console.warn('Admin attendance silent reload skipped:', error);
-                setLiveRefreshStatus('Live update paused', 'error');
-            } finally {
-                isSilentReloading = false;
-            }
-        }
-
         document.addEventListener('input', function (event) {
             if (event.target && event.target.id === 'attendanceSearch') {
                 applyTableFilters();
@@ -948,15 +882,7 @@
             }
         });
 
-        captureFilterFormInitialValues();
         applyTableFilters();
-        setLiveRefreshStatus('Live updating', 'success');
-
-        if (silentReloadTimer) {
-            clearInterval(silentReloadTimer);
-        }
-
-        silentReloadTimer = setInterval(silentReloadAttendancePage, SILENT_RELOAD_INTERVAL);
     });
 </script>
 @endpush

@@ -26,6 +26,7 @@ class Attendance extends Model
         'break_out',
         'break_in',
         'time_out',
+        'overtime_minutes',
         'status',
         'remarks',
         'biometric_matched',
@@ -35,6 +36,7 @@ class Attendance extends Model
     protected $casts = [
         'log_date' => 'date',
         'biometric_matched' => 'boolean',
+        'overtime_minutes' => 'integer',
     ];
 
     public function worker(): BelongsTo
@@ -72,5 +74,15 @@ class Attendance extends Model
     public function getDisplayProjectAttribute()
     {
         return $this->deployment?->project;
+    }
+
+    public function getScheduledEndAttribute(): ?string
+    {
+        return $this->worker?->schedule_end;
+    }
+
+    public function getOvertimeHoursAttribute(): float
+    {
+        return round(((int) $this->overtime_minutes) / 60, 2);
     }
 }
