@@ -209,6 +209,14 @@
             line-height: 1.5;
         }
 
+        .landing-form-note svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+            margin-top: 1px;
+            color: var(--forest, #173824);
+        }
+
         .landing-form-actions {
             display: flex;
             justify-content: flex-end;
@@ -411,7 +419,7 @@
             <a href="#contact">Contact</a>
         </div>
 
-        <a class="nav-cta" href="{{ route('login') }}">Login <span class="arrow">→</span></a>
+        <a class="nav-cta" href="{{ route('login') }}">Login</a>
     </nav>
 
     <main>
@@ -490,22 +498,47 @@
 
             <div class="about-metrics">
                 <div class="metric-card">
-                    <div class="metric-icon">👥</div>
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
                     <strong>100+</strong>
                     <span>Projects Completed</span>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">🏅</div>
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="6"></circle>
+                            <path d="m9 14-1 8 4-2 4 2-1-8"></path>
+                            <path d="m12 5 1 2 2 .3-1.5 1.5.4 2.2L12 10l-1.9 1 .4-2.2L9 7.3l2-.3 1-2Z"></path>
+                        </svg>
+                    </div>
                     <strong>15+</strong>
                     <span>Years of Experience</span>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">😊</div>
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <path d="M9 9h.01"></path>
+                            <path d="M15 9h.01"></path>
+                        </svg>
+                    </div>
                     <strong>75+</strong>
                     <span>Happy Clients</span>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">📍</div>
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+                            <circle cx="12" cy="10" r="2.5"></circle>
+                        </svg>
+                    </div>
                     <strong>Serving</strong>
                     <span>Our Community with Pride</span>
                 </div>
@@ -589,24 +622,74 @@
         </section>
 
         <!-- TESTIMONIAL SLIDER -->
-        <section class="testimonial-strip">
-            <div class="testimonial-content">
-                <span class="quote-icon">“</span>
-                <p class="quote-text">D&G Construction Inc. exceeded our expectations. Their team was professional, reliable, and the quality of work is outstanding.</p>
-                <div class="testimonial-author">
-                    <div class="author-avatar">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <section class="testimonial-strip" aria-label="Client testimonials">
+            <div class="testimonial-slides" aria-live="polite">
+                <article class="testimonial-slide is-active">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">D&G Construction Inc. exceeded our expectations. Their team was professional, reliable, and the quality of work is outstanding.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Mark & Sarah T.</strong>
+                                <span>Happy Homeowners</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="author-meta">
-                        <strong>Mark & Sarah T.</strong>
-                        <span>Happy Homeowners</span>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">From the first consultation to the final walkthrough, D&G kept us informed and delivered exactly what they promised.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>James R.</strong>
+                                <span>Renovation Client</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">Our new space feels thoughtfully designed and beautifully built. The crew was respectful, organized, and easy to work with.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Priya & Daniel K.</strong>
+                                <span>Custom Home Clients</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">D&G brought practical ideas, honest guidance, and excellent craftsmanship to our project. We would gladly recommend their team.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Michael B.</strong>
+                                <span>Commercial Client</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </div>
             <div class="testimonial-dots">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
+                <button type="button" class="dot active" aria-label="Show testimonial 1" aria-current="true"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 2"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 3"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 4"></button>
             </div>
         </section>
 
@@ -652,17 +735,33 @@
             
             <div class="footer-links-column">
                 <h4>Contact Us</h4>
-                <span>📞 (705) 123-4567</span>
-                <span>✉️ info@dgconstruction.ca</span>
-                <span>📍 Barrie, Ontario</span>
+                <a href="tel:09431393749">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 3.2 2 2 0 0 1 4.11 1h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 8.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"></path></svg>
+                    0943 139 3749
+                </a>
+                <a href="mailto:dgconphil@gmail.com">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+                    dgconphil@gmail.com
+                </a>
+                <span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                    Barrie, Ontario
+                </span>
             </div>
         </div>
 
         <div class="footer-bottom">
             <span>&copy; 2026 D&G Construction Inc. All Rights Reserved.</span>
             <div class="footer-socials">
-                <a href="#" aria-label="Facebook">🌐</a>
-                <a href="#" aria-label="Instagram">📸</a>
+                <a href="https://www.facebook.com/dgconphil" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-3.31 0-5 1.69-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.67.33-1 1-1Z"></path></svg>
+                </a>
+                <a href="https://www.tiktok.com/@dgconphil?fbclid=IwY2xjawUOEjlwZG9mBWV4dG4DYWVtAjEwAGJyaWQRMUpMWDJXc2x4Q2Y0ZWVLelNzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeLJ0ctsEzAVBec_aAoZ4GX3U-svIiFqlonzfiGLWLTSNwkftDh_CX4q1RzCE_aem_Ek9dBz7yh8a1Lcl1dE5rpQ" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4c.3 2.3 1.7 3.7 4 4v3.2c-1.5-.1-2.8-.6-4-1.4V16a5 5 0 1 1-5-5c.4 0 .7 0 1 .1v3.3a2 2 0 1 0 1 1.7V4h3Z"></path></svg>
+                </a>
+                <a href="https://www.instagram.com/dgcon.phil?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r=".75" fill="currentColor" stroke="none"></circle></svg>
+                </a>
             </div>
         </div>
     </footer>
@@ -734,7 +833,7 @@
                     </div>
 
                     <div class="landing-form-note">
-                        <span>ℹ️</span>
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
                         <span>This quote request will open your email app with the project details already prepared. You can review it before sending.</span>
                     </div>
 
@@ -800,7 +899,7 @@
                     </div>
 
                     <div class="landing-form-note">
-                        <span>💬</span>
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.5 9.5 0 0 1-4-.9L3 21l1.4-4A8.3 8.3 0 0 1 3 12.5 8.5 8.5 0 0 1 12 4a8.5 8.5 0 0 1 9 7.5Z"></path></svg>
                         <span>This works like a simple support assistant: fill out the form, submit, then your email app will open with the message prepared.</span>
                     </div>
 
@@ -925,6 +1024,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize systems
     updateCarouselPosition();
+    startAutoSlide();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const testimonialStrip = document.querySelector('.testimonial-strip');
+    const slides = Array.from(document.querySelectorAll('.testimonial-slide'));
+    const dots = Array.from(document.querySelectorAll('.testimonial-dots .dot'));
+
+    if (!testimonialStrip || slides.length === 0) return;
+
+    let currentIndex = 0;
+    let autoSlideInterval = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const slideDelay = 6000;
+
+    function showSlide(index) {
+        currentIndex = (index + slides.length) % slides.length;
+
+        slides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === currentIndex);
+        });
+
+        dots.forEach((dot, dotIndex) => {
+            const isActive = dotIndex === currentIndex;
+            dot.classList.toggle('active', isActive);
+            dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+        });
+    }
+
+    function stopAutoSlide() {
+        if (autoSlideInterval !== null) {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = null;
+        }
+    }
+
+    function startAutoSlide() {
+        stopAutoSlide();
+        autoSlideInterval = setInterval(() => showSlide(currentIndex + 1), slideDelay);
+    }
+
+    dots.forEach((dot, dotIndex) => {
+        dot.addEventListener('click', () => {
+            showSlide(dotIndex);
+            startAutoSlide();
+        });
+    });
+
+    testimonialStrip.addEventListener('mouseenter', stopAutoSlide);
+    testimonialStrip.addEventListener('mouseleave', startAutoSlide);
+
+    testimonialStrip.addEventListener('touchstart', event => {
+        stopAutoSlide();
+        touchStartX = event.changedTouches[0].clientX;
+        touchStartY = event.changedTouches[0].clientY;
+    }, { passive: true });
+
+    testimonialStrip.addEventListener('touchend', event => {
+        const touch = event.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            showSlide(currentIndex + (deltaX < 0 ? 1 : -1));
+        }
+
+        startAutoSlide();
+    }, { passive: true });
+
+    showSlide(0);
     startAutoSlide();
 });
 </script>

@@ -25,12 +25,18 @@
         
         $scheduleHealth = $projectItem->status === 'completed' ? 'Completed' : ($projectItem->status === 'on_hold' ? 'At Risk' : 'On Track');
         
-        // DYNAMIC ATTRIBUTE RESOLUTION FIX: Reads live location text without breaking or using dummy values
-        $projectLocation = trim((string) ($projectItem->project_location ?? $projectItem->location ?? $projectItem->location_address ?? ''));
+        // Resolve the canonical stored location while allowing legacy location columns.
+        $projectLocation = trim((string) (
+            \App\Models\ProjectArchive::resolveLocation($projectItem)
+            ?? $projectItem->location_address
+            ?? ''
+        ));
         
         $startDate = $projectItem->start_date ? $projectItem->start_date->format('M d, Y') : 'TBD';
         $targetEndDate = $projectItem->target_end_date ? $projectItem->target_end_date->format('M d, Y') : 'TBD';
-        $daysRemaining = $projectItem->target_end_date ? max(0, $projectItem->target_end_date->diffInDays(now())) : 0;
+        $daysRemaining = $projectItem->target_end_date
+            ? max(0, (int) ceil(now()->diffInDays($projectItem->target_end_date, false)))
+            : 0;
         $projectManager = optional($projectItem->engineer)->name ?? 'Unassigned';
         $siteSupervisor = optional($projectItem->activeSupervisor)->name ?? 'Not assigned';
         
@@ -139,7 +145,7 @@
 
                     <section class="project-command-summary-panel-matrix">
                         
-                        <div class="command-panel-card card-highlight-border">
+                        <div class="command-panel-card card-highlight-border summary-overall">
                             <span class="command-panel-lbl">Overall Progress</span>
                             <div class="command-panel-main-val-group">
                                 <strong class="command-panel-large-display-val text-success-dg">{{ round($percent) }}%</strong>
@@ -149,7 +155,7 @@
                             </div>
                         </div>
 
-                        <div class="command-panel-card">
+                        <div class="command-panel-card summary-phase">
                             <span class="command-panel-lbl">Current Phase</span>
                             <div class="command-panel-horizontal-split">
                                 <div class="command-panel-circle-icon icon-phase-green">

@@ -162,7 +162,7 @@
     </section>
 
     <div class="row g-2 g-md-3 mb-3 mb-md-4 report-summary-row">
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="report-summary-widget">
                 <div class="widget-icon bg-success-subtle text-success">
                     <i class="bi bi-file-earmark-text"></i>
@@ -173,7 +173,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="report-summary-widget">
                 <div class="widget-icon bg-info-subtle text-info">
                     <i class="bi bi-eye"></i>
@@ -184,21 +184,6 @@
                 </div>
             </div>
         </div>
-        @if($selectedProject)
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="report-summary-widget">
-                    <div class="widget-icon bg-primary-subtle text-primary">
-                        <i class="bi bi-images"></i>
-                    </div>
-                    <div>
-                        <span class="widget-label">Project Image Export</span>
-                        <a href="{{ route('client.reports.imagesPdf', $selectedProject->project_id) }}" class="btn btn-sm btn-cms-primary mt-2" target="_blank">
-                            Export Images
-                        </a>
-                    </div>
-                </div>
-            </div>
-        @endif
     </div>
 
     <section class="report-main-panel mb-4">
@@ -207,7 +192,14 @@
                 <h5 class="fw-bold mb-0" style="color: var(--brand-green);">Accomplishment Reports</h5>
                 <div class="text-muted small">Showing the latest updates for your projects</div>
             </div>
-            <div class="badge rounded-pill bg-success-subtle text-success px-3 py-2">{{ $reports->total() }} records</div>
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                @if($selectedProject)
+                    <a href="{{ route('client.reports.imagesPdf', $selectedProject->project_id) }}" class="btn btn-sm report-export-btn" target="_blank">
+                        <i class="bi bi-images me-1"></i> Export Images
+                    </a>
+                @endif
+                <div class="badge rounded-pill bg-success-subtle text-success px-3 py-2">{{ $reports->total() }} records</div>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -647,25 +639,25 @@
     }
 
     .report-summary-widget {
-        padding: 1.2rem;
+        padding: 0.9rem 1rem;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.7rem;
     }
 
     .widget-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 14px;
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.15rem;
+        font-size: 0.95rem;
         flex-shrink: 0;
     }
 
     .widget-label {
-        font-size: 0.78rem;
+        font-size: 0.7rem;
         color: var(--text-muted);
         font-weight: 600;
         text-transform: uppercase;
@@ -716,7 +708,7 @@
 
     .report-summary-widget h3 {
         margin: 0.15rem 0 0;
-        font-size: 1.35rem;
+        font-size: 1.15rem;
         font-weight: 800;
         color: var(--text-primary);
     }
@@ -1354,7 +1346,7 @@
     }
 
     .client-reports-page .report-summary-widget {
-        min-height: 92px;
+        min-height: 78px;
         background: linear-gradient(135deg, #ffffff 0%, #fbfffb 100%);
     }
 
@@ -1364,6 +1356,13 @@
 
     .client-reports-page .report-mobile-list {
         display: none;
+    }
+
+    @media (max-width: 991.98px) {
+        .client-reports-page .report-filter-card .row > [class*="col-"]:last-child {
+            margin-left: auto;
+            margin-right: auto;
+        }
     }
 
     @media (max-width: 767.98px) {
@@ -1392,6 +1391,12 @@
             max-width: 100% !important;
             flex: none !important;
             padding: 0 !important;
+        }
+
+        .client-reports-page .report-filter-card .row > [class*="col-"]:last-child {
+            grid-column: 1 / -1;
+            width: 50% !important;
+            justify-self: center;
         }
 
         .client-reports-page .report-filter-card .form-label {
@@ -1424,30 +1429,30 @@
         }
 
         .client-reports-page .report-summary-widget {
-            min-height: 104px !important;
-            padding: 12px !important;
-            border-radius: 17px !important;
+            min-height: 78px !important;
+            padding: 9px !important;
+            border-radius: 13px !important;
             align-items: flex-start !important;
-            gap: 10px !important;
+            gap: 7px !important;
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.045) !important;
         }
 
         .client-reports-page .widget-icon {
-            width: 38px !important;
-            height: 38px !important;
-            border-radius: 13px !important;
-            font-size: 1rem !important;
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 9px !important;
+            font-size: 0.82rem !important;
         }
 
         .client-reports-page .widget-label {
             display: block !important;
-            font-size: 9.5px !important;
+            font-size: 8.5px !important;
             line-height: 1.25 !important;
             letter-spacing: 0.06em !important;
         }
 
         .client-reports-page .report-summary-widget h3 {
-            font-size: 1.25rem !important;
+            font-size: 1.05rem !important;
             line-height: 1 !important;
             margin-top: 6px !important;
         }
@@ -1461,10 +1466,31 @@
         }
 
         .client-reports-page .report-main-panel > .p-3.border-bottom {
-            padding: 15px 14px !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto;
+            padding: 12px !important;
             align-items: flex-start !important;
-            gap: 10px !important;
+            gap: 8px !important;
             background: linear-gradient(135deg, #fbfffb 0%, #ffffff 100%) !important;
+        }
+
+        .client-reports-page .report-main-panel > .p-3.border-bottom > div:last-child {
+            gap: 5px !important;
+            max-width: 158px;
+        }
+
+        .client-reports-page .report-export-btn {
+            min-height: 34px !important;
+            padding: 7px 10px !important;
+            border-radius: 9px !important;
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+        }
+
+        .client-reports-page .report-export-btn i {
+            margin-right: 3px !important;
+            font-size: 11px !important;
         }
 
         .client-reports-page .report-main-panel h5 {
@@ -1475,8 +1501,8 @@
 
         .client-reports-page .report-main-panel .badge {
             white-space: nowrap !important;
-            padding: 7px 10px !important;
-            font-size: 11px !important;
+            padding: 6px 8px !important;
+            font-size: 10px !important;
         }
 
         .client-reports-page .report-main-panel > .table-responsive {

@@ -1228,6 +1228,39 @@
         display: block;
     }
 
+    /* Keep the three timeline filters compact and side by side. */
+    @media (max-width: 1100px) {
+        #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) {
+            min-width: 0 !important;
+            flex: 1 1 calc((100% - 1.5rem) / 3) !important;
+        }
+
+        #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) .toolbar-select {
+            min-height: 40px;
+            padding: 0.35rem 1.35rem 0.35rem 0.55rem;
+            font-size: 0.76rem;
+        }
+
+        #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) label {
+            font-size: 0.64rem;
+            white-space: nowrap;
+        }
+    }
+
+    @media (max-width: 720px) {
+        #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) {
+            width: auto !important;
+            min-width: 0 !important;
+            flex: 1 1 0 !important;
+        }
+
+        #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) .toolbar-select {
+            min-height: 44px !important;
+            padding-right: 1.15rem !important;
+            font-size: 0.7rem !important;
+        }
+    }
+
     @media (max-width: 720px) {
         #pg-timeline {
             padding: 0 0 1.4rem !important;

@@ -319,9 +319,18 @@ ABOUT SECTION
 }
 
 .metric-icon {
+    display: flex;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
     margin-bottom: 18px;
-    font-size: 1.7rem;
+    color: var(--forest);
     line-height: 1;
+}
+
+.metric-icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 .metric-card strong {
@@ -484,6 +493,28 @@ TESTIMONIAL
     color: #fff;
 }
 
+.testimonial-slides {
+    position: relative;
+    min-height: 184px;
+    touch-action: pan-y;
+}
+
+.testimonial-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(22px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+    pointer-events: none;
+}
+
+.testimonial-slide.is-active {
+    position: relative;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
 .testimonial-content {
     max-width: 760px;
 }
@@ -541,15 +572,57 @@ TESTIMONIAL
 }
 
 .dot {
+    display: block;
     width: 7px;
     height: 7px;
+    padding: 0;
+    border: 0;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: width 0.35s ease, background-color 0.35s ease;
 }
 
 .dot.active {
     width: 20px;
     background: #fff;
+}
+
+.footer-links-column a,
+.footer-links-column span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-links-column a svg,
+.footer-links-column span svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--forest);
+}
+
+.footer-socials a {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid var(--border-gray);
+    border-radius: 50%;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.footer-socials a:hover {
+    border-color: var(--forest);
+    background: var(--forest);
+    color: #fff;
+}
+
+.footer-socials svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* ==========================================================================
@@ -902,6 +975,10 @@ MOBILE
         margin-bottom: 44px;
         padding: 28px 20px;
         border-radius: 22px;
+    }
+
+    .testimonial-slides {
+        min-height: 218px;
     }
 
     .quote-icon {

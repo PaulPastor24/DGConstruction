@@ -17,8 +17,8 @@
         $activeTrackCount = $projects->getCollection()->filter(fn($summary) => data_get($summary, 'project.status') === 'ongoing')->count();
     @endphp
     
-    <div class="row g-4 mb-4 align-items-center">
-        <div class="col-12 col-md-4 col-xl-3">
+    <div class="row g-3 mb-4 align-items-center">
+        <div class="col-6 col-xl-3">
             <div class="project-summary-box">
                 <div class="summary-icon bg-mint-container text-success">
                     <i class="bi bi-briefcase-fill"></i>
@@ -30,7 +30,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="project-summary-box">
                 <div class="summary-icon bg-orange-container text-warning">
                     <i class="bi bi-cone-striped"></i>
@@ -124,28 +124,28 @@
     .project-summary-box {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 1.25rem;
+        border-radius: 12px;
+        padding: 0.8rem 0.9rem;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.7rem;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
     }
     .summary-icon {
-        width: 48px;
-        height: 48px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.25rem;
+        font-size: 1rem;
         flex-shrink: 0;
     }
     .bg-mint-container { background-color: #e6f7ed; }
     .bg-orange-container { background-color: #fff7ed; }
-    .summary-label { font-size: 0.8rem; color: #64748b; font-weight: 500; }
-    .summary-subtext { font-size: 0.74rem; color: #94a3b8; display: block; }
-    .project-summary-box h3 { font-size: 1.5rem; font-weight: 800; margin: 0.1rem 0; color: #0f172a; }
+    .summary-label { font-size: 0.72rem; color: #64748b; font-weight: 500; }
+    .summary-subtext { font-size: 0.65rem; color: #94a3b8; display: block; }
+    .project-summary-box h3 { font-size: 1.25rem; font-weight: 800; margin: 0.05rem 0; color: #0f172a; }
 
     /* FIXED NON-FALLING HORIZONTAL CONTROL BAR WORKSPACE IMPLEMENTATION RULES */
     .project-filter-toolbar {
@@ -528,7 +528,7 @@
     }
 
     .project-command-body {
-        padding: 44px;
+        padding: 32px;
         max-height: 84vh;
         overflow-y: auto;
     }
@@ -558,7 +558,7 @@
     .project-command-modal-title {
         margin: 0;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 2.4rem;
+        font-size: 2rem;
         font-weight: 800;
         letter-spacing: -0.03em;
         color: #0f172a;
@@ -566,24 +566,29 @@
     }
 
     /* Modal Dashboard Premium Horizontal Row Metrics Panels */
-    .project-command-summary-panel-matrix {
+        .project-command-summary-panel-matrix {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 36px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 24px;
         width: 100%;
     }
     .command-panel-card {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 20px;
+        border-radius: 12px;
+        padding: 14px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 120px;
+        min-height: 90px;
         transition: all 0.2s ease;
     }
+
+        .command-panel-card.summary-overall,
+        .command-panel-card.summary-phase {
+            grid-column: 1 / -1;
+        }
     .card-highlight-border {
         background-color: #f8fafc;
         border-color: #cbd5e1;
@@ -598,7 +603,7 @@
         margin-bottom: 8px;
     }
     .command-panel-large-display-val {
-        font-size: 2.2rem;
+        font-size: 1.8rem;
         font-weight: 800;
         letter-spacing: -0.03em;
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -614,17 +619,17 @@
     .command-panel-horizontal-split {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         margin-top: 4px;
     }
     .command-panel-circle-icon {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.15rem;
+        font-size: 0.95rem;
         flex-shrink: 0;
     }
     .icon-phase-cyan { background-color: #eff6ff; color: #2563eb; }
@@ -637,7 +642,7 @@
         min-width: 0;
     }
     .command-panel-medium-display-val {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         font-weight: 700;
         color: #0f172a;
         white-space: nowrap;
@@ -885,7 +890,6 @@
             gap: 20px;
         }
         .project-command-summary-panel-matrix {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
         }
         .project-command-dual-grid-split {
@@ -895,8 +899,12 @@
     }
 
     @media (max-width: 992px) {
-        .project-command-body { padding: 32px 24px; }
+        .project-command-body { padding: 24px 18px; }
         .project-command-footer { padding: 16px 24px 24px 24px; }
+
+        .project-summary-box {
+            padding: 0.7rem;
+        }
     }
 
     /* Mobile Platform Layout Viewports */
@@ -919,18 +927,40 @@
             min-height: auto;
         }
         .project-command-body {
-            padding: 20px 16px;
+            padding: 16px 12px;
         }
         .project-command-modal-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             padding-right: 24px;
         }
         .project-command-summary-panel-matrix {
-            grid-template-columns: 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .command-panel-card.summary-overall,
+        .command-panel-card.summary-phase {
+            grid-column: 1 / -1;
         }
         .project-command-summary-grid {
             grid-template-columns: 1fr;
+        }
+
+        .command-panel-card {
+            padding: 11px;
+            min-height: 82px;
+        }
+
+        .command-panel-lbl {
+            font-size: 0.62rem;
+            margin-bottom: 5px;
+        }
+
+        .command-panel-medium-display-val {
+            font-size: 0.78rem;
+        }
+
+        .command-panel-subtext-lbl {
+            font-size: 0.68rem;
         }
         
         .project-command-footer {
