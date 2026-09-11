@@ -232,8 +232,11 @@
 <div id="phaseDetailsModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modalPhaseTitle">Phase Details</h2>
-            <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+            <div class="modal-heading">
+                <span class="modal-kicker">Construction phase</span>
+                <h2 id="modalPhaseTitle">Phase Details</h2>
+            </div>
+            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close phase details">&times;</button>
         </div>
         <div class="modal-body" id="modalBody">
             <div class="modal-loading">
@@ -619,6 +622,10 @@
         text-align: left;
     }
 
+    .phases-data-table tbody tr.phase-filter-hidden {
+        display: none !important;
+    }
+
     .phases-data-table th {
         background: #fbfcfa;
         border-top: 1px solid var(--ui-border-color);
@@ -841,7 +848,9 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        background: rgba(15, 32, 21, 0.58);
+        backdrop-filter: blur(4px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -856,12 +865,15 @@
 
     .modal-content {
         background: var(--ui-bg-surface);
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        max-width: 600px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 20px;
+        box-shadow: 0 24px 70px rgba(15, 32, 21, 0.24);
+        max-width: 680px;
+        width: min(680px, 100%);
+        max-height: min(88vh, 760px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
         animation: slideUp 0.3s ease;
     }
 
@@ -880,20 +892,41 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.5rem;
-        border-bottom: 1px solid var(--ui-border-color);
+        padding: 1.35rem 1.5rem;
+        border-bottom: 1px solid #e4eee7;
+        background: linear-gradient(135deg, #f7fcf8 0%, #ffffff 72%);
+    }
+
+    .modal-heading { min-width: 0; }
+
+    .modal-kicker {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--ui-theme-green);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
     }
 
     .modal-header h2 {
-        font-size: 1.25rem;
+        font-family: var(--font-brand, 'Syne', sans-serif);
+        font-size: 1.45rem;
+        line-height: 1.15;
         color: var(--ui-text-main);
         margin: 0;
+        overflow-wrap: anywhere;
     }
 
     .modal-close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
+        flex: 0 0 auto;
+        width: 36px;
+        height: 36px;
+        border: 1px solid #dfece4;
+        border-radius: 12px;
+        background: #ffffff;
+        font-size: 1.4rem;
+        line-height: 1;
         color: var(--ui-text-muted);
         cursor: pointer;
         transition: color 0.2s;
@@ -901,10 +934,14 @@
 
     .modal-close-btn:hover {
         color: var(--ui-text-main);
+        border-color: #b9d5c0;
+        background: var(--ui-theme-green-light);
     }
 
     .modal-body {
         padding: 1.5rem;
+        overflow-y: auto;
+        background: #ffffff;
     }
 
     .modal-loading {
@@ -935,12 +972,91 @@
         gap: 1rem;
     }
 
+    .phase-overview {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #dfece4;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f5fbf6 0%, #ffffff 100%);
+    }
+
+    .phase-overview-label {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--ui-text-muted);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .phase-overview-description {
+        color: var(--ui-text-main);
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .phase-progress-value {
+        color: var(--ui-theme-green);
+        font-family: var(--font-brand, 'Syne', sans-serif);
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: right;
+    }
+
+    .phase-progress-track {
+        grid-column: 1 / -1;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e7f0e9;
+    }
+
+    .phase-progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #2a4028, #77a477);
+    }
+
+    .phase-status-badge {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        margin-top: 0.55rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: var(--status-pend-bg);
+        color: var(--status-pend-txt);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .phase-status-badge.status-completed { background: var(--status-comp-bg); color: var(--status-comp-txt); }
+    .phase-status-badge.status-in-progress { background: var(--status-prog-bg); color: var(--status-prog-txt); }
+    .phase-status-badge.status-delayed { background: var(--status-delay-bg); color: var(--status-delay-txt); }
+
+    .phase-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
     .detail-row {
         display: flex;
-        justify-content: space-between;
-        padding: 0.75rem;
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 0;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid #e6efe8;
         background: var(--ui-bg-app);
-        border-radius: 8px;
+        border-radius: 12px;
     }
 
     .detail-label {
@@ -951,29 +1067,32 @@
     .detail-value {
         color: var(--ui-text-main);
         font-weight: 500;
+        overflow-wrap: anywhere;
     }
 
     .modal-footer {
-        padding: 1.5rem;
-        border-top: 1px solid var(--ui-border-color);
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e4eee7;
+        background: #fbfdfb;
         display: flex;
         justify-content: flex-end;
     }
 
     .btn-modal-close {
-        padding: 0.5rem 1rem;
-        background: var(--ui-border-color);
-        border: none;
-        border-radius: 8px;
-        color: var(--ui-text-main);
+        min-width: 92px;
+        padding: 0.65rem 1rem;
+        background: var(--ui-theme-green);
+        border: 1px solid var(--ui-theme-green);
+        border-radius: 10px;
+        color: #ffffff;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.2s;
     }
 
     .btn-modal-close:hover {
-        background: var(--ui-theme-green);
-        color: white;
+        background: #365233;
+        border-color: #365233;
     }
 
     /* Responsive Design */
@@ -1025,7 +1144,11 @@
         }
 
         .project-selector-card {
-            grid-column: 1 / -1 !important;
+            grid-column: 1 !important;
+        }
+
+        .health-metric-card {
+            grid-column: 2 !important;
         }
 
         .metric-label {
@@ -1166,6 +1289,10 @@
             border-radius: 20px !important;
             background: #ffffff !important;
             box-shadow: 0 10px 24px rgba(15, 32, 21, 0.045) !important;
+        }
+
+        .phases-data-table tbody tr[data-phase-id].phase-filter-hidden {
+            display: none !important;
         }
 
         .phases-data-table tbody tr.row-active-highlight {
@@ -1333,6 +1460,49 @@
             border-radius: 20px !important;
         }
 
+        .modal-overlay {
+            padding: 12px !important;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+            padding: 14px !important;
+        }
+
+        .modal-header h2 {
+            font-size: 1.15rem !important;
+        }
+
+        .phase-overview {
+            grid-template-columns: minmax(0, 1fr) auto;
+            padding: 12px !important;
+            gap: 10px;
+        }
+
+        .phase-overview-description {
+            font-size: 0.8rem;
+        }
+
+        .phase-progress-value {
+            font-size: 1.45rem;
+        }
+
+        .phase-detail-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .detail-row {
+            padding: 10px !important;
+            border-radius: 10px;
+        }
+
+        .detail-label,
+        .detail-value {
+            font-size: 0.75rem;
+        }
+
         .detail-row {
             display: grid !important;
             grid-template-columns: 1fr !important;
@@ -1341,9 +1511,16 @@
     }
 
     @media (max-width: 390px) {
-        .metrics-row,
         .filters-section {
             grid-template-columns: 1fr !important;
+        }
+
+        .project-name {
+            font-size: 15px !important;
+        }
+
+        .phase-detail-grid {
+            grid-template-columns: 1fr;
         }
 
         .phases-data-table tbody tr[data-phase-id] {
@@ -1430,52 +1607,58 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Build modal body with management controls when allowed
                         const canManage = data.can_manage === true;
+                        const progress = Math.max(0, Math.min(100, Math.round(Number(phase.completion_percentage) || 0)));
+                        const statusLabel = phase.status.replaceAll('_', ' ');
+                        const statusClass = phase.status === 'completed'
+                            ? 'status-completed'
+                            : (phase.status === 'in_progress' ? 'status-in-progress' : (phase.status === 'delayed' ? 'status-delayed' : 'status-pending'));
 
                         modalBody.innerHTML = `
                             <div class="phase-details">
-                                <div class="detail-row">
-                                    <span class="detail-label">Phase Order:</span>
-                                    <span class="detail-value">#${phase.order}</span>
+                                <div class="phase-overview">
+                                    <div>
+                                        <span class="phase-overview-label">Phase ${phase.order}</span>
+                                        <div class="phase-overview-description">${phase.description}</div>
+                                        <span class="phase-status-badge ${statusClass}">${statusLabel}</span>
+                                    </div>
+                                    <div class="phase-progress-value">${progress}%</div>
+                                    <div class="phase-progress-track" aria-label="Phase completion ${progress}%">
+                                        <div class="phase-progress-fill" style="width: ${progress}%"></div>
+                                    </div>
                                 </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Status:</span>
-                                    <span class="detail-value">${phase.status.toUpperCase().replace('_', ' ')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Progress:</span>
-                                    <span class="detail-value">${Math.round(phase.completion_percentage)}%</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Project:</span>
-                                    <span class="detail-value">${phase.project_name}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Planned Start:</span>
-                                    <span class="detail-value">${phase.planned_start_date}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Planned End:</span>
-                                    <span class="detail-value">${phase.planned_end_date}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Actual Start:</span>
-                                    <span class="detail-value">${phase.actual_start_date}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Actual End:</span>
-                                    <span class="detail-value">${phase.actual_end_date}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Milestones:</span>
-                                    <span class="detail-value">${phase.completed_milestones}/${phase.milestones_count} completed</span>
+                                <div class="phase-detail-grid">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Project</span>
+                                        <span class="detail-value">${phase.project_name}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Milestones</span>
+                                        <span class="detail-value">${phase.completed_milestones}/${phase.milestones_count} completed</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Planned Start</span>
+                                        <span class="detail-value">${phase.planned_start_date}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Planned End</span>
+                                        <span class="detail-value">${phase.planned_end_date}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Actual Start</span>
+                                        <span class="detail-value">${phase.actual_start_date}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Actual End</span>
+                                        <span class="detail-value">${phase.actual_end_date}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Delayed Milestones</span>
+                                        <span class="detail-value">${phase.delayed_milestones}</span>
+                                    </div>
                                 </div>
                                 ${canManage ? `
                                 <div class="detail-row">
-                                    <span class="detail-label">Current Progress:</span>
-                                    <span class="detail-value">${Math.round(phase.completion_percentage)}%</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">Change Status:</span>
+                                    <span class="detail-label">Change Status</span>
                                     <span class="detail-value">
                                         <select id="modalStatusSelect" style="padding:6px;border-radius:6px;border:1px solid #e6ece9;">
                                             <option value="not_started" ${phase.status === 'not_started' ? 'selected' : ''}>Pending</option>
@@ -1597,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesSearch = phaseName.includes(searchTerm);
             const matchesStatus = !statusValue || phaseStatus === statusValue;
             
-            row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+            row.classList.toggle('phase-filter-hidden', !(matchesSearch && matchesStatus));
         });
     }
 

@@ -242,7 +242,7 @@
     }
 
     .milestone-modal-card {
-        width: min(780px, 100%);
+        width: min(920px, 100%);
         background: #ffffff;
         border: 1px solid var(--border);
         border-radius: 24px;
@@ -352,6 +352,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
         margin-bottom: 1rem;
+        align-items: stretch;
     }
 
     .milestone-schedule-status-row.is-create {
@@ -364,12 +365,63 @@
         margin-bottom: 0;
     }
 
+    .milestone-schedule-box {
+        background: #f8fafc;
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        box-shadow: none;
+    }
+
+    .milestone-status-box {
+        background: #f8fafc;
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        box-shadow: none;
+    }
+
+    .milestone-schedule-box .milestone-modal-section-title,
+    .milestone-status-box .milestone-modal-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .milestone-schedule-box .milestone-modal-section-title::before,
+    .milestone-status-box .milestone-modal-section-title::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #94a3b8;
+    }
+
+    .milestone-status-box .milestone-modal-section-title::before {
+        background: #94a3b8;
+    }
+
+    .milestone-schedule-box .milestone-modal-field,
+    .milestone-status-box .milestone-modal-field {
+        padding: 0.75rem;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .milestone-schedule-box .milestone-modal-field input,
+    .milestone-status-box .milestone-modal-field select {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+
     .milestone-schedule-fields {
         display: grid;
         gap: 0.85rem;
     }
 
     .milestone-schedule-status-row.is-create .milestone-schedule-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .milestone-schedule-status-row:not(.is-create) .milestone-schedule-fields {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1183,6 +1235,12 @@
     }
 
     @media (max-width: 720px) {
+        .timeline-filter-group {
+            width: calc(50% - 0.45rem) !important;
+            min-width: 0 !important;
+            flex: 1 1 calc(50% - 0.45rem) !important;
+        }
+
         .summary-grid { grid-template-columns: 1fr; }
         .page-header-card { padding: 1rem 1rem 1.05rem; }
         .page-title { font-size: 1.25rem; }
@@ -1295,6 +1353,12 @@
             padding: 12px !important;
             border-radius: 18px !important;
             margin-bottom: 12px !important;
+        }
+
+        #pg-timeline .toolbar-group.timeline-filter-group {
+            width: calc(50% - 5px) !important;
+            min-width: 0 !important;
+            flex: 1 1 calc(50% - 5px) !important;
         }
 
         #pg-timeline .toolbar-input,
@@ -1555,7 +1619,7 @@
 
         #pg-timeline .timeline-mobile-head {
             display: grid !important;
-            grid-template-columns: 30px minmax(0, 1fr) auto !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
             gap: 10px !important;
             align-items: start !important;
             padding-bottom: 12px !important;
@@ -1591,6 +1655,23 @@
             letter-spacing: -0.01em !important;
             word-break: normal !important;
             overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-mobile-title {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        #pg-timeline .mobile-gantt-title {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .mobile-gantt-head .status-pill-badge,
+        #pg-timeline .timeline-mobile-head .status-pill-badge {
+            flex: 0 0 auto !important;
+            max-width: 96px !important;
         }
 
         #pg-timeline .timeline-mobile-code {
@@ -1731,14 +1812,14 @@
             </select>
         </div>
 
-        <div class="toolbar-group">
+        <div class="toolbar-group timeline-filter-group" data-filter="phase">
             <label for="phaseFilterSelector">Construction Phase</label>
             <select id="phaseFilterSelector" class="toolbar-select">
                 <option value="all">All phases</option>
             </select>
         </div>
 
-        <div class="toolbar-group">
+        <div class="toolbar-group timeline-filter-group" data-filter="status">
             <label for="statusFilterSelector">Status</label>
             <select id="statusFilterSelector" class="toolbar-select">
                 <option value="all">All statuses</option>
@@ -1997,9 +2078,10 @@
             if (activeTimelineFilter !== 'all' && status !== activeTimelineFilter) return false;
             if (statusFilter !== 'all' && status !== statusFilter) return false;
             if (phaseFilter !== 'all') {
+                const phaseId = String(phase.phase_id ?? phase.id ?? '');
                 const phaseCode = String(phase.phase_code || phase.code || '').toLowerCase();
                 const phaseName = String(phase.phase_name || phase.name || '').toLowerCase();
-                if (phaseCode !== phaseFilter.toLowerCase() && phaseName !== phaseFilter.toLowerCase()) return false;
+                if (phaseId !== phaseFilter && phaseCode !== phaseFilter.toLowerCase() && phaseName !== phaseFilter.toLowerCase()) return false;
             }
             if (searchValue) {
                 const haystack = `${phase.phase_name || phase.name || ''} ${phase.phase_code || phase.code || ''} ${phase.description || ''}`.toLowerCase();
@@ -2039,9 +2121,10 @@
             if (activeTimelineFilter !== 'all' && status !== activeTimelineFilter) return false;
             if (statusFilter !== 'all' && status !== statusFilter) return false;
             if (phaseFilter !== 'all') {
+                const phaseId = String(milestone.phase_id ?? '');
                 const phaseCode = String(milestone.phase_code || '').toLowerCase();
                 const phaseName = String(milestone.phase_name || '').toLowerCase();
-                if (phaseCode !== phaseFilter.toLowerCase() && phaseName !== phaseFilter.toLowerCase()) return false;
+                if (phaseId !== phaseFilter && phaseCode !== phaseFilter.toLowerCase() && phaseName !== phaseFilter.toLowerCase()) return false;
             }
             if (searchValue) {
                 const haystack = `${milestone.milestone_name || ''} ${milestone.phase_name || ''} ${milestone.phase_code || ''}`.toLowerCase();
@@ -2069,10 +2152,13 @@
         if (!filter) return;
 
         const phases = getProjectPhases(project);
-        const phaseOptions = Array.from(new Set(phases.map((phase) => phase.phase_code || phase.code || phase.phase_name || phase.name || '').filter(Boolean))).sort();
+        const phaseOptions = phases.map((phase) => ({
+            value: String(phase.phase_id ?? phase.id ?? phase.phase_code ?? phase.code ?? phase.phase_name ?? phase.name ?? ''),
+            label: getDisplayPhaseName(phase),
+        })).filter((option, index, options) => option.value && options.findIndex((item) => item.value === option.value) === index);
         const currentValue = filter.value;
-        filter.innerHTML = ['<option value="all">All phases</option>', ...phaseOptions.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)].join('');
-        if (phaseOptions.includes(currentValue)) {
+        filter.innerHTML = ['<option value="all">All phases</option>', ...phaseOptions.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)].join('');
+        if (phaseOptions.some((option) => option.value === currentValue)) {
             filter.value = currentValue;
         }
     }

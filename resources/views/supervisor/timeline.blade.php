@@ -91,7 +91,7 @@
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
+                        <div class="row g-3 mb-4 timeline-meta-row">
                             <div class="col-6 col-md-3">
                                 <div class="meta-metric-card">
                                     <div class="meta-card-label"><i class="bi bi-calendar-plus me-1"></i> Planned Start</div>
@@ -138,8 +138,8 @@
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-6 col-md-4 custom-col-five">
+                    <div class="row g-3 mb-4 kpi-summary-row">
+                        <div class="col-6 col-md-4 custom-col-five kpi-overall-card">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Overall Progress</span>
                                 <div class="d-flex align-items-center justify-content-between mt-2">
@@ -149,7 +149,7 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Project-wide delivery health</span>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 custom-col-five">
+                        <div class="col-6 col-md-4 custom-col-five kpi-secondary-card">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Completed Phases</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
@@ -159,7 +159,7 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Delivered in sequence</span>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 custom-col-five">
+                        <div class="col-6 col-md-4 custom-col-five kpi-secondary-card">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Remaining Phases</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
@@ -174,7 +174,7 @@
                             $scheduleHealthLabel = data_get($project, 'scheduleHealth', 'On Track');
                             $scheduleHealthClass = $scheduleHealthLabel === 'Delayed' ? 'text-amber-deep' : 'text-success';
                         @endphp
-                        <div class="col-6 col-md-6 col-xl-2.4 custom-col-five">
+                        <div class="col-6 col-md-6 col-xl-2.4 custom-col-five kpi-secondary-card">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Active Milestones</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
@@ -184,7 +184,7 @@
                                 <span class="kpi-subtext text-muted mt-2 d-block">Driving today's work</span>
                             </div>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-2.4 custom-col-five">
+                        <div class="col-12 col-md-6 col-xl-2.4 custom-col-five kpi-secondary-card">
                             <div class="kpi-panel-card">
                                 <span class="kpi-label">Schedule Health</span>
                                 <div class="mt-2">
@@ -622,6 +622,68 @@
     .kpi-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.04em; }
     .kpi-value { font-size: 1.45rem; font-weight: 700; color: #166534; font-family: 'Syne', sans-serif; }
     .kpi-subtext { font-size: 0.78rem; line-height: 1.3; }
+
+    @media (max-width: 575.98px) {
+        .timeline-meta-row {
+            --bs-gutter-x: 0.65rem;
+            --bs-gutter-y: 0.65rem;
+        }
+
+        .timeline-meta-row .meta-metric-card {
+            height: 100%;
+            min-height: 76px;
+            padding: 10px 11px;
+            border-radius: 10px;
+        }
+
+        .timeline-meta-row .meta-card-label {
+            font-size: 0.58rem;
+            line-height: 1.25;
+        }
+
+        .timeline-meta-row .meta-card-value {
+            margin-top: 3px;
+            font-size: 0.78rem;
+            line-height: 1.2;
+        }
+
+        .kpi-summary-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem !important;
+        }
+
+        .kpi-summary-row > [class*="col-"] {
+            width: auto;
+            max-width: none;
+            padding: 0;
+        }
+
+        .kpi-summary-row .kpi-overall-card {
+            grid-column: 1 / -1;
+        }
+
+        .kpi-panel-card {
+            min-height: 112px;
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .kpi-label {
+            font-size: 0.58rem;
+            line-height: 1.25;
+        }
+
+        .kpi-value {
+            font-size: 1.2rem;
+        }
+
+        .kpi-subtext {
+            margin-top: 0.45rem !important;
+            font-size: 0.68rem;
+            line-height: 1.25;
+        }
+    }
     
     .kpi-icon-success { color: #16A34A; font-size: 1.25rem; }
     .kpi-icon-warning { color: #f59e0b; font-size: 1.25rem; }

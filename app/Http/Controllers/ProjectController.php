@@ -23,7 +23,21 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+        $query = Project::with([
+                'client.user',
+                'engineer',
+                'supervisors',
+                'phases' => function ($phaseQuery) {
+                    $phaseQuery->select([
+                        'phase_id',
+                        'project_id',
+                        'phase_name',
+                        'phase_order',
+                        'completion_percentage',
+                        'status',
+                    ])->orderBy('phase_order');
+                },
+            ])
             ->withCount([
                 'phases as phase_count',
                 'milestones as milestone_count',
@@ -895,33 +909,8 @@ class ProjectController extends Controller
 
     public function phaseManagement(Request $request)
     {
-        $pendingReports = collect();
-
-        if (Schema::hasTable('accomplishment_reports')) {
-            $reportColumns = Schema::getColumnListing('accomplishment_reports');
-            $query = Report::query()->with(['project', 'submittedBy'])->orderBy('created_at', 'desc');
-
-            if (in_array('approval_status', $reportColumns, true)) {
-                $query->where('approval_status', 'pending');
-            } elseif (in_array('status', $reportColumns, true)) {
-                $query->where('status', 'pending');
-            }
-
-            $pendingReports = $query->get();
-        }
-
-        $auditLogs = [];
-        if (class_exists('\App\Models\PhaseAuditLog')) {
-            $auditLogs = \App\Models\PhaseAuditLog::with(['project', 'user'])
-                ->orderBy('created_at', 'desc')
-                ->take(10)
-                ->get();
-        }
-
         $projects = Project::query()
-            ->with(['phases' => function ($query) {
-                $query->orderBy('phase_order')->with(['milestones', 'overrideAppliedBy']);
-            }])
+            ->select(['project_id', 'project_name'])
             ->orderBy('project_name')
             ->get();
 
@@ -950,8 +939,8 @@ class ProjectController extends Controller
                 session(['admin_selected_project_id' => $selectedProject->project_id]);
             }
 
-            $selectedProject->loadMissing(['phases' => function ($query) {
-                $query->orderBy('phase_order')->with('milestones');
+            $selectedProject->load(['phases' => function ($query) {
+                $query->orderBy('phase_order')->with(['milestones', 'project']);
             }]);
 
             $allPhases = $selectedProject->phases;
@@ -972,8 +961,6 @@ class ProjectController extends Controller
         }
 
         return view('admin.phases', compact(
-            'pendingReports',
-            'auditLogs',
             'projects',
             'selectedProject',
             'phases',

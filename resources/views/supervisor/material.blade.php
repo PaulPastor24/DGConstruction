@@ -54,6 +54,18 @@
         transform: translateY(-1px);
     }
 
+    .material-stack > .material-toggle-bar {
+        border: 1px solid #e5e7eb;
+        border-bottom: 0;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .material-stack > .material-toggle-bar ~ .material-inventory-card {
+        margin-top: 0 !important;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+
     @media (max-width: 640px) {
         .material-page-shell {
             padding: 0.15rem 0 0.75rem !important;
@@ -234,6 +246,10 @@
     }
 
     @media (max-width: 640px) {
+        .material-toggle-bar {
+            min-height: 116px !important;
+        }
+
         .material-toggle-bar .inline-flex {
             width: 100% !important;
         }
@@ -429,8 +445,9 @@
         <div class="material-stack space-y-5 lg:space-y-8">
 
             <!-- ===================== INVENTORY PANEL ===================== -->
-            <div x-show="activeTab === 'inventory'" class="material-inventory-card bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden">
-                @include('partials.supervisor.material-toggle')
+            @include('partials.supervisor.material-toggle')
+
+            <div x-show="activeTab === 'inventory'" x-cloak class="material-inventory-card bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden">
 
                 <div class="material-filter-panel p-4 sm:p-6 border-b border-gray-200 bg-white">
                     <form id="material-filters-form" method="GET" action="{{ route('supervisor.materials') }}" class="material-filter-form flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
@@ -452,17 +469,6 @@
                                     <option value="low_stock" @selected($selectedStatus === 'low_stock')>Low Stock</option>
                                     <option value="critical" @selected($selectedStatus === 'critical')>Critical</option>
                                     <option value="out_of_stock" @selected($selectedStatus === 'out_of_stock')>Out of Stock</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                                    <i class="bi bi-chevron-down text-xs"></i>
-                                </div>
-                            </div>
-
-                            <div class="relative">
-                                <select name="project_id" class="appearance-none bg-white pl-4 pr-10 py-2.5 text-sm text-gray-700 border border-gray-200 rounded-input shadow-saas focus:outline-none focus:ring-2 focus:ring-brand-dark transition">
-                                    @foreach($assignedProjects as $project)
-                                        <option value="{{ $project->project_id }}" @selected(optional($selectedProject)->project_id == $project->project_id)>{{ $project->project_name }}</option>
-                                    @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                                     <i class="bi bi-chevron-down text-xs"></i>
@@ -515,7 +521,7 @@
                                                 </div>
                                                 <div class="min-w-0">
                                                     <div class="text-sm font-bold text-gray-900 group-hover:text-brand-dark transition leading-snug break-words">{{ $item->name }}</div>
-                                                    <div class="text-xs text-gray-400">SKU-{{ 1000 + $item->id }}</div>
+                                                    <div class="text-xs text-gray-400">ID-{{ 1000 + $item->id }}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -631,8 +637,6 @@
 
             <!-- ===================== REQUEST MATERIAL TABLE PANEL ===================== -->
             <div x-show="activeTab === 'requests'" class="material-inventory-card bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden" x-cloak>
-                @include('partials.supervisor.material-toggle')
-
                 <div class="material-filter-panel p-4 sm:p-6 border-b border-gray-200 bg-white">
                     <form id="requests-filters-form" method="GET" action="{{ route('supervisor.materials') }}" class="material-filter-form flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
                         <input type="hidden" name="project_id" value="{{ optional($selectedProject)->project_id }}">
@@ -777,8 +781,6 @@
 
             <!-- ===================== RECENT MATERIAL USAGE PANEL ===================== -->
             <div x-show="activeTab === 'usage'" class="material-inventory-card bg-white rounded-card border border-gray-200 shadow-saas overflow-hidden" x-cloak>
-                @include('partials.supervisor.material-toggle')
-
                 <div class="material-filter-panel p-4 sm:p-6 border-b border-gray-200 bg-white">
                     <form id="usage-filters-form" method="GET" action="{{ route('supervisor.materials') }}" class="material-filter-form flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
                         <input type="hidden" name="project_id" value="{{ optional($selectedProject)->project_id }}">

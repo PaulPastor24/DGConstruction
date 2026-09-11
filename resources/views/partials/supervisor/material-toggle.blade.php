@@ -18,6 +18,19 @@
     </div>
 
     <div class="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:ml-auto w-full sm:w-auto mt-1 sm:mt-0">
+        <div class="relative col-span-2 sm:col-span-1 sm:min-w-[190px]">
+            <select
+                aria-label="Select project"
+                @change="window.location.href = '{{ route('supervisor.materials') }}?project_id=' + $event.target.value + '&tab=' + activeTab"
+                class="w-full appearance-none bg-white pl-9 pr-9 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 border border-gray-200 rounded-btn shadow-saas focus:outline-none focus:ring-2 focus:ring-brand-dark transition"
+            >
+                @foreach($assignedProjects as $project)
+                    <option value="{{ $project->project_id }}" @selected(optional($selectedProject)->project_id == $project->project_id)>{{ $project->project_name }}</option>
+                @endforeach
+            </select>
+            <i class="bi bi-building absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+        </div>
         <button type="button" @click="openRequestModal = true" class="w-full sm:w-auto inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs sm:text-sm font-bold text-white bg-[#2a4028] rounded-btn shadow-saas hover:bg-green-900 transition hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap">
             <i class="bi bi-cart-plus"></i> Request
         </button>
