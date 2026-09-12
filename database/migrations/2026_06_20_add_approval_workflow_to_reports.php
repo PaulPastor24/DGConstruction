@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::table('accomplishment_reports', function (Blueprint $table) {
             // Add approval workflow columns
-            $table->bigInteger('reviewed_by')->nullable()->after('submitted_by');
-            $table->bigInteger('approved_by')->nullable()->after('reviewed_by');
+            $table->unsignedBigInteger('reviewed_by')->nullable()->after('submitted_by');
+            $table->unsignedBigInteger('approved_by')->nullable()->after('reviewed_by');
             $table->string('approval_status')->default('pending')->after('ai_status');
             $table->text('approval_remarks')->nullable()->after('approval_status');
             $table->timestamp('reviewed_at')->nullable()->after('approval_remarks');

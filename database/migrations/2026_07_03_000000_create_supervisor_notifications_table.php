@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('supervisor_notifications', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('supervisor_id')->index();
+            $table->unsignedBigInteger('supervisor_id')->index();
             $table->string('type')->nullable()->index();
             $table->string('title');
             $table->text('message')->nullable();

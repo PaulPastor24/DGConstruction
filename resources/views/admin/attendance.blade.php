@@ -284,14 +284,17 @@
             </div>
         </form>
 
-        <form method="POST" action="{{ route('admin.attendance.send-report') }}" class="mt-3">
-            @csrf
+        <form method="GET" action="{{ route('admin.attendance.preview-report') }}" class="mt-3">
             <input type="hidden" name="date" value="{{ $filters['date'] ?? now()->toDateString() }}">
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-envelope"></i>
-                Send Attendance Report
+            <input type="hidden" name="project_id" value="{{ $filters['project_id'] ?? '' }}">
+            <input type="hidden" name="status" value="{{ $filters['status'] ?? '' }}">
+            <input type="hidden" name="biometric" value="{{ $filters['biometric'] ?? '' }}">
+            <input type="hidden" name="search" value="{{ $filters['search'] ?? '' }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-eye"></i>
+                Preview Attendance Report
             </button>
-            <span class="text-muted small ms-2">Sends the selected date to active administrators.</span>
+            <span class="text-muted small ms-2">Review records before sending.</span>
         </form>
     </section>
 

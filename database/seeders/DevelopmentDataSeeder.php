@@ -122,8 +122,6 @@ class DevelopmentDataSeeder extends Seeder
                 // Insert log using deployment_id
                 DB::table('attendance_logs')->insert([
                     'deployment_id' => $deploymentId,
-                    'project_id' => $projectId,
-                    'worker_id' => $wid,
                     'recorded_by' => $supervisorId,
                     'log_date' => $date,
                     'time_in' => $timeIn,

@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('material_requests', function (Blueprint $table) {
             $table->id('request_id');
-            $table->foreignId('project_id')->references('project_id')->on('projects')->cascadeOnDelete();
+            $table->unsignedInteger('project_id');
+            $table->foreign('project_id')->references('project_id')->on('projects')->cascadeOnDelete();
             $table->foreignId('material_id')->references('id')->on('materials')->cascadeOnDelete();
             $table->foreignId('requested_by')->references('user_id')->on('users')->cascadeOnDelete();
             $table->foreignId('reviewed_by')->nullable()->references('user_id')->on('users')->nullOnDelete();

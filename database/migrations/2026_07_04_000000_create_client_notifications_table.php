@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('client_notifications', function (Blueprint $table) {
             $table->id();
-            $table->integer('client_id')->index();
+            $table->unsignedInteger('client_id')->index();
             $table->string('type')->nullable()->index();
             $table->string('title');
             $table->text('message')->nullable();

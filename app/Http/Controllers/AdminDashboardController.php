@@ -1397,30 +1397,212 @@ class AdminDashboardController extends Controller
         );
     }
 
+    public function previewAttendanceReport(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => ['nullable', 'date'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
+            'status' => ['nullable', 'string', 'max:30'],
+            'biometric' => ['nullable', 'string', 'max:20'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $date = Carbon::parse($validated['date'] ?? Carbon::today()->toDateString())->startOfDay();
+
+        if (! Schema::hasTable('attendance_logs')) {
+            $records = collect();
+
+            return view(
+                'admin.attendance-preview',
+                compact('records', 'date')
+            );
+        }
+
+        $query = Attendance::query()
+            ->with([
+                'worker',
+                'deployment.worker',
+                'deployment.project',
+                'recordedBy',
+            ]);
+
+        $query->whereDate('log_date', $date->toDateString());
+
+        if (! empty($validated['project_id'])) {
+            $query->whereHas('deployment', function ($deploymentQuery) use ($validated) {
+                $deploymentQuery->where('project_id', $validated['project_id']);
+            });
+        }
+
+        if (! empty($validated['status'])) {
+            if ($validated['status'] === 'late') {
+                $query->whereIn('status', ['late', 'half_day', 'half day']);
+            } else {
+                $query->where('status', $validated['status']);
+            }
+        }
+
+        if (! empty($validated['biometric'])) {
+            if ($validated['biometric'] === 'verified') {
+                $query->where('biometric_matched', 1);
+            } elseif ($validated['biometric'] === 'unverified') {
+                $query->where(function ($biometricQuery) {
+                    $biometricQuery
+                        ->where('biometric_matched', 0)
+                        ->orWhereNull('biometric_matched');
+                });
+            }
+        }
+
+        if (! empty($validated['search'])) {
+            $keyword = '%'.$validated['search'].'%';
+
+            $query->where(function ($searchQuery) use ($keyword) {
+                $searchQuery
+                    ->where('status', 'like', $keyword)
+                    ->orWhere('remarks', 'like', $keyword)
+                    ->orWhereHas('worker', function ($workerQuery) use ($keyword) {
+                        $workerQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('trade', 'like', $keyword);
+                    })
+                    ->orWhereHas('deployment.worker', function ($workerQuery) use ($keyword) {
+                        $workerQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('trade', 'like', $keyword);
+                    })
+                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword) {
+                        $projectQuery
+                            ->where('project_name', 'like', $keyword)
+                            ->orWhere('project_location', 'like', $keyword);
+                    })
+                    ->orWhereHas('recordedBy', function ($userQuery) use ($keyword) {
+                        $userQuery
+                            ->where('first_name', 'like', $keyword)
+                            ->orWhere('last_name', 'like', $keyword)
+                            ->orWhere('name', 'like', $keyword);
+                    });
+            });
+        }
+
+        $records = $query
+            ->orderByDesc('time_in')
+            ->orderByDesc('log_id')
+            ->get();
+
+        return view(
+            'admin.attendance-preview',
+            compact('records', 'date')
+        );
+    }
+
     public function sendAttendanceReport(Request $request)
     {
         $validated = $request->validate([
             'date' => ['nullable', 'date'],
         ]);
+
         $date = Carbon::parse($validated['date'] ?? Carbon::today()->toDateString())->startOfDay();
+
+        if (! Schema::hasTable('attendance_logs')) {
+            return redirect()
+                ->route('admin.attendance')
+                ->with('error', 'Attendance records are not available yet.');
+        }
+
         $records = Attendance::with(['worker', 'deployment.project'])
             ->whereDate('log_date', $date->toDateString())
             ->orderBy('time_in')
             ->get();
 
-        $admins = User::query()
-            ->whereIn('role', ['engineer', 'admin', 'administrator'])
-            ->where('is_active', true)
-            ->whereNotNull('email')
-            ->get();
+        $user = Auth::user();
 
-        foreach ($admins as $admin) {
-            Mail::to($admin->email)->send(new DailyAttendanceReport($date, $records));
+        if (! $user || ! $user->email) {
+            return redirect()
+                ->route('admin.attendance.preview-report', ['date' => $date->toDateString()])
+                ->with('error', 'Your account does not have an email address configured. Please update your profile before sending reports.');
         }
 
-        return redirect()
-            ->back()
-            ->with('success', "Attendance report for {$date->toDateString()} sent to {$admins->count()} administrator(s).");
+        $mailConfigError = $this->validateMailConfiguration();
+
+        if ($mailConfigError !== null) {
+            return redirect()
+                ->route('admin.attendance.preview-report', ['date' => $date->toDateString()])
+                ->with('error', $mailConfigError);
+        }
+
+        try {
+            Log::info('Attendance report sending', [
+                'to' => $user->email,
+                'user_id' => $user->user_id,
+                'date' => $date->toDateString(),
+            ]);
+
+            Mail::to($user->email)->send(new DailyAttendanceReport($date, $records));
+
+            return redirect()
+                ->route('admin.attendance.preview-report', ['date' => $date->toDateString()])
+                ->with('success', "Attendance report for {$date->toDateString()} sent to {$user->email}. Check spam if not in inbox.");
+        } catch (\Throwable $e) {
+            Log::error('Attendance report email failed: '.$e->getMessage(), [
+                'user_id' => $user->user_id,
+                'email' => $user->email,
+                'date' => $date->toDateString(),
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = 'Failed to send attendance report. Mail configuration error. Please contact support.';
+
+            if (str_contains($e->getMessage(), '535-5.7.8 Username and Password not accepted')) {
+                $message = 'The mail provider rejected the login. Double-check MAIL_USERNAME and MAIL_PASSWORD in your .env file.';
+            } elseif (str_contains($e->getMessage(), 'Connection could not be established')) {
+                $message = 'Could not connect to the mail server. Check MAIL_HOST and MAIL_PORT in your .env file.';
+            } elseif (str_contains($e->getMessage(), 'Authentication failed')) {
+                $message = 'SMTP authentication failed. Verify your mail provider credentials.';
+            }
+
+            return redirect()
+                ->route('admin.attendance.preview-report', ['date' => $date->toDateString()])
+                ->with('error', $message);
+        }
+    }
+
+    protected function validateMailConfiguration(): ?string
+    {
+        if (app()->environment('testing')) {
+            return null;
+        }
+
+        $mailer = config('mail.default');
+        $host = config('mail.mailers.'.$mailer.'.host');
+        $port = config('mail.mailers.'.$mailer.'.port');
+        $username = config('mail.mailers.'.$mailer.'.username');
+        $password = config('mail.mailers.'.$mailer.'.password');
+        $encryption = config('mail.mailers.'.$mailer.'.encryption');
+
+        if ($mailer === 'log') {
+            return null;
+        }
+
+        if (! $host || ! $port) {
+            return 'Mail is not configured. Please set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, and MAIL_PASSWORD in your .env file.';
+        }
+
+        if ($host === 'smtp.gmail.com' && $port == 587 && empty($username)) {
+            return 'Gmail SMTP is selected but MAIL_USERNAME is empty. Set it to the full Gmail address.';
+        }
+
+        if ($host === 'smtp.gmail.com' && empty($password)) {
+            return 'Gmail SMTP is selected but MAIL_PASSWORD is empty. Use a Gmail App Password here, not your regular password.';
+        }
+
+        if (str_contains($password ?? '', 'your_') || str_contains($password ?? '', 'changeme') || preg_match('/^(password|example|test|dummy|foo|bar|123|qwerty)$/i', (string) $password)) {
+            return 'MAIL_PASSWORD still contains a placeholder value. Replace it with the actual SMTP key or password from your mail provider.';
+        }
+
+        return null;
     }
 
     private function attendanceTimes(Request $request): array

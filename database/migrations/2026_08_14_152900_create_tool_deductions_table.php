@@ -12,7 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tool_loan_id')->constrained('tool_loans')->cascadeOnDelete();
             $table->foreignId('tool_id')->constrained('tools')->cascadeOnDelete();
-            $table->foreignId('worker_id')->constrained('workers', 'worker_id')->cascadeOnDelete();
+            $table->unsignedInteger('worker_id');
+            $table->foreign('worker_id')->references('worker_id')->on('workers')->cascadeOnDelete();
             $table->decimal('amount', 12, 2);
             $table->enum('reason', ['lost', 'damaged_beyond_repair', 'stolen']);
             $table->text('remarks')->nullable();

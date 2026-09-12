@@ -46,7 +46,6 @@ class DatabaseSeeder extends Seeder
         $engineerId = DB::table('users')->insertGetId([
             'first_name' => 'Lead',
             'last_name' => 'Engineer',
-            'name' => 'Lead Engineer',
             'email' => 'admin@dg-corp.ph',
             'password' => $password,
             'role' => 'engineer',
@@ -57,7 +56,6 @@ class DatabaseSeeder extends Seeder
         $supervisorId = DB::table('users')->insertGetId([
             'first_name' => 'Site',
             'last_name' => 'Supervisor',
-            'name' => 'Site Supervisor',
             'email' => 'supervisor@dg-corp.ph',
             'password' => $password,
             'role' => 'supervisor',
@@ -68,7 +66,6 @@ class DatabaseSeeder extends Seeder
         $clientUserId = DB::table('users')->insertGetId([
             'first_name' => 'John',
             'last_name' => 'Doe',
-            'name' => 'John Doe',
             'email' => 'client@dg-corp.ph',
             'password' => $password,
             'role' => 'client',
@@ -87,8 +84,7 @@ class DatabaseSeeder extends Seeder
         DB::table('projects')->insert([
             [
                 'project_name' => 'Kulas and Rene',
-            'location' => 'Quezon City',
-            'project_location' => 'Quezon City',
+                'location' => 'Quezon City',
                 'client_id' => $clientId,
                 'engineer_id' => $engineerId,
                 'start_date' => now()->addDays(5),
@@ -102,7 +98,6 @@ class DatabaseSeeder extends Seeder
             [
                 'project_name' => 'Ghost Project',
                 'location' => 'Pasig',
-                'project_location' => 'Pasig',
                 'client_id' => $clientId,
                 'engineer_id' => $engineerId,
                 'start_date' => now(),

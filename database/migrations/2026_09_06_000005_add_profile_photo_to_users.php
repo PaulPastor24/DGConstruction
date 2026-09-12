@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (!Schema::hasColumn('users', 'profile_photo')) {
             Schema::table('users', function (Blueprint $table): void {
-                $table->string('profile_photo')->nullable()->after('address');
+                $table->string('profile_photo')->nullable()->after('remember_token');
             });
         }
     }

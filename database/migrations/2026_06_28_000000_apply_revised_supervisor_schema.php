@@ -12,10 +12,10 @@ return new class extends Migration
         if (!Schema::hasTable('worker_biometric_profiles')) {
             Schema::create('worker_biometric_profiles', function (Blueprint $table) {
                 $table->increments('biometric_id');
-                $table->integer('worker_id');
+                $table->unsignedInteger('worker_id');
                 $table->binary('fingerprint_template');
                 $table->timestamp('enrolled_at')->useCurrent();
-                $table->bigInteger('enrolled_by')->nullable();
+                $table->unsignedBigInteger('enrolled_by')->nullable();
                 $table->foreign('worker_id')->references('worker_id')->on('workers')->onDelete('cascade')->onUpdate('cascade');
                 $table->foreign('enrolled_by')->references('user_id')->on('users')->nullOnDelete()->onUpdate('cascade');
             });

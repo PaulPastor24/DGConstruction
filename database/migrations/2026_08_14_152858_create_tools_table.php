@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('purchase_price', 12, 2)->nullable();
             $table->text('description')->nullable();
             $table->enum('status', ['available', 'in_use', 'lost', 'retired'])->default('available');
-            $table->unsignedBigInteger('current_borrower_worker_id')->nullable();
+            $table->unsignedInteger('current_borrower_worker_id')->nullable();
             $table->timestamps();
 
             $table->foreign('current_borrower_worker_id')

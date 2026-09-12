@@ -264,9 +264,19 @@ class SupervisorController extends Controller
             $timeInValue = $requestedTimeIn ?? $now->format('H:i:s');
             $status = $this->computeTimeInStatus($timeInValue, $worker->schedule_start ?: '07:00:00');
 
+            $deployment = null;
+
+            if (Schema::hasTable('project_workers') && Schema::hasColumn('project_workers', 'project_id')) {
+                $deployment = DB::table('project_workers')
+                    ->where('worker_id', $validated['worker_id'])
+                    ->where('is_active', 1)
+                    ->first();
+            }
+
             DB::table('attendance_logs')->insert([
+                'project_id' => $deployment->project_id ?? null,
                 'worker_id' => $validated['worker_id'],
-                'deployment_id' => 1,
+                'deployment_id' => $deployment->deployment_id ?? null,
                 'recorded_by' => Auth::id(),
                 'log_date' => $date,
                 'time_in' => $timeInValue,
