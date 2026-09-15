@@ -2800,8 +2800,7 @@ textarea {
     body.page-admin-timeline .content .gantt-chart,
     body.page-admin-timeline .content .gantt-chart-wrapper,
     body.page-admin-timeline .content .timeline-table-wrapper,
-    body.page-admin-timeline .content [class*="gantt"],
-    body.page-admin-timeline .content [id*="gantt"] {
+    body.page-admin-timeline .content .gantt-scroll-shell {
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -2819,8 +2818,7 @@ textarea {
     body.page-admin-timeline .content .gantt-container::before,
     body.page-admin-timeline .content .gantt-chart::before,
     body.page-admin-timeline .content .gantt-chart-wrapper::before,
-    body.page-admin-timeline .content [class*="gantt"]::before,
-    body.page-admin-timeline .content [id*="gantt"]::before {
+    body.page-admin-timeline .content .gantt-scroll-shell::before {
         content: none !important;
         display: none !important;
     }

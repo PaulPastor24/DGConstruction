@@ -25,8 +25,8 @@ gantt.config.drag_move = false;
 gantt.config.drag_resize = false;
 gantt.config.drag_progress = false;
 gantt.config.drag_links = false;
-gantt.config.fit_tasks = true;
-gantt.config.autofit = true;
+gantt.config.fit_tasks = false;
+gantt.config.autofit = false;
 gantt.config.open_tree_initially = true;
 gantt.config.min_column_width = 46;
 gantt.config.scroll_size = 20;
@@ -35,18 +35,18 @@ gantt.config.order_branch = true;
 
 function getResponsiveGanttColumns() {
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
-    const isMobile = viewportWidth < 768;
-    const isTablet = viewportWidth < 1024;
+    const isMobile = viewportWidth < 720;
+    const isTablet = viewportWidth < 1200;
 
     return [
-        { name: 'text', label: isMobile ? 'Phase' : 'Phases', tree: true, width: isMobile ? 168 : isTablet ? 220 : 280 },
-        { name: 'start_date', label: 'Start', align: 'center', width: isMobile ? 76 : 110 },
-        { name: 'end_date', label: 'End', align: 'center', width: isMobile ? 76 : 110 },
+        { name: 'text', label: isMobile ? 'Phase' : 'Phases', tree: true, width: isMobile ? 168 : isTablet ? 190 : 280 },
+        { name: 'start_date', label: 'Start', align: 'center', width: isMobile ? 76 : isTablet ? 86 : 110 },
+        { name: 'end_date', label: 'End', align: 'center', width: isMobile ? 76 : isTablet ? 86 : 110 },
         {
             name: 'progress',
             label: isMobile ? '%' : 'Progress',
             align: 'center',
-            width: isMobile ? 62 : 100,
+            width: isMobile ? 62 : isTablet ? 76 : 100,
             template: function(task) {
                 return `${Math.round((Number(task.progress) || 0) * 100)}%`;
             }
@@ -56,8 +56,8 @@ function getResponsiveGanttColumns() {
 
 function applyResponsiveGanttSettings() {
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
-    const isMobile = viewportWidth < 768;
-    const isTablet = viewportWidth < 1024;
+    const isMobile = viewportWidth < 720;
+    const isTablet = viewportWidth < 1200;
 
     gantt.config.columns = getResponsiveGanttColumns();
     gantt.config.row_height = isMobile ? 72 : isTablet ? 84 : 96;
@@ -120,6 +120,36 @@ if (!document.getElementById('gantt-compact-styles')) {
             font-weight: 500 !important;
             font-size: 12px !important;
             text-shadow: 0 1px 2px rgba(15, 23, 42, 0.25) !important;
+        }
+        .gantt_layout_outer_scroll,
+        .gantt_data_area,
+        .gantt_grid_data,
+        .gantt_task_bg,
+        .gantt_task_vscroll,
+        .gantt_ver_scroll,
+        .scrollVer_cell,
+        .gantt_row,
+        .gantt_task_row {
+            scrollbar-width: none !important;
+        }
+        .gantt_layout_outer_scroll::-webkit-scrollbar,
+        .gantt_data_area::-webkit-scrollbar,
+        .gantt_grid_data::-webkit-scrollbar,
+        .gantt_task_bg::-webkit-scrollbar,
+        .gantt_task_vscroll::-webkit-scrollbar,
+        .gantt_ver_scroll::-webkit-scrollbar,
+        .scrollVer_cell::-webkit-scrollbar,
+        .gantt_row::-webkit-scrollbar,
+        .gantt_task_row::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
+        }
+        .gantt_hor_scroll,
+        .scrollHor_cell {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
         .gantt_progress_overlay {
             position: absolute !important;
@@ -325,6 +355,67 @@ function syncGanttHeight() {
     }
 }
 
+function syncGanttResponsiveWidth() {
+    const container = document.getElementById('dhtmlxGantt');
+    const shell = container?.closest('.gantt-scroll-shell');
+    if (!container || !shell) return;
+
+    shell.style.width = '100%';
+    shell.style.maxWidth = '100%';
+    shell.style.minWidth = '0';
+    shell.style.overflowX = 'auto';
+    shell.style.overflowY = 'auto';
+    shell.style.touchAction = 'pan-x pan-y';
+    shell.style.webkitOverflowScrolling = 'touch';
+    container.style.width = '100%';
+    container.style.minWidth = '0';
+
+    const layout = container.querySelector('.gantt_layout_x');
+    if (layout) {
+        layout.style.whiteSpace = 'nowrap';
+        layout.style.setProperty('overflow', 'hidden', 'important');
+    }
+
+    container.querySelectorAll('.gantt_layout_outer_scroll, .gantt_data_area, .gantt_task_scroll, .gantt_grid_data, .gantt_task_vscroll, .gantt_ver_scroll, .scrollVer_cell, .gantt_row, .gantt_task_row').forEach((scrollTarget) => {
+        scrollTarget.style.setProperty('overflow', 'hidden', 'important');
+    });
+
+    container.querySelectorAll('.gantt_task_bg').forEach((scrollTarget) => {
+        scrollTarget.style.setProperty('overflow-x', 'auto', 'important');
+        scrollTarget.style.setProperty('overflow-y', 'hidden', 'important');
+        scrollTarget.style.setProperty('touch-action', 'pan-x', 'important');
+    });
+
+    container.querySelectorAll('.gantt_hor_scroll').forEach((scrollTarget) => {
+        scrollTarget.style.setProperty('visibility', 'hidden', 'important');
+        scrollTarget.style.setProperty('opacity', '0', 'important');
+        scrollTarget.style.setProperty('pointer-events', 'none', 'important');
+    });
+}
+
+function normalizeGanttLayout() {
+    const root = document.querySelector('#dhtmlxGantt .gantt_layout_root');
+    const horizontalLayout = root?.querySelector(':scope > .gantt_layout_x');
+    if (!horizontalLayout) return;
+
+    horizontalLayout.style.setProperty('white-space', 'nowrap', 'important');
+
+    horizontalLayout.querySelectorAll(':scope > .gantt_layout_cell').forEach((cell) => {
+        cell.style.setProperty('display', 'inline-block', 'important');
+        cell.style.setProperty('vertical-align', 'top', 'important');
+    });
+
+    const cells = [...horizontalLayout.querySelectorAll(':scope > .gantt_layout_cell')];
+    if (cells.length >= 3) {
+        const availableWidth = horizontalLayout.clientWidth;
+        const gridWidth = Math.min(280, Math.max(220, Math.floor(availableWidth * 0.34)));
+        const taskWidth = Math.max(260, availableWidth - gridWidth - 1);
+        cells[0].style.setProperty('width', `${gridWidth}px`, 'important');
+        cells[1].style.setProperty('width', '1px', 'important');
+        cells[2].style.setProperty('width', `${taskWidth}px`, 'important');
+    }
+}
+
 function scheduleTaskStylingRefresh() {
     // Throttle with rAF instead of a "wait until scrolling stops" debounce so
     // flags get repositioned on (near) every frame while the user is actively
@@ -372,6 +463,25 @@ function attachGanttScrollHooks() {
         scrollTargets.forEach((target) => {
             target.addEventListener('scroll', scheduleTaskStylingRefresh, { passive: true });
         });
+
+        const taskSurface = root.querySelector('.gantt_task');
+        const horizontalScroll = root.querySelector('.gantt_hor_scroll');
+        if (taskSurface && horizontalScroll && !taskSurface.dataset.touchScrollBound) {
+            let startX = 0;
+            let startScrollLeft = 0;
+
+            taskSurface.addEventListener('touchstart', (event) => {
+                startX = event.touches[0]?.clientX || 0;
+                startScrollLeft = horizontalScroll.scrollLeft;
+            }, { passive: true });
+
+            taskSurface.addEventListener('touchmove', (event) => {
+                const currentX = event.touches[0]?.clientX || startX;
+                horizontalScroll.scrollLeft = startScrollLeft + (startX - currentX);
+            }, { passive: true });
+
+            taskSurface.dataset.touchScrollBound = 'true';
+        }
     };
 
     attachRawScrollListeners();
@@ -387,11 +497,18 @@ function refreshGanttView() {
     if (!initialized) return;
     applyResponsiveGanttSettings();
     applyScalePreset(activeScale);
+    syncGanttResponsiveWidth();
     gantt.render();
     try { gantt.refreshData(); } catch (err) { console.warn(err); }
+    syncGanttResponsiveWidth();
+    normalizeGanttLayout();
     attachGanttScrollHooks();
     scheduleTaskStylingRefresh();
     syncGanttHeight();
+    window.setTimeout(() => {
+        syncGanttResponsiveWidth();
+        normalizeGanttLayout();
+    }, 80);
 }
 
 function mapTasks(tasks) {
@@ -637,6 +754,7 @@ window.initDhtmlxGantt = function (tasks, project) {
     if (!container) return;
 
     applyResponsiveGanttSettings();
+    syncGanttResponsiveWidth();
     container.style.minHeight = container.style.minHeight || '560px';
 
     const needsReinit = !initialized || ganttContainer !== container;
@@ -717,7 +835,9 @@ if (document.readyState !== 'loading') {
 window.addEventListener('resize', () => {
     applyResponsiveGanttSettings();
     if (initialized) {
+        syncGanttResponsiveWidth();
         gantt.render();
+        normalizeGanttLayout();
         applyTaskStyling();
     }
 });

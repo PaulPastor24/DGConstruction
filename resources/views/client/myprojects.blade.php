@@ -482,20 +482,28 @@
         font-size: 0.8rem;
         font-weight: 600;
         color: #334155;
-        white-space: nowrap;
+        min-width: 0;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
         overflow: hidden;
-        text-overflow: ellipsis;
+        line-height: 1.25;
     }
     .font-weight-bold-css { font-weight: 700 !important; color: #0f172a !important; }
     .project-dashboard-action-wrapper {
         display: flex;
-        justify-content: flex-end;
+        grid-column: 1 / -1;
+        justify-content: flex-start;
         padding-top: 6px;
     }
 
     @media (max-width: 767.98px) {
         .project-dashboard-meta-row {
             grid-template-columns: 1fr;
+        }
+
+        .project-dashboard-action-wrapper {
+            grid-column: auto;
         }
     }
     .project-dashboard-button-link {
@@ -510,6 +518,7 @@
         border-radius: 8px;
         font-size: 0.78rem;
         font-weight: 700;
+        white-space: nowrap;
         transition: all 0.2s ease;
     }
     .project-dashboard-button-link:hover {
@@ -592,7 +601,7 @@
     /* Modal Dashboard Premium Horizontal Row Metrics Panels */
         .project-command-summary-panel-matrix {
         display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
         margin-bottom: 24px;
         width: 100%;
@@ -907,7 +916,7 @@
     }
 
     /* Tablet Platform Layout Viewports */
-    @media (max-width: 1200px) {
+    @media (max-width: 1400px) {
         .project-feed-dynamic-3card-layout-matrix {
             grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2-Columns fallback safe layout for tablet spaces */
             gap: 20px;

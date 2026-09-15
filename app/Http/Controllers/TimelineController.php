@@ -144,7 +144,8 @@ class TimelineController extends Controller
             $phase->display_status = match($phase->status) {
                 'completed' => 'completed',
                 'in_progress' => 'in-progress',
-                'not_started', 'delayed' => 'planning',
+                'delayed' => 'delayed',
+                'not_started' => 'planning',
                 default => 'planning'
             };
             $phase->name = $phase->phase_name;

@@ -215,6 +215,15 @@
         margin-top: 0.2rem;
     }
 
+    .summary-stat-secondary {
+        display: block;
+        margin-top: 0.15rem;
+        color: var(--secondary-text);
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: none;
+    }
+
     .timeline-card {
         padding: 1.25rem;
         border-radius: var(--radius);
@@ -1135,7 +1144,7 @@
         .timeline-layout { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 800px) {
         .summary-grid { grid-template-columns: 1fr; }
         .page-header-card { padding: 1rem 1rem 1.05rem; }
         .page-title { font-size: 1.25rem; }
@@ -1247,7 +1256,7 @@
         }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 800px) {
         #pg-timeline .top-toolbar > .toolbar-group:not(.search-group) {
             width: auto !important;
             min-width: 0 !important;
@@ -1261,7 +1270,7 @@
         }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 800px) {
         #pg-timeline {
             padding: 0 0 1.4rem !important;
             overflow-x: hidden !important;
@@ -1717,6 +1726,90 @@
             width: 100% !important;
             overflow-x: auto !important;
             padding-bottom: 2px !important;
+        }
+    }
+
+    /* The desktop Gantt is too dense for the 800-1100px workspace. Use the
+       detailed phase cards so labels, dates, progress, and status remain readable. */
+    @media (min-width: 801px) and (max-width: 1100px) {
+        #pg-timeline .timeline-layout {
+            display: block !important;
+        }
+
+        #pg-timeline .timeline-side-panel {
+            display: none !important;
+        }
+
+        #pg-timeline .desktop-gantt-view {
+            display: none !important;
+        }
+
+        #pg-timeline .mobile-gantt-view {
+            display: grid !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .gantt-toolbar-actions {
+            width: 100% !important;
+            justify-content: flex-start !important;
+        }
+
+        #pg-timeline .gantt-mode-actions {
+            flex: 1 1 auto !important;
+        }
+
+        #pg-timeline .timeline-card-header {
+            align-items: flex-start !important;
+        }
+    }
+
+    /* Keep the Gantt visible at narrow widths, but remove the large empty
+       reserve space that makes the chart feel disconnected from its controls. */
+    @media (max-width: 1100px) {
+        #pg-timeline .timeline-card,
+        #pg-timeline .timeline-card-header,
+        #pg-timeline .timeline-view-panel,
+        #pg-timeline .gantt-toolbar-actions {
+            height: auto !important;
+            min-height: 0 !important;
+        }
+
+        #pg-timeline .timeline-card-header-copy {
+            flex: 0 0 auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+        }
+
+        #pg-timeline .timeline-card-header {
+            display: flex !important;
+            align-content: flex-start !important;
+            justify-content: flex-start !important;
+            margin-bottom: 10px !important;
+        }
+
+        #pg-timeline .gantt-toolbar-actions {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        #pg-timeline .desktop-gantt-view {
+            display: block !important;
+            min-height: 0 !important;
+        }
+
+        #pg-timeline .mobile-gantt-view {
+            display: none !important;
+        }
+
+        #pg-timeline .gantt-shell,
+        #pg-timeline .gantt-scroll-shell {
+            min-height: 0 !important;
+        }
+
+        #pg-timeline #dhtmlxGantt {
+            height: 300px !important;
+            min-height: 300px !important;
         }
     }
 
@@ -2186,6 +2279,33 @@
         const delayedCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'delayed').length;
         const pendingCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'pending').length;
         const projectProgress = clampPercentage(project.progress ?? 0);
+        const allProjectPhases = getProjectPhases(project);
+        const allProjectMilestones = allProjectPhases.flatMap((phase) => Array.isArray(phase.milestones) ? phase.milestones : []);
+        const currentProjectPhase = allProjectPhases.find((phase) => ['in_progress', 'ongoing', 'current'].includes(String(phase.status || '').toLowerCase()))
+            || allProjectPhases.find((phase) => String(phase.status || '').toLowerCase() === 'delayed')
+            || allProjectPhases[0];
+        const normalizedProjectStatus = String(project.status || '').toLowerCase();
+        const projectStatusLabel = {
+            ongoing: 'In Progress',
+            in_progress: 'In Progress',
+            completed: 'Completed',
+            planning: 'Planning',
+            delayed: 'Delayed',
+            on_hold: 'On Hold',
+            at_risk: 'At Risk',
+            behind_schedule: 'Behind Schedule',
+        }[normalizedProjectStatus] || (project.status ? String(project.status).replace(/_/g, ' ') : 'Active');
+        const hasDelayedSchedule = allProjectPhases.some((phase) => ['delayed', 'on_hold'].includes(String(phase.status || '').toLowerCase()))
+            || allProjectMilestones.some((milestone) => milestone.is_delayed && !milestone.is_completed)
+            || ['delayed', 'on_hold', 'at_risk', 'behind_schedule'].includes(normalizedProjectStatus);
+        const hasOverdueSchedule = allProjectPhases.some((phase) => phase.status !== 'completed' && phase.end && new Date(phase.end) < new Date())
+            || allProjectMilestones.some((milestone) => {
+                const deadline = milestone.end_date || milestone.end || milestone.start_date || milestone.start;
+                return !milestone.is_completed && !milestone.is_delayed && deadline && new Date(deadline) < new Date();
+            });
+        const projectScheduleLabel = normalizedProjectStatus === 'completed'
+            ? 'Completed'
+            : (hasDelayedSchedule || hasOverdueSchedule ? 'At Risk' : 'On Track');
 
         const statusSummary = [
             { key: 'completed', label: 'Completed', count: completedCount, color: '#E8F5E9', textColor: '#2E7D32' },
@@ -2352,21 +2472,21 @@
                                     <div class="summary-stat-icon"><i class="bi bi-flag-fill"></i></div>
                                     <div class="summary-stat-body">
                                         <span class="summary-stat-label">Milestones</span>
-                                        <strong>${filteredMilestones.length}</strong>
+                                        <strong>${allProjectMilestones.length}</strong>
                                     </div>
                                 </div>
                                 <div class="summary-stat-card">
                                     <div class="summary-stat-icon"><i class="bi bi-lightning-charge-fill"></i></div>
                                     <div class="summary-stat-body">
                                         <span class="summary-stat-label">Current phase</span>
-                                        <strong>${escapeHtml(filteredPhases[0]?.phase_name || filteredPhases[0]?.name || 'Planning')}</strong>
+                                        <strong>${escapeHtml(currentProjectPhase?.phase_name || currentProjectPhase?.name || 'Planning')}</strong>
                                     </div>
                                 </div>
                                 <div class="summary-stat-card">
                                     <div class="summary-stat-icon"><i class="bi bi-activity"></i></div>
                                     <div class="summary-stat-body">
                                         <span class="summary-stat-label">Project status</span>
-                                        <strong>${escapeHtml(project.status || 'Active')}</strong>
+                                        <strong>${escapeHtml(projectScheduleLabel)} <span class="summary-stat-secondary">(${escapeHtml(projectStatusLabel)})</span></strong>
                                     </div>
                                 </div>
                             </div>
