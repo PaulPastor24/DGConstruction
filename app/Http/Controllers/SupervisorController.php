@@ -1674,6 +1674,13 @@ class SupervisorController extends Controller
                 'updated_at' => now(),
             ], 'worker_id');
 
+            DB::table('workers')
+                ->where('worker_id', $workerId)
+                ->update([
+                    'credential_id' => $credentialId,
+                    'credential_json' => json_encode($validated['credential']),
+                ]);
+
             DB::table('worker_biometric_profiles')->insert([
                 'worker_id' => $workerId,
                 'fingerprint_template' => json_encode([
