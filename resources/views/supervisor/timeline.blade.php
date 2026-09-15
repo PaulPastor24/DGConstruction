@@ -30,6 +30,48 @@
                     $currentPhaseActualStart = data_get($currentPhase, 'actual_start');
                     $currentPhaseActualEnd = data_get($currentPhase, 'actual_end');
 
+                    $projectMilestones = collect($phases)->flatMap(fn ($phase) => collect(data_get($phase, 'milestones', [])));
+                    $delayedMilestoneCount = $projectMilestones->where('is_delayed', true)->where('is_completed', false)->count();
+                    $delayedPhaseCount = collect($phases)->whereIn('status', ['delayed'])->count();
+                    $overdueMilestoneCount = $projectMilestones->filter(function ($milestone) {
+                        $deadline = data_get($milestone, 'end_date') ?: data_get($milestone, 'start_date');
+
+                        return !data_get($milestone, 'is_completed')
+                            && !data_get($milestone, 'is_delayed')
+                            && $deadline
+                            && \Carbon\Carbon::parse($deadline)->isPast();
+                    })->count();
+                    $upcomingMilestoneCount = $projectMilestones->filter(function ($milestone) {
+                        $deadline = data_get($milestone, 'end_date') ?: data_get($milestone, 'start_date');
+
+                        return !data_get($milestone, 'is_completed')
+                            && !data_get($milestone, 'is_delayed')
+                            && $deadline
+                            && \Carbon\Carbon::parse($deadline)->isFuture();
+                    })->count();
+
+                    if ($delayedMilestoneCount || $delayedPhaseCount) {
+                        $insightTitle = 'Attention Required';
+                        $insightDescription = ($delayedMilestoneCount + $delayedPhaseCount) . ' delayed schedule item(s) need review';
+                        $insightBadge = 'Delayed';
+                        $insightClass = 'delay-bg';
+                    } elseif ($overdueMilestoneCount) {
+                        $insightTitle = 'Attention Required';
+                        $insightDescription = $overdueMilestoneCount . ' overdue milestone(s) need review';
+                        $insightBadge = 'Overdue';
+                        $insightClass = 'delay-bg';
+                    } elseif ($upcomingMilestoneCount) {
+                        $insightTitle = 'Schedule On Track';
+                        $insightDescription = $upcomingMilestoneCount . ' upcoming milestone(s) scheduled';
+                        $insightBadge = 'On Track';
+                        $insightClass = 'on-track-bg';
+                    } else {
+                        $insightTitle = 'No Active Schedule Alerts';
+                        $insightDescription = 'No incomplete milestones currently need review';
+                        $insightBadge = 'Clear';
+                        $insightClass = 'on-track-bg';
+                    }
+
                     $estimatedRemaining = null;
                     if ($currentPhaseActualStart && $currentPhaseEnd && $currentPhaseProgress > 0) {
                         try {
@@ -122,12 +164,12 @@
                             <div class="col-12 col-md-7">
                                 <div class="schedule-insight-box">
                                     <div class="d-flex align-items-start gap-3">
-                                        <div class="insight-icon-shell"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                                        <div class="insight-icon-shell {{ $insightClass }}"><i class="bi {{ $insightClass === 'on-track-bg' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' }}"></i></div>
                                         <div>
-                                            <div class="insight-title">Schedule Insight: <span class="text-amber-deep fw-bold">Attention Required</span></div>
-                                            <div class="insight-desc">Overdue milestone needs review</div>
+                                            <div class="insight-title">Schedule Insight: <span class="{{ $insightClass === 'on-track-bg' ? 'text-success' : 'text-amber-deep' }} fw-bold">{{ $insightTitle }}</span></div>
+                                            <div class="insight-desc">{{ $insightDescription }}</div>
                                         </div>
-                                        <span class="badge-alert-pill delay-bg ms-auto">Delayed</span>
+                                        <span class="badge-alert-pill {{ $insightClass }} ms-auto">{{ $insightBadge }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -195,9 +237,9 @@
                         </div>
                     </div>
 
-                    <div class="row g-4 align-items-stretch">
-                        <div class="col-12 col-lg-6 d-flex">
-                            <div class="dashboard-panel w-100 d-flex flex-column construction-progress-panel">
+                    <div class="row g-4 align-items-start timeline-content-row">
+                        <div class="col-12 col-lg-6">
+                            <div class="dashboard-panel w-100 construction-progress-panel">
                                 <div class="construction-progress-header mb-3">
                                     <div>
                                         <span class="construction-progress-eyebrow">Phase Roadmap</span>
@@ -207,7 +249,7 @@
                                 </div>
                                 <p class="construction-progress-subtitle">Monitor each construction phase, milestone marker, status, and completion progress in one compact view.</p>
 
-                                <div class="d-flex flex-column flex-grow-1 justify-content-around py-2 dynamic-timeline-stepper">
+                                <div class="d-flex flex-column py-2 dynamic-timeline-stepper">
                                     @foreach($phases as $phase)
                                         @php
                                             $pStatus = strtolower(data_get($phase, 'status', 'upcoming'));
@@ -298,7 +340,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+                        <div class="col-12 col-lg-6 timeline-supporting-column">
                             <div class="dashboard-panel">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="panel-section-title mb-0">Active Milestones</h3>
@@ -362,9 +404,9 @@
                             </div>
                             </div>
 
-                            <div class="row g-3 flex-grow-1">
+                            <div class="row g-3">
                                 <div class="col-12 col-md-6">
-                                    <div class="dashboard-panel h-100">
+                                    <div class="dashboard-panel">
                                         <h3 class="panel-section-title mb-3">Project Schedule</h3>
                                         
                                         <div class="schedule-box-segment mb-3">
@@ -397,53 +439,36 @@
                                 </div>
 
                                 <div class="col-12 col-md-6">
-                                    <div class="dashboard-panel h-100 d-flex flex-column justify-content-between">
-                                        <div>
-                                            <h3 class="panel-section-title mb-1">Upcoming Milestone</h3>
-                                            <span class="text-muted small d-block mb-3">Next deadline target tracking</span>
-                                            
-                                            @php
-                                                $nextUpcoming = collect(data_get($project, 'upcomingMilestones', []))->first();
-                                            @endphp
-                                            @if($nextUpcoming)
-                                                <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <h4 class="fw-bold text-dark small mb-1">{{ data_get($nextUpcoming, 'name') }}</h4>
-                                                        <span class="text-muted small">
-                                                            {{ data_get($nextUpcoming, 'is_completed') ? 'Completed' : (data_get($nextUpcoming, 'is_delayed') ? 'Delayed' : 'Upcoming') }}
-                                                            • {{ data_get($nextUpcoming, 'start_date') ? \Carbon\Carbon::parse(data_get($nextUpcoming, 'start_date'))->format('M d, Y') : 'TBD' }}
-                                                        </span>
-                                                    </div>
-                                                    <i class="bi bi-chevron-right text-muted"></i>
-                                                </div>
-                                            @else
-                                                <div class="upcoming-milestone-panel-strip p-3 border rounded-3 mb-3 d-flex align-items-center justify-content-between" style="opacity: 0.7;">
-                                                    <div>
-                                                        <h4 class="fw-bold text-dark small mb-1">No upcoming milestones</h4>
-                                                        <span class="text-muted small">All milestones are on track</span>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-
+                                    <div class="dashboard-panel delivery-outlook-panel">
                                         @php
-                                            $nextMilestoneDays = null;
-                                            if ($nextUpcoming && data_get($nextUpcoming, 'start_date')) {
-                                                try {
-                                                    $nextMilestoneDays = max(0, \Carbon\Carbon::parse(data_get($nextUpcoming, 'start_date'))->diffInDays(now(), false));
-                                                } catch (\Exception $e) {
-                                                    $nextMilestoneDays = null;
-                                                }
-                                            }
+                                            $deliveryTargetDate = $projectTargetEnd ? \Carbon\Carbon::parse($projectTargetEnd) : null;
+                                            $deliveryDaysRemaining = $deliveryTargetDate ? (int) now()->diffInDays($deliveryTargetDate, false) : null;
                                         @endphp
-                                        @if($nextMilestoneDays !== null)
-                                            <div class="alert-countdown-banner p-3 rounded-3 mt-auto">
-                                                <div class="d-flex align-items-center gap-2 text-amber-deep fw-bold">
-                                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                                    <span>{{ $nextMilestoneDays }} days left</span>
-                                                </div>
+                                        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                                            <div>
+                                                <span class="panel-eyebrow">Delivery Outlook</span>
+                                                <h3 class="panel-section-title mb-1">Project Finish</h3>
+                                                <span class="text-muted small">Overall delivery position</span>
                                             </div>
-                                        @endif
+                                        </div>
+                                        <div class="delivery-outlook-date">
+                                            <span class="small text-muted text-uppercase">Target completion</span>
+                                            <strong>{{ $deliveryTargetDate ? $deliveryTargetDate->format('M d, Y') : 'Pending' }}</strong>
+                                        </div>
+                                        <div class="delivery-outlook-grid mt-3">
+                                            <div>
+                                                <span>Current phase</span>
+                                                <strong>{{ $currentPhaseName }}</strong>
+                                            </div>
+                                            <div>
+                                                <span>Phase progress</span>
+                                                <strong>{{ number_format($currentPhaseProgress, 0) }}%</strong>
+                                            </div>
+                                            <div>
+                                                <span>Time outlook</span>
+                                                <strong>{{ $deliveryDaysRemaining === null ? 'TBD' : ($deliveryDaysRemaining >= 0 ? $deliveryDaysRemaining . ' days left' : abs($deliveryDaysRemaining) . ' days overdue') }}</strong>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -594,10 +619,12 @@
         padding: 12px 16px;
     }
     .insight-icon-shell { color: #d97706; font-size: 1.2rem; }
+    .insight-icon-shell.on-track-bg { color: #15803d; }
     .insight-title { font-size: 0.88rem; color: #451a03; font-weight: 500; }
     .insight-desc { font-size: 0.8rem; color: #78350f; }
     .text-amber-deep { color: #d97706 !important; }
     .badge-alert-pill.delay-bg { background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}
+    .badge-alert-pill.on-track-bg { background-color: #ecfdf3; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}
 
     /* BUTTON ACTION SET SCHEMES */
     .btn-timeline-primary { background-color: #2a4028; color: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.88rem; padding: 10px 18px; border: none; transition: all 0.2s;}
@@ -700,7 +727,23 @@
 
     /* STEPPER PACKS & VERTICAL RECTANGLE ALIGNMENTS */
     .panel-section-title { font-size: 1rem; font-weight: 700; color: #373737; font-family: 'Syne', sans-serif; }
-    .dynamic-timeline-stepper { position: relative; width: 100%; }
+    .timeline-content-row {
+        align-items: flex-start;
+    }
+
+    .timeline-supporting-column {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-self: flex-start;
+    }
+
+    .dynamic-timeline-stepper {
+        position: relative;
+        width: 100%;
+        gap: 0.85rem;
+        justify-content: flex-start;
+    }
     
     /* Phase Rectangle Cards Stylings */
     .timeline-phase-card-item {
@@ -714,6 +757,7 @@
         transition: transform 0.2s, box-shadow 0.2s;
         overflow: visible;
         z-index: 1;
+        flex: 0 0 auto;
     }
     .timeline-phase-card-item:hover {
         transform: translateY(-2px);
@@ -894,6 +938,69 @@
     .date-label { font-size: 0.82rem; }
     .date-val { font-size: 0.82rem; }
 
+    .delivery-outlook-panel {
+        height: 100%;
+    }
+
+    .outlook-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+        background: #ecfdf3;
+        font-size: 0.72rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .outlook-status.text-amber-deep {
+        background: #fff7ed;
+    }
+
+    .delivery-outlook-date {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid rgba(9, 96, 86, 0.08);
+        border-radius: 12px;
+        background: #f8fcf9;
+    }
+
+    .delivery-outlook-date strong {
+        color: #166534;
+        font-family: 'Syne', sans-serif;
+        font-size: 1.2rem;
+    }
+
+    .delivery-outlook-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
+    .delivery-outlook-grid > div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 0;
+    }
+
+    .delivery-outlook-grid span {
+        color: #64748b;
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .delivery-outlook-grid strong {
+        color: #1e293b;
+        font-size: 0.8rem;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
     .upcoming-milestone-panel-strip { background-color: #ffffff; border: 1px solid rgba(0, 0, 0, 0.06) !important; transition: background 0.2s; cursor: pointer;}
     .upcoming-milestone-panel-strip:hover { background-color: #f9fafb; }
     
@@ -950,7 +1057,44 @@
         line-height: 1.45;
     }
 
+    @media (min-width: 769px) and (max-width: 1199px) {
+        .construction-progress-panel {
+            padding: 18px;
+        }
+
+        .dynamic-timeline-stepper {
+            gap: 0.65rem;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .timeline-phase-card-item {
+            padding: 12px 14px;
+        }
+
+        .stepper-phase-name {
+            font-size: 0.88rem;
+        }
+
+        .stepper-phase-dates {
+            font-size: 0.72rem;
+        }
+
+        .stepper-percentage {
+            font-size: 0.85rem;
+        }
+    }
+
     @media (max-width: 768px) {
+        .delivery-outlook-panel {
+            height: auto;
+        }
+
+        .delivery-outlook-grid {
+            grid-template-columns: 1fr;
+            gap: 0.55rem;
+        }
+
         .construction-progress-panel {
             padding: 18px 14px !important;
             border-radius: 20px !important;

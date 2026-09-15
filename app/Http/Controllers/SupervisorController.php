@@ -501,10 +501,20 @@ class SupervisorController extends Controller
 
             $upcomingMilestones = Milestone::whereHas('phase', function ($q) use ($selectedProjectId) {
                 $q->where('project_id', $selectedProjectId);
-            })->where('is_completed', false)
-                ->whereNotNull('start_date')
-                ->where('start_date', '>', now())
-                ->orderBy('start_date')
+            })
+                ->where('is_completed', false)
+                ->where('is_delayed', false)
+                ->where(function ($query) {
+                    $query->where(function ($query) {
+                        $query->whereNotNull('end_date')
+                            ->where('end_date', '>', now());
+                    })->orWhere(function ($query) {
+                        $query->whereNull('end_date')
+                            ->whereNotNull('start_date')
+                            ->where('start_date', '>', now());
+                    });
+                })
+                ->orderByRaw('COALESCE(end_date, start_date) ASC')
                 ->get();
 
             $primaryPhase = $primaryProject->phases->firstWhere('status', 'in_progress')
@@ -551,7 +561,20 @@ class SupervisorController extends Controller
             ? max(0, min($projectWorkersCount, $projectWorkersCount - 1))
             : $attendancePresentCount;
 
-        $upcomingMilestone = $upcomingMilestones->sortBy('start_date')->first();
+        $upcomingMilestone = $upcomingMilestones->first();
+        if (!$upcomingMilestone && $primaryProject) {
+            $upcomingMilestone = Milestone::whereHas('phase', function ($q) use ($selectedProjectId) {
+                $q->where('project_id', $selectedProjectId);
+            })
+                ->where('is_completed', false)
+                ->where('is_delayed', false)
+                ->where(function ($query) {
+                    $query->whereNotNull('end_date')
+                        ->orWhereNotNull('start_date');
+                })
+                ->orderByRaw('COALESCE(end_date, start_date) ASC')
+                ->first();
+        }
         $pendingTasksCount = max(0, $pendingReports->count() + ($primaryPhase ? 1 : 0));
 
         $stats = [
@@ -618,6 +641,7 @@ class SupervisorController extends Controller
                         'project_name' => $phase->project->project_name ?? null,
                         'phase_name' => $phase->phase_name,
                         'start_date' => optional($milestone->start_date)->toDateString(),
+                        'end_date' => optional($milestone->end_date)->toDateString(),
                         'is_completed' => (bool) $milestone->is_completed,
                         'is_delayed' => (bool) $milestone->is_delayed,
                         'phase_order' => $phase->phase_order,
@@ -639,6 +663,27 @@ class SupervisorController extends Controller
                 return ! $milestone['is_completed'] && ! $milestone['is_delayed'] && $milestone['start_date'] && Carbon::parse($milestone['start_date'])->gt(now());
             })->take(2)->values();
 
+            $delayedPhaseCount = $phases->where('status', 'delayed')->count();
+            $overduePhaseCount = $phases->filter(function ($phase) {
+                return $phase->status !== 'completed'
+                    && $phase->planned_end_date
+                    && Carbon::parse($phase->planned_end_date)->isPast();
+            })->count();
+            $delayedMilestoneCount = $allMilestones->where('is_delayed', true)->where('is_completed', false)->count();
+            $overdueMilestoneCount = $allMilestones->filter(function ($milestone) {
+                $deadline = data_get($milestone, 'end_date') ?: data_get($milestone, 'start_date');
+
+                return ! data_get($milestone, 'is_completed')
+                    && ! data_get($milestone, 'is_delayed')
+                    && $deadline
+                    && Carbon::parse($deadline)->isPast();
+            })->count();
+            $projectStatus = strtolower((string) $project->status);
+            $projectIsDelayed = in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
+            $scheduleHealth = ($delayedPhaseCount || $overduePhaseCount || $delayedMilestoneCount || $overdueMilestoneCount || $projectIsDelayed)
+                ? 'Delayed'
+                : 'On Track';
+
             return [
                 'id' => $project->project_id,
                 'name' => $project->project_name,
@@ -655,7 +700,7 @@ class SupervisorController extends Controller
                 'completedPhases' => $completedPhases,
                 'inProgressPhases' => $inProgressPhases,
                 'upcomingPhases' => $upcomingPhases,
-                'scheduleHealth' => $phases->contains(fn ($phase) => $phase->status === 'delayed') ? 'Delayed' : 'On Track',
+                'scheduleHealth' => $scheduleHealth,
                 'phases' => $phases->map(function ($phase) {
                     return [
                         'id' => $phase->phase_id,
@@ -689,7 +734,12 @@ class SupervisorController extends Controller
             ];
         })->values()->all();
 
-        $selectedProjectId = $request->query('project_id') ?: session('supervisor_selected_project_id') ?: data_get($projectsWithStats, '0.id');
+        $requestedProjectId = $request->query('project_id') ?: session('supervisor_selected_project_id');
+        $selectedProjectId = collect($projectsWithStats)->contains(function ($project) use ($requestedProjectId) {
+            return (string) data_get($project, 'id') === (string) $requestedProjectId;
+        })
+            ? $requestedProjectId
+            : data_get($projectsWithStats, '0.id');
         if ($selectedProjectId) {
             session(['supervisor_selected_project_id' => $selectedProjectId]);
         }
@@ -720,6 +770,7 @@ class SupervisorController extends Controller
                 'projectPhases' => collect(),
                 'overallProgress' => 0,
                 'scheduleHealth' => 'ON TRACK',
+                'scheduleHealthReason' => 'No assigned project schedule',
             ]);
         }
 
@@ -768,12 +819,53 @@ class SupervisorController extends Controller
             ->avg('completion_percentage') ?? 0;
         $overallProgress = round($overallProgress, 0);
 
-        // Determine schedule health
+        // Determine schedule health from the full project schedule, not only the active phase.
         $delayedCount = ConstructionPhase::query()
             ->where('project_id', $primaryProject->project_id)
             ->where('status', 'delayed')
             ->count('*');
-        $scheduleHealth = $delayedCount > 0 ? 'DELAYED' : 'ON TRACK';
+        $overdueCount = ConstructionPhase::query()
+            ->where('project_id', $primaryProject->project_id)
+            ->whereNotIn('status', ['completed'])
+            ->whereNotNull('planned_end_date')
+            ->whereDate('planned_end_date', '<', now()->toDateString())
+            ->count('*');
+        $delayedMilestoneCount = Milestone::whereHas('phase', function ($query) use ($primaryProject) {
+            $query->where('project_id', $primaryProject->project_id);
+        })
+            ->where('is_delayed', true)
+            ->where('is_completed', false)
+            ->count();
+        $overdueMilestoneCount = Milestone::whereHas('phase', function ($query) use ($primaryProject) {
+            $query->where('project_id', $primaryProject->project_id);
+        })
+            ->where('is_completed', false)
+            ->where('is_delayed', false)
+            ->where(function ($query) {
+                $query->where(function ($query) {
+                    $query->whereNotNull('end_date')
+                        ->whereDate('end_date', '<', now()->toDateString());
+                })->orWhere(function ($query) {
+                    $query->whereNull('end_date')
+                        ->whereNotNull('start_date')
+                        ->whereDate('start_date', '<', now()->toDateString());
+                });
+            })
+            ->count();
+        $projectStatus = strtolower((string) $primaryProject->status);
+        $projectIsDelayed = in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
+        $scheduleHealth = ($delayedCount > 0 || $overdueCount > 0 || $delayedMilestoneCount > 0 || $overdueMilestoneCount > 0 || $projectIsDelayed) ? 'DELAYED' : 'ON TRACK';
+        $scheduleHealthReason = match (true) {
+            $delayedCount > 0 && $delayedMilestoneCount > 0 => $delayedCount . ' delayed phase(s), ' . $delayedMilestoneCount . ' delayed milestone(s)',
+            $overdueCount > 0 && $overdueMilestoneCount > 0 => $overdueCount . ' overdue phase(s), ' . $overdueMilestoneCount . ' overdue milestone(s)',
+            $delayedCount > 0 && $overdueCount > 0 => $delayedCount . ' delayed phase(s), ' . $overdueCount . ' overdue phase(s)',
+            $delayedCount > 0 => $delayedCount . ' delayed phase(s) require attention',
+            $delayedMilestoneCount > 0 => $delayedMilestoneCount . ' delayed milestone(s) require attention',
+            $overdueCount > 0 => $overdueCount . ' overdue phase(s) require attention',
+            $overdueMilestoneCount > 0 => $overdueMilestoneCount . ' overdue milestone(s) require attention',
+            $projectIsDelayed => 'Project status is marked ' . strtoupper(str_replace('_', ' ', $projectStatus)),
+            default => 'No delayed or overdue phases',
+        };
 
         return view('supervisor.phases', compact(
             'assignedProjects',
@@ -781,7 +873,8 @@ class SupervisorController extends Controller
             'primaryPhase',
             'projectPhases',
             'overallProgress',
-            'scheduleHealth'
+            'scheduleHealth',
+            'scheduleHealthReason'
         ));
     }
 

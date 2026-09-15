@@ -87,6 +87,83 @@
         background-color: #f1f5f9 !important;
     }
 
+    .assigned-project-details-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
+    .assigned-project-details-grid > [class*="col-"] {
+        display: flex;
+        width: auto;
+        max-width: none;
+    }
+
+    .assigned-project-details-grid .dashboard-key-value {
+        width: 100%;
+        min-height: 78px;
+        height: 100%;
+        align-items: flex-start;
+    }
+
+    .assigned-project-details-grid .dashboard-key-value > div {
+        min-width: 0;
+    }
+
+    .assigned-project-details-grid .dashboard-key-value .small {
+        overflow-wrap: anywhere;
+        line-height: 1.3;
+    }
+
+    @media (max-width: 820px) {
+        .assigned-project-details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (min-width: 821px) and (max-width: 1199px) {
+        .supervisor-dashboard-page .page-hero {
+            padding: 0.95rem;
+        }
+
+        .supervisor-dashboard-page .page-hero > .row.g-3 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+        .supervisor-dashboard-page .page-hero > .row.g-3 > [class*="col-"] {
+            width: auto;
+            max-width: none;
+        }
+
+        .supervisor-dashboard-page .stat-card {
+            min-height: 86px;
+            padding: 0.62rem 0.72rem;
+            border-radius: 12px;
+        }
+
+        .supervisor-dashboard-page .stat-title {
+            font-size: 0.62rem;
+            letter-spacing: 0.08em;
+        }
+
+        .supervisor-dashboard-page .stat-value {
+            font-size: 1.2rem;
+            line-height: 1.15;
+        }
+
+        .supervisor-dashboard-page .stat-meta,
+        .supervisor-dashboard-page .stat-card .small {
+            font-size: 0.72rem;
+        }
+
+        .assigned-project-details-grid .dashboard-key-value {
+            min-height: 74px;
+            padding: 0.62rem;
+        }
+    }
+
     @media (max-width: 820px) {
         .supervisor-dashboard-page {
             gap: 14px !important;
@@ -383,7 +460,7 @@
                 <div class="col-12 col-xl-3">
                     <div class="stat-card">
                         <div class="stat-title">Upcoming Deadline</div>
-                        <div class="stat-value">{{ $upcomingMilestone ? \Carbon\Carbon::parse($upcomingMilestone->start_date)->format('M d') : 'No date' }}</div>
+                        <div class="stat-value">{{ $upcomingMilestone ? optional($upcomingMilestone->end_date ?? $upcomingMilestone->start_date)->format('M d') : 'No date' }}</div>
                         <div class="stat-meta">{{ $upcomingMilestone->milestone_name ?? 'No upcoming milestone' }}</div>
                     </div>
                 </div>
@@ -474,7 +551,7 @@
                         <span class="badge rounded-pill bg-success-subtle text-success-emphasis">{{ ucfirst($primaryProject->status ?? 'Active') }}</span>
                     </div>
 
-                    <div class="row g-2">
+                    <div class="row g-2 assigned-project-details-grid">
                         <div class="col-12 col-sm-6">
                             <div class="dashboard-key-value">
                                 <span class="dashboard-icon"><i class="bi bi-building"></i></span>

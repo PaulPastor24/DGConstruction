@@ -127,9 +127,9 @@
             </div>
         </div>
         @php
-            $scheduleHealth = $stats['delayed_milestones_count'] > 0 ? 'At Risk' : 'On Track';
-            $scheduleHealthClass = $stats['delayed_milestones_count'] > 0 ? 'text-warning' : 'text-success';
-            $scheduleHealthNote = $stats['delayed_milestones_count'] > 0 ? 'Delayed milestones detected' : 'No major delays';
+            $scheduleHealth = ($stats['schedule_at_risk'] ?? false) ? 'At Risk' : 'On Track';
+            $scheduleHealthClass = ($stats['schedule_at_risk'] ?? false) ? 'text-warning' : 'text-success';
+            $scheduleHealthNote = $stats['schedule_health_note'] ?? 'No delayed or overdue schedule items';
         @endphp
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="metric-status-card">
@@ -149,7 +149,7 @@
                     <div class="metric-main-val text-success" id="metricNextMilestoneName" style="font-size: 1.05rem; font-weight:700; line-height:1.2; margin:0.25rem 0;">
                         {{ optional($nextMilestone)->milestone_name ?? 'Next milestone pending' }}
                     </div>
-                    <div class="metric-sub-text text-dark fw-semibold" id="metricNextMilestoneDate">{{ optional($nextMilestone)->start_date?->format('M d, Y') ?? 'Pending' }}</div>
+                    <div class="metric-sub-text text-dark fw-semibold" id="metricNextMilestoneDate">{{ optional($nextMilestone?->end_date ?? $nextMilestone?->start_date)->format('M d, Y') ?? 'Pending' }}</div>
                 </div>
             </div>
         </div>
@@ -159,15 +159,20 @@
                 <div>
                     <div class="metric-title">Latest Report Status</div>
                     <div class="metric-main-val text-success" id="metricLatestReportStatus" style="font-size: 1.25rem; font-weight:700; margin: 0.3rem 0;">
-                        {{ $recentReports->first()?->approval_status === 'approved' && $recentReports->first()?->is_published_to_client ? 'Published' : ($recentReports->first()?->approval_status === 'rejected' ? 'Returned' : 'No report') }}
+                        {{ match($stats['latest_report_status'] ?? null) {
+                            'approved' => ($stats['latest_report_published'] ?? false) ? 'Published' : 'Approved',
+                            'rejected' => 'Returned',
+                            'pending' => 'Pending Review',
+                            default => 'No report',
+                        } }}
                     </div>
-                    <div class="metric-sub-text" id="metricLatestReportNote">{{ $recentReports->count() > 0 ? 'Last uploaded report' : 'No report submitted' }}</div>
+                    <div class="metric-sub-text" id="metricLatestReportNote">{{ $stats['latest_report_note'] ?? 'No report submitted' }}</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 align-items-start client-dashboard-feed-row">
         <div class="col-12 col-md-7 col-xl-8">
             <div class="dashboard-ui-panel">
                 <div class="ui-panel-head d-flex justify-content-between align-items-center">
@@ -177,7 +182,7 @@
                 <div class="ui-panel-body p-0">
                     <div class="report-list-group" id="recentReportsList">
                         @forelse($recentReports as $report)
-                            <div class="report-item-row">
+                            <div class="report-item-row {{ $loop->iteration > 3 ? 'dashboard-extra-item d-none' : '' }}">
                                 <div class="d-flex align-items-start gap-3">
                                     <div class="file-icon-frame"><i class="bi bi-file-earmark-text"></i></div>
                                     <div>
@@ -194,6 +199,9 @@
                             </div>
                         @endforelse
                     </div>
+                    @if($recentReports->count() > 3)
+                        <button type="button" class="dashboard-more-btn" data-target-list="recentReportsList" data-more-label="Show 3 more reports" data-less-label="Show fewer reports">Show 3 more reports</button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -202,12 +210,12 @@
             <div class="dashboard-ui-panel">
                 <div class="ui-panel-head d-flex justify-content-between align-items-center">
                     <h5 class="ui-panel-title">Recent Activity</h5>
-                    <a href="{{ route('client.reports') }}" class="view-all-link">View All</a>
+                    <a href="{{ route('client.notifications') }}" class="view-all-link">View All</a>
                 </div>
                 <div class="ui-panel-body">
                     <div class="activity-timeline-container" id="recentActivityList">
                         @forelse($activityItems as $item)
-                            <div class="activity-timeline-node">
+                            <div class="activity-timeline-node {{ $loop->iteration > 3 ? 'dashboard-extra-item d-none' : '' }}">
                                 <div class="node-icon {{ $item['variant'] }}">
                                     <i class="{{ $item['icon'] }}"></i>
                                 </div>
@@ -226,6 +234,9 @@
                             </div>
                         @endforelse
                     </div>
+                    @if($activityItems->count() > 3)
+                        <button type="button" class="dashboard-more-btn" data-target-list="recentActivityList" data-more-label="Show 3 more updates" data-less-label="Show fewer updates">Show 3 more updates</button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -358,12 +369,57 @@
             if (metricNextMilestoneName) metricNextMilestoneName.textContent = stats.next_milestone_name;
             if (metricNextMilestoneDate) metricNextMilestoneDate.textContent = stats.next_milestone_date;
 
-            if (metricLatestReportStatus) metricLatestReportStatus.textContent = stats.latest_report_status;
+            if (metricLatestReportStatus) {
+                const reportStatusLabels = {
+                    approved: stats.latest_report_published ? 'Published' : 'Approved',
+                    rejected: 'Returned',
+                    pending: 'Pending Review',
+                };
+                metricLatestReportStatus.textContent = reportStatusLabels[stats.latest_report_status] || 'No report';
+            }
             if (metricLatestReportNote) metricLatestReportNote.textContent = stats.latest_report_note;
+        }
+
+        function updateMoreButton(list, total, moreLabel, lessLabel, shouldExpand) {
+            const body = list.closest('.ui-panel-body');
+            if (!body) return;
+
+            let button = body.querySelector('.dashboard-more-btn');
+            if (total <= 3) {
+                if (button) button.remove();
+                return;
+            }
+
+            if (!button) {
+                button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'dashboard-more-btn';
+                body.appendChild(button);
+            }
+
+            button.dataset.moreLabel = moreLabel;
+            button.dataset.lessLabel = lessLabel;
+            if (typeof shouldExpand === 'boolean') {
+                button.classList.toggle('is-expanded', shouldExpand);
+            }
+            const isExpanded = button.classList.contains('is-expanded');
+            list.querySelectorAll('.dashboard-extra-item').forEach(function (item) {
+                item.classList.toggle('d-none', !isExpanded);
+            });
+            button.textContent = isExpanded ? lessLabel : moreLabel;
+            button.onclick = function () {
+                const expanded = button.classList.toggle('is-expanded');
+                list.querySelectorAll('.dashboard-extra-item').forEach(function (item) {
+                    item.classList.toggle('d-none', !expanded);
+                });
+                button.textContent = expanded ? lessLabel : moreLabel;
+            };
         }
 
         function renderReports(reports) {
             if (!recentReportsList) return;
+            const existingButton = recentReportsList.closest('.ui-panel-body')?.querySelector('.dashboard-more-btn');
+            const wasExpanded = existingButton?.classList.contains('is-expanded') || false;
             recentReportsList.innerHTML = '';
 
             if (!reports || reports.length === 0) {
@@ -371,12 +427,13 @@
                 empty.className = 'text-center p-4 text-muted';
                 empty.innerHTML = '<div class="mb-2 fs-3"><i class="bi bi-folder-x"></i></div><p class="m-0">No recent reports are available for this project.</p>';
                 recentReportsList.appendChild(empty);
+                updateMoreButton(recentReportsList, 0, 'Show 3 more reports', 'Show fewer reports', false);
                 return;
             }
 
-            reports.forEach(function (report) {
+            reports.slice(0, 6).forEach(function (report, index) {
                 const row = document.createElement('div');
-                row.className = 'report-item-row';
+                row.className = 'report-item-row' + (index >= 3 ? ' dashboard-extra-item d-none' : '');
 
                 const left = document.createElement('div');
                 left.className = 'd-flex align-items-start gap-3';
@@ -400,10 +457,13 @@
                 row.appendChild(link);
                 recentReportsList.appendChild(row);
             });
+            updateMoreButton(recentReportsList, Math.min(reports.length, 6), 'Show 3 more reports', 'Show fewer reports', wasExpanded);
         }
 
         function renderActivity(items) {
             if (!recentActivityList) return;
+            const existingButton = recentActivityList.closest('.ui-panel-body')?.querySelector('.dashboard-more-btn');
+            const wasExpanded = existingButton?.classList.contains('is-expanded') || false;
             recentActivityList.innerHTML = '';
 
             if (!items || items.length === 0) {
@@ -411,12 +471,13 @@
                 empty.className = 'text-center p-4 text-muted';
                 empty.innerHTML = '<div class="mb-2 fs-3"><i class="bi bi-clock-history"></i></div><p class="m-0">No recent activities are available yet.</p>';
                 recentActivityList.appendChild(empty);
+                updateMoreButton(recentActivityList, 0, 'Show 3 more updates', 'Show fewer updates', false);
                 return;
             }
 
-            items.forEach(function (item) {
+            items.slice(0, 6).forEach(function (item, index) {
                 const node = document.createElement('div');
-                node.className = 'activity-timeline-node';
+                node.className = 'activity-timeline-node' + (index >= 3 ? ' dashboard-extra-item d-none' : '');
 
                 const iconBox = document.createElement('div');
                 iconBox.className = 'node-icon ' + item.variant;
@@ -447,6 +508,7 @@
                 node.appendChild(content);
                 recentActivityList.appendChild(node);
             });
+            updateMoreButton(recentActivityList, Math.min(items.length, 6), 'Show 3 more updates', 'Show fewer updates', wasExpanded);
         }
 
         function setLoadingState(isLoading) {
@@ -1356,7 +1418,7 @@
         background: #ffffff;
         border: 1px solid var(--border-color);
         border-radius: 20px;
-        height: 100%;
+        height: auto;
         box-shadow: 0 4px 16px rgba(0,0,0,0.01);
         display: flex;
         flex-direction: column;
@@ -1373,13 +1435,42 @@
     }
     .ui-panel-body {
         padding: 0 1.5rem 1.5rem 1.5rem;
-        flex-grow: 1;
+        flex-grow: 0;
     }
     .view-all-link {
         font-size: 0.85rem;
         font-weight: 700;
         color: #16a34a;
         text-decoration: none;
+    }
+
+    .client-dashboard-feed-row > [class*="col-"] {
+        align-self: flex-start;
+    }
+
+    .dashboard-more-btn {
+        display: block;
+        width: 100%;
+        margin-top: 0.7rem;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #dbe7de;
+        border-radius: 10px;
+        background: #f8fcf9;
+        color: #166534;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .dashboard-more-btn:hover,
+    .dashboard-more-btn:focus-visible {
+        background: #ecfdf3;
+        border-color: #86efac;
+        outline: none;
+    }
+
+    .dashboard-extra-item.d-none {
+        display: none !important;
     }
 
     /* --- CHART SYSTEM LOOK --- */
@@ -1533,6 +1624,16 @@
 
 
     @media (max-width: 768px) {
+        .client-dashboard-feed-row > [class*="col-"] {
+            width: 100%;
+        }
+
+        .ui-panel-head,
+        .ui-panel-body {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
         .dashboard-page-header {
             align-items: stretch;
             flex-direction: column;

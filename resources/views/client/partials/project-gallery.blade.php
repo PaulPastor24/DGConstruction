@@ -23,7 +23,21 @@
             default => 'status-planning',
         };
         
-        $scheduleHealth = $projectItem->status === 'completed' ? 'Completed' : ($projectItem->status === 'on_hold' ? 'At Risk' : 'On Track');
+        $projectMilestones = $projectItem->phases->flatMap(fn ($phase) => $phase->milestones ?? collect());
+        $hasDelayedPhase = $projectItem->phases->contains(fn ($phase) => in_array($phase->status, ['delayed', 'on_hold'], true));
+        $hasDelayedMilestone = $projectMilestones->contains(fn ($milestone) => $milestone->is_delayed && ! $milestone->is_completed);
+        $hasOverduePhase = $projectItem->phases->contains(function ($phase) {
+            return $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->isPast();
+        });
+        $hasOverdueMilestone = $projectMilestones->contains(function ($milestone) {
+            $deadline = $milestone->end_date ?: $milestone->start_date;
+
+            return ! $milestone->is_completed && ! $milestone->is_delayed && $deadline && $deadline->isPast();
+        });
+        $projectStatus = strtolower((string) $projectItem->status);
+        $scheduleAtRisk = $hasDelayedPhase || $hasDelayedMilestone || $hasOverduePhase || $hasOverdueMilestone || in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
+        $scheduleHealth = $projectStatus === 'completed' ? 'Completed' : ($scheduleAtRisk ? 'At Risk' : 'On Track');
+        $scheduleHealthClass = $scheduleHealth === 'Completed' ? 'status-completed' : ($scheduleAtRisk ? 'status-delayed' : 'status-on-track');
         
         // Resolve the canonical stored location while allowing legacy location columns.
         $projectLocation = trim((string) (
@@ -43,12 +57,22 @@
         $latestReport = $projectItem->relationLoaded('reports')
             ? $projectItem->reports->sortByDesc('report_date')->first()
             : null;
-        $latestUpdate = $latestReport && ! empty($latestReport->report_text)
-            ? Str::limit($latestReport->report_text, 180)
-            : 'No recent report updates have been submitted for this project yet.';
-        $latestUpdateMeta = $latestReport && $latestReport->report_date
-            ? 'Updated '.$latestReport->report_date->diffForHumans()
-            : 'No updates yet';
+        $latestMilestone = $projectMilestones->sortByDesc(fn ($milestone) => $milestone->updated_at ?: $milestone->created_at)->first();
+        if ($latestReport && ! empty($latestReport->report_text)) {
+            $latestUpdate = Str::limit($latestReport->report_text, 180);
+            $latestUpdateMeta = $latestReport->report_date
+                ? 'Report updated '.$latestReport->report_date->diffForHumans()
+                : 'Latest report submitted';
+        } elseif ($latestMilestone) {
+            $milestoneStatus = $latestMilestone->is_completed ? 'completed' : ($latestMilestone->is_delayed ? 'delayed' : 'updated');
+            $latestUpdate = "Milestone '{$latestMilestone->milestone_name}' was {$milestoneStatus}.";
+            $latestUpdateMeta = $latestMilestone->updated_at
+                ? 'Milestone updated '.$latestMilestone->updated_at->diffForHumans()
+                : 'Latest project activity';
+        } else {
+            $latestUpdate = 'No recent report or milestone updates have been recorded for this project yet.';
+            $latestUpdateMeta = 'No updates yet';
+        }
     @endphp
 
     <article class="project-dashboard-tile" data-project-card data-bs-toggle="modal" data-bs-target="#projectDetailModal-{{ $projectItem->project_id }}" tabindex="0" role="button" aria-label="Open details for {{ $projectItem->project_name }}">
@@ -171,7 +195,7 @@
                         <div class="command-panel-card card-highlight-border">
                             <span class="command-panel-lbl">Schedule Health</span>
                             <div class="command-panel-main-val-group">
-                                <span class="project-command-status-badge status-on-track project-command-schedule-badge">{{ $scheduleHealth }}</span>
+                                <span class="project-command-status-badge {{ $scheduleHealthClass }} project-command-schedule-badge">{{ $scheduleHealth }}</span>
                             </div>
                             <span class="command-panel-subtext-lbl mt-1">Timeline Baseline Status</span>
                         </div>

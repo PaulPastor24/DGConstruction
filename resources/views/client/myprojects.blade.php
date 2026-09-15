@@ -14,7 +14,7 @@
 
     @php
         $totalProjects = $projects->total();
-        $activeTrackCount = $projects->getCollection()->filter(fn($summary) => data_get($summary, 'project.status') === 'ongoing')->count();
+        $activeTrackCount = $activeTrackCount ?? $projects->getCollection()->filter(fn($summary) => data_get($summary, 'project.status') === 'ongoing')->count();
     @endphp
     
     <div class="row g-3 mb-4 align-items-center">
@@ -43,7 +43,7 @@
             </div>
         </div>
         
-        <div class="col-12 col-md-6 col-xl-6 ms-auto">
+        <div class="col-12">
             <div class="project-filter-toolbar">
                 <form id="projectFilterForm" class="project-filter-form" action="{{ route('client.myprojects') }}" method="GET">
                     <div class="position-relative project-search-field">
@@ -275,9 +275,27 @@
         }
     }
 
+    @media (min-width: 993px) {
+        .project-filter-form {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
+            align-items: center;
+        }
+
+        .project-search-field {
+            max-width: none;
+        }
+
+        .project-select-fields-wrapper-group .project-filter-select {
+            flex: 1 1 0;
+            width: auto;
+            min-width: 0;
+        }
+    }
+
     @media (max-width: 1200px) {
         .project-feed-dynamic-3card-layout-matrix {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 20px;
         }
     }
@@ -422,7 +440,7 @@
 
     .project-dashboard-meta-row {
         display: grid;
-        grid-template-columns: 1fr; /* Clean stacking parameters inside 3-column rows */
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
         padding-top: 14px;
         border-top: 1px solid #f1f5f9;
@@ -473,6 +491,12 @@
         display: flex;
         justify-content: flex-end;
         padding-top: 6px;
+    }
+
+    @media (max-width: 767.98px) {
+        .project-dashboard-meta-row {
+            grid-template-columns: 1fr;
+        }
     }
     .project-dashboard-button-link {
         display: inline-flex;
@@ -585,8 +609,7 @@
         transition: all 0.2s ease;
     }
 
-        .command-panel-card.summary-overall,
-        .command-panel-card.summary-phase {
+        .command-panel-card.summary-overall {
             grid-column: 1 / -1;
         }
     .card-highlight-border {

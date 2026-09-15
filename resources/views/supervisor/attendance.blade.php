@@ -60,8 +60,8 @@
         }
 
         .scan-pulse-container:hover {
-            border-color: #0d6efd;
-            background-color: #f1f7ff;
+            border-color: #315c35;
+            background-color: #f1f8f2;
         }
 
         .fingerprint-trigger-btn {
@@ -76,7 +76,7 @@
             justify-content: center !important;
             font-size: 3.2rem !important;
             line-height: 1 !important;
-            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.28);
+            box-shadow: 0 6px 20px rgba(49, 92, 53, 0.28);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -407,6 +407,13 @@
             overflow: hidden !important;
         }
 
+        .attendance-page,
+        .attendance-main-grid,
+        .attendance-main-grid > [class*="col-"],
+        .attendance-control-layout > * {
+            min-width: 0 !important;
+        }
+
         .attendance-control-card .card-body,
         .attendance-biometric-card .card-body,
         .attendance-log-card .card-body {
@@ -574,7 +581,7 @@
         }
 
         .fingerprint-trigger-btn {
-            background: linear-gradient(135deg, #2563eb 0%, #0d6efd 100%) !important;
+            background: linear-gradient(135deg, #4b6b46 0%, #315c35 100%) !important;
             border-color: transparent !important;
         }
 
@@ -593,6 +600,26 @@
 
             .attendance-main-grid {
                 gap: 1rem !important;
+            }
+        }
+
+        @media (min-width: 993px) and (max-width: 1199px) {
+            .attendance-control-layout {
+                grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr) !important;
+            }
+
+            .attendance-action-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .attendance-quick-btn {
+                min-height: 42px !important;
+                font-size: 0.78rem !important;
+            }
+
+            .attendance-main-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
             }
         }
 

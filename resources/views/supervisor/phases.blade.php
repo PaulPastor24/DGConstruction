@@ -35,7 +35,7 @@
     };
 
     $activePhase = $primaryPhase;
-    $scheduleHealth = ($activePhase && $activePhase->status === 'delayed') ? 'DELAYED' : 'ON TRACK';
+    $scheduleHealth = strtoupper($scheduleHealth ?? 'ON TRACK');
     $scheduleHealthClass = $scheduleHealth === 'ON TRACK' ? 'health-on-track' : 'health-delayed';
 @endphp
 
@@ -46,7 +46,8 @@
     <div class="metrics-row">
         <div class="metric-card project-selector-card">
             <span class="metric-label">Project</span>
-            <div class="project-dropdown-trigger" id="projectDropdownBtn">
+            <div class="project-dropdown-trigger" id="projectDropdownBtn" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
+                <span class="project-selector-leading-icon"><i class="bi bi-building"></i></span>
                 <span class="project-name" id="selectedProjectName">{{ $primaryProject?->project_name ?? 'Select Project' }}</span>
                 <i class="bi bi-chevron-down dropdown-arrow"></i>
             </div>
@@ -94,6 +95,7 @@
                 </div>
                 <span class="health-text" id="scheduleHealthText"><i class="bi bi-plus"></i> {{ $scheduleHealth }}</span>
             </div>
+            <span class="health-detail" id="scheduleHealthReason">{{ $scheduleHealthReason ?? 'No delayed or overdue phases' }}</span>
         </div>
     </div>
 
@@ -266,8 +268,8 @@
         --status-prog-txt: #2563EB;
         --status-pend-bg: #F1F5F9;
         --status-pend-txt: #64748B;
-        --status-delay-bg: #FEE2E2;
-        --status-delay-txt: #DC2626;
+        --status-delay-bg: #FFF7ED;
+        --status-delay-txt: #C2410C;
     }
 
     body {
@@ -322,11 +324,46 @@
         padding-top: 0.25rem;
     }
 
+    .project-dropdown-trigger {
+        gap: 0.6rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid var(--ui-border-color);
+        border-radius: 10px;
+        background: #fbfcfa;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .project-dropdown-trigger:focus,
+    .project-dropdown-trigger:hover {
+        border-color: var(--ui-theme-green);
+        background: var(--ui-bg-surface);
+        box-shadow: 0 0 0 3px rgba(42, 64, 40, 0.08);
+        outline: none;
+    }
+
+    .project-selector-leading-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 28px;
+        border-radius: 8px;
+        background: var(--ui-theme-green-light);
+        color: var(--ui-theme-green);
+    }
+
     .project-name {
+        flex: 1;
+        min-width: 0;
         font-size: 1.4rem;
         font-weight: 700;
         font-family: var(--font-brand, 'Syne', sans-serif);
         color: var(--ui-text-main);
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .dropdown-arrow {
@@ -346,24 +383,25 @@
         right: 0;
         background: var(--ui-bg-surface);
         border: 1px solid var(--ui-border-color);
-        border-radius: 8px;
-        margin-top: 0.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        margin-top: 0.4rem;
+        padding: 0.35rem;
+        box-shadow: 0 16px 30px rgba(15, 32, 21, 0.14);
         z-index: 100;
         overflow: hidden;
     }
 
     .dropdown-item {
         display: block;
-        padding: 0.75rem 1rem;
+        padding: 0.7rem 0.75rem;
         color: var(--ui-text-main);
         text-decoration: none;
-        border-bottom: 1px solid var(--ui-border-color);
+        border-radius: 8px;
         transition: background 0.2s;
     }
 
     .dropdown-item:last-child {
-        border-bottom: none;
+        border-bottom: 0;
     }
 
     .dropdown-item:hover {
@@ -447,6 +485,14 @@
         font-weight: 700;
         padding: 0.35rem 0.65rem;
         border-radius: 6px;
+    }
+
+    .health-detail {
+        display: block;
+        margin-top: 0.45rem;
+        color: var(--ui-text-muted);
+        font-size: 0.72rem;
+        line-height: 1.3;
     }
 
     .health-on-track .health-text {
@@ -1100,6 +1146,58 @@
         .metrics-row {
             grid-template-columns: repeat(2, 1fr);
         }
+
+        .metric-card {
+            min-height: 100px;
+            padding: 1rem;
+        }
+
+        .project-name {
+            font-size: 1.1rem;
+        }
+
+        .metric-value-large {
+            font-size: 1.65rem;
+        }
+
+        .phases-data-table th,
+        .phases-data-table td {
+            padding: 0.75rem 0.8rem;
+        }
+
+        .phases-data-table th {
+            font-size: 0.66rem;
+        }
+
+        .phases-data-table td {
+            font-size: 0.78rem;
+        }
+
+        .description-text-cell,
+        .date-cell-text {
+            font-size: 0.74rem;
+        }
+    }
+
+    @media (min-width: 821px) and (max-width: 1100px) {
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .phases-data-table {
+            min-width: 860px;
+        }
+
+        .table-section-header,
+        .filters-section {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .filters-section {
+            max-width: none !important;
+        }
     }
 
     @media (max-width: 768px) {
@@ -1189,6 +1287,11 @@
             text-align: center !important;
             border-radius: 999px !important;
             padding: 7px 10px !important;
+        }
+
+        .health-detail {
+            font-size: 10px !important;
+            text-align: center;
         }
 
         .table-section-container {
