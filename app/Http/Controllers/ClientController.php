@@ -262,9 +262,6 @@ class ClientController extends Controller
 
         $reportsByProject = Report::query()
             ->whereIn('project_id', $projectIdsForCarousel)
-            ->when($primaryProject, function ($query) use ($primaryProject) {
-                $query->where('project_id', $primaryProject->project_id);
-            })
             ->where('approval_status', 'approved')
             ->where('is_published_to_client', true)
             ->with(['project', 'phase', 'submittedBy'])
@@ -273,7 +270,15 @@ class ClientController extends Controller
             ->groupBy('project_id')
             ->map(fn ($reports) => $reports->take(6)->values());
 
-        $carouselProjects = $allProjects->map(function ($project) use ($primaryProject, $delayedCountsByProject, $nextMilestoneByProject, $reportsByProject, $milestonesByProject) {
+        $latestReportsByProject = Report::query()
+            ->whereIn('project_id', $projectIdsForCarousel)
+            ->with(['phase', 'submittedBy'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy('project_id')
+            ->map(fn ($reports) => $reports->first());
+
+        $carouselProjects = $allProjects->map(function ($project) use ($primaryProject, $delayedCountsByProject, $nextMilestoneByProject, $reportsByProject, $latestReportsByProject, $milestonesByProject) {
             $phases = $project->phases;
             $location = trim((string) ($project->project_location ?? $project->location ?? $project->location_address ?? ''));
             $isDelayed = ($delayedCountsByProject->get($project->project_id, 0)) > 0;
@@ -304,13 +309,13 @@ class ClientController extends Controller
                 'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
                 'phase' => optional($phases->firstWhere('status', 'in_progress'))->phase_name ?? 'Phase pending',
                 'next_milestone_date' => optional($nextMilestone?->end_date ?? $nextMilestone?->start_date)->format('M d, Y') ?? 'Pending',
-                'snapshot' => $primaryProject && $project->project_id === $primaryProject->project_id
-                    ? $this->buildProjectSnapshot(
-                        $project,
-                        $reportsByProject->get($project->project_id, collect()),
-                        $milestonesByProject->get($project->project_id, collect())
-                    )
-                    : null,
+                'snapshot' => $this->buildProjectSnapshot(
+                    $project,
+                    $reportsByProject->get($project->project_id, collect()),
+                    $milestonesByProject->get($project->project_id, collect()),
+                    $latestReportsByProject->get($project->project_id),
+                    true
+                ),
             ];
         })->values();
 
@@ -361,7 +366,7 @@ class ClientController extends Controller
      * @param  Collection|null  $reports  Pre-filtered reports for this project.
      * @param  Collection|null  $milestones  Pre-filtered milestones for this project.
      */
-    private function buildProjectSnapshot(Project $project, $reports = null, $milestones = null)
+    private function buildProjectSnapshot(Project $project, $reports = null, $milestones = null, $latestSubmittedReport = null, $latestReportWasPreloaded = false)
     {
         $project->loadMissing(['phases', 'engineer', 'supervisors']);
         $phases = $project->phases;
@@ -441,11 +446,13 @@ class ClientController extends Controller
         }
 
         $latestReport = $reports->first();
-        $latestSubmittedReport = Report::query()
-            ->where('project_id', $project->project_id)
-            ->with(['phase', 'submittedBy'])
-            ->orderByDesc('created_at')
-            ->first();
+        if ($latestSubmittedReport === null && ! $latestReportWasPreloaded) {
+            $latestSubmittedReport = Report::query()
+                ->where('project_id', $project->project_id)
+                ->with(['phase', 'submittedBy'])
+                ->orderByDesc('created_at')
+                ->first();
+        }
 
         $reportData = $reports->map(function ($report) {
             return [
@@ -745,15 +752,12 @@ class ClientController extends Controller
 
         $projects->setCollection($projectSummaries);
 
-        $availablePhases = Project::query()
-            ->where('client_id', '=', $client->client_id)
-            ->with('phases')
-            ->get()
-            ->flatMap(fn ($project) => $project->phases)
-            ->pluck('phase_name')
-            ->unique()
-            ->sort()
-            ->values();
+        $availablePhases = ConstructionPhase::query()
+            ->whereHas('project', fn ($phaseQuery) => $phaseQuery->where('client_id', $client->client_id))
+            ->select('phase_name')
+            ->distinct()
+            ->orderBy('phase_name')
+            ->pluck('phase_name');
 
         if ($request->ajax()) {
             return response()->json([

@@ -191,6 +191,194 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .supervisor-profile-page {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .supervisor-profile-page .row > [class*="col-"] {
+            min-width: 0;
+        }
+
+        .supervisor-profile-page .ui-card {
+            min-width: 0;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(42, 64, 40, 0.05);
+        }
+
+        .supervisor-profile-page .profile-personal-card {
+            height: auto;
+            align-self: flex-start;
+        }
+
+        .supervisor-profile-page .profile-main-grid {
+            align-items: flex-start;
+        }
+
+        .supervisor-profile-page .summary-list li {
+            min-width: 0;
+            gap: 0.35rem;
+        }
+
+        .supervisor-profile-page .summary-list .label {
+            flex: 0 0 7.5rem;
+        }
+
+        .supervisor-profile-page .summary-list .value {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .supervisor-profile-page .info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            align-items: stretch;
+        }
+
+        .supervisor-profile-page .info-row {
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .supervisor-profile-page .info-grid .info-row + .info-row {
+            margin-top: 0;
+        }
+
+        .supervisor-profile-page .info-item-value {
+            overflow-wrap: anywhere;
+            line-height: 1.4;
+        }
+
+        .supervisor-profile-page .profile-security-last-login {
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .supervisor-profile-page .profile-security-last-login > div:last-child {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .supervisor-profile-page .profile-photo-card {
+            min-width: 0;
+        }
+
+        .supervisor-profile-page .quick-link-item span {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-modal-form .form-control {
+            min-height: 44px;
+        }
+
+        @media (max-width: 1199.98px) {
+            .supervisor-profile-page .ui-card {
+                padding: 1.25rem;
+            }
+
+            .supervisor-profile-page .ui-avatar-large {
+                width: 96px;
+                height: 96px;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .supervisor-profile-page .summary-list .label {
+                flex-basis: 7rem;
+            }
+
+            .supervisor-profile-page .profile-security-last-login > div:last-child {
+                margin-left: 0;
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .supervisor-profile-page .ui-card {
+                padding: 1rem;
+                border-radius: 14px;
+            }
+
+            .supervisor-profile-page .profile-summary-content {
+                width: 100%;
+            }
+
+            .supervisor-profile-page .summary-list .label {
+                flex: 0 0 6.6rem;
+                font-size: 0.78rem;
+            }
+
+            .supervisor-profile-page .summary-list .value {
+                font-size: 0.82rem;
+            }
+
+            .supervisor-profile-page .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .supervisor-profile-page .profile-heading-row {
+                align-items: flex-start !important;
+                flex-direction: column;
+            }
+
+            .supervisor-profile-page .profile-heading-row > button {
+                width: 100%;
+            }
+
+            .supervisor-profile-page .profile-related-grid {
+                text-align: left !important;
+            }
+
+            .supervisor-profile-page .profile-related-grid > [class*="col-"] {
+                padding-top: 0.35rem;
+                padding-bottom: 0.35rem;
+            }
+
+            .supervisor-profile-page .profile-photo-card .ui-avatar-large {
+                width: 88px;
+                height: 88px;
+            }
+
+            #profileEditModal .modal-dialog,
+            #passwordModal .modal-dialog {
+                margin: 0.5rem;
+            }
+
+            #profileEditModal .modal-content,
+            #passwordModal .modal-content {
+                border-radius: 14px;
+            }
+
+            #profileEditModal .modal-body,
+            #passwordModal .modal-body {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .supervisor-profile-page .summary-list li {
+                align-items: flex-start;
+            }
+
+            .supervisor-profile-page .summary-list .label {
+                flex-basis: 5.8rem;
+                font-size: 0.72rem;
+            }
+
+            .supervisor-profile-page .summary-list .value {
+                font-size: 0.76rem;
+            }
+
+            .supervisor-profile-page .profile-security-last-login > div:first-child {
+                width: 100%;
+            }
+        }
     </style>
 @endpush
 
@@ -207,10 +395,10 @@
     $lastName = $user->last_name ?? '';
 @endphp
 
-<div class="container-fluid px-0">
+<div class="container-fluid px-0 supervisor-profile-page">
     <div class="row g-4 mb-4">
         <div class="col-12 col-lg-6">
-            <div class="ui-card">
+            <div class="ui-card profile-personal-card">
                 <h5 class="fw-bold mb-4">Profile Summary</h5>
                 <div class="d-flex flex-column flex-sm-row gap-4 align-items-start">
                     <div class="ui-avatar-container">
@@ -226,7 +414,7 @@
                             <i class="bi bi-camera-fill text-muted-small"></i>
                         </span>
                     </div>
-                    <div class="flex-grow-1">
+                    <div class="flex-grow-1 profile-summary-content">
                         <h4 class="fw-bold mb-1">{{ $user->name ?? 'Supervisor Name' }}</h4>
                         <span class="badge badge-role rounded-pill mb-3">{{ $userPosition }}</span>
                         
@@ -298,9 +486,9 @@
                     </div>
                 </div>
 
-                <div class="border-top pt-3 mt-2">
+                    <div class="border-top pt-3 mt-2">
                     <label class="text-muted small fw-bold d-block mb-1">Last Login</label>
-                    <div class="d-flex align-items-center justify-content-between text-muted small">
+                    <div class="d-flex align-items-center justify-content-between text-muted small profile-security-last-login">
                         <div>
                             <span class="fw-semibold text-dark">{{ $lastLogin }}</span>
                             <span class="mx-2">•</span>
@@ -315,10 +503,10 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-12 col-xl-8">
+    <div class="row g-4 profile-main-grid">
+        <div class="col-12 col-lg-8">
             <div class="ui-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 profile-heading-row">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-person text-success fs-5"></i>
                         <div>
@@ -368,7 +556,7 @@
 
                 <div class="pt-2">
                     <h6 class="fw-bold text-muted small mb-3 text-uppercase tracking-wider">Related Information</h6>
-                    <div class="row g-3 text-center text-sm-start">
+                    <div class="row g-3 text-center text-sm-start profile-related-grid">
                         <div class="col-12 col-sm-4">
                             <div class="info-item-label">Assigned Project</div>
                             <div class="info-item-value">{{ $assignedProjectName }}</div>
@@ -386,8 +574,8 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl-4 d-flex flex-column gap-4">
-            <div class="ui-card text-center py-4">
+        <div class="col-12 col-lg-4 d-flex flex-column gap-4">
+            <div class="ui-card text-center py-4 profile-photo-card">
                 <div class="d-flex align-items-center justify-content-center gap-2 mb-3 justify-content-start px-2">
                     <i class="bi bi-image text-muted fs-5"></i>
                     <h5 class="fw-bold mb-0">Profile Photo</h5>
@@ -472,7 +660,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="profileUpdateForm" action="{{ route('supervisor.profile.update') }}" method="POST">
+                <form id="profileUpdateForm" class="profile-modal-form" action="{{ route('supervisor.profile.update') }}" method="POST">
                     @csrf
                     @method('PUT')
                     <div class="row g-3">

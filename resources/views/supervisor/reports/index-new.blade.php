@@ -82,6 +82,40 @@
             max-width: 1080px;
         }
 
+        .report-details-modal .modal-content {
+            overflow: hidden;
+            border: 1px solid #dfeae2;
+            box-shadow: 0 24px 70px rgba(20, 55, 31, 0.16);
+        }
+
+        .report-details-modal .modal-header {
+            background: linear-gradient(135deg, #f5fbf6 0%, #ffffff 72%) !important;
+            padding: 1.1rem 1.35rem;
+        }
+
+        .report-details-modal .modal-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .report-details-modal .modal-title-icon {
+            display: inline-flex;
+            width: 2.6rem;
+            height: 2.6rem;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.85rem;
+            background: var(--cms-green-light);
+            color: var(--cms-green-dark);
+            font-size: 1.1rem;
+        }
+
+        .report-details-modal .modal-body {
+            background: #f7faf8;
+        }
+
         .report-detail-card,
         .report-detail-sidebar {
             border-radius: 16px;
@@ -92,11 +126,13 @@
 
         .report-detail-card {
             padding: 2rem;
+            box-shadow: 0 10px 28px rgba(20, 55, 31, 0.05);
         }
 
         .report-detail-sidebar {
             background: #F8FAFC;
             border-color: rgba(22, 101, 52, 0.12);
+            box-shadow: 0 10px 28px rgba(20, 55, 31, 0.05);
         }
 
         .report-detail-sidebar .img-thumbnail-grid {
@@ -104,6 +140,125 @@
             max-width: none;
             height: 76px;
             min-width: 0;
+        }
+
+        .report-details-modal .detail-summary-card {
+            border: 1px solid #e0ebe3 !important;
+            background: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(20, 55, 31, 0.04);
+        }
+
+        .report-details-modal .detail-meta-card {
+            min-height: 76px;
+            border: 1px solid #e4eee7;
+            background: #fbfdfb !important;
+            padding: 0.95rem !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.35rem;
+            transition: border-color 160ms ease, background-color 160ms ease;
+        }
+
+        .report-details-modal .detail-meta-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            row-gap: 0.85rem !important;
+            column-gap: 0.85rem !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .report-details-modal .detail-meta-grid > .detail-meta-card {
+            width: auto !important;
+            max-width: none !important;
+            padding-left: 0.95rem !important;
+            padding-right: 0.95rem !important;
+        }
+
+        .report-details-modal .detail-meta-card:hover {
+            border-color: #b8d1bc;
+            background: #ffffff !important;
+        }
+
+        .report-details-modal .detail-meta-label {
+            display: block;
+            margin-bottom: 0;
+            color: #718078;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        .report-details-modal .detail-meta-value {
+            color: #203526;
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .report-details-modal .detail-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.7rem;
+            color: var(--cms-green-dark);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .report-details-modal .detail-section-title::before {
+            content: '';
+            width: 0.45rem;
+            height: 0.45rem;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: #76a47e;
+        }
+
+        .report-details-modal .detail-report-text,
+        .report-details-modal .detail-approval-card {
+            border: 1px solid #e4eee7 !important;
+            background: #fbfdfb !important;
+        }
+
+        .report-details-modal .detail-report-text {
+            line-height: 1.75;
+        }
+
+        .report-details-modal .detail-sidebar-heading {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            color: var(--cms-green-dark);
+            font-weight: 800;
+        }
+
+        .report-details-modal .detail-sidebar-heading i {
+            color: #76a47e;
+        }
+
+        .report-details-modal .report-images-gallery {
+            padding: 0.35rem;
+            border: 1px solid #e0ebe3;
+            border-radius: 0.85rem;
+            background: #ffffff;
+        }
+
+        .report-details-modal .report-images-gallery .img-thumbnail-grid {
+            border-color: #d6e5d9 !important;
+            border-radius: 0.65rem !important;
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .report-details-modal .report-images-gallery .img-thumbnail-grid:hover {
+            border-color: #6e9a76 !important;
+            box-shadow: 0 5px 14px rgba(20, 55, 31, 0.14);
+            transform: translateY(-2px);
         }
 
         .report-images-gallery {
@@ -234,8 +389,14 @@
             background-color: #ffffff;
         }
 
+        .create-report-modal .modal-content {
+            overflow: hidden;
+            border: 1px solid #dfeae2;
+            box-shadow: 0 24px 70px rgba(20, 55, 31, 0.16);
+        }
+
         .cms-modal .modal-header {
-            background-color: #ffffff;
+            background: linear-gradient(135deg, #f5fbf6 0%, #ffffff 72%);
             border-bottom: 1px solid #e2e8f0;
             padding: 20px 24px;
             border-top-left-radius: 12px;
@@ -246,6 +407,29 @@
             color: #1e293b;
             font-size: 1.25rem;
             font-weight: 700;
+        }
+
+        .create-report-modal .modal-header {
+            border-bottom: 2px solid var(--cms-green-dark);
+        }
+
+        .create-report-modal .modal-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .create-report-modal .modal-title-icon {
+            display: inline-flex;
+            width: 2.75rem;
+            height: 2.75rem;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.9rem;
+            background: var(--cms-green-light);
+            color: var(--cms-green-dark);
+            font-size: 1.2rem;
         }
 
         .cms-modal .modal-subtitle {
@@ -270,6 +454,22 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .create-report-modal .cms-form-section-header {
+            margin-top: 0.35rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid #e7eee8;
+        }
+
+        .create-report-modal .cms-form-section-header::before {
+            content: '';
+            width: 0.45rem;
+            height: 0.45rem;
+            flex: 0 0 auto;
+            border-radius: 999px;
+            background: #76a47e;
         }
 
         .cms-form-section-header::after {
@@ -300,6 +500,18 @@
             border-radius: 6px;
             color: #1e293b;
             transition: all 0.15s ease;
+        }
+
+        .create-report-modal .cms-form-control {
+            min-height: 44px;
+            border-color: #cbdccf;
+            border-radius: 9px;
+        }
+
+        .create-report-modal textarea.cms-form-control {
+            min-height: 116px;
+            resize: vertical;
+            line-height: 1.55;
         }
 
         .cms-form-control:focus {
@@ -337,6 +549,28 @@
             min-height: 220px;
             display: grid;
             place-items: center;
+        }
+
+        .create-report-modal .cms-file-upload-zone {
+            min-height: 190px;
+            border-color: #b9d2bd;
+            background: linear-gradient(180deg, #fbfefb 0%, #f4faf5 100%);
+        }
+
+        .create-report-modal .cms-file-upload-zone h6 {
+            color: var(--cms-green-dark) !important;
+        }
+
+        .create-report-modal .cms-file-upload-icon {
+            display: inline-flex;
+            width: 3.2rem;
+            height: 3.2rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.7rem;
+            border-radius: 1rem;
+            background: #e8f4ea;
+            color: var(--cms-green-dark);
         }
 
         .cms-file-upload-zone:hover,
@@ -463,6 +697,12 @@
             padding: 16px 24px;
             border-bottom-left-radius: 12px;
             border-bottom-right-radius: 12px;
+        }
+
+        .create-report-modal .modal-footer {
+            padding-top: 14px;
+            padding-bottom: 14px;
+            background: #fbfdfb;
         }
 
         .btn-cms-secondary {
@@ -1058,6 +1298,106 @@
             font-size: 0.85rem;
             z-index: 2;
         }
+
+        .create-report-modal .cms-form-section-header {
+            justify-content: flex-start;
+        }
+
+        .create-report-modal .cms-form-section-header > span {
+            white-space: nowrap;
+        }
+
+        .create-report-modal .cms-form-section-header small {
+            margin-left: auto;
+            color: #94a39a;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .create-report-modal .cms-form-section-header em {
+            color: #94a39a;
+            font-style: normal;
+            font-weight: 500;
+            text-transform: none;
+        }
+
+        .create-report-field-hint {
+            margin-top: 0.35rem;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+
+        .create-report-modal-footer {
+            gap: 0.65rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .report-details-modal .modal-title-wrap {
+                align-items: flex-start;
+                gap: 0.6rem;
+            }
+
+            .report-details-modal .modal-title-icon {
+                width: 2.3rem;
+                height: 2.3rem;
+                font-size: 1rem;
+            }
+
+            .report-details-modal .modal-title {
+                font-size: 1.05rem;
+            }
+
+            .report-details-modal .report-detail-card,
+            .report-details-modal .report-detail-sidebar {
+                padding: 1rem !important;
+            }
+
+            .report-details-modal .detail-summary-card {
+                padding: 0.85rem !important;
+            }
+
+            .create-report-modal .modal-title-wrap {
+                align-items: flex-start;
+                gap: 0.6rem;
+            }
+
+            .create-report-modal .modal-title-icon {
+                width: 2.35rem;
+                height: 2.35rem;
+                font-size: 1rem;
+            }
+
+            .create-report-modal .modal-title {
+                font-size: 1.05rem;
+            }
+
+            .create-report-modal .modal-subtitle {
+                max-width: 230px;
+                font-size: 0.75rem;
+            }
+
+            .create-report-modal .cms-form-section-header {
+                display: block;
+            }
+
+            .create-report-modal .cms-form-section-header small {
+                display: block;
+                margin-top: 0.25rem;
+            }
+
+            .create-report-modal-footer {
+                flex-wrap: wrap;
+            }
+
+            .create-report-modal-footer button {
+                flex: 1 1 0;
+                justify-content: center;
+                margin-right: 0 !important;
+            }
+        }
     </style>
 @endpush
 
@@ -1269,10 +1609,13 @@
                             <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-report-status="{{ $status }}" data-gallery='@json($siteImageUrls->map(fn($url) => $url)->values())' tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
                             <div class="modal-dialog modal-xl">
                                 <div class="modal-content">
-                                    <div class="modal-header" style="background: #ffffff; border-bottom: 2px solid var(--cms-green-dark);">
-                                        <div>
+                                    <div class="modal-header">
+                                        <div class="modal-title-wrap">
+                                            <span class="modal-title-icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+                                            <div>
                                             <h5 class="modal-title fw-bold" id="reportDetailsModalLabel-{{ $report->report_id }}" style="color: var(--cms-green-dark);">Report Details</h5>
                                             <div class="text-muted small">A complete summary of the selected accomplishment report.</div>
+                                            </div>
                                         </div>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
@@ -1280,39 +1623,39 @@
                                         <div class="row gx-4 gy-4">
                                             <div class="col-12 col-xl-7">
                                                 <div class="report-detail-card p-4">
-                                                    <div class="d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3" style="background: #fff;">
+                                                    <div class="detail-summary-card d-flex flex-column flex-sm-row justify-content-between gap-3 mb-4 p-3 rounded-3">
                                                         <div>
-                                                            <div class="small text-uppercase text-muted" style="font-weight: 600;">Report ID</div>
-                                                            <div class="fw-bold text-dark" style="font-size: 1.1rem;">RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</div>
+                                                            <div class="detail-meta-label">Report ID</div>
+                                                            <div class="fw-bold text-dark" style="font-size: 1.1rem; color: var(--cms-green-dark) !important;">RPT-2026-{{ str_pad($report->report_id, 4, '0', STR_PAD_LEFT) }}</div>
                                                         </div>
                                                         <div class="text-sm-end">
-                                                            <div class="small text-uppercase text-muted" style="font-weight: 600;">Approval Status</div>
+                                                            <div class="detail-meta-label">Approval Status</div>
                                                             <span class="status-pill {{ $pillClass }} p-2 mt-1 d-inline-block">{{ $status }}</span>
                                                         </div>
                                                     </div>
 
-                                                    <div class="row g-3 mb-4 small">
-                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
-                                                            <div class="fw-semibold text-muted mb-1">Project</div>
-                                                            <div class="text-dark js-detail-project">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
+                                                    <div class="row g-3 detail-meta-grid mb-4 small">
+                                                        <div class="detail-meta-card col-12 col-sm-6 p-3 rounded">
+                                                            <span class="detail-meta-label">Project</span>
+                                                            <div class="detail-meta-value js-detail-project">{{ optional($report->project)->project_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
-                                                            <div class="fw-semibold text-muted mb-1">Construction Phase</div>
-                                                            <div class="text-dark js-detail-phase">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
+                                                        <div class="detail-meta-card col-12 col-sm-6 p-3 rounded">
+                                                            <span class="detail-meta-label">Construction Phase</span>
+                                                            <div class="detail-meta-value js-detail-phase">{{ optional($report->phase)->phase_name ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
-                                                            <div class="fw-semibold text-muted mb-1">Report Date</div>
-                                                            <div class="text-dark js-detail-date">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
+                                                        <div class="detail-meta-card col-12 col-sm-6 p-3 rounded">
+                                                            <span class="detail-meta-label">Report Date</span>
+                                                            <div class="detail-meta-value js-detail-date">{{ optional($report->report_date)->format('M d, Y h:i A') ?? 'N/A' }}</div>
                                                         </div>
-                                                        <div class="col-12 col-sm-6 p-3 rounded" style="background: #f9fafb;">
-                                                            <div class="fw-semibold text-muted mb-1">Submitted By</div>
-                                                            <div class="text-dark">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
+                                                        <div class="detail-meta-card col-12 col-sm-6 p-3 rounded">
+                                                            <span class="detail-meta-label">Submitted By</span>
+                                                            <div class="detail-meta-value">{{ optional($report->submittedBy)->name ?? 'Supervisor' }}</div>
                                                         </div>
                                                     </div>
 
                                                     <div class="js-report-view-section">
-                                                        <div class="p-4 rounded-3 mb-4" style="white-space: pre-line; line-height: 1.7; background: #f9fafb;">
-                                                            <div class="fw-bold mb-2" style="color: var(--cms-green-dark);">Construction Accomplishment</div>
+                                                        <div class="detail-report-text p-4 rounded-3 mb-4">
+                                                            <div class="detail-section-title">Construction Accomplishment</div>
                                                             <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->report_text ?? 'No description logs reported.' }}</p>
                                                         </div>
                                                     </div>
@@ -1383,8 +1726,8 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="p-3 rounded-3" style="background: #f9fafb;">
-                                                        <div class="fw-semibold text-muted mb-1">Approval Remarks</div>
+                                                    <div class="detail-approval-card p-3 rounded-3">
+                                                        <div class="detail-section-title">Approval Remarks</div>
                                                         <div class="text-dark small">{{ $report->approval_remarks ?? 'No remarks' }}</div>
                                                     </div>
                                                 </div>
@@ -1393,7 +1736,7 @@
                                             <div class="col-12 col-xl-5">
                                                 <div class="report-detail-sidebar p-4">
                                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                                        <div class="fw-bold" style="color: var(--cms-green-dark);">Site Images</div>
+                                                        <div class="detail-sidebar-heading"><i class="bi bi-images"></i><span>Site Images</span></div>
                                                         <div class="small text-muted">{{ $siteImageUrls->count() }} uploaded</div>
                                                     </div>
                                                     @if($siteImageUrls->isEmpty())
@@ -1591,23 +1934,26 @@
     </div>
 </section>
 
-<div class="modal fade cms-modal" id="createReportModal" tabindex="-1" aria-labelledby="createReportModalLabel" aria-hidden="true">
+<div class="modal fade cms-modal create-report-modal" id="createReportModal" tabindex="-1" aria-labelledby="createReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             
             <div class="modal-header">
-                <div>
+                <div class="modal-title-wrap">
+                    <span class="modal-title-icon"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i></span>
+                    <div>
                     <h5 class="modal-title" id="createReportModalLabel">Create Accomplishment Report</h5>
                     <p class="cms-modal-subtitle modal-subtitle">Fill out the form below to document and submit daily construction progress.</p>
+                    </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="createReportForm" action="{{ route('supervisor.reports.submit') }}" method="POST" enctype="multipart/form-data">
+            <form id="createReportForm" class="create-report-form" action="{{ route('supervisor.reports.submit') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     
-                    <div class="cms-form-section-header">Project Context</div>
+                    <div class="cms-form-section-header"><span>Project Context</span><small>Choose where this progress belongs</small></div>
                     <div class="row">
                                 <div class="col-12 col-md-6 cms-form-group">
                             <label for="modal_project_id" class="cms-form-label">Project Assignment <span class="text-danger">*</span></label>
@@ -1641,10 +1987,11 @@
                         <div class="col-12 col-md-6 cms-form-group">
                             <label for="modal_report_text" class="cms-form-label">Accomplishment Summary <span class="text-danger">*</span></label>
                             <textarea name="report_text" id="modal_report_text" rows="4" class="cms-form-control" placeholder="Enter the accomplishment report text for this project and phase." required></textarea>
+                            <div class="create-report-field-hint">Describe completed work, current progress, and any important site conditions.</div>
                         </div>
                     </div>
 
-                    <div class="cms-form-section-header">Upload Site Images <span class="text-muted">(Optional)</span></div>
+                    <div class="cms-form-section-header"><span>Site Evidence <em>(Optional)</em></span><small>Add up to 20 progress images</small></div>
                     <div class="row">
                         <div class="col-12 cms-form-group">
                             <div id="imageUploadZone" class="cms-file-upload-zone">
@@ -1663,10 +2010,10 @@
                     </div>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer create-report-modal-footer">
                     <button type="button" class="btn-cms-secondary me-2" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn-cms-primary d-flex align-items-center gap-2">
-                        <i class="bi bi-file-earmark-check"></i> Submit Accomplishment
+                        <i class="bi bi-send-check"></i> Submit Accomplishment
                     </button>
                 </div>
             </form>

@@ -357,6 +357,126 @@
             gap: 0.85rem !important;
         }
     }
+
+    .material-modal {
+        max-height: min(92vh, 860px);
+    }
+
+    .material-modal-header {
+        background: linear-gradient(135deg, #ffffff 0%, #f7fbf7 100%) !important;
+    }
+
+    .material-modal-icon {
+        display: inline-flex;
+        width: 2.6rem;
+        height: 2.6rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.85rem;
+        font-size: 1.15rem;
+    }
+
+    .material-modal-form {
+        max-height: calc(92vh - 92px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #cbdccf transparent;
+    }
+
+    .material-form-section {
+        border: 1px solid #edf1ee;
+        border-radius: 1rem;
+        padding: 1rem;
+        background: #fcfdfc;
+    }
+
+    .material-form-section-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid #e7eee8;
+        color: #2a4028;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .material-form-section-heading small {
+        color: #94a39a;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    .material-modal-form input:not([type="hidden"]),
+    .material-modal-form select,
+    .material-modal-form textarea {
+        transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+
+    .material-modal-form input:not([type="hidden"]):focus,
+    .material-modal-form select:focus,
+    .material-modal-form textarea:focus {
+        border-color: #6e9a76 !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(42, 64, 40, 0.12) !important;
+    }
+
+    .material-modal-actions {
+        position: sticky;
+        bottom: -1.5rem;
+        z-index: 2;
+        margin: 0 -1.5rem -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        background: rgba(255, 255, 255, 0.96) !important;
+        backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 640px) {
+        .material-modal {
+            max-height: calc(100vh - 1rem);
+        }
+
+        .material-modal-header {
+            padding: 1rem !important;
+        }
+
+        .material-modal-form {
+            max-height: calc(100vh - 92px);
+            padding: 1rem !important;
+        }
+
+        .material-form-section {
+            padding: 0.75rem;
+            border-radius: 0.8rem;
+        }
+
+        .material-form-section-heading {
+            display: block;
+        }
+
+        .material-form-section-heading small {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .material-modal-actions {
+            bottom: -1rem;
+            margin: 0 -1rem -1rem;
+            padding: 0.85rem 1rem 1rem;
+        }
+
+        .material-modal-actions button {
+            flex: 1 1 0;
+        }
+    }
 </style>
 
 <script>
@@ -939,22 +1059,27 @@
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                  class="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-4xl material-modal border border-gray-100">
+                  class="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-4xl material-modal material-usage-modal border border-gray-100">
                  
-                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
-                    <div class="flex items-center gap-2 text-brand-dark">
-                        <i class="bi bi-pencil-square text-lg"></i>
-                        <h3 class="text-lg font-bold text-gray-900 font-heading">Record Material Usage</h3>
+                <div class="material-modal-header px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
+                    <div class="flex items-center gap-3 text-brand-dark">
+                        <span class="material-modal-icon bg-green-50 text-brand-dark"><i class="bi bi-pencil-square"></i></span>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 font-heading">Record Material Usage</h3>
+                            <p class="mt-0.5 text-xs text-gray-500">Log materials used on the selected construction phase.</p>
+                        </div>
                     </div>
                     <button @click="openUsageModal = false" class="text-gray-400 hover:text-gray-600 transition p-1.5 rounded-lg hover:bg-gray-50">
                         <i class="bi bi-x-lg text-sm"></i>
                     </button>
                 </div>
 
-                <form id="material_usage_form" action="{{ route('supervisor.materials.log') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6 bg-white" x-init="if (selectedMaterialId) { $nextTick(() => { const materialSelect = $refs.materialSelect; if(materialSelect){ materialSelect.value = selectedMaterialId; } }); }" x-effect="if (selectedMaterialId && $refs.materialSelect) selectedUnit = $refs.materialSelect.selectedOptions[0]?.dataset.unit || selectedUnit">
+                <form id="material_usage_form" action="{{ route('supervisor.materials.log') }}" method="POST" enctype="multipart/form-data" class="material-modal-form p-6 space-y-6 bg-white" x-init="if (selectedMaterialId) { $nextTick(() => { const materialSelect = $refs.materialSelect; if(materialSelect){ materialSelect.value = selectedMaterialId; } }); }" x-effect="if (selectedMaterialId && $refs.materialSelect) selectedUnit = $refs.materialSelect.selectedOptions[0]?.dataset.unit || selectedUnit">
                     @csrf
                     <input type="hidden" name="form_type" value="usage">
                     <input type="hidden" name="project_id" value="{{ optional($selectedProject)->project_id }}">
+                    <div class="material-form-section">
+                        <div class="material-form-section-heading"><span>Usage details</span><small>Required fields are marked with *</small></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
                         <div>
@@ -1049,8 +1174,9 @@
                             </div>
                         </div>
                     </div>
+                    </div>
 
-                    <div class="pt-5 border-t border-gray-200 flex items-center justify-end gap-3 bg-white">
+                    <div class="material-modal-actions pt-5 border-t border-gray-200 flex items-center justify-end gap-3 bg-white">
                         <button type="button" @click="openUsageModal = false; previewUrl = ''" class="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-btn shadow-saas hover:bg-gray-50 transition">
                             Cancel
                         </button>
@@ -1085,21 +1211,26 @@
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                  class="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-2xl material-modal border border-gray-100">
+                  class="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-2xl material-modal material-request-modal border border-gray-100">
                   
-                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
-                    <div class="flex items-center gap-2 text-brand-dark">
-                        <i class="bi bi-cart-plus text-lg"></i>
-                        <h3 class="text-lg font-bold text-gray-900 font-heading">Request Material</h3>
+                <div class="material-modal-header px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
+                    <div class="flex items-center gap-3 text-brand-dark">
+                        <span class="material-modal-icon bg-amber-50 text-amber-700"><i class="bi bi-cart-plus"></i></span>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 font-heading">Request Material</h3>
+                            <p class="mt-0.5 text-xs text-gray-500">Send a supply request for the selected project.</p>
+                        </div>
                     </div>
                     <button @click="openRequestModal = false" class="text-gray-400 hover:text-gray-600 transition p-1.5 rounded-lg hover:bg-gray-50">
                         <i class="bi bi-x-lg text-sm"></i>
                     </button>
                 </div>
 
-                <form id="material_request_form" action="{{ route('supervisor.materials.request') }}" method="POST" class="p-6 space-y-6 bg-white">
+                <form id="material_request_form" action="{{ route('supervisor.materials.request') }}" method="POST" class="material-modal-form p-6 space-y-6 bg-white">
                     @csrf
                     <input type="hidden" name="project_id" value="{{ optional($selectedProject)->project_id }}">
+                    <div class="material-form-section">
+                        <div class="material-form-section-heading"><span>Request details</span><small>Choose a material and quantity</small></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
                         <div>
@@ -1148,8 +1279,9 @@
                             <textarea name="remarks" rows="3" maxlength="1000" class="w-full px-4 py-3 text-sm border border-gray-200 rounded-input bg-white focus:outline-none focus:ring-2 focus:ring-brand-dark transition placeholder-gray-400 font-medium" placeholder="Explain why this material is needed for the project..."></textarea>
                         </div>
                     </div>
+                    </div>
 
-                    <div class="pt-5 border-t border-gray-200 flex items-center justify-end gap-3 bg-white">
+                    <div class="material-modal-actions pt-5 border-t border-gray-200 flex items-center justify-end gap-3 bg-white">
                         <button type="button" @click="openRequestModal = false" class="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-btn shadow-saas hover:bg-gray-50 transition">
                             Cancel
                         </button>

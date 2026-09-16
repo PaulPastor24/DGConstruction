@@ -119,9 +119,11 @@
 
     <section class="report-filter-card p-3 mb-4">
         <form method="GET" id="filterForm" class="row g-3 align-items-end">
-            <div class="col-12 col-md-3">
-                <label class="form-label small fw-bold text-muted">Project</label>
-                <select name="project_id" id="projectSelect" class="form-select form-select-sm" onchange="this.form.submit()">
+            <div class="col-12 col-md-3 report-project-filter-field">
+                <label class="form-label small fw-bold text-muted" for="projectSelect">
+                    <i class="bi bi-building me-1" aria-hidden="true"></i>Project
+                </label>
+                <select name="project_id" id="projectSelect" class="form-select form-select-sm report-project-select" onchange="this.form.submit()">
                     @php
                         $selectedProjectFilter = $activeProjectId ?? request('project_id');
                     @endphp
@@ -2133,6 +2135,76 @@
             padding: 0.25rem 1.35rem 0.25rem 0.4rem !important;
             border-radius: 6px !important;
             font-size: 0.64rem !important;
+        }
+    }
+
+    .client-reports-page .report-project-filter-field {
+        position: relative;
+    }
+
+    .client-reports-page .report-project-filter-field .form-label {
+        color: #2a4028 !important;
+    }
+
+    .client-reports-page .report-project-select {
+        border: 1px solid #a8c6ad;
+        background-color: #f5faf5;
+        color: #244128;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(42, 64, 40, 0.08);
+    }
+
+    .client-reports-page .report-project-select:hover {
+        border-color: #6e9a76;
+        background-color: #eef7ef;
+    }
+
+    .client-reports-page .report-project-select:focus {
+        border-color: #2a4028;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 0.2rem rgba(42, 64, 40, 0.14);
+    }
+
+    @media (min-width: 770px) and (max-width: 1030px) {
+        .client-reports-page .report-filter-card {
+            padding: 0.65rem !important;
+        }
+
+        .client-reports-page .report-filter-card form {
+            display: grid !important;
+            grid-template-columns: 1.3fr 1.2fr 0.85fr 0.85fr 1fr !important;
+            align-items: flex-end !important;
+            gap: 0.35rem !important;
+            margin: 0 !important;
+        }
+
+        .client-reports-page .report-filter-card form > [class*="col-"] {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            flex: none !important;
+            padding: 0 !important;
+        }
+
+        .client-reports-page .report-filter-card .form-label {
+            display: block;
+            margin-bottom: 0.2rem !important;
+            overflow: hidden;
+            font-size: 0.62rem !important;
+            line-height: 1.1;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .client-reports-page .report-filter-card .form-select,
+        .client-reports-page .report-filter-card .form-control {
+            width: 100%;
+            min-width: 0 !important;
+            min-height: 32px !important;
+            height: 32px;
+            padding: 0.25rem 1.45rem 0.25rem 0.45rem !important;
+            border-radius: 7px !important;
+            font-size: 0.68rem !important;
         }
     }
 
