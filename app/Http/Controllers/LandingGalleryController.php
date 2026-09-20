@@ -77,13 +77,7 @@ class LandingGalleryController extends Controller
 
     public function publicProject(Project $project)
     {
-        abort_unless(
-            $project->workflowStatus() === Project::STATUS_COMPLETED
-                && LandingGalleryImage::where('project_id', $project->project_id)
-                    ->where('is_active', true)
-                    ->exists(),
-            404
-        );
+        abort_unless($project->workflowStatus() === Project::STATUS_COMPLETED, 404);
 
         return response()->json([
             'name' => $project->project_name,
@@ -93,5 +87,41 @@ class LandingGalleryController extends Controller
             'status' => Project::statusLabel($project->status),
             'image' => $project->image_url,
         ]);
+    }
+
+    public function publicDemoProject(string $slug)
+    {
+        $demoProjects = [
+            'modern-residential-home' => [
+                'name' => 'Modern Residential Home',
+                'location' => 'Quezon City',
+                'completion_date' => 'December 2024',
+                'description' => 'A modern 2-story residential home with contemporary design and sustainable materials.',
+                'status' => 'Completed',
+                'image' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',
+            ],
+            'commercial-office-building' => [
+                'name' => 'Commercial Office Building',
+                'location' => 'Makati City',
+                'completion_date' => 'August 2024',
+                'description' => 'A 5-story commercial office building with modern amenities and efficient workspace design.',
+                'status' => 'Completed',
+                'image' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80',
+            ],
+            'luxury-villa-renovation' => [
+                'name' => 'Luxury Villa Renovation',
+                'location' => 'Tagaytay',
+                'completion_date' => 'March 2025',
+                'description' => 'Complete renovation of a luxury villa featuring modern interiors and landscape design.',
+                'status' => 'Completed',
+                'image' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+            ],
+        ];
+
+        $project = $demoProjects[$slug] ?? null;
+
+        abort_if(! $project, 404);
+
+        return response()->json($project);
     }
 }

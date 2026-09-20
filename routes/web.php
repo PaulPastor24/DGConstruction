@@ -32,11 +32,66 @@ Route::get('/', function () {
             ->get();
     }
 
+    if ($galleryImages->isEmpty() && Schema::hasTable('projects')) {
+        $completedProjects = \App\Models\Project::query()
+            ->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED))
+            ->whereNotNull('project_image')
+            ->orderBy('project_name')
+            ->get(['project_id', 'project_name', 'location', 'project_image', 'actual_end_date', 'description']);
+
+        $galleryImages = $completedProjects->map(function ($project) {
+            return (object) [
+                'project' => $project,
+                'image_path' => $project->project_image,
+            ];
+        });
+    }
+
+    if ($galleryImages->isEmpty()) {
+        $demoProjects = [
+            (object) [
+                'project' => (object) [
+                    'project_id' => 'demo-1',
+                    'project_name' => 'Modern Residential Home',
+                    'location' => 'Quezon City',
+                    'actual_end_date' => null,
+                    'description' => 'A modern 2-story residential home with contemporary design and sustainable materials.',
+                ],
+                'image_path' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+            ],
+            (object) [
+                'project' => (object) [
+                    'project_id' => 'demo-2',
+                    'project_name' => 'Commercial Office Building',
+                    'location' => 'Makati City',
+                    'actual_end_date' => null,
+                    'description' => 'A 5-story commercial office building with modern amenities and efficient workspace design.',
+                ],
+                'image_path' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+            ],
+            (object) [
+                'project' => (object) [
+                    'project_id' => 'demo-3',
+                    'project_name' => 'Luxury Villa Renovation',
+                    'location' => 'Tagaytay',
+                    'actual_end_date' => null,
+                    'description' => 'Complete renovation of a luxury villa featuring modern interiors and landscape design.',
+                ],
+                'image_path' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+            ],
+        ];
+
+        $galleryImages = collect($demoProjects);
+    }
+
     return view('welcome', compact('galleryImages'));
 });
 
 Route::get('/api/landing-gallery/projects/{project}', [LandingGalleryController::class, 'publicProject'])
     ->name('landing-gallery.projects.show');
+
+Route::get('/api/landing-gallery/demo/{slug}', [LandingGalleryController::class, 'publicDemoProject'])
+    ->name('landing-gallery.demo.show');
 
 Route::get('/dashboard', function () {
     $user = Auth::user();

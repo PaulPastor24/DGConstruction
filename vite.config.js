@@ -14,6 +14,10 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        outDir: 'dist', // Forces Vite output to 'dist' so Hostinger detects it
+        manifest: true,
+    },
     server: {
         host: '0.0.0.0',
         port: 5173,

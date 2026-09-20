@@ -620,14 +620,25 @@
             <div class="carousel-view-window">
                 <div class="project-carousel-track">
                     @forelse($galleryImages as $galleryImage)
+                        @php
+                            $project = $galleryImage->project;
+                            $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                            $demoSlug = $isDemo ? Str::of($project->project_name)->slug('-') : null;
+                            $projectUrl = $isDemo
+                                ? route('landing-gallery.demo.show', $demoSlug)
+                                : route('landing-gallery.projects.show', $project);
+                            $imageSrc = $isDemo
+                                ? $galleryImage->image_path
+                                : ($galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? ''));
+                        @endphp
                         <article class="project-card">
-                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="{{ route('landing-gallery.projects.show', $galleryImage->project) }}" aria-label="View details for {{ $galleryImage->project->project_name }}">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="{{ $projectUrl }}" aria-label="View details for {{ $project->project_name }}">
                                 <div class="project-img-container">
-                                    <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->project->project_name }}">
+                                    <img src="{{ $imageSrc }}" alt="{{ $project->project_name }}">
                                 </div>
                                 <div class="project-body">
-                                    <h3>{{ $galleryImage->project->project_name }}</h3>
-                                    <p>{{ $galleryImage->project->location ?: 'Completed project' }}</p>
+                                    <h3>{{ $project->project_name }}</h3>
+                                    <p>{{ $project->location ?: 'Completed project' }}</p>
                                 </div>
                                 <span class="project-arrow-btn" aria-hidden="true">→</span>
                             </button>
