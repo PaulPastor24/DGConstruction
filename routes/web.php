@@ -9,16 +9,34 @@ use App\Http\Controllers\PhasesExportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectArchiveController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\LandingGalleryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $galleryImages = collect();
+    if (Schema::hasTable('landing_gallery_images')) {
+        $galleryImages = \App\Models\LandingGalleryImage::query()
+            ->with('project')
+            ->where('is_active', true)
+            ->whereHas('project', function ($query) {
+                $query->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
+            })
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+    }
+
+    return view('welcome', compact('galleryImages'));
 });
+
+Route::get('/api/landing-gallery/projects/{project}', [LandingGalleryController::class, 'publicProject'])
+    ->name('landing-gallery.projects.show');
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
@@ -92,6 +110,14 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::put('/admin/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
 
     Route::get('/admin/project-archives', [ProjectArchiveController::class, 'index'])->name('admin.project-archives.index');
+
+    Route::prefix('admin/landing-gallery')->name('admin.landing-gallery.')->group(function () {
+        Route::get('/', [LandingGalleryController::class, 'index'])->name('index');
+        Route::post('/', [LandingGalleryController::class, 'store'])->name('store');
+        Route::patch('/{galleryImage}/toggle', [LandingGalleryController::class, 'toggle'])->name('toggle');
+        Route::patch('/reorder', [LandingGalleryController::class, 'reorder'])->name('reorder');
+        Route::delete('/{galleryImage}', [LandingGalleryController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('admin/projects')->name('admin.projects.')->group(function () {
         Route::get('/', [ProjectController::class, 'index'])->name('index');

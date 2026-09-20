@@ -392,22 +392,20 @@
         padding-right: 0.85rem;
     }
     .reports-table th:nth-child(6),
-    .reports-table td:nth-child(6),
+    .reports-table td:nth-child(6) {
+        width: 12%;
+        min-width: 110px;
+        padding-left: 0.9rem;
+        padding-right: 0.5rem;
+    }
     .reports-table th:nth-child(7),
     .reports-table td:nth-child(7) {
-        width: 10%;
-        min-width: 100px;
-        white-space: nowrap;
-        padding-left: 0.8rem;
-        padding-right: 0.8rem;
-    }
-    .reports-table th:nth-child(8),
-    .reports-table td:nth-child(8) {
-        width: 96px;
+        width: 90px;
+        min-width: 90px;
         text-align: center;
         white-space: nowrap;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 0.5rem;
+        padding-right: 0.9rem;
     }
     .reports-table tbody tr {
         transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -978,13 +976,46 @@
         overflow-y: visible;
     }
     #reportDetailsModal .modal-dialog {
-        max-width: 1100px;
-        margin-top: 60px;
+        max-width: 960px;
+        margin-top: 40px;
         margin-bottom: 20px;
         max-height: calc(100vh - 80px);
     }
     #reportDetailsModal .modal-xl {
-        max-width: 1100px;
+        max-width: 960px;
+    }
+    
+    /* Medium screens - reduce white space */
+    @media (max-width: 1024px) {
+        #reportDetailsModal .modal-dialog {
+            max-width: 92vw;
+            margin-top: 30px;
+        }
+        #reportDetailsModal .modal-body {
+            padding: 1.25rem !important;
+        }
+        #reportDetailsModal .modal-detail-card {
+            padding: 1rem !important;
+        }
+        #reportDetailsModal .modal-sidebar-card {
+            padding: 1rem !important;
+        }
+        #reportDetailsModal .modal-section-title {
+            margin-bottom: 0.6rem !important;
+            font-size: 0.72rem !important;
+        }
+        #reportDetailsModal .modal-info-grid {
+            gap: 0.6rem !important;
+        }
+        #reportDetailsModal .modal-info-item {
+            padding: 0.7rem 0.85rem !important;
+        }
+        #reportDetailsModal .modal-accomplishment-box {
+            padding: 0.9rem 1rem !important;
+        }
+        #reportDetailsModal .row.gx-3 {
+            gap: 0.75rem !important;
+        }
     }
     
     /* Ensure modal is scrollable and header is always visible */
@@ -1006,19 +1037,26 @@
     /* Mobile adjustments for close button accessibility */
     @media (max-width: 768px) {
         #reportDetailsModal .modal-dialog {
-            margin-top: 50px;
+            margin-top: 30px;
             margin-bottom: 10px;
             max-height: calc(100vh - 60px);
+            max-width: 100% !important;
         }
         #reportDetailsModal .modal-dialog-scrollable .modal-content {
             max-height: calc(100vh - 60px);
         }
         #reportDetailsModal .modal-header {
-            padding: 1rem 1rem;
+            padding: 0.85rem 1rem;
             position: sticky;
             top: 0;
             z-index: 1020;
             background: linear-gradient(135deg, #f8fdf9 0%, #ffffff 100%);
+        }
+        #reportDetailsModal .modal-body {
+            padding: 1rem !important;
+        }
+        #reportDetailsModal .modal-xl {
+            max-width: 100% !important;
         }
     }
 
@@ -1710,6 +1748,7 @@
             padding-top: 13px !important;
             margin-top: 7px !important;
             border-top: 1px solid #edf3ef !important;
+            overflow: visible !important;
         }
 
         .reports-table .status-pill {
@@ -1731,6 +1770,7 @@
             justify-content: flex-end !important;
             align-items: center !important;
             padding: 10px 0 0 !important;
+            gap: 10px !important;
         }
 
         .reports-table tbody td[data-label="Actions"]::before {
@@ -1741,6 +1781,7 @@
             display: flex !important;
             justify-content: flex-end !important;
             width: 100% !important;
+            gap: 8px !important;
         }
 
         .reports-table .btn-icon-action {
@@ -1751,6 +1792,7 @@
             border-color: #dceee0 !important;
             color: #234b2f !important;
             box-shadow: none !important;
+            flex-shrink: 0 !important;
         }
     }
 

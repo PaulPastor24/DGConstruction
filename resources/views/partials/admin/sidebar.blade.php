@@ -37,6 +37,9 @@
         <a class="nav-item {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}">
             <i class="bi bi-building"></i><span>Project Management</span>
         </a>
+        <a class="nav-item {{ request()->routeIs('admin.landing-gallery.*') ? 'active' : '' }}" href="{{ route('admin.landing-gallery.index') }}">
+            <i class="bi bi-images"></i><span>Landing Page</span>
+        </a>
         <a class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
             <i class="bi bi-people"></i><span>User Management</span>
         </a>

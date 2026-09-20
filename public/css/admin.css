@@ -1420,6 +1420,49 @@ grid-template-columns: 1fr;
 }
 
 
+.qa-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+}
+
+
+/* Medium screens: reduce sidebar width for better content space */
+@media (min-width: 1025px) and (max-width: 1200px) {
+.sidebar {
+    width: 240px;
+}
+
+.main {
+    margin-left: 240px;
+}
+
+.sidebar-nav .nav-item {
+    padding: 8px 14px;
+    font-size: 12.5px;
+    gap: 10px;
+}
+
+.sidebar-nav .nav-item i {
+    width: 16px;
+    flex: 0 0 16px;
+    font-size: 12px;
+}
+
+.stat-box {
+    padding: 16px;
+}
+
+.stat-icon-wrap {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+}
+
+.content {
+    padding: 20px 18px;
+}
 }
 
 @media (max-width: 1024px) {

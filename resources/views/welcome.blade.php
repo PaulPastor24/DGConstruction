@@ -254,6 +254,65 @@
             color: #166534;
         }
 
+        .gallery-project-modal-card {
+            width: min(900px, 100%);
+        }
+
+        .gallery-project-modal-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .gallery-project-modal-image {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 18px;
+            background: #edf3ee;
+        }
+
+        .gallery-project-modal-meta {
+            display: grid;
+            gap: 14px;
+        }
+
+        .gallery-project-modal-meta dt {
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .gallery-project-modal-meta dd {
+            margin: 3px 0 0;
+            color: var(--text-dark, #10271b);
+            line-height: 1.55;
+        }
+
+        .gallery-project-modal-loading {
+            color: var(--text-muted, #6f7d74);
+            text-align: center;
+        }
+
+        .project-card-trigger {
+            width: 100%;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            .gallery-project-modal-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .cta-action-row {
                 flex-direction: column;
@@ -440,8 +499,11 @@
             </div>
 
             <div class="hero-visual">
-                <!-- Replace with your combined rendering background image as seen in image_60ea5c.jpg -->
-                <img src="{{ asset('images/h4.jpg') }}" alt="Construction site with workers and equipment">
+                @if($galleryImages->first())
+                    <img src="{{ asset('storage/' . ltrim($galleryImages->first()->image_path, '/')) }}" alt="{{ $galleryImages->first()->project->project_name }}">
+                @else
+                    <img src="{{ asset('images/bg.png') }}" alt="D&G Construction Inc.">
+                @endif
             </div>
         </section>
 
@@ -557,66 +619,22 @@
 
             <div class="carousel-view-window">
                 <div class="project-carousel-track">
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h1.jpg') }}" alt="Custom Home Build">
-                        </div>
-                        <div class="project-body">
-                            <h3>Custom Home Build</h3>
-                            <p>Barrie, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h2.jpg') }}" alt="Full Home Renovation">
-                        </div>
-                        <div class="project-body">
-                            <h3>Full Home Renovation</h3>
-                            <p>Innisfil, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h3.jpg') }}" alt="Commercial Build">
-                        </div>
-                        <div class="project-body">
-                            <h3>Commercial Build</h3>
-                            <p>Newmarket, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h5.jpg') }}" alt="Interior Renovation">
-                        </div>
-                        <div class="project-body">
-                            <h3>Interior Renovation</h3>
-                            <p>Aurora, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h1.jpg') }}" alt="Custom Home Build">
-                        </div>
-                        <div class="project-body">
-                            <h3>Custom Home Build</h3>
-                            <p>Barrie, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
-                    <article class="project-card">
-                        <div class="project-img-container">
-                            <img src="{{ asset('images/h3.jpg') }}" alt="Commercial Build">
-                        </div>
-                        <div class="project-body">
-                            <h3>Commercial Build</h3>
-                            <p>Newmarket, ON</p>
-                        </div>
-                        <a href="#" class="project-arrow-btn">→</a>
-                    </article>
+                    @forelse($galleryImages as $galleryImage)
+                        <article class="project-card">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="{{ route('landing-gallery.projects.show', $galleryImage->project) }}" aria-label="View details for {{ $galleryImage->project->project_name }}">
+                                <div class="project-img-container">
+                                    <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->project->project_name }}">
+                                </div>
+                                <div class="project-body">
+                                    <h3>{{ $galleryImage->project->project_name }}</h3>
+                                    <p>{{ $galleryImage->project->location ?: 'Completed project' }}</p>
+                                </div>
+                                <span class="project-arrow-btn" aria-hidden="true">→</span>
+                            </button>
+                        </article>
+                    @empty
+                        <p class="gallery-project-modal-loading">Completed projects will appear here soon.</p>
+                    @endforelse
                 </div>
             </div>
         </section>
@@ -765,6 +783,24 @@
             </div>
         </div>
     </footer>
+
+    <!-- PUBLIC PROJECT DETAILS MODAL -->
+    <div class="landing-modal-overlay" id="galleryProjectModal" aria-hidden="true">
+        <div class="landing-modal-card gallery-project-modal-card" role="dialog" aria-modal="true" aria-labelledby="galleryProjectTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Completed Project</span>
+                    <h2 class="landing-modal-title" id="galleryProjectTitle">Project details</h2>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close project details">×</button>
+            </div>
+            <div class="landing-modal-body">
+                <div class="gallery-project-modal-content" id="galleryProjectContent">
+                    <p class="gallery-project-modal-loading">Loading project details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- QUOTE REQUEST MODAL -->
     <div class="landing-modal-overlay" id="quoteModal" aria-hidden="true">
@@ -1025,6 +1061,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize systems
     updateCarouselPosition();
     startAutoSlide();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('galleryProjectModal');
+    const content = document.getElementById('galleryProjectContent');
+    const title = document.getElementById('galleryProjectTitle');
+
+    if (!modal || !content || !title) return;
+
+    const escapeHtml = value => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const openModal = () => {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    };
+
+    document.querySelectorAll('.js-open-gallery-project').forEach(button => {
+        button.addEventListener('click', async () => {
+            title.textContent = 'Project details';
+            content.innerHTML = '<p class="gallery-project-modal-loading">Loading project details...</p>';
+            openModal();
+
+            try {
+                const response = await fetch(button.dataset.projectUrl, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (!response.ok) throw new Error('Unable to load project details.');
+
+                const project = await response.json();
+                title.textContent = project.name;
+                content.innerHTML = `
+                    ${project.image ? `<img class="gallery-project-modal-image" src="${escapeHtml(project.image)}" alt="${escapeHtml(project.name)}">` : ''}
+                    <dl class="gallery-project-modal-meta">
+                        <div><dt>Location</dt><dd>${escapeHtml(project.location || 'Not specified')}</dd></div>
+                        <div><dt>Completion date</dt><dd>${escapeHtml(project.completion_date || 'Not specified')}</dd></div>
+                        <div><dt>Status</dt><dd>${escapeHtml(project.status || 'Completed')}</dd></div>
+                        <div><dt>About this project</dt><dd>${escapeHtml(project.description || 'A completed D&G Construction project.')}</dd></div>
+                    </dl>`;
+            } catch (error) {
+                content.innerHTML = '<p class="gallery-project-modal-loading">Project details are temporarily unavailable.</p>';
+            }
+        });
+    });
 });
 </script>
 

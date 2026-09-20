@@ -410,6 +410,11 @@ class Project extends Model
         return $this->hasMany(MaterialUsage::class, 'project_id', 'project_id');
     }
 
+    public function landingGalleryImages()
+    {
+        return $this->hasMany(LandingGalleryImage::class, 'project_id', 'project_id');
+    }
+
     public function getPhaseCountAttribute(): int
     {
         if (array_key_exists('phase_count', $this->attributes)) {
