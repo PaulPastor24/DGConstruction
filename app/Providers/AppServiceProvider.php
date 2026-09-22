@@ -22,7 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Explicitly point to public_html using the absolute path
+        $this->app->usePublicPath('/home/u381418166/domains/system.dgconphil.com/public_html');
     }
 
     /**

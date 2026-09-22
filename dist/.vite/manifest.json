@@ -1,0 +1,44 @@
+{
+  "resources/css/admin-attendance.css": {
+    "file": "assets/admin-attendance-H-GY5MId.css",
+    "src": "resources/css/admin-attendance.css",
+    "isEntry": true,
+    "name": "admin-attendance",
+    "names": [
+      "admin-attendance.css"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-4_ZLMW_E.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/supervisor.css": {
+    "file": "assets/supervisor-6I3YPEPV.css",
+    "src": "resources/css/supervisor.css",
+    "isEntry": true,
+    "name": "supervisor",
+    "names": [
+      "supervisor.css"
+    ]
+  },
+  "resources/js/admin-timeline.js": {
+    "file": "assets/admin-timeline-CpLSylHF.js",
+    "name": "admin-timeline",
+    "src": "resources/js/admin-timeline.js",
+    "isEntry": true,
+    "css": [
+      "assets/admin-timeline-Dmgl1LQP.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-B09N2t2D.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
