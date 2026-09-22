@@ -5,7 +5,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-$corePath = '/home/u381418166/domains/system.dgconphil.com';
+// Automatically use absolute path on Hostinger, and relative path locally on your PC
+$corePath = is_dir('/home/u381418166/domains/system.dgconphil.com') 
+    ? '/home/u381418166/domains/system.dgconphil.com' 
+    : __DIR__.'/..';
 
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = $corePath . '/storage/framework/maintenance.php')) {

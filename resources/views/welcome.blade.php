@@ -256,6 +256,11 @@
 
         .gallery-project-modal-card {
             width: min(900px, 100%);
+            max-height: min(94vh, 980px);
+        }
+
+        .gallery-project-modal-card .landing-modal-body {
+            max-height: calc(min(94vh, 980px) - 132px);
         }
 
         .gallery-project-modal-content {
@@ -310,6 +315,245 @@
         @media (max-width: 700px) {
             .gallery-project-modal-content {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        .project-detail-scroll {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .project-detail-hero {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 18px;
+            background: #edf3ee;
+        }
+
+        .project-detail-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .project-detail-meta-icons {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .project-detail-meta-icon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid #e5ece7;
+            border-radius: 14px;
+            background: #f8fbf9;
+            color: var(--text-dark, #10271b);
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .project-detail-meta-icon svg {
+            width: 22px;
+            height: 22px;
+            flex: 0 0 22px;
+            color: var(--forest, #173824);
+        }
+
+        .project-detail-section h3 {
+            margin: 0 0 10px;
+            font-family: var(--font-heading, 'Syne', sans-serif);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-dark, #10271b);
+            letter-spacing: -0.02em;
+        }
+
+        .project-detail-section p,
+        .project-detail-section dd {
+            margin: 0;
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.92rem;
+            line-height: 1.65;
+        }
+
+        .project-detail-highlights {
+            display: grid;
+            gap: 10px;
+        }
+
+        .project-detail-highlights ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .project-detail-highlights li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.92rem;
+            color: var(--text-dark, #10271b);
+            line-height: 1.5;
+        }
+
+        .project-detail-highlights li::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+            margin-top: 1px;
+            background: var(--forest, #173824);
+            border-radius: 50%;
+            mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 12l5 5L20 7' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 12l5 5L20 7' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+        }
+
+        .project-detail-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .project-detail-gallery-grid img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 14px;
+            background: #edf3ee;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .project-detail-gallery-grid img:hover {
+            transform: translateY(-2px);
+        }
+
+        .project-detail-timeline {
+            display: grid;
+            gap: 14px;
+        }
+
+        .project-detail-phase {
+            border: 1px solid #e5ece7;
+            border-radius: 14px;
+            background: #f8fbf9;
+            overflow: hidden;
+        }
+
+        .project-detail-phase-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e5ece7;
+            background: #fff;
+        }
+
+        .project-detail-phase-header span:first-child {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text-dark, #10271b);
+        }
+
+        .project-detail-phase-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e6f3ea;
+            color: #173824;
+        }
+
+        .project-detail-phase-badge.completed {
+            background: #e6f3ea;
+            color: #173824;
+        }
+
+        .project-detail-phase-badge.in-progress {
+            background: #fff7e6;
+            color: #8a5a00;
+        }
+
+        .project-detail-phase-badge.pending {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .project-detail-phase-badge.delayed {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .project-detail-milestones {
+            display: grid;
+            gap: 8px;
+            padding: 12px 14px;
+        }
+
+        .project-detail-milestone {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text-dark, #10271b);
+        }
+
+        .project-detail-milestone-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .project-detail-milestone-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            flex: 0 0 8px;
+        }
+
+        .project-detail-milestone-dot.completed {
+            background: #173824;
+        }
+
+        .project-detail-milestone-dot.delayed {
+            background: #ef4444;
+        }
+
+        .project-detail-milestone-dot.pending {
+            background: #cbd5e1;
+        }
+
+        .project-detail-milestone-date {
+            font-size: 0.78rem;
+            color: var(--text-muted, #6f7d74);
+            font-weight: 500;
+        }
+
+        @media (max-width: 700px) {
+            .project-detail-meta-icons {
+                grid-template-columns: 1fr;
+            }
+
+            .project-detail-gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-project-modal-card {
+                width: 100%;
             }
         }
 
@@ -499,11 +743,23 @@
             </div>
 
             <div class="hero-visual">
-                @if($galleryImages->first())
-                    <img src="{{ asset('storage/' . ltrim($galleryImages->first()->image_path, '/')) }}" alt="{{ $galleryImages->first()->project->project_name }}">
-                @else
-                    <img src="{{ asset('images/bg.png') }}" alt="D&G Construction Inc.">
-                @endif
+                @php
+                    $heroImage = asset('images/h4.jpg');
+                    $heroAlt = 'D&G Construction Inc.';
+                    if ($galleryImages->isNotEmpty()) {
+                        $first = $galleryImages->first();
+                        $path = $first->image_path;
+                        $project = $first->project;
+                        $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                        if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
+                            $heroImage = $path;
+                        } elseif ($path) {
+                            $heroImage = asset('storage/' . ltrim($path, '/'));
+                        }
+                        $heroAlt = $project->project_name ?? 'D&G Construction Inc.';
+                    }
+                @endphp
+                <img src="{{ $heroImage }}" alt="{{ $heroAlt }}">
             </div>
         </section>
 
@@ -806,7 +1062,7 @@
                 <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close project details">×</button>
             </div>
             <div class="landing-modal-body">
-                <div class="gallery-project-modal-content" id="galleryProjectContent">
+                <div class="project-detail-scroll" id="galleryProjectContent">
                     <p class="gallery-project-modal-loading">Loading project details...</p>
                 </div>
             </div>
@@ -1110,14 +1366,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const project = await response.json();
                 title.textContent = project.name;
+
+                const metaIcons = [];
+                if (project.bedrooms) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                        <span>${escapeHtml(project.bedrooms)} Beds</span>
+                    </div>`);
+                }
+                if (project.bathrooms) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a1 1 0 0 1 1-1z"/><path d="M6 12V5a2 2 0 0 1 2-2h1.5a1 1 0 0 1 1 .8l1.2 4.2H16a2 2 0 0 1 2 2v1"/><path d="M8 21h8"/></svg>
+                        <span>${escapeHtml(project.bathrooms)} Baths</span>
+                    </div>`);
+                }
+                if (project.lot_area) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                        <span>${escapeHtml(project.lot_area)}</span>
+                    </div>`);
+                }
+
+                const highlightsHtml = (project.highlights && project.highlights.length)
+                    ? `<div class="project-detail-section project-detail-highlights">
+                        <h3>Project Highlights</h3>
+                        <ul>${project.highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ul>
+                    </div>`
+                    : '';
+
+                const featuresHtml = (project.features && project.features.length)
+                    ? `<div class="project-detail-section project-detail-highlights">
+                        <h3>Features</h3>
+                        <ul>${project.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+                    </div>`
+                    : '';
+
+                const galleryHtml = (project.gallery_images && project.gallery_images.length)
+                    ? `<div class="project-detail-section">
+                        <h3>Project Gallery</h3>
+                        <div class="project-detail-gallery-grid">
+                            ${project.gallery_images.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(project.name)}" loading="lazy">`).join('')}
+                        </div>
+                    </div>`
+                    : '';
+
+                const timelineHtml = (project.timeline && project.timeline.length)
+                    ? `<div class="project-detail-section project-detail-timeline">
+                        <h3>Project Timeline</h3>
+                        ${project.timeline.map(phase => {
+                            const statusClass = phase.status === 'completed' ? 'completed' : (phase.status === 'in_progress' ? 'in-progress' : (phase.status === 'delayed' ? 'delayed' : 'pending'));
+                            const milestonesHtml = (phase.milestones && phase.milestones.length)
+                                ? phase.milestones.map(m => {
+                                    const dotClass = m.is_completed ? 'completed' : (m.is_delayed ? 'delayed' : 'pending');
+                                    return `<div class="project-detail-milestone">
+                                        <div class="project-detail-milestone-left">
+                                            <span class="project-detail-milestone-dot ${dotClass}"></span>
+                                            <span>${escapeHtml(m.name)}</span>
+                                        </div>
+                                        <span class="project-detail-milestone-date">${escapeHtml(m.start_date || '')}${m.end_date && m.end_date !== m.start_date ? ' - ' + escapeHtml(m.end_date) : ''}</span>
+                                    </div>`;
+                                }).join('')
+                                : '<p style="color:var(--text-muted,#6f7d74);font-size:0.88rem;">No milestones recorded.</p>';
+                            return `<div class="project-detail-phase">
+                                <div class="project-detail-phase-header">
+                                    <span>${escapeHtml(phase.name)}</span>
+                                    <span class="project-detail-phase-badge ${statusClass}">${escapeHtml(phase.status.replace('_', ' '))}</span>
+                                </div>
+                                <div class="project-detail-milestones">${milestonesHtml}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>`
+                    : '';
+
                 content.innerHTML = `
-                    ${project.image ? `<img class="gallery-project-modal-image" src="${escapeHtml(project.image)}" alt="${escapeHtml(project.name)}">` : ''}
-                    <dl class="gallery-project-modal-meta">
-                        <div><dt>Location</dt><dd>${escapeHtml(project.location || 'Not specified')}</dd></div>
-                        <div><dt>Completion date</dt><dd>${escapeHtml(project.completion_date || 'Not specified')}</dd></div>
-                        <div><dt>Status</dt><dd>${escapeHtml(project.status || 'Completed')}</dd></div>
-                        <div><dt>About this project</dt><dd>${escapeHtml(project.description || 'A completed D&G Construction project.')}</dd></div>
-                    </dl>`;
+                    ${project.image ? `<div class="project-detail-hero"><img src="${escapeHtml(project.image)}" alt="${escapeHtml(project.name)}"></div>` : ''}
+                    ${metaIcons.length ? `<div class="project-detail-meta-icons">${metaIcons.join('')}</div>` : ''}
+                    <div class="project-detail-section">
+                        <h3>About This Project</h3>
+                        <p>${escapeHtml(project.description || 'A completed D&G Construction project.')}</p>
+                    </div>
+                    ${highlightsHtml}
+                    ${featuresHtml}
+                    ${galleryHtml}
+                    ${timelineHtml}`;
             } catch (error) {
                 content.innerHTML = '<p class="gallery-project-modal-loading">Project details are temporarily unavailable.</p>';
             }

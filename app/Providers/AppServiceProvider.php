@@ -22,8 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Explicitly point to public_html using the absolute path
-        $this->app->usePublicPath('/home/u381418166/domains/system.dgconphil.com/public_html');
+        // Automatically use public_html on Hostinger, and public locally on your PC
+        if (is_dir(base_path('public_html'))) {
+            $this->app->usePublicPath(base_path('public_html'));
+        }
     }
 
     /**

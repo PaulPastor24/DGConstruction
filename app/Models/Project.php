@@ -52,6 +52,11 @@ class Project extends Model
         'actual_end_date' => 'date',
         'time_in' => 'datetime:H:i',
         'time_out' => 'datetime:H:i',
+        'bedrooms' => 'integer',
+        'bathrooms' => 'integer',
+        'lot_area' => 'decimal:2',
+        'highlights' => 'array',
+        'features' => 'array',
     ];
 
     protected $appends = [
