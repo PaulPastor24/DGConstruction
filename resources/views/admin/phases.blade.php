@@ -40,6 +40,40 @@
         border: 1px solid rgba(4, 90, 51, 0.14);
     }
     .metric-icon i { color: #045a33 !important; }
+
+    @media (min-width: 992px) {
+        #pg-phases .metric-card {
+            padding: 0.6rem !important;
+            border-radius: 13px;
+            box-shadow: 0 8px 18px rgba(15, 32, 21, 0.05);
+        }
+
+        #pg-phases .metric-card .d-flex {
+            gap: 0.5rem !important;
+        }
+
+        #pg-phases .metric-icon {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+        }
+
+        #pg-phases .metric-icon i {
+            font-size: 0.95rem !important;
+        }
+
+        #pg-phases .metric-card h3 {
+            font-size: 1.2rem;
+            line-height: 1.1;
+        }
+
+        #pg-phases .metric-card .text-muted:last-child {
+            display: block;
+            font-size: 10px !important;
+            line-height: 1.2;
+        }
+    }
+
     .phase-table {
         width: 100%;
         min-width: 0;
@@ -879,7 +913,7 @@
 
     #pg-phases .phase-table tbody tr {
         margin: 0 0 12px !important;
-        padding: 14px !important;
+        padding: 10px !important;
         border: 1px solid #e6eee8 !important;
         border-radius: 16px !important;
         background: #ffffff !important;
@@ -889,15 +923,15 @@
 
     #pg-phases .phase-table td {
         display: grid !important;
-        grid-template-columns: 118px minmax(0, 1fr) !important;
-        gap: 12px !important;
+        grid-template-columns: 100px minmax(0, 1fr) !important;
+        gap: 8px !important;
         align-items: start !important;
-        padding: 8px 0 !important;
+        padding: 5px 0 !important;
         border: 0 !important;
         background: transparent !important;
         text-align: left !important;
-        font-size: 13px !important;
-        line-height: 1.45 !important;
+        font-size: 12px !important;
+        line-height: 1.3 !important;
         white-space: normal !important;
         word-break: normal !important;
         overflow-wrap: break-word !important;
@@ -953,6 +987,106 @@
         flex: 0 0 auto !important;
         min-width: 0 !important;
         font-size: 13px !important;
+    }
+}
+
+@media (max-width: 991px) {
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 {
+        gap: 8px !important;
+    }
+
+    #pg-phases .metric-card {
+        min-height: 0 !important;
+        padding: 0.5rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0 6px 14px rgba(15, 32, 21, 0.05) !important;
+    }
+
+    #pg-phases .metric-card .d-flex {
+        gap: 0.45rem !important;
+    }
+
+    #pg-phases .metric-icon {
+        width: 30px !important;
+        height: 30px !important;
+        flex: 0 0 30px !important;
+    }
+
+    #pg-phases .metric-icon i {
+        font-size: 0.82rem !important;
+    }
+
+    #pg-phases .metric-card h3 {
+        font-size: 1.12rem !important;
+        line-height: 1.05 !important;
+    }
+
+    #pg-phases .metric-card .text-muted:first-child {
+        font-size: 9px !important;
+        letter-spacing: 0.35px !important;
+    }
+
+    #pg-phases .metric-card .text-muted:last-child {
+        font-size: 9px !important;
+        line-height: 1.15 !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 > .col {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    #pg-phases .row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg-5 > .col:nth-child(5) {
+        grid-column: auto !important;
+        justify-self: stretch !important;
+        width: 100% !important;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 820px) {
+    #pg-phases .phase-table tbody tr {
+        margin-bottom: 9px !important;
+        padding: 8px !important;
+        border-radius: 14px !important;
+    }
+
+    #pg-phases .phase-table td {
+        grid-template-columns: 88px minmax(0, 1fr) !important;
+        gap: 7px !important;
+        padding: 4px 0 !important;
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+    }
+
+    #pg-phases .phase-table td::before {
+        font-size: 9px !important;
+        line-height: 1.15 !important;
+    }
+
+    #pg-phases .phase-table td:nth-child(2) strong {
+        font-size: 13px !important;
+    }
+
+    #pg-phases .phase-table td:nth-child(2) small {
+        font-size: 10px !important;
+    }
+
+    #pg-phases .phase-table .action-cell {
+        gap: 5px !important;
+        padding: 4px 0 !important;
+    }
+
+    #pg-phases .phase-table .action-cell .btn {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 12px !important;
     }
 }
 

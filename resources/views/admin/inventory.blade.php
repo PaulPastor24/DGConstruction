@@ -560,6 +560,124 @@
         border-color: #14532d;
     }
 
+    #addMaterialModal .modal-dialog {
+        max-width: 680px;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    #addMaterialModal .modal-content {
+        overflow: hidden;
+    }
+
+    #addMaterialModal .modal-body-custom {
+        padding: 0 1.5rem 0.25rem;
+    }
+
+    #addMaterialModal .modal-header-custom {
+        padding: 1.15rem 1.5rem 0.4rem;
+    }
+
+    #addMaterialModal .modal-icon-container {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    #addMaterialModal .modal-title-text {
+        font-size: 1.25rem;
+    }
+
+    #addMaterialModal .modal-subtitle {
+        font-size: 0.78rem;
+    }
+
+    #addMaterialModal .inventory-form > .row {
+        row-gap: 0.65rem !important;
+        margin-bottom: 0.65rem !important;
+    }
+
+    #addMaterialModal .form-group-wrapper {
+        margin-bottom: 0 !important;
+    }
+
+    #addMaterialModal .form-label-custom {
+        margin-bottom: 0.25rem;
+        font-size: 0.78rem;
+    }
+
+    #addMaterialModal .control-field-input {
+        min-height: 36px;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+        font-size: 0.8rem;
+    }
+
+    #addMaterialModal textarea.control-field-input {
+        min-height: 70px;
+    }
+
+    #addMaterialModal .form-input-hint {
+        margin-top: 0.2rem;
+        font-size: 0.66rem;
+        line-height: 1.2;
+    }
+
+    #addMaterialModal .inventory-form > .row {
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    #addMaterialModal .inventory-form > .row > [class*='col-'] {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+
+    #addMaterialModal .form-group-wrapper {
+        height: 100%;
+    }
+
+    #addMaterialModal .footer-action-row {
+        margin-top: 0.25rem;
+        padding: 0.75rem 1.5rem 1rem;
+        border-top-color: #e8eee9 !important;
+    }
+
+    #addMaterialModal .footer-action-row button {
+        min-width: 130px;
+    }
+
+    @media (max-width: 767.98px) {
+        #addMaterialModal .modal-dialog {
+            margin: 0.75rem;
+            max-width: calc(100% - 1.5rem);
+        }
+
+        #addMaterialModal .modal-header-custom {
+            padding: 1.15rem 1rem 0.5rem;
+        }
+
+        #addMaterialModal .modal-body-custom {
+            padding: 0 1rem 0.5rem;
+        }
+
+        #addMaterialModal .modal-title-text {
+            font-size: 1.1rem;
+        }
+
+        #addMaterialModal .modal-subtitle {
+            font-size: 0.75rem;
+        }
+
+        #addMaterialModal .footer-action-row {
+            padding: 0.85rem 1rem 1rem;
+        }
+
+        #addMaterialModal .footer-action-row button {
+            width: 100%;
+        }
+    }
+
     .mi-smooth-loading {
         opacity: 0.55;
         pointer-events: none;
@@ -1211,6 +1329,10 @@
     }
 }
 
+    body.page-admin-inventory .modal {
+        position: fixed !important;
+    }
+
 </style>
 @endpush
 
@@ -1495,13 +1617,13 @@
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
-                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addMaterialModal" title="Register a new material in the master catalog">
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addMaterialModal" title="Register a new material in the master catalog" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('addMaterialModal');">
                                 <i class="bi bi-plus-lg me-1"></i> Add Material
                             </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" title="Receive stock for a material">
+                            <button type="button" class="btn btn-outline-warning btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#receiveStockModalGeneral" title="Receive stock for a material" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('receiveStockModalGeneral');">
                                 <i class="bi bi-envelope-open me-1"></i> Receive Stock
                             </button>
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#allocateMaterialModal" title="Allocate material to a project">
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#allocateMaterialModal" title="Allocate material to a project" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('allocateMaterialModal');">
                                 <i class="bi bi-diagram-3 me-1"></i> Allocate
                             </button>
                         </div>
@@ -1552,8 +1674,8 @@
                                         <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $badgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $statusText }}</span></td>
                                         <td>
                                             <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}" title="View details"><i class="bi bi-eye"></i></button>
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}" title="Edit material"><i class="bi bi-pencil"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}" title="View details" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('viewMaterialModal{{ $material->id }}');"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}" title="Edit material" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('editMaterialModal{{ $material->id }}');"><i class="bi bi-pencil"></i></button>
                                                 <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
                                                     @csrf
                                                     @method('DELETE')
@@ -2099,7 +2221,7 @@
                                 </select>
                             </div>
                             <div class="col-lg-2 col-md-12 col-12 inventory-action-stack">
-                                <button type="button" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addToolModal">
+                                <button type="button" id="addToolBtn" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addToolModal" onclick="event.preventDefault(); event.stopPropagation(); window.openInventoryModal('addToolModal');">
                                     <i class="bi bi-plus-lg me-1"></i> Add Tool
                                 </button>
                             </div>
@@ -2147,7 +2269,7 @@
                                             <td>
                                                 <div class="d-flex justify-content-center gap-1 inventory-action-stack">
                                                     @if($canIssue)
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool" onclick="event.preventDefault(); event.stopPropagation(); const toolId = this.getAttribute('data-tool-id'); const toolName = this.getAttribute('data-tool-name'); const toolCode = this.getAttribute('data-tool-code'); const form = document.getElementById('issueToolForm'); if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/issue'); const nameEl = document.getElementById('issueToolName'); const codeEl = document.getElementById('issueToolCode'); if (nameEl) nameEl.textContent = toolName || '-'; if (codeEl) codeEl.textContent = toolCode || '-'; window.openInventoryModal('issueToolModal');"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
                                                     @endif
                                                     @if($canReturn)
                                                         <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
@@ -2676,9 +2798,11 @@
                                             <i class="bi bi-tags input-icon-left"></i>
                                             <select name="category" class="control-field-input" id="receiveStockMaterialCategoryInput">
                                                 <option value="">Select category</option>
-                                                @foreach($predefinedMaterialCategories as $cat)
-                                                    <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                                @endforeach
+                                                <optgroup label="Common material categories">
+                                                    @foreach($predefinedMaterialCategories as $cat)
+                                                        <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                                    @endforeach
+                                                </optgroup>
                                                 <option value="Other">Other</option>
                                             </select>
                                         </div>
@@ -2844,18 +2968,20 @@
                                 <div class="input-container-group">
                                     <i class="bi bi-tags input-icon-left"></i>
                                     <select name="category" class="control-field-input" id="addMaterialCategorySelect">
-    <option value="">Select category</option>
-    @foreach($predefinedMaterialCategories as $cat)
-        <option value="{{ $cat }}">{{ $cat }}</option>
-    @endforeach
-    <option value="Other">Other</option>
-</select>
-<div class="custom-category-input d-none mt-2" id="addMaterialCustomCategoryWrapper">
-    <div class="input-container-group">
-        <i class="bi bi-pencil-square input-icon-left"></i>
-        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
-    </div>
-</div>
+                                        <option value="">Select category</option>
+                                        <optgroup label="Common material categories">
+                                            @foreach($predefinedMaterialCategories as $cat)
+                                                <option value="{{ $cat }}">{{ $cat }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="custom-category-input d-none mt-2" id="addMaterialCustomCategoryWrapper">
+                                    <div class="input-container-group">
+                                        <i class="bi bi-pencil-square input-icon-left"></i>
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+                                    </div>
                                 </div>
                                 <div class="form-input-hint">Optional classification for grouping.</div>
                             </div>
@@ -2915,7 +3041,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
                 <div class="footer-action-row border-top pt-3 pb-2">
                     <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
                         <i class="bi bi-X-lg"></i> Cancel
@@ -3514,6 +3639,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
+    window.openInventoryModal = function (modalId) {
+        if (!modalId) {
+            return;
+        }
+
+        const modalEl = document.getElementById(modalId);
+        if (!modalEl) {
+            return;
+        }
+
+        const visibleModal = document.querySelector('.modal.show');
+        if (visibleModal && visibleModal !== modalEl) {
+            const visibleInstance = bootstrap.Modal.getInstance(visibleModal);
+            if (visibleInstance) {
+                try {
+                    visibleInstance.hide();
+                } catch (error) {
+                    console.warn('Failed to hide active modal before opening next one:', error);
+                }
+            }
+        }
+
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         function setActiveView(targetId) {
             document.querySelectorAll('.inventory-view-panel').forEach(function (panel) {
@@ -3649,12 +3800,47 @@
                 if (panelId === 'tools-view') {
                     bindToolModalHandlers();
                 }
+
+                const panelScope = panel;
+                if (panelScope) {
+                    bindInventoryModalTriggers(panelScope);
+                }
             } catch (error) {
                 console.error(error);
                 window.location.href = url.toString();
             } finally {
                 setPanelLoading(panel, false);
             }
+        }
+
+        function bindInventoryModalTriggers(root = document) {
+            const scope = root && root.matches ? root : document;
+
+            scope.querySelectorAll('[data-bs-toggle="modal"][data-bs-target]').forEach(function (trigger) {
+                if (trigger.dataset.modalBound === '1') {
+                    return;
+                }
+
+                trigger.dataset.modalBound = '1';
+                const targetSelector = trigger.getAttribute('data-bs-target');
+                if (!targetSelector || !targetSelector.startsWith('#')) {
+                    return;
+                }
+
+                trigger.removeAttribute('data-bs-toggle');
+                trigger.removeAttribute('data-bs-target');
+                trigger.onclick = null;
+
+                trigger.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const targetEl = document.querySelector(targetSelector);
+                    if (!targetEl) {
+                        return;
+                    }
+                    openModalSafely(targetEl);
+                });
+            });
         }
 
         function bindSmoothInventoryForms() {
@@ -3928,6 +4114,60 @@
             setActiveView(activePanel.id);
         }
 
+        function clearStaleModalState() {
+            const activeVisibleModal = document.querySelector('.modal.show');
+            if (activeVisibleModal) {
+                return;
+            }
+
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                backdrop.remove();
+            });
+
+            document.querySelectorAll('.modal').forEach(function (modalEl) {
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                modalEl.setAttribute('aria-hidden', 'true');
+
+                const instance = bootstrap.Modal.getInstance(modalEl);
+                if (instance) {
+                    try {
+                        instance.hide();
+                    } catch (error) {
+                        console.warn('Failed to hide stale modal instance:', error);
+                    }
+                }
+            });
+        }
+
+        function openModalSafely(modalEl) {
+            if (!modalEl) {
+                return;
+            }
+
+            const visibleModal = document.querySelector('.modal.show');
+            if (visibleModal && visibleModal !== modalEl) {
+                const visibleInstance = bootstrap.Modal.getInstance(visibleModal);
+                if (visibleInstance) {
+                    try {
+                        visibleInstance.hide();
+                    } catch (error) {
+                        console.warn('Failed to hide active modal before opening next one:', error);
+                    }
+                }
+            }
+
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInstance.show();
+        }
+
+        document.addEventListener('DOMContentLoaded', clearStaleModalState);
+        window.addEventListener('pageshow', clearStaleModalState);
+
         bindSmoothInventoryForms();
         bindInventoryPagination();
         bindUsageClientFilters();
@@ -4028,7 +4268,29 @@
             const existingCategory = chosenOption.getAttribute('data-category') || '';
 
             if (receiveStockCategoryInput) {
-                receiveStockCategoryInput.value = existingCategory;
+                const matchingCategory = Array.from(receiveStockCategoryInput.options)
+                    .find(option => option.value === existingCategory);
+                const customCategoryWrapper = document.getElementById('receiveStockCustomCategoryWrapper');
+                const customCategoryInput = document.getElementById('receiveStockCustomCategoryInput');
+
+                if (matchingCategory) {
+                    receiveStockCategoryInput.value = existingCategory;
+                    customCategoryWrapper?.classList.add('d-none');
+                    if (customCategoryInput) {
+                        customCategoryInput.value = '';
+                        customCategoryInput.required = false;
+                    }
+                } else if (existingCategory) {
+                    receiveStockCategoryInput.value = 'Other';
+                    customCategoryWrapper?.classList.remove('d-none');
+                    if (customCategoryInput) {
+                        customCategoryInput.value = existingCategory;
+                        customCategoryInput.required = true;
+                    }
+                } else {
+                    receiveStockCategoryInput.value = '';
+                    customCategoryWrapper?.classList.add('d-none');
+                }
             }
 
             if (receiveStockForm) {
@@ -4198,11 +4460,12 @@
         bindModalFormLoading(document.getElementById('receiveStockForm'));
         bindModalFormLoading(document.getElementById('allocateMaterialForm'));
         bindModalFormLoading(document.querySelector('#addMaterialModal form'));
-        bindModalFormLoading(document.querySelector('#editMaterialModal{{ $material->id }} form'));
         bindModalFormLoading(document.getElementById('addToolForm'));
         bindModalFormLoading(document.getElementById('issueToolForm'));
         bindModalFormLoading(document.getElementById('returnToolForm'));
         bindModalFormLoading(document.getElementById('markLostToolForm'));
+
+        bindInventoryModalTriggers();
 
         function bindToolModalHandlers() {
             document.querySelectorAll('.btn-issue-tool').forEach(function (btn) {
@@ -4217,8 +4480,8 @@
                     const codeEl = document.getElementById('issueToolCode');
                     if (nameEl) nameEl.textContent = toolName || '-';
                     if (codeEl) codeEl.textContent = toolCode || '-';
-                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('issueToolModal'));
-                    if (modal) modal.show();
+                    const modalEl = document.getElementById('issueToolModal');
+                    if (modalEl) openModalSafely(modalEl);
                 });
             });
 
@@ -4234,8 +4497,8 @@
                     const codeEl = document.getElementById('returnToolCode');
                     if (nameEl) nameEl.textContent = toolName || '-';
                     if (codeEl) codeEl.textContent = toolCode || '-';
-                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('returnToolModal'));
-                    if (modal) modal.show();
+                    const modalEl = document.getElementById('returnToolModal');
+                    if (modalEl) openModalSafely(modalEl);
                 });
             });
 
@@ -4251,13 +4514,28 @@
                     const codeEl = document.getElementById('lostToolCode');
                     if (nameEl) nameEl.textContent = toolName || '-';
                     if (codeEl) codeEl.textContent = toolCode || '-';
-                    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('markLostModal'));
-                    if (modal) modal.show();
+                    const modalEl = document.getElementById('markLostModal');
+                    if (modalEl) openModalSafely(modalEl);
                 });
             });
         }
 
         bindToolModalHandlers();
+
+        const addToolBtn = document.getElementById('addToolBtn');
+        const addToolModalEl = document.getElementById('addToolModal');
+
+        if (addToolBtn && addToolModalEl && addToolBtn.dataset.modalBound !== '1') {
+            addToolBtn.dataset.modalBound = '1';
+            addToolBtn.removeAttribute('data-bs-toggle');
+            addToolBtn.removeAttribute('data-bs-target');
+            addToolBtn.onclick = null;
+            addToolBtn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openModalSafely(addToolModalEl);
+            });
+        }
 
         const toolCategorySelect = document.getElementById('toolCategorySelect');
         const customCategoryWrapper = document.getElementById('customCategoryWrapper');
@@ -4357,6 +4635,12 @@
         }
 
         attachModalPaginationHandlers();
+    });
+
+    document.querySelectorAll('.modal').forEach(function (modal) {
+        if (modal.closest('.app')) {
+            document.body.appendChild(modal);
+        }
     });
 </script>
 @endsection

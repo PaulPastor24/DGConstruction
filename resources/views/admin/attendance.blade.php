@@ -55,6 +55,30 @@
                 width: 100% !important;
             }
 
+            .attendance-hero {
+                align-items: stretch !important;
+                gap: 14px !important;
+                padding: 18px !important;
+            }
+
+            .attendance-date-chip {
+                align-self: flex-start !important;
+            }
+
+            .attendance-filter-card form.mt-3 {
+                align-items: stretch !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+            .attendance-filter-card form.mt-3 .btn.btn-primary {
+                width: 100% !important;
+            }
+
+            .attendance-filter-card form.mt-3 .text-muted {
+                margin-left: 0 !important;
+            }
+
             .attendance-search,
             .btn-print {
                 width: 100% !important;
@@ -190,6 +214,18 @@
             </p>
         @endif
     </div>
+
+    <section class="attendance-hero" aria-labelledby="attendanceOverviewTitle">
+        <div class="attendance-title-wrap">
+            <span class="attendance-eyebrow"><i class="bi bi-shield-check"></i> Workforce operations</span>
+            <h1 class="attendance-title" id="attendanceOverviewTitle">Attendance overview</h1>
+            <p class="attendance-subtitle">Review worker presence, exceptions, and verified time records from one operational view.</p>
+        </div>
+        <div class="attendance-date-chip">
+            <i class="bi bi-calendar3"></i>
+            <span>{{ $filters['date'] ? \Carbon\Carbon::parse($filters['date'])->format('M d, Y') : 'All dates' }}</span>
+        </div>
+    </section>
 
     @if(session('success'))
         <div class="alert alert-success" role="alert">

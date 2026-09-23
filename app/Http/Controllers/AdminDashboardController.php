@@ -654,7 +654,7 @@ class AdminDashboardController extends Controller
             ->get(['project_id', 'project_name']);
 
         $materialRequests = collect();
-        $requestStats = $predefinedMaterialCategories = [
+        $requestStats = [
             'pending' => 0,
             'approved' => 0,
             'rejected' => 0,
@@ -689,7 +689,7 @@ class AdminDashboardController extends Controller
                 ->paginate(20)
                 ->appends($request->only(['search', 'request_status', 'view', 'category', 'stock_status']));
 
-            $requestStats = $predefinedMaterialCategories = [
+            $requestStats = [
                 'pending' => MaterialRequest::where('status', 'pending')->count(),
                 'approved' => MaterialRequest::where('status', 'approved')->count(),
                 'rejected' => MaterialRequest::where('status', 'rejected')->count(),
@@ -698,7 +698,7 @@ class AdminDashboardController extends Controller
 
         $toolLoans = collect();
         $toolDeductions = collect();
-        $toolMetrics = $predefinedMaterialCategories = [
+        $toolMetrics = [
             'total_tools' => 0,
             'available' => 0,
             'in_use' => 0,
@@ -733,7 +733,7 @@ class AdminDashboardController extends Controller
                 ->paginate(10)
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
-            $toolMetrics = $predefinedMaterialCategories = [
+            $toolMetrics = [
                 'total_tools' => Tool::count('*'),
                 'available' => Tool::where('status', 'available')->count('*'),
                 'in_use' => Tool::where('status', 'in_use')->count('*'),
@@ -787,7 +787,6 @@ class AdminDashboardController extends Controller
             $allToolDeductions = collect();
             $toolCategories = collect();
             $predefinedToolCategories = [];
-            $predefinedMaterialCategories = [];
         }
 
         return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
@@ -878,7 +877,7 @@ class AdminDashboardController extends Controller
                     'report_text' => $report->report_text,
                     'admin_report_text' => $report->admin_report_text,
                     'admin_site_images' => array_values(array_filter(array_map(function ($image) {
-                        return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
+                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                     }, (array) ($report->admin_site_images ?? [])))),
                     'admin_explanation' => $report->admin_explanation,
                     'is_published_to_client' => (bool) $report->is_published_to_client,
@@ -886,7 +885,7 @@ class AdminDashboardController extends Controller
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                     'site_images' => array_values(array_filter(array_map(function ($image) {
-                        return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
+                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                     }, (array) ($report->site_images ?? [])))),
                     'site_images_count' => count(array_filter((array) ($report->site_images ?? []))),
                 ];
@@ -960,7 +959,7 @@ class AdminDashboardController extends Controller
                 'report_text' => $report->report_text,
                 'admin_report_text' => $report->admin_report_text,
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
+                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_explanation' => $report->admin_explanation,
@@ -969,7 +968,7 @@ class AdminDashboardController extends Controller
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
+                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
                 }, (array) ($report->site_images ?? [])))),
                 'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'material_usage' => $materialUsage,

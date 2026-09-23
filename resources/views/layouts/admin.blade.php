@@ -171,7 +171,11 @@
 
         function closeGlobalLoading() {
             if (globalLoadingSwal) {
-                globalLoadingSwal.close();
+                try {
+                    globalLoadingSwal.close();
+                } catch (error) {
+                    console.warn('Unable to close global loading overlay:', error);
+                }
                 globalLoadingSwal = null;
             }
         }
