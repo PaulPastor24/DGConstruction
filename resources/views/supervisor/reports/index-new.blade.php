@@ -1600,7 +1600,7 @@
                                     }
                                     return str_starts_with($path, 'http://') || str_starts_with($path, 'https://')
                                         ? $path
-                                        : asset('storage/' . ltrim($path, '/'));
+                                        : '/storage/' . ltrim($path, '/');
                                 })
                                 ->filter()
                                 ->values();
@@ -1699,7 +1699,7 @@
                                                                 @if(!empty($report->site_images))
                                                                     @foreach($report->site_images as $img)
                                                                         <div class="current-image-item">
-                                                                            <img src="{{ str_starts_with($img, 'http://') || str_starts_with($img, 'https://') ? $img : asset('storage/' . ltrim($img, '/')) }}" class="object-fit-cover border rounded" alt="Original report image">
+                                                                            <img src="{{ str_starts_with($img, 'http://') || str_starts_with($img, 'https://') ? $img : '/storage/' . ltrim($img, '/') }}" class="object-fit-cover border rounded" alt="Original report image">
                                                                             <div class="form-check mt-1">
                                                                                 <input class="form-check-input js-remove-image-checkbox" type="checkbox" value="{{ $img }}" style="width: 12px; height: 12px;">
                                                                                 <label class="form-check-label small" style="font-size: 0.65rem;">Remove</label>

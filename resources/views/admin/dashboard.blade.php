@@ -48,11 +48,17 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 140px;
+        min-width: 180px;
+        width: 220px;
+        flex: 0 0 220px;
+        max-width: 220px;
     }
     .progress-bar-bg {
+        position: relative;
+        flex: 1 1 auto;
         width: 100%;
-        height: 6px;
+        min-width: 72px;
+        height: 8px;
         background: #f1f5f9;
         border-radius: 999px;
         overflow: hidden;

@@ -1295,7 +1295,7 @@
                                     if (!$path) {
                                         return null;
                                     }
-                                    return asset('storage/' . ltrim($path, '/'));
+                                    return '/storage/' . ltrim($path, '/');
                                 })
                                 ->filter()
                                 ->values();

@@ -998,12 +998,12 @@ class ReportController extends Controller
                 'admin_report_text' => $report->admin_report_text,
                 'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                    return is_string($image) && $image ? '/storage/' . ltrim($image, '/') : null;
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_explanation' => $report->admin_explanation ?? '',
                 'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
+                    return is_string($image) && $image ? '/storage/' . ltrim($image, '/') : null;
                 }, (array) ($report->site_images ?? [])))),
                 'submitted_at' => $report->created_at->format('M d, Y'),
                 'reviewed_at' => $report->reviewed_at ? $report->reviewed_at->format('M d, Y') : '-',
@@ -1236,7 +1236,7 @@ class ReportController extends Controller
                         'report_date' => $report->report_date->format('M d, Y h:i A'),
                         'report_text' => $report->report_text,
                         'site_image_paths' => $finalImages,
-                        'site_images' => array_map(fn ($img) => asset('storage/' . ltrim($img, '/')), $finalImages),
+                        'site_images' => array_map(fn ($img) => '/storage/' . ltrim($img, '/'), $finalImages),
                         'accomplishment_percentage' => $report->accomplishment_percentage,
                     ]
                 ]);

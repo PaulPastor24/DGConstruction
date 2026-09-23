@@ -71,6 +71,25 @@ if (!document.getElementById('gantt-compact-styles')) {
     const compactStyles = document.createElement('style');
     compactStyles.id = 'gantt-compact-styles';
     compactStyles.textContent = `
+        #dhtmlxGantt,
+        #dhtmlxGantt * {
+            scrollbar-width: none !important;
+            scrollbar-color: transparent !important;
+        }
+        #dhtmlxGantt *::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
+        }
+        .gantt-scroll-shell {
+            scrollbar-width: none !important;
+            scrollbar-color: transparent !important;
+        }
+        .gantt-scroll-shell::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
+        }
         .gantt_task_line {
             height: 56px !important;
             min-height: 56px !important;
@@ -106,6 +125,25 @@ if (!document.getElementById('gantt-compact-styles')) {
         }
         .gantt_task_row {
             height: 96px !important;
+            border-bottom: 1px solid #dfe0e1 !important;
+            box-sizing: border-box !important;
+            background-image: linear-gradient(to bottom, transparent calc(100% - 1px), #dfe0e1 calc(100% - 1px)) !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 100% !important;
+        }
+        .gantt_grid_data .gantt_row {
+            border-bottom: 1px solid #dfe0e1 !important;
+            box-sizing: border-box !important;
+        }
+        .gantt_grid_data,
+        .gantt_grid_data .gantt_row,
+        .gantt_grid_data .gantt_tree_content,
+        .gantt_task_row,
+        .gantt_task_content,
+        .gantt_task_bg,
+        .gantt_scale_line,
+        .gantt_scale_cell {
+            overflow: hidden !important;
         }
         .gantt_task_content {
             line-height: 56px !important;
@@ -147,9 +185,17 @@ if (!document.getElementById('gantt-compact-styles')) {
         }
         .gantt_hor_scroll,
         .scrollHor_cell {
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+        }
+        .gantt_hor_scroll::-webkit-scrollbar,
+        .scrollHor_cell::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
         }
         .gantt_progress_overlay {
             position: absolute !important;
@@ -367,53 +413,20 @@ function syncGanttResponsiveWidth() {
     shell.style.overflowY = 'auto';
     shell.style.touchAction = 'pan-x pan-y';
     shell.style.webkitOverflowScrolling = 'touch';
+    shell.style.setProperty('scrollbar-width', 'none', 'important');
+    shell.style.setProperty('scrollbar-color', 'transparent', 'important');
     container.style.width = '100%';
     container.style.minWidth = '0';
 
-    const layout = container.querySelector('.gantt_layout_x');
-    if (layout) {
-        layout.style.whiteSpace = 'nowrap';
-        layout.style.setProperty('overflow', 'hidden', 'important');
-    }
-
-    container.querySelectorAll('.gantt_layout_outer_scroll, .gantt_data_area, .gantt_task_scroll, .gantt_grid_data, .gantt_task_vscroll, .gantt_ver_scroll, .scrollVer_cell, .gantt_row, .gantt_task_row').forEach((scrollTarget) => {
-        scrollTarget.style.setProperty('overflow', 'hidden', 'important');
-    });
-
-    container.querySelectorAll('.gantt_task_bg').forEach((scrollTarget) => {
-        scrollTarget.style.setProperty('overflow-x', 'auto', 'important');
-        scrollTarget.style.setProperty('overflow-y', 'hidden', 'important');
-        scrollTarget.style.setProperty('touch-action', 'pan-x', 'important');
-    });
-
-    container.querySelectorAll('.gantt_hor_scroll').forEach((scrollTarget) => {
-        scrollTarget.style.setProperty('visibility', 'hidden', 'important');
-        scrollTarget.style.setProperty('opacity', '0', 'important');
-        scrollTarget.style.setProperty('pointer-events', 'none', 'important');
+    container.querySelectorAll('.gantt_row, .gantt_tree_content, .gantt_task_row, .gantt_task_content, .gantt_scale_line, .gantt_scale_cell').forEach((nestedCell) => {
+        nestedCell.style.setProperty('overflow', 'hidden', 'important');
     });
 }
 
 function normalizeGanttLayout() {
-    const root = document.querySelector('#dhtmlxGantt .gantt_layout_root');
-    const horizontalLayout = root?.querySelector(':scope > .gantt_layout_x');
-    if (!horizontalLayout) return;
-
-    horizontalLayout.style.setProperty('white-space', 'nowrap', 'important');
-
-    horizontalLayout.querySelectorAll(':scope > .gantt_layout_cell').forEach((cell) => {
-        cell.style.setProperty('display', 'inline-block', 'important');
-        cell.style.setProperty('vertical-align', 'top', 'important');
-    });
-
-    const cells = [...horizontalLayout.querySelectorAll(':scope > .gantt_layout_cell')];
-    if (cells.length >= 3) {
-        const availableWidth = horizontalLayout.clientWidth;
-        const gridWidth = Math.min(280, Math.max(220, Math.floor(availableWidth * 0.34)));
-        const taskWidth = Math.max(260, availableWidth - gridWidth - 1);
-        cells[0].style.setProperty('width', `${gridWidth}px`, 'important');
-        cells[1].style.setProperty('width', '1px', 'important');
-        cells[2].style.setProperty('width', `${taskWidth}px`, 'important');
-    }
+    // DHTMLX owns the internal layout and keeps the grid and timeline in sync.
+    // Do not resize its generated cells by DOM position; that hides columns when
+    // the installed DHTMLX layout contains a different set of cells.
 }
 
 function scheduleTaskStylingRefresh() {
@@ -428,22 +441,22 @@ function scheduleTaskStylingRefresh() {
 }
 
 function attachGanttScrollHooks() {
-    if (ganttScrollHooksAttached) return;
+    if (!ganttScrollHooksAttached) {
+        // Primary hook: DHTMLX's own public scroll event. This fires for both
+        // horizontal and vertical scrolling of the timeline regardless of which
+        // internal DOM elements/classes the installed dhtmlx-gantt version uses
+        // internally, so it doesn't rely on guessing class names that may not
+        // exist (which is why flags previously stopped refreshing on scroll).
+        gantt.attachEvent('onGanttScroll', function () {
+            scheduleTaskStylingRefresh();
+            return true;
+        });
 
-    // Primary hook: DHTMLX's own public scroll event. This fires for both
-    // horizontal and vertical scrolling of the timeline regardless of which
-    // internal DOM elements/classes the installed dhtmlx-gantt version uses
-    // internally, so it doesn't rely on guessing class names that may not
-    // exist (which is why flags previously stopped refreshing on scroll).
-    gantt.attachEvent('onGanttScroll', function () {
-        scheduleTaskStylingRefresh();
-        return true;
-    });
-
-    gantt.attachEvent('onGanttRender', function () {
-        scheduleTaskStylingRefresh();
-        return true;
-    });
+        gantt.attachEvent('onGanttRender', function () {
+            scheduleTaskStylingRefresh();
+            return true;
+        });
+    }
 
     // Secondary/backup hooks: also listen on the raw DOM containers in case
     // they exist, and on the outer scroll wrapper from the Blade template.
@@ -461,26 +474,149 @@ function attachGanttScrollHooks() {
         ].filter(Boolean);
 
         scrollTargets.forEach((target) => {
+            if (target.dataset.ganttScrollRefreshBound) return;
             target.addEventListener('scroll', scheduleTaskStylingRefresh, { passive: true });
+            target.dataset.ganttScrollRefreshBound = 'true';
         });
 
         const taskSurface = root.querySelector('.gantt_task');
-        const horizontalScroll = root.querySelector('.gantt_hor_scroll');
-        if (taskSurface && horizontalScroll && !taskSurface.dataset.touchScrollBound) {
+        const shell = root.closest('.gantt-scroll-shell');
+        const dragSurface = shell;
+        if (taskSurface && dragSurface && !dragSurface.dataset.pointerScrollBound) {
             let startX = 0;
             let startScrollLeft = 0;
+            let isDragging = false;
+            let activePointerId = null;
+            let mouseDragActive = false;
+            let suppressNextClick = false;
 
-            taskSurface.addEventListener('touchstart', (event) => {
-                startX = event.touches[0]?.clientX || 0;
-                startScrollLeft = horizontalScroll.scrollLeft;
-            }, { passive: true });
+            const getScrollTarget = () => {
+                const horizontalScroll = root.querySelector('.gantt_hor_scroll');
+                if (horizontalScroll && horizontalScroll.scrollWidth > horizontalScroll.clientWidth) {
+                    return horizontalScroll;
+                }
+                return shell;
+            };
 
-            taskSurface.addEventListener('touchmove', (event) => {
-                const currentX = event.touches[0]?.clientX || startX;
-                horizontalScroll.scrollLeft = startScrollLeft + (startX - currentX);
-            }, { passive: true });
+            const setTimelineScroll = (scrollLeft) => {
+                const nextScrollLeft = Math.max(0, scrollLeft);
+                const scrollTarget = getScrollTarget();
+                scrollTarget.scrollLeft = nextScrollLeft;
+                const horizontalScroll = root.querySelector('.gantt_hor_scroll');
+                horizontalScroll && (horizontalScroll.scrollLeft = nextScrollLeft);
+                shell.scrollLeft = nextScrollLeft;
+            };
 
-            taskSurface.dataset.touchScrollBound = 'true';
+            dragSurface.style.touchAction = 'pan-y';
+            dragSurface.style.cursor = 'grab';
+
+            dragSurface.addEventListener('pointerdown', (event) => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                const scrollTarget = getScrollTarget();
+                startX = event.clientX;
+                startScrollLeft = scrollTarget.scrollLeft;
+                isDragging = false;
+                activePointerId = event.pointerId;
+                try {
+                    dragSurface.setPointerCapture?.(event.pointerId);
+                } catch (error) {
+                    // Continue tracking on window when pointer capture is unavailable.
+                }
+            });
+
+            const movePointer = (event) => {
+                if (event.pointerId !== activePointerId) return;
+                const distance = event.clientX - startX;
+                if (!isDragging && Math.abs(distance) < 6) return;
+                isDragging = true;
+                dragSurface.style.cursor = 'grabbing';
+                event.preventDefault();
+                setTimelineScroll(startScrollLeft - distance);
+            };
+
+            dragSurface.addEventListener('pointermove', movePointer, { passive: false });
+            window.addEventListener('pointermove', movePointer, { passive: false });
+
+            const finishPointer = () => {
+                if (activePointerId !== null && dragSurface.hasPointerCapture?.(activePointerId)) {
+                    dragSurface.releasePointerCapture(activePointerId);
+                }
+                activePointerId = null;
+                window.setTimeout(() => {
+                    isDragging = false;
+                    dragSurface.style.cursor = 'grab';
+                }, 0);
+            };
+
+            dragSurface.addEventListener('pointerup', finishPointer);
+            dragSurface.addEventListener('pointercancel', finishPointer);
+            window.addEventListener('pointerup', finishPointer);
+            window.addEventListener('pointercancel', finishPointer);
+            dragSurface.addEventListener('click', (event) => {
+                if (isDragging || suppressNextClick) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    suppressNextClick = false;
+                }
+            }, true);
+
+            // DHTMLX can capture desktop mouse events on the task layer before
+            // pointermove reaches the chart. Track mouse drags at document level
+            // and update the internal horizontal scroller directly.
+            const startMouse = (event) => {
+                if (event.button !== 0) return;
+                if (mouseDragActive) return;
+                const scrollTarget = getScrollTarget();
+                startX = event.clientX;
+                startScrollLeft = scrollTarget.scrollLeft;
+                mouseDragActive = true;
+                isDragging = false;
+                dragSurface.style.cursor = 'grab';
+
+                const panLayer = document.createElement('div');
+                panLayer.className = 'gantt-mouse-pan-layer';
+                panLayer.style.cssText = 'position:absolute; inset:0; z-index:1000; cursor:grab; background:transparent;';
+                const dataArea = root.querySelector('.gantt_data_area');
+                if (dataArea) {
+                    dataArea.appendChild(panLayer);
+                    panLayer.addEventListener('mousemove', moveMouse, { passive: false });
+                    panLayer.addEventListener('mouseup', finishMouse);
+                    panLayer.addEventListener('mouseleave', (moveEvent) => {
+                        if (mouseDragActive) moveMouse(moveEvent);
+                    });
+                    panLayer.dataset.active = 'true';
+                }
+            };
+
+            const moveMouse = (event) => {
+                if (!mouseDragActive) return;
+                const distance = event.clientX - startX;
+                if (!isDragging && Math.abs(distance) < 6) return;
+                isDragging = true;
+                suppressNextClick = true;
+                dragSurface.style.cursor = 'grabbing';
+                event.preventDefault();
+                const nextScrollLeft = startScrollLeft - distance;
+                window.requestAnimationFrame(() => setTimelineScroll(nextScrollLeft));
+            };
+
+            const finishMouse = () => {
+                if (!mouseDragActive) return;
+                mouseDragActive = false;
+                root.querySelector('.gantt-mouse-pan-layer')?.remove();
+                window.setTimeout(() => {
+                    isDragging = false;
+                    dragSurface.style.cursor = 'grab';
+                }, 0);
+            };
+
+            document.addEventListener('mousedown', startMouse, { capture: true });
+            const dataArea = root.querySelector('.gantt_data_area');
+            dataArea?.addEventListener('mousedown', startMouse, { capture: true });
+            document.addEventListener('mousemove', moveMouse, { passive: false, capture: true });
+            document.addEventListener('mouseup', finishMouse);
+
+            dragSurface.dataset.pointerScrollBound = 'true';
         }
     };
 
@@ -489,8 +625,10 @@ function attachGanttScrollHooks() {
     // again shortly after in case the containers weren't present yet.
     window.setTimeout(attachRawScrollListeners, 200);
 
-    window.addEventListener('resize', scheduleTaskStylingRefresh);
-    ganttScrollHooksAttached = true;
+    if (!ganttScrollHooksAttached) {
+        window.addEventListener('resize', scheduleTaskStylingRefresh);
+        ganttScrollHooksAttached = true;
+    }
 }
 
 function refreshGanttView() {

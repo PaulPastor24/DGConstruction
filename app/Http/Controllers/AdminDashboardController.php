@@ -181,15 +181,21 @@ class AdminDashboardController extends Controller
 
                 $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
 
-                $overallProgress['on_track'] = $allActiveProjects->filter(function ($project) {
+                $delayedProjects = $allActiveProjects->filter(function ($project) {
+                    $status = strtolower((string) ($project->status ?? 'planning'));
                     $phases = $project->phases;
+                    $averageProgress = $phases->isNotEmpty() ? $phases->avg('completion_percentage') : 0;
+                    $hasDelayedPhase = $phases->contains(function ($phase) {
+                        return in_array(strtolower((string) ($phase->status ?? '')), ['delayed', 'on_hold'], true);
+                    });
 
-                    return $phases->isNotEmpty()
-                        ? $phases->avg('completion_percentage') >= 50
-                        : false;
-                })->count();
+                    return in_array($status, ['delayed', 'on_hold', 'behind_schedule', 'at_risk'], true)
+                        || $hasDelayedPhase
+                        || ($phases->isNotEmpty() && $averageProgress < 50);
+                });
 
-                $overallProgress['delayed'] = $overallProgress['total'] - $overallProgress['on_track'];
+                $overallProgress['on_track'] = $overallProgress['total'] - $delayedProjects->count();
+                $overallProgress['delayed'] = $delayedProjects->count();
             }
         }
 
@@ -872,7 +878,7 @@ class AdminDashboardController extends Controller
                     'report_text' => $report->report_text,
                     'admin_report_text' => $report->admin_report_text,
                     'admin_site_images' => array_values(array_filter(array_map(function ($image) {
-                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                        return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
                     }, (array) ($report->admin_site_images ?? [])))),
                     'admin_explanation' => $report->admin_explanation,
                     'is_published_to_client' => (bool) $report->is_published_to_client,
@@ -880,7 +886,7 @@ class AdminDashboardController extends Controller
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                     'site_images' => array_values(array_filter(array_map(function ($image) {
-                        return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                        return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
                     }, (array) ($report->site_images ?? [])))),
                     'site_images_count' => count(array_filter((array) ($report->site_images ?? []))),
                 ];
@@ -954,7 +960,7 @@ class AdminDashboardController extends Controller
                 'report_text' => $report->report_text,
                 'admin_report_text' => $report->admin_report_text,
                 'admin_site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                    return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
                 'admin_explanation' => $report->admin_explanation,
@@ -963,7 +969,7 @@ class AdminDashboardController extends Controller
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
                 'site_images' => array_values(array_filter(array_map(function ($image) {
-                    return is_string($image) && $image ? asset('storage/'.ltrim($image, '/')) : null;
+                    return is_string($image) && $image ? '/storage/'.ltrim($image, '/') : null;
                 }, (array) ($report->site_images ?? [])))),
                 'site_image_paths' => array_values((array) ($report->site_images ?? [])),
                 'material_usage' => $materialUsage,

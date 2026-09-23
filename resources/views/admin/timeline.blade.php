@@ -89,21 +89,22 @@
         display: flex;
         flex-direction: column;
         gap: 0.35rem;
-        min-width: 170px;
+        min-width: 150px;
+        flex: 1 1 0;
     }
 
     .toolbar-group.search-group {
-        min-width: 300px;
-        flex: 0 1 340px;
-        max-width: 360px;
+        min-width: 210px;
+        flex: 1.2 1 220px;
+        max-width: 260px;
     }
 
     .toolbar-group label {
-        font-size: 0.72rem;
+        font-size: clamp(0.56rem, 1.05vw, 0.72rem);
         font-weight: 700;
         color: var(--secondary-text);
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: clamp(0.02em, 0.12vw, 0.06em);
     }
 
     .toolbar-input,
@@ -1225,11 +1226,44 @@
         .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .page-header-card, .timeline-card-header { flex-direction: column; align-items: flex-start; }
         .toolbar-actions { margin-left: 0; }
-        .top-toolbar { padding: 1rem; gap: 0.75rem; }
-        .toolbar-group { min-width: min(100%, 220px); flex: 1 1 220px; }
-        .toolbar-group.search-group { min-width: min(100%, 280px); flex: 1 1 280px; max-width: none; }
-        .toolbar-actions { width: 100%; justify-content: flex-start; }
-        .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost { flex: 1 1 180px; justify-content: center; }
+        .top-toolbar {
+            padding: 1rem;
+            gap: 0.65rem;
+            flex-wrap: nowrap;
+            align-items: stretch;
+        }
+        .toolbar-group {
+            max-width: 180px;
+            min-width: 0;
+            flex: 1 1 0;
+        }
+        .toolbar-group.search-group {
+            min-width: 150px;
+            flex: 1.25 1 150px;
+            max-width: 220px;
+        }
+        .toolbar-group.timeline-filter-group {
+            max-width: 170px;
+        }
+        .toolbar-input,
+        .toolbar-select {
+            min-height: 36px;
+            font-size: 0.76rem;
+            padding: 0.42rem 0.6rem;
+        }
+        .toolbar-actions {
+            width: auto;
+            justify-content: flex-start;
+            flex: 0 0 auto;
+            margin-left: 0;
+        }
+        .toolbar-actions .btn-primary, .toolbar-actions .btn-ghost {
+            flex: 0 1 auto;
+            justify-content: center;
+            padding: 0.62rem 0.8rem;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
         .gantt-scroll-shell { max-height: 70vh; }
         .timeline-layout { grid-template-columns: 1fr; }
     }
@@ -1353,11 +1387,24 @@
             padding: 12px !important;
             border-radius: 18px !important;
             margin-bottom: 12px !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+        }
+
+        #pg-timeline .toolbar-group,
+        #pg-timeline .toolbar-group.search-group {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            flex: 1 1 100% !important;
         }
 
         #pg-timeline .toolbar-group.timeline-filter-group {
             width: calc(50% - 5px) !important;
             min-width: 0 !important;
+            max-width: none !important;
             flex: 1 1 calc(50% - 5px) !important;
         }
 
@@ -1368,11 +1415,18 @@
             touch-action: manipulation !important;
         }
 
+        #pg-timeline .toolbar-group label {
+            font-size: clamp(0.56rem, 2.1vw, 0.68rem) !important;
+            letter-spacing: 0.03em !important;
+        }
+
         #pg-timeline .toolbar-actions {
             width: 100% !important;
             display: grid !important;
             grid-template-columns: 1fr !important;
             gap: 10px !important;
+            flex: 1 1 100% !important;
+            margin: 0 !important;
         }
 
         #pg-timeline .toolbar-actions .btn-ghost,
@@ -1785,6 +1839,134 @@
         }
     }
 
+    @media (min-width: 720px) and (max-width: 900px) {
+        #pg-timeline .table-wrapper {
+            overflow: visible !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+
+        #pg-timeline .table-wrapper > .standard-data-table {
+            display: none !important;
+        }
+
+        #pg-timeline .mobile-timeline-list {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-mobile-card {
+            width: 100% !important;
+            padding: 14px !important;
+            border: 1px solid #e1ebe4 !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
+            overflow: hidden !important;
+        }
+
+        #pg-timeline .timeline-mobile-head {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto !important;
+            gap: 10px !important;
+            align-items: start !important;
+            padding-bottom: 10px !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid #edf3ee !important;
+        }
+
+        #pg-timeline .timeline-mobile-title,
+        #pg-timeline .timeline-mobile-title h4 {
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+
+        #pg-timeline .timeline-mobile-title h4 {
+            color: #10271b !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 9px !important;
+            width: 100% !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail {
+            min-width: 0 !important;
+            min-height: 62px !important;
+            padding: 10px 11px !important;
+            border: 1px solid #edf3ee !important;
+            border-radius: 12px !important;
+            background: #fbfdfb !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail.full {
+            grid-column: 1 / -1 !important;
+        }
+
+        #pg-timeline .timeline-mobile-label {
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #66768a !important;
+            font-size: 9px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            line-height: 1.15 !important;
+            text-transform: uppercase !important;
+        }
+
+        #pg-timeline .timeline-mobile-value {
+            display: block !important;
+            min-width: 0 !important;
+            color: #0f172a !important;
+            font-size: 12.5px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        #pg-timeline .timeline-mobile-detail.status,
+        #pg-timeline .timeline-mobile-detail.progress {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-track {
+            display: block !important;
+            width: 100% !important;
+            height: 8px !important;
+            margin-top: 6px !important;
+            overflow: hidden !important;
+            border-radius: 999px !important;
+            background: #edf3ee !important;
+        }
+
+        #pg-timeline .timeline-mobile-progress-fill {
+            display: block !important;
+            width: var(--bar-width, 0%) !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            border-radius: 999px !important;
+            background: #365233 !important;
+        }
+
+        #pg-timeline .timeline-table-footer {
+            margin-top: 12px !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+        }
+    }
+
     /* Keep the same compact Gantt behavior as the client timeline between
        desktop and mobile widths. */
     @media (max-width: 1100px) {
@@ -1826,6 +2008,32 @@
         #pg-timeline .gantt-shell,
         #pg-timeline .gantt-scroll-shell {
             min-height: 0 !important;
+        }
+
+        #pg-timeline #dhtmlxGantt,
+        #pg-timeline #dhtmlxGantt .gantt_data_area,
+        #pg-timeline #dhtmlxGantt .gantt_task_bg,
+        #pg-timeline #dhtmlxGantt .gantt_hor_scroll,
+        #pg-timeline #dhtmlxGantt .gantt_layout_outer_scroll {
+            overflow: auto !important;
+        }
+
+        #pg-timeline #dhtmlxGantt .gantt_hor_scroll {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            height: 18px !important;
+        }
+
+        #pg-timeline #dhtmlxGantt .gantt_progress_overlay {
+            overflow: visible !important;
+        }
+
+        #pg-timeline #dhtmlxGantt .gantt-progress-flag {
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: inline-flex !important;
+            z-index: 50 !important;
         }
 
         #pg-timeline #dhtmlxGantt {
@@ -2445,9 +2653,15 @@
         const pendingCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'pending').length;
         const projectProgress = clampPercentage(project.progress ?? 0);
         const allProjectPhases = getProjectPhases(project);
-        const allProjectMilestones = allProjectPhases.flatMap((phase) => Array.isArray(phase.milestones) ? phase.milestones : []);
-        const currentProjectPhase = allProjectPhases.find((phase) => ['in_progress', 'ongoing', 'current'].includes(String(phase.status || '').toLowerCase()))
-            || allProjectPhases.find((phase) => String(phase.status || '').toLowerCase() === 'delayed')
+        const nestedProjectMilestones = allProjectPhases.flatMap((phase) => Array.isArray(phase.milestones) ? phase.milestones : []);
+        const allProjectMilestones = Array.isArray(project.milestones) && project.milestones.length
+            ? project.milestones
+            : nestedProjectMilestones;
+        const currentPhaseId = project.currentPhase?.phase_id ?? project.currentPhase?.id;
+        const currentProjectPhase = allProjectPhases.find((phase) => String(phase.phase_id ?? phase.id ?? '') === String(currentPhaseId || ''))
+            || allProjectPhases.find((phase) => normalizeStatus(phase.display_status ?? phase.status) === 'in-progress')
+            || allProjectPhases.find((phase) => normalizeStatus(phase.display_status ?? phase.status) === 'delayed')
+            || allProjectPhases.find((phase) => normalizeStatus(phase.display_status ?? phase.status) === 'pending')
             || allProjectPhases[0];
         const normalizedProjectStatus = String(project.status || '').toLowerCase();
         const projectStatusLabel = {
@@ -2463,9 +2677,9 @@
         const hasDelayedSchedule = allProjectPhases.some((phase) => ['delayed', 'on_hold'].includes(String(phase.status || '').toLowerCase()))
             || allProjectMilestones.some((milestone) => milestone.is_delayed && !milestone.is_completed)
             || ['delayed', 'on_hold', 'at_risk', 'behind_schedule'].includes(normalizedProjectStatus);
-        const hasOverdueSchedule = allProjectPhases.some((phase) => phase.status !== 'completed' && phase.end && new Date(phase.end) < new Date())
+        const hasOverdueSchedule = allProjectPhases.some((phase) => normalizeStatus(phase.display_status ?? phase.status) !== 'completed' && (phase.planned_end_date || phase.end) && new Date(phase.planned_end_date || phase.end) < new Date())
             || allProjectMilestones.some((milestone) => {
-                const deadline = milestone.end_date || milestone.end || milestone.start_date || milestone.start;
+                const deadline = milestone.planned_end_date || milestone.end_date || milestone.end || milestone.start_date || milestone.start;
                 return !milestone.is_completed && !milestone.is_delayed && deadline && new Date(deadline) < new Date();
             });
         const projectScheduleLabel = normalizedProjectStatus === 'completed'

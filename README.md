@@ -21,6 +21,16 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Local Report Images
+
+Report image files are tracked in `storage/app/public/reports` so local installations receive them with the project code. After pulling the repository, run:
+
+```bash
+php artisan storage:link
+```
+
+If the storage link already exists, the command can be skipped. The application must be opened through the computer running XAMPP; other computers should use that computer's LAN IP instead of their own `localhost`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
