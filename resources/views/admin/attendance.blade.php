@@ -320,18 +320,13 @@
             </div>
         </form>
 
-        <form method="GET" action="{{ route('admin.attendance.preview-report') }}" class="mt-3">
-            <input type="hidden" name="date" value="{{ $filters['date'] ?? now()->toDateString() }}">
-            <input type="hidden" name="project_id" value="{{ $filters['project_id'] ?? '' }}">
-            <input type="hidden" name="status" value="{{ $filters['status'] ?? '' }}">
-            <input type="hidden" name="biometric" value="{{ $filters['biometric'] ?? '' }}">
-            <input type="hidden" name="search" value="{{ $filters['search'] ?? '' }}">
-            <button type="submit" class="btn btn-primary">
+        <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
                 <i class="bi bi-eye"></i>
                 Preview Attendance Report
             </button>
-            <span class="text-muted small ms-2">Review records before sending.</span>
-        </form>
+            <span class="text-muted small">Review records before sending.</span>
+        </div>
     </section>
 
     <div class="attendance-stat-grid">
@@ -903,6 +898,131 @@
         </div>
     </section>
 
+</div>
+
+<div class="modal fade attendance-preview-modal" id="attendancePreviewModal" tabindex="-1" aria-labelledby="attendancePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 py-3 attendance-preview-header">
+                <div>
+                    <div class="attendance-preview-kicker">Daily overview</div>
+                    <h5 class="modal-title mb-0" id="attendancePreviewModalLabel">Attendance report preview</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                <div class="attendance-preview-summary px-4 pt-4 pb-3">
+                    <div class="attendance-preview-stat">
+                        <span>Total</span>
+                        <strong>{{ number_format($stats['total'] ?? 0) }}</strong>
+                    </div>
+                    <div class="attendance-preview-stat success">
+                        <span>Present</span>
+                        <strong>{{ number_format($stats['present'] ?? 0) }}</strong>
+                    </div>
+                    <div class="attendance-preview-stat warning">
+                        <span>Late / Half Day</span>
+                        <strong>{{ number_format($stats['late'] ?? 0) }}</strong>
+                    </div>
+                    <div class="attendance-preview-stat danger">
+                        <span>Absent</span>
+                        <strong>{{ number_format($stats['absent'] ?? 0) }}</strong>
+                    </div>
+                </div>
+
+                <div class="attendance-preview-meta px-4 pb-3">
+                    <div class="attendance-preview-badge">
+                        <i class="bi bi-calendar3"></i>
+                        {{ $filters['date'] ? \Carbon\Carbon::parse($filters['date'])->format('F d, Y') : 'All dates' }}
+                    </div>
+                    @if(!empty($filters['project_id']) || !empty($filters['status']) || !empty($filters['biometric']) || !empty($filters['search']))
+                        <div class="attendance-preview-filter-list">
+                            @if(!empty($filters['project_id']))<span>Project filter</span>@endif
+                            @if(!empty($filters['status']))<span>{{ ucfirst(str_replace('_', ' ', $filters['status'])) }}</span>@endif
+                            @if(!empty($filters['biometric']))<span>{{ ucfirst($filters['biometric']) }}</span>@endif
+                            @if(!empty($filters['search']))<span>Search: {{ $filters['search'] }}</span>@endif
+                        </div>
+                    @endif
+                </div>
+
+                <div class="attendance-preview-table-wrap px-4 pb-4">
+                    <table class="attendance-preview-table">
+                        <thead>
+                            <tr>
+                                <th>Worker</th>
+                                <th>Project</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Status</th>
+                                <th>OT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($logs as $log)
+                                @php
+                                    $worker = $log->display_worker ?? $log->worker ?? $log->deployment?->worker;
+                                    $project = $log->display_project ?? $log->deployment?->project;
+                                    $workerName = trim(($worker?->first_name ?? '') . ' ' . ($worker?->last_name ?? '')) ?: ($worker?->full_name ?? $worker?->name ?? 'Unknown Worker');
+                                    $projectName = $project?->project_name ?? $project?->name ?? 'No Project';
+                                    $status = strtolower($log->status ?? 'unknown');
+                                    $statusLabel = match ($status) {
+                                        'half_day' => 'Half Day',
+                                        default => ucwords(str_replace('_', ' ', $status)),
+                                    };
+                                    $statusClass = match ($status) {
+                                        'present' => 'status-present',
+                                        'absent' => 'status-absent',
+                                        'late' => 'status-late',
+                                        'half_day', 'half day' => 'status-half-day',
+                                        default => 'status-default',
+                                    };
+                                    $overtimeLabel = $log->overtime_label ?? (($log->overtime_minutes ?? 0) > 0 ? 'OT ' . $log->overtime_minutes . 'm' : '—');
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <div class="attendance-preview-worker">
+                                            <span class="attendance-preview-avatar">{{ strtoupper(substr(str_replace(' ', '', $workerName), 0, 2)) ?: 'W' }}</span>
+                                            <span>{{ $workerName }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ $projectName }}</td>
+                                    <td>{{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('h:i A') : '—' }}</td>
+                                    <td>{{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('h:i A') : '—' }}</td>
+                                    <td><span class="attendance-status {{ $statusClass }}">{{ $statusLabel }}</span></td>
+                                    <td>{{ $overtimeLabel }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="attendance-empty attendance-preview-empty">
+                                            <i class="bi bi-calendar-x"></i>
+                                            <strong>No attendance records found</strong>
+                                            <span>There are no attendance records for the current filters.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 px-4 py-3 attendance-preview-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
+                @if(($logs->count() ?? 0) > 0)
+                    <form method="POST" action="{{ route('admin.attendance.send-report') }}" class="d-inline">
+                        @csrf
+                        <input type="hidden" name="date" value="{{ $filters['date'] ?? now()->toDateString() }}">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-envelope"></i>
+                            Send report to my email
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

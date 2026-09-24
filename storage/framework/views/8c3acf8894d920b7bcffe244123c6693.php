@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Materials & Inventory'); ?>
+<?php $__env->startSection('page_title', 'Materials & Inventory'); ?>
 
-@section('title', 'Materials & Inventory')
-@section('page_title', 'Materials & Inventory')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     :root {
         /* map to global brand tokens */
@@ -1538,11 +1536,11 @@
     }
 
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="mi-page inventory-green-theme">
-    @php
+    <?php
         $activeInventoryView = request('view', $activeView ?? 'inventory');
         $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
 
@@ -1607,7 +1605,7 @@
             ->filter()
             ->unique()
             ->count();
-    @endphp
+    ?>
     
     <!-- Top 4 Summary Cards Grid Row -->
     <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
@@ -1619,7 +1617,7 @@
                     </div>
                     <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Total Materials</div>
-                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['total_materials'] }}</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($metrics['total_materials']); ?></div>
                         <div class="text-muted mi-metric-caption">All registered</div>
                     </div>
                 </div>
@@ -1633,7 +1631,7 @@
                     </div>
                     <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Available</div>
-                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['available_materials'] }}</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($metrics['available_materials']); ?></div>
                         <div class="text-muted mi-metric-caption">Sufficient stock</div>
                     </div>
                 </div>
@@ -1647,7 +1645,7 @@
                     </div>
                     <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Low Stock</div>
-                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['low_stock_alerts'] }}</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($metrics['low_stock_alerts']); ?></div>
                         <div class="text-muted mi-metric-caption">Below minimum</div>
                     </div>
                 </div>
@@ -1661,7 +1659,7 @@
                     </div>
                     <div class="mi-metric-copy">
                         <div class="text-muted small fw-semibold">Out of Stock</div>
-                        <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $metrics['out_of_stock'] }}</div>
+                        <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($metrics['out_of_stock']); ?></div>
                         <div class="text-muted mi-metric-caption">No stock</div>
                     </div>
                 </div>
@@ -1669,12 +1667,12 @@
         </div>
     </div>
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({
                     title: 'Success',
-                    text: '{{ addslashes(session('success')) }}',
+                    text: '<?php echo e(addslashes(session('success'))); ?>',
                     icon: 'success',
                     confirmButtonColor: '#166534'
                 }).then(function() {
@@ -1688,20 +1686,20 @@
                 });
             });
         </script>
-    @endif
-    @if(session('error'))
+    <?php endif; ?>
+    <?php if(session('error')): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({
                     title: 'Action failed',
-                    text: '{{ addslashes(session('error')) }}',
+                    text: '<?php echo e(addslashes(session('error'))); ?>',
                     icon: 'error',
                     confirmButtonColor: '#dc2626'
                 });
             });
         </script>
-    @endif
-    @if($errors->any())
+    <?php endif; ?>
+    <?php if($errors->any()): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const fieldToModal = {
@@ -1725,9 +1723,9 @@
                     'reason': 'markLostModal',
                 };
 
-                const firstError = @json($errors->first());
-                const errorKeys = @json($errors->keys());
-                const errorMessages = @json($errors->all());
+                const firstError = <?php echo json_encode($errors->first(), 15, 512) ?>;
+                const errorKeys = <?php echo json_encode($errors->keys(), 15, 512) ?>;
+                const errorMessages = <?php echo json_encode($errors->all(), 15, 512) ?>;
 
                 let targetModalId = null;
                 errorKeys.forEach(function (key) {
@@ -1761,7 +1759,7 @@
                 }
             });
         </script>
-    @endif
+    <?php endif; ?>
 
     <!-- Main Workspace Split Grid Layout (Left Content, Right Dashboard Widgets) -->
     <div class="row g-4">
@@ -1774,21 +1772,21 @@
                 <div class="card-header bg-white border-0 pt-3 pb-0">
                     <ul class="nav nav-tabs border-bottom-0">
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
+                            <a class="inventory-view-toggle nav-link <?php echo e($activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted'); ?> px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'requests' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="requests-view"><i class="bi bi-cart-plus me-1"></i><span class="tab-full">Material Requests</span><span class="tab-short">Requests</span></a>
+                            <a class="inventory-view-toggle nav-link <?php echo e($activeInventoryView === 'requests' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted'); ?> px-3 pb-2" href="#" data-target="requests-view"><i class="bi bi-cart-plus me-1"></i><span class="tab-full">Material Requests</span><span class="tab-short">Requests</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
+                            <a class="inventory-view-toggle nav-link <?php echo e($activeInventoryView === 'usage' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted'); ?> px-3 pb-2" href="#" data-target="usage-view"><i class="bi bi-clock-history me-1"></i><span class="tab-full">Material Usage Logs</span><span class="tab-short">Usage Logs</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'tools' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="tools-view">
+                            <a class="inventory-view-toggle nav-link <?php echo e($activeInventoryView === 'tools' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted'); ?> px-3 pb-2" href="#" data-target="tools-view">
                                 <i class="bi bi-wrench me-1"></i><span class="tab-full">Tools & Equipments</span><span class="tab-short">Tools</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
+                            <a class="inventory-view-toggle nav-link <?php echo e($activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted'); ?> px-3 pb-2" href="#" data-target="expenses-view">
                                 <i class="bi bi-cash-stack me-1"></i><span class="tab-full">Project / Phase Expenses</span><span class="tab-short">Expenses</span>
                             </a>
                         </li>
@@ -1796,28 +1794,28 @@
                 </div>
                 
                 <div class="card-body pt-3">
-                    <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
+                    <div id="inventory-view" class="inventory-view-panel <?php echo e($activeInventoryView !== 'inventory' ? 'd-none' : ''); ?>">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
-                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
+                    <form method="GET" action="<?php echo e(route('admin.inventory')); ?>" class="row g-2 align-items-center mb-4" id="inventory-search-form">
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                            <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
+                            <input type="text" name="search" value="<?php echo e($search); ?>" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
                             <input type="hidden" name="view" value="inventory" id="inventory-view-input">
                             <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                         </div>
                         <div class="col-md-2">
                             <select name="category" class="form-select form-select-sm text-muted" >
                                 <option value="">All Categories</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat }}" {{ $category === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($cat); ?>" <?php echo e($category === $cat ? 'selected' : ''); ?>><?php echo e($cat); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <select name="stock_status" class="form-select form-select-sm text-muted" >
                                 <option value="">All Status</option>
-                                <option value="normal" {{ $stockStatus === 'normal' ? 'selected' : '' }}>Available</option>
-                                <option value="low_stock" {{ $stockStatus === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
-                                <option value="out_of_stock" {{ $stockStatus === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                <option value="normal" <?php echo e($stockStatus === 'normal' ? 'selected' : ''); ?>>Available</option>
+                                <option value="low_stock" <?php echo e($stockStatus === 'low_stock' ? 'selected' : ''); ?>>Low Stock</option>
+                                <option value="out_of_stock" <?php echo e($stockStatus === 'out_of_stock' ? 'selected' : ''); ?>>Out of Stock</option>
                             </select>
                         </div>
                         <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
@@ -1848,8 +1846,8 @@
                                 </tr>
                             </thead>
                             <tbody id="inventoryMaterialsTableBody">
-                                @forelse($materials as $material)
-                                    @php
+                                <?php $__empty_1 = true; $__currentLoopData = $materials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $material): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <?php
                                         if($material->current_stock <= 0) {
                                             $badgeClass = 'badge-out-of-stock';
                                             $statusText = 'Out of Stock';
@@ -1865,32 +1863,32 @@
                                         }
 
                                         $materialSearchText = strtolower(trim(($material->name ?? '') . ' ' . ($material->category ?? 'General') . ' ' . ($material->unit ?? '') . ' ' . $statusText));
-                                    @endphp
+                                    ?>
                                     <tr data-inventory-row="true"
-                                        data-material-search="{{ $materialSearchText }}"
-                                        data-material-category="{{ $material->category ?? 'General' }}"
-                                        data-material-status="{{ $stockStatusKey }}">
-                                        <td class="fw-semibold text-dark">{{ $material->name }}</td>
-                                        <td class="text-muted">{{ $material->category ?? 'General' }}</td>
-                                        <td class="text-muted">{{ $material->unit }}</td>
-                                        <td class="fw-bold text-dark">{{ number_format($material->current_stock, 0) }}</td>
-                                        <td class="text-muted">{{ number_format($material->minimum_stock_level, 0) }}</td>
-                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $badgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $statusText }}</span></td>
+                                        data-material-search="<?php echo e($materialSearchText); ?>"
+                                        data-material-category="<?php echo e($material->category ?? 'General'); ?>"
+                                        data-material-status="<?php echo e($stockStatusKey); ?>">
+                                        <td class="fw-semibold text-dark"><?php echo e($material->name); ?></td>
+                                        <td class="text-muted"><?php echo e($material->category ?? 'General'); ?></td>
+                                        <td class="text-muted"><?php echo e($material->unit); ?></td>
+                                        <td class="fw-bold text-dark"><?php echo e(number_format($material->current_stock, 0)); ?></td>
+                                        <td class="text-muted"><?php echo e(number_format($material->minimum_stock_level, 0)); ?></td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 <?php echo e($badgeClass); ?>" style="font-size: 11px; font-weight: 600;"><?php echo e($statusText); ?></span></td>
                                         <td>
                                             <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal{{ $material->id }}" title="View details"><i class="bi bi-eye"></i></button>
-                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal{{ $material->id }}" title="Edit material"><i class="bi bi-pencil"></i></button>
-                                                <form method="POST" action="{{ route('admin.inventory.materials.destroy', $material->id) }}" class="inventory-delete-form d-inline m-0">
-                                                    @csrf
-                                                    @method('DELETE')
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white" data-bs-toggle="modal" data-bs-target="#viewMaterialModal<?php echo e($material->id); ?>" title="View details"><i class="bi bi-eye"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white" data-bs-toggle="modal" data-bs-target="#editMaterialModal<?php echo e($material->id); ?>" title="Edit material"><i class="bi bi-pencil"></i></button>
+                                                <form method="POST" action="<?php echo e(route('admin.inventory.materials.destroy', $material->id)); ?>" class="inventory-delete-form d-inline m-0">
+                                                    <?php echo csrf_field(); ?>
+                                                    <?php echo method_field('DELETE'); ?>
                                                     <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete material"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             </div>
                                         </td>
                                     </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr id="inventoryEmptyStateRow"><td colspan="7" class="text-center text-muted py-4">No structural materials profiles discovered.</td></tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -1913,8 +1911,8 @@
                                     </button>
                                 </div>
                                 <div class="modal-body-custom">
-                                    <form id="allocateMaterialForm" method="POST" action="{{ route('admin.inventory.allocate') }}">
-                                        @csrf
+                                    <form id="allocateMaterialForm" method="POST" action="<?php echo e(route('admin.inventory.allocate')); ?>">
+                                        <?php echo csrf_field(); ?>
                                         <div class="row g-3 mb-3">
                                             <div class="col-md-6">
                                                 <div class="form-group-wrapper mb-0">
@@ -1923,15 +1921,16 @@
                                                         <i class="bi bi-box-seam input-icon-left"></i>
                                                         <select name="material_id" id="allocateMaterialSelect" class="control-field-input" required>
                                                             <option value="">Select material</option>
-                                                            @foreach($materials as $materialOption)
-                                                                <option value="{{ $materialOption->id }}"
-                                                                    data-name="{{ $materialOption->name }}"
-                                                                    data-unit="{{ $materialOption->unit }}"
-                                                                    data-stock="{{ $materialOption->current_stock }}"
-                                                                    data-min="{{ $materialOption->minimum_stock_level }}">
-                                                                    {{ $materialOption->name }}
+                                                            <?php $__currentLoopData = $materials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $materialOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                                <option value="<?php echo e($materialOption->id); ?>"
+                                                                    data-name="<?php echo e($materialOption->name); ?>"
+                                                                    data-unit="<?php echo e($materialOption->unit); ?>"
+                                                                    data-stock="<?php echo e($materialOption->current_stock); ?>"
+                                                                    data-min="<?php echo e($materialOption->minimum_stock_level); ?>">
+                                                                    <?php echo e($materialOption->name); ?>
+
                                                                 </option>
-                                                            @endforeach
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                         </select>
                                                     </div>
                                                     <div class="form-input-hint">Select a material from the catalog.</div>
@@ -1956,13 +1955,13 @@
                                                         <i class="bi bi-building input-icon-left"></i>
                                                         <select name="project_id" class="control-field-input" required>
                                                             <option value="">Select project</option>
-                                                            @foreach($inventoryProjectOptions as $projectOption)
-                                                                @php
+                                                            <?php $__currentLoopData = $inventoryProjectOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projectOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                                <?php
                                                                     $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
                                                                     $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
-                                                                @endphp
-                                                                <option value="{{ $projectOptionId }}">{{ $projectOptionName }}</option>
-                                                            @endforeach
+                                                                ?>
+                                                                <option value="<?php echo e($projectOptionId); ?>"><?php echo e($projectOptionName); ?></option>
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -2000,25 +1999,25 @@
 
                     <!-- Layout Footer Summary with Pagination Links -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
-                        <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
-                        <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
+                        <span class="text-muted small">Showing <?php echo e($materials->firstItem() ?? 0); ?> to <?php echo e($materials->lastItem() ?? 0); ?> of <?php echo e($materials->total()); ?> materials</span>
+                        <div class="w-100 w-md-auto overflow-auto"><?php echo e($materials->links('pagination::bootstrap-5')); ?></div>
                     </div>
                 </div>
 
-            <div id="requests-view" class="inventory-view-panel {{ $activeInventoryView !== 'requests' ? 'd-none' : '' }}">
+            <div id="requests-view" class="inventory-view-panel <?php echo e($activeInventoryView !== 'requests' ? 'd-none' : ''); ?>">
                 <div class="mi-filter-card p-3 mb-3">
-                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center">
+                    <form method="GET" action="<?php echo e(route('admin.inventory')); ?>" class="row g-2 align-items-center">
                         <input type="hidden" name="view" value="requests" id="requests-view-input">
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                            <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm mi-search-input" placeholder="Search requests by material, project, or requester...">
+                            <input type="text" name="search" value="<?php echo e(request('search')); ?>" class="form-control form-control-sm mi-search-input" placeholder="Search requests by material, project, or requester...">
                             <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                         </div>
                         <div class="col-md-3">
                             <select name="request_status" class="form-select form-select-sm text-muted" onchange="this.form.submit()">
                                 <option value="">All Status</option>
-                                <option value="pending" {{ $requestStatus === 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="approved" {{ $requestStatus === 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ $requestStatus === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                <option value="pending" <?php echo e($requestStatus === 'pending' ? 'selected' : ''); ?>>Pending</option>
+                                <option value="approved" <?php echo e($requestStatus === 'approved' ? 'selected' : ''); ?>>Approved</option>
+                                <option value="rejected" <?php echo e($requestStatus === 'rejected' ? 'selected' : ''); ?>>Rejected</option>
                             </select>
                         </div>
                     </form>
@@ -2040,49 +2039,49 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($materialRequests as $request)
-                                    @php
+                                <?php $__empty_1 = true; $__currentLoopData = $materialRequests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $request): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <?php
                                         $requestBadgeClass = match($request->status) {
                                             'pending' => 'badge-request-pending',
                                             'approved' => 'badge-request-approved',
                                             'rejected' => 'badge-request-rejected',
                                             default => 'badge-request-pending',
                                         };
-                                    @endphp
+                                    ?>
                                     <tr>
-                                        <td class="fw-semibold text-dark">#{{ $request->request_id }}</td>
+                                        <td class="fw-semibold text-dark">#<?php echo e($request->request_id); ?></td>
                                         <td>
-                                            <div class="fw-semibold text-dark">{{ $request->material->name ?? 'Unknown' }}</div>
-                                            <div class="text-muted small">{{ $request->unit ?? 'unit' }}</div>
+                                            <div class="fw-semibold text-dark"><?php echo e($request->material->name ?? 'Unknown'); ?></div>
+                                            <div class="text-muted small"><?php echo e($request->unit ?? 'unit'); ?></div>
                                         </td>
-                                        <td class="text-muted">{{ $request->project->project_name ?? 'N/A' }}</td>
-                                        <td class="text-muted">{{ $request->requester->name ?? 'Unknown' }}</td>
-                                        <td class="fw-bold text-dark">{{ number_format($request->requested_quantity, 2) }}</td>
-                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $requestBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ ucfirst($request->status) }}</span></td>
-                                        <td class="text-muted">{{ $request->created_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                                        <td class="text-muted"><?php echo e($request->project->project_name ?? 'N/A'); ?></td>
+                                        <td class="text-muted"><?php echo e($request->requester->name ?? 'Unknown'); ?></td>
+                                        <td class="fw-bold text-dark"><?php echo e(number_format($request->requested_quantity, 2)); ?></td>
+                                        <td><span class="badge rounded-pill px-2.5 py-1.5 <?php echo e($requestBadgeClass); ?>" style="font-size: 11px; font-weight: 600;"><?php echo e(ucfirst($request->status)); ?></span></td>
+                                        <td class="text-muted"><?php echo e($request->created_at?->format('M d, Y h:i A') ?? 'N/A'); ?></td>
                                         <td>
-                                            @if($request->status === 'pending')
+                                            <?php if($request->status === 'pending'): ?>
                                                 <div class="d-flex justify-content-center gap-1">
-                                                    <button type="button" class="btn-request-approve" data-bs-toggle="modal" data-bs-target="#approveModal{{ $request->request_id }}">
+                                                    <button type="button" class="btn-request-approve" data-bs-toggle="modal" data-bs-target="#approveModal<?php echo e($request->request_id); ?>">
                                                         <i class="bi bi-check-lg"></i> Approve
                                                     </button>
-                                                    <button type="button" class="btn-request-reject" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $request->request_id }}">
+                                                    <button type="button" class="btn-request-reject" data-bs-toggle="modal" data-bs-target="#rejectModal<?php echo e($request->request_id); ?>">
                                                         <i class="bi bi-x-lg"></i> Reject
                                                     </button>
                                                 </div>
-                                            @else
+                                            <?php else: ?>
                                                 <div class="text-center">
-                                                    <span class="text-muted small d-block">{{ $request->reviewed_at?->format('M d, Y h:i A') ?? 'N/A' }}</span>
-                                                    @if($request->rejection_remarks)
-                                                        <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ $request->rejection_remarks }}</div>
-                                                    @endif
+                                                    <span class="text-muted small d-block"><?php echo e($request->reviewed_at?->format('M d, Y h:i A') ?? 'N/A'); ?></span>
+                                                    <?php if($request->rejection_remarks): ?>
+                                                        <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i><?php echo e($request->rejection_remarks); ?></div>
+                                                    <?php endif; ?>
                                                 </div>
-                                            @endif
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
 
                                     <!-- Approve Modal -->
-                                    <div class="modal fade modal-receive-stock" id="approveModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal fade modal-receive-stock" id="approveModal<?php echo e($request->request_id); ?>" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
                                                 <div class="modal-header-custom">
@@ -2091,7 +2090,7 @@
                                                             <i class="bi bi-check-circle"></i>
                                                         </div>
                                                         <div>
-                                                            <h4 class="modal-title-text mb-0">Approve Request #{{ $request->request_id }}</h4>
+                                                            <h4 class="modal-title-text mb-0">Approve Request #<?php echo e($request->request_id); ?></h4>
                                                             <p class="modal-subtitle mb-0">Confirm and allocate stock for this request.</p>
                                                         </div>
                                                     </div>
@@ -2104,25 +2103,25 @@
                                                         <div class="meta-item">
                                                             <div>
                                                                 <div class="meta-label">Material</div>
-                                                                <div class="meta-value">{{ $request->material->name ?? 'material' }}</div>
+                                                                <div class="meta-value"><?php echo e($request->material->name ?? 'material'); ?></div>
                                                             </div>
                                                         </div>
                                                         <div class="meta-item">
                                                             <div>
                                                                 <div class="meta-label">Requested</div>
-                                                                <div class="meta-value">{{ number_format($request->requested_quantity, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                                <div class="meta-value"><?php echo e(number_format($request->requested_quantity, 2)); ?> <?php echo e($request->unit ?? 'unit'); ?></div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <form method="POST" action="{{ route('admin.inventory.requests.approve', $request) }}" class="receive-stock-form-main">
-                                                        @csrf
+                                                    <form method="POST" action="<?php echo e(route('admin.inventory.requests.approve', $request)); ?>" class="receive-stock-form-main">
+                                                        <?php echo csrf_field(); ?>
                                                         <div class="form-group-wrapper">
                                                             <label class="form-label-custom">Approved Quantity<span class="required-asterisk">*</span></label>
                                                             <div class="input-container-group">
                                                                 <i class="bi bi-box-seam input-icon-left"></i>
-                                                                <input type="number" name="approved_quantity" value="{{ $request->requested_quantity }}" max="{{ $request->material->current_stock ?? 0 }}" step="0.01" min="0.01" class="control-field-input" required>
+                                                                <input type="number" name="approved_quantity" value="<?php echo e($request->requested_quantity); ?>" max="<?php echo e($request->material->current_stock ?? 0); ?>" step="0.01" min="0.01" class="control-field-input" required>
                                                             </div>
-                                                            <div class="form-input-hint">Available stock: {{ number_format($request->material->current_stock ?? 0, 2) }} {{ $request->unit ?? 'unit' }}</div>
+                                                            <div class="form-input-hint">Available stock: <?php echo e(number_format($request->material->current_stock ?? 0, 2)); ?> <?php echo e($request->unit ?? 'unit'); ?></div>
                                                         </div>
                                                         <div class="footer-action-row border-top pt-3 pb-2">
                                                             <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
@@ -2139,7 +2138,7 @@
                                     </div>
 
                                     <!-- Reject Modal -->
-                                    <div class="modal fade modal-receive-stock" id="rejectModal{{ $request->request_id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal fade modal-receive-stock" id="rejectModal<?php echo e($request->request_id); ?>" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content">
                                                 <div class="modal-header-custom">
@@ -2148,7 +2147,7 @@
                                                             <i class="bi bi-x-circle"></i>
                                                         </div>
                                                         <div>
-                                                            <h4 class="modal-title-text mb-0">Reject Request #{{ $request->request_id }}</h4>
+                                                            <h4 class="modal-title-text mb-0">Reject Request #<?php echo e($request->request_id); ?></h4>
                                                             <p class="modal-subtitle mb-0">Provide a reason for rejecting this request.</p>
                                                         </div>
                                                     </div>
@@ -2157,8 +2156,8 @@
                                                     </button>
                                                 </div>
                                                 <div class="modal-body-custom">
-                                                    <form method="POST" action="{{ route('admin.inventory.requests.reject', $request) }}" class="receive-stock-form-main">
-                                                        @csrf
+                                                    <form method="POST" action="<?php echo e(route('admin.inventory.requests.reject', $request)); ?>" class="receive-stock-form-main">
+                                                        <?php echo csrf_field(); ?>
                                                         <div class="form-group-wrapper">
                                                             <label class="form-label-custom">Rejection Remarks <span class="text-muted fw-normal">(Optional)</span></label>
                                                             <textarea name="rejection_remarks" rows="3" class="control-field-input" style="padding-left: 0.85rem;" placeholder="Reason for rejection..."></textarea>
@@ -2176,80 +2175,82 @@
                                             </div>
                                         </div>
                                     </div>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
                                         <td colspan="8" class="text-center text-muted py-4">
                                             <i class="bi bi-inbox fs-3 text-secondary d-block mb-2"></i>
                                             No material requests found.
                                         </td>
                                     </tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
 
-                    @if($materialRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $materialRequests->hasPages())
+                    <?php if($materialRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $materialRequests->hasPages()): ?>
                         <div class="card-footer bg-white border-0 py-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">Showing {{ $materialRequests->firstItem() ?? 0 }} to {{ $materialRequests->lastItem() ?? 0 }} of {{ $materialRequests->total() }} requests</span>
-                                <div>{{ $materialRequests->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                                <span class="text-muted small">Showing <?php echo e($materialRequests->firstItem() ?? 0); ?> to <?php echo e($materialRequests->lastItem() ?? 0); ?> of <?php echo e($materialRequests->total()); ?> requests</span>
+                                <div><?php echo e($materialRequests->appends(request()->query())->links('pagination::bootstrap-5')); ?></div>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
 
-                    <div id="usage-view" class="inventory-view-panel {{ $activeInventoryView !== 'usage' ? 'd-none' : '' }}">
-                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-3" id="usage-search-form">
-                            <input type="hidden" name="category" value="{{ $category }}">
-                            <input type="hidden" name="stock_status" value="{{ $stockStatus }}">
+                    <div id="usage-view" class="inventory-view-panel <?php echo e($activeInventoryView !== 'usage' ? 'd-none' : ''); ?>">
+                        <form method="GET" action="<?php echo e(route('admin.inventory')); ?>" class="row g-2 align-items-center mb-3" id="usage-search-form">
+                            <input type="hidden" name="category" value="<?php echo e($category); ?>">
+                            <input type="hidden" name="stock_status" value="<?php echo e($stockStatus); ?>">
                             <input type="hidden" name="view" value="usage" id="usage-view-input">
                             <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search usage logs...">
+                                <input type="text" name="search" value="<?php echo e($search); ?>" class="form-control form-control-sm mi-search-input" placeholder="Search usage logs...">
                                 <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                             </div>
                             <div class="col-md-3">
                                 <select name="project_id" id="usageProjectFilter" class="form-select form-select-sm text-muted">
                                     <option value="">All Projects</option>
-                                    @foreach($inventoryProjectOptions as $projectOption)
-                                        @php
+                                    <?php $__currentLoopData = $inventoryProjectOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projectOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
                                             $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
-                                        @endphp
-                                        <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
-                                            {{ $projectOptionName }}
+                                        ?>
+                                        <option value="<?php echo e($projectOptionId); ?>" <?php echo e((string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : ''); ?>>
+                                            <?php echo e($projectOptionName); ?>
+
                                         </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <select name="phase_id" id="usagePhaseFilter" class="form-select form-select-sm text-muted">
                                     <option value="">All Phases</option>
-                                    @foreach($inventoryPhaseOptions as $phaseOption)
-                                        @php
+                                    <?php $__currentLoopData = $inventoryPhaseOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $phaseOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
                                             $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
                                             $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
-                                        @endphp
-                                        <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
-                                            {{ $phaseOptionName }}
+                                        ?>
+                                        <option value="<?php echo e($phaseOptionId); ?>" data-project-id="<?php echo e($phaseProjectId); ?>" <?php echo e((string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : ''); ?>>
+                                            <?php echo e($phaseOptionName); ?>
+
                                         </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <select name="usage_category" class="form-select form-select-sm text-muted" >
                                     <option value="">All Categories</option>
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat }}" {{ $usageCategory === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($cat); ?>" <?php echo e($usageCategory === $cat ? 'selected' : ''); ?>><?php echo e($cat); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <select name="usage_status" class="form-select form-select-sm text-muted"  style="display: none;">
                                     <option value="">All</option>
-                                    <option value="with_remarks" {{ $usageStatus === 'with_remarks' ? 'selected' : '' }}>Has Notes</option>
-                                    <option value="without_remarks" {{ $usageStatus === 'without_remarks' ? 'selected' : '' }}>No Notes</option>
+                                    <option value="with_remarks" <?php echo e($usageStatus === 'with_remarks' ? 'selected' : ''); ?>>Has Notes</option>
+                                    <option value="without_remarks" <?php echo e($usageStatus === 'without_remarks' ? 'selected' : ''); ?>>No Notes</option>
                                 </select>
                             </div>
                         </form>
@@ -2268,8 +2269,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="usageLogsTableBody">
-                                    @forelse($usageLogs as $log)
-                                        @php
+                                    <?php $__empty_1 = true; $__currentLoopData = $usageLogs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $log): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        <?php
                                             $usageProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
                                             $usagePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
                                             $usageMaterial = $log->material ?? null;
@@ -2296,42 +2297,42 @@
                                                 (optional($log->recorder)->name ?? '') . ' ' .
                                                 ($log->remarks ?? '')
                                             ));
-                                        @endphp
+                                        ?>
                                         <tr data-usage-row="true"
-                                            data-project-id="{{ $usageProjectId }}"
-                                            data-phase-id="{{ $usagePhaseId }}"
-                                            data-usage-category="{{ optional($usageMaterial)->category ?? 'General' }}"
-                                            data-usage-search="{{ $usageSearchText }}"
-                                            data-expense-amount="{{ $usageExpenseAmount }}">
-                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
-                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($log->material)->name ?? 'N/A' }}</td>
-                                            <td class="fw-bold text-dark">{{ number_format($log->quantity_used, 0) }}</td>
-                                            <td class="text-muted">{{ optional($log->material)->unit ?? 'Piece' }}</td>
-                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                            data-project-id="<?php echo e($usageProjectId); ?>"
+                                            data-phase-id="<?php echo e($usagePhaseId); ?>"
+                                            data-usage-category="<?php echo e(optional($usageMaterial)->category ?? 'General'); ?>"
+                                            data-usage-search="<?php echo e($usageSearchText); ?>"
+                                            data-expense-amount="<?php echo e($usageExpenseAmount); ?>">
+                                            <td class="text-muted"><?php echo e(optional($log->usage_date)->format('M d, Y') ?? '-'); ?></td>
+                                            <td class="fw-semibold text-dark"><?php echo e(optional($log->project)->project_name ?? 'N/A'); ?></td>
+                                            <td class="text-muted"><?php echo e(optional($log->phase)->phase_name ?? 'N/A'); ?></td>
+                                            <td class="fw-semibold text-dark"><?php echo e(optional($log->material)->name ?? 'N/A'); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo e(number_format($log->quantity_used, 0)); ?></td>
+                                            <td class="text-muted"><?php echo e(optional($log->material)->unit ?? 'Piece'); ?></td>
+                                            <td><?php echo e(optional($log->recorder)->name ?? 'Unknown'); ?></td>
                                             <td class="text-center">
                                                 <button type="button"
                                                     class="btn btn-outline-success btn-sm p-2"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#materialUsageDetailModal"
-                                                    data-date="{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}"
-                                                    data-project="{{ optional($log->project)->project_name ?? 'N/A' }}"
-                                                    data-phase="{{ optional($log->phase)->phase_name ?? 'N/A' }}"
-                                                    data-material="{{ optional($log->material)->name ?? 'N/A' }}"
-                                                    data-quantity="{{ number_format($log->quantity_used, 0) }}"
-                                                    data-unit="{{ optional($log->material)->unit ?? 'Piece' }}"
-                                                    data-recorder="{{ optional($log->recorder)->name ?? 'Unknown' }}"
-                                                    data-notes="{{ e($log->remarks ?? '') }}"
-                                                    data-photo="{{ $log->site_photo_path ? asset('storage/' . ltrim($log->site_photo_path, '/')) : '' }}"
+                                                    data-date="<?php echo e(optional($log->usage_date)->format('M d, Y') ?? '-'); ?>"
+                                                    data-project="<?php echo e(optional($log->project)->project_name ?? 'N/A'); ?>"
+                                                    data-phase="<?php echo e(optional($log->phase)->phase_name ?? 'N/A'); ?>"
+                                                    data-material="<?php echo e(optional($log->material)->name ?? 'N/A'); ?>"
+                                                    data-quantity="<?php echo e(number_format($log->quantity_used, 0)); ?>"
+                                                    data-unit="<?php echo e(optional($log->material)->unit ?? 'Piece'); ?>"
+                                                    data-recorder="<?php echo e(optional($log->recorder)->name ?? 'Unknown'); ?>"
+                                                    data-notes="<?php echo e(e($log->remarks ?? '')); ?>"
+                                                    data-photo="<?php echo e($log->site_photo_path ? asset('storage/' . ltrim($log->site_photo_path, '/')) : ''); ?>"
                                                     title="View usage details">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                             </td>
                                         </tr>
-                                    @empty
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                         <tr id="usageEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No analytical usage sequences registered.</td></tr>
-                                    @endforelse
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -2339,7 +2340,7 @@
 
                     </div>
 
-                    <div id="tools-view" class="inventory-view-panel {{ $activeInventoryView !== 'tools' ? 'd-none' : '' }}">
+                    <div id="tools-view" class="inventory-view-panel <?php echo e($activeInventoryView !== 'tools' ? 'd-none' : ''); ?>">
                         <!-- Tools Metrics -->
                         <div class="row g-2 g-md-3 mb-3 mi-metric-grid">
                             <div class="col-lg-3 col-md-6 col-6">
@@ -2350,7 +2351,7 @@
                                         </div>
                                         <div class="mi-metric-copy">
                                             <div class="text-muted small fw-semibold">Total Tools</div>
-                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['total_tools'] }}</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($toolMetrics['total_tools']); ?></div>
                                             <div class="text-muted mi-metric-caption">All registered</div>
                                         </div>
                                     </div>
@@ -2364,7 +2365,7 @@
                                         </div>
                                         <div class="mi-metric-copy">
                                             <div class="text-muted small fw-semibold">Available</div>
-                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['available'] }}</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($toolMetrics['available']); ?></div>
                                             <div class="text-muted mi-metric-caption">Ready for issue</div>
                                         </div>
                                     </div>
@@ -2378,7 +2379,7 @@
                                         </div>
                                         <div class="mi-metric-copy">
                                             <div class="text-muted small fw-semibold">In Use</div>
-                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['in_use'] }}</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($toolMetrics['in_use']); ?></div>
                                             <div class="text-muted mi-metric-caption">Currently borrowed</div>
                                         </div>
                                     </div>
@@ -2392,7 +2393,7 @@
                                         </div>
                                         <div class="mi-metric-copy">
                                             <div class="text-muted small fw-semibold">Lost</div>
-                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['lost'] }}</div>
+                                            <div class="fs-2 fw-bold text-dark lh-1 my-1"><?php echo e($toolMetrics['lost']); ?></div>
                                             <div class="text-muted mi-metric-caption">Lost / Unrecovered</div>
                                         </div>
                                     </div>
@@ -2401,27 +2402,27 @@
                         </div>
 
                         <!-- Tools Search & Filters -->
-                        <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="tools-search-form">
+                        <form method="GET" action="<?php echo e(route('admin.inventory')); ?>" class="row g-2 align-items-center mb-4" id="tools-search-form">
                             <input type="hidden" name="view" value="tools" id="tools-view-input">
                             <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                                <input type="text" name="search" value="{{ $toolsSearch ?? $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search tools by name, code, or category...">
+                                <input type="text" name="search" value="<?php echo e($toolsSearch ?? $search); ?>" class="form-control form-control-sm mi-search-input" placeholder="Search tools by name, code, or category...">
                                 <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                             </div>
                             <div class="col-md-3">
                                 <select name="tool_category" class="form-select form-select-sm text-muted">
                                     <option value="">All Categories</option>
-                                    @foreach($toolCategories as $cat)
-                                        <option value="{{ $cat }}" {{ ($toolCategory ?? '') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $toolCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($cat); ?>" <?php echo e(($toolCategory ?? '') === $cat ? 'selected' : ''); ?>><?php echo e($cat); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <select name="tool_status" class="form-select form-select-sm text-muted">
                                     <option value="">All Status</option>
-                                    <option value="available" {{ ($toolStatus ?? '') === 'available' ? 'selected' : '' }}>Available</option>
-                                    <option value="in_use" {{ ($toolStatus ?? '') === 'in_use' ? 'selected' : '' }}>In Use</option>
-                                    <option value="lost" {{ ($toolStatus ?? '') === 'lost' ? 'selected' : '' }}>Lost</option>
-                                    <option value="retired" {{ ($toolStatus ?? '') === 'retired' ? 'selected' : '' }}>Retired</option>
+                                    <option value="available" <?php echo e(($toolStatus ?? '') === 'available' ? 'selected' : ''); ?>>Available</option>
+                                    <option value="in_use" <?php echo e(($toolStatus ?? '') === 'in_use' ? 'selected' : ''); ?>>In Use</option>
+                                    <option value="lost" <?php echo e(($toolStatus ?? '') === 'lost' ? 'selected' : ''); ?>>Lost</option>
+                                    <option value="retired" <?php echo e(($toolStatus ?? '') === 'retired' ? 'selected' : ''); ?>>Retired</option>
                                 </select>
                             </div>
                             <div class="col-lg-2 col-md-12 col-12 inventory-action-stack">
@@ -2448,8 +2449,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="toolsTableBody">
-                                    @forelse($tools as $tool)
-                                        @php
+                                    <?php $__empty_1 = true; $__currentLoopData = $tools; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tool): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        <?php
                                             $toolBadgeClass = $tool->status_badge_class;
                                             $toolStatusLabel = $tool->status_label;
                                             $borrowerName = $tool->currentBorrower ? $tool->currentBorrower->full_name : '-';
@@ -2457,45 +2458,45 @@
                                             $canReturn = $tool->status === 'in_use';
                                             $canMarkLost = $tool->status === 'in_use';
                                             $hasActiveLoan = $tool->activeLoan()->exists();
-                                        @endphp
+                                        ?>
                                         <tr data-tool-row="true"
-                                            data-tool-search="{{ strtolower(trim(($tool->name ?? '') . ' ' . ($tool->tool_code ?? '') . ' ' . ($tool->category ?? '') . ' ' . $toolStatusLabel)) }}"
-                                            data-tool-category="{{ $tool->category ?? 'General' }}"
-                                            data-tool-status="{{ $tool->status }}">
-                                            <td class="fw-semibold text-dark">{{ $tool->tool_code }}</td>
-                                            <td class="fw-semibold text-dark">{{ $tool->name }}</td>
-                                            <td class="text-muted">{{ $tool->category ?? 'General' }}</td>
-                                            <td class="text-muted">{{ ucfirst($tool->type) }}</td>
-                                            <td class="text-muted">{{ $tool->unit ?? '-' }}</td>
-                                            <td class="text-muted">{{ ucfirst($tool->condition ?? '-') }}</td>
-                                            <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $toolBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $toolStatusLabel }}</span></td>
-                                            <td class="text-muted">{{ $borrowerName }}</td>
+                                            data-tool-search="<?php echo e(strtolower(trim(($tool->name ?? '') . ' ' . ($tool->tool_code ?? '') . ' ' . ($tool->category ?? '') . ' ' . $toolStatusLabel))); ?>"
+                                            data-tool-category="<?php echo e($tool->category ?? 'General'); ?>"
+                                            data-tool-status="<?php echo e($tool->status); ?>">
+                                            <td class="fw-semibold text-dark"><?php echo e($tool->tool_code); ?></td>
+                                            <td class="fw-semibold text-dark"><?php echo e($tool->name); ?></td>
+                                            <td class="text-muted"><?php echo e($tool->category ?? 'General'); ?></td>
+                                            <td class="text-muted"><?php echo e(ucfirst($tool->type)); ?></td>
+                                            <td class="text-muted"><?php echo e($tool->unit ?? '-'); ?></td>
+                                            <td class="text-muted"><?php echo e(ucfirst($tool->condition ?? '-')); ?></td>
+                                            <td><span class="badge rounded-pill px-2.5 py-1.5 <?php echo e($toolBadgeClass); ?>" style="font-size: 11px; font-weight: 600;"><?php echo e($toolStatusLabel); ?></span></td>
+                                            <td class="text-muted"><?php echo e($borrowerName); ?></td>
                                             <td>
                                                 <div class="d-flex justify-content-center gap-1 inventory-action-stack">
-                                                    @if($canIssue)
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool" data-bs-toggle="modal" data-bs-target="#issueToolModal"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
-                                                    @endif
-                                                    @if($canReturn)
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white btn-mark-lost-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Mark as lost"><i class="bi bi-exclamation-triangle"></i> Mark Lost</button>
-                                                    @endif
-                                                    <form method="POST" action="{{ route('admin.inventory.tools.destroy', $tool->id) }}" class="inventory-delete-form d-inline m-0">
-                                                        @csrf
-                                                        @method('DELETE')
+                                                    <?php if($canIssue): ?>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="<?php echo e($tool->id); ?>" data-tool-name="<?php echo e($tool->name); ?>" data-tool-code="<?php echo e($tool->tool_code); ?>" title="Issue tool" data-bs-toggle="modal" data-bs-target="#issueToolModal"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
+                                                    <?php endif; ?>
+                                                    <?php if($canReturn): ?>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="<?php echo e($tool->id); ?>" data-tool-name="<?php echo e($tool->name); ?>" data-tool-code="<?php echo e($tool->tool_code); ?>" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
+                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white btn-mark-lost-tool" data-tool-id="<?php echo e($tool->id); ?>" data-tool-name="<?php echo e($tool->name); ?>" data-tool-code="<?php echo e($tool->tool_code); ?>" title="Mark as lost"><i class="bi bi-exclamation-triangle"></i> Mark Lost</button>
+                                                    <?php endif; ?>
+                                                    <form method="POST" action="<?php echo e(route('admin.inventory.tools.destroy', $tool->id)); ?>" class="inventory-delete-form d-inline m-0">
+                                                        <?php echo csrf_field(); ?>
+                                                        <?php echo method_field('DELETE'); ?>
                                                         <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete tool"><i class="bi bi-trash"></i></button>
                                                     </form>
                                                 </div>
                                             </td>
                                         </tr>
-                                    @empty
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                         <tr id="toolsEmptyStateRow"><td colspan="9" class="text-center text-muted py-4">No tools or equipment registered yet.</td></tr>
-                                    @endforelse
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Active Tool Loans -->
-                        @if($activeToolLoans->count() > 0)
+                        <?php if($activeToolLoans->count() > 0): ?>
                         <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
                             <div class="card-header bg-white border-0 py-3">
                                 <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
@@ -2514,24 +2515,24 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($activeToolLoans as $loan)
+                                        <?php $__empty_1 = true; $__currentLoopData = $activeToolLoans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $loan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                             <tr>
-                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
-                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
+                                                <td class="fw-semibold text-dark"><?php echo e($loan->tool->name ?? 'Unknown'); ?></td>
+                                                <td class="text-muted"><?php echo e($loan->tool->tool_code ?? '-'); ?></td>
+                                                <td class="text-muted"><?php echo e($loan->worker->full_name ?? 'Unknown'); ?></td>
+                                                <td class="text-muted"><?php echo e($loan->project->project_name ?? '-'); ?></td>
+                                                <td class="text-muted"><?php echo e($loan->expected_return_date?->format('M d, Y') ?? '-'); ?></td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;"><?php echo e(ucfirst($loan->condition_at_issue ?? '-')); ?></span></td>
+                                                <td class="text-muted"><?php echo e($loan->borrowed_at?->format('M d, Y h:i A') ?? '-'); ?></td>
                                             </tr>
-                                        @empty
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
-                                        @endforelse
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        @endif
+                        <?php endif; ?>
 
                         <!-- Tool Deduction Ledger -->
                         <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
@@ -2551,63 +2552,65 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($allToolDeductions as $deduction)
-                                            @php
+                                        <?php $__empty_1 = true; $__currentLoopData = $allToolDeductions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $deduction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                            <?php
                                                 $deductionBadgeClass = $deduction->status_badge_class;
                                                 $deductionStatusLabel = $deduction->status_label;
-                                            @endphp
+                                            ?>
                                             <tr>
-                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
-                                                <td class="fw-bold text-dark">₱{{ number_format($deduction->amount, 2) }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
-                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
+                                                <td class="fw-semibold text-dark"><?php echo e($deduction->tool->name ?? 'Unknown'); ?></td>
+                                                <td class="text-muted"><?php echo e($deduction->worker->full_name ?? 'Unknown'); ?></td>
+                                                <td class="text-muted"><?php echo e(ucfirst(str_replace('_', ' ', $deduction->reason))); ?></td>
+                                                <td class="fw-bold text-dark">₱<?php echo e(number_format($deduction->amount, 2)); ?></td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 <?php echo e($deductionBadgeClass); ?>" style="font-size: 11px; font-weight: 600;"><?php echo e($deductionStatusLabel); ?></span></td>
+                                                <td class="text-muted"><?php echo e($deduction->created_at?->format('M d, Y') ?? '-'); ?></td>
                                             </tr>
-                                        @empty
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
-                                        @endforelse
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
             </div>
 
-                    <div id="expenses-view" class="inventory-view-panel {{ $activeInventoryView !== 'expenses' ? 'd-none' : '' }}">
+                    <div id="expenses-view" class="inventory-view-panel <?php echo e($activeInventoryView !== 'expenses' ? 'd-none' : ''); ?>">
                         <div class="mi-filter-card p-3 mb-3">
-                            <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="expenses-filter-form">
+                            <form method="GET" action="<?php echo e(route('admin.inventory')); ?>" class="row g-2 align-items-center" id="expenses-filter-form">
                                 <input type="hidden" name="view" value="expenses">
                                 <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                                    <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search project, phase, material, or supervisor...">
+                                    <input type="text" name="search" value="<?php echo e($search); ?>" class="form-control form-control-sm mi-search-input" placeholder="Search project, phase, material, or supervisor...">
                                     <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                                 </div>
                                 <div class="col-md-3">
                                     <select name="project_id" id="expenseProjectFilter" class="form-select form-select-sm text-muted">
                                         <option value="">All Projects</option>
-                                        @foreach($inventoryProjectOptions as $projectOption)
-                                            @php
+                                        <?php $__currentLoopData = $inventoryProjectOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projectOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
                                                 $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
-                                            @endphp
-                                            <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
-                                                {{ $projectOptionName }}
+                                            ?>
+                                            <option value="<?php echo e($projectOptionId); ?>" <?php echo e((string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : ''); ?>>
+                                                <?php echo e($projectOptionName); ?>
+
                                             </option>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
                                     <select name="phase_id" id="expensePhaseFilter" class="form-select form-select-sm text-muted">
                                         <option value="">All Phases</option>
-                                        @foreach($inventoryPhaseOptions as $phaseOption)
-                                            @php
+                                        <?php $__currentLoopData = $inventoryPhaseOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $phaseOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
                                                 $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
                                                 $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
-                                            @endphp
-                                            <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
-                                                {{ $phaseOptionName }}
+                                            ?>
+                                            <option value="<?php echo e($phaseOptionId); ?>" data-project-id="<?php echo e($phaseProjectId); ?>" <?php echo e((string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : ''); ?>>
+                                                <?php echo e($phaseOptionName); ?>
+
                                             </option>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -2625,7 +2628,7 @@
                                         <div class="mi-expense-summary-icon"><i class="bi bi-cash-stack"></i></div>
                                         <div>
                                             <div class="text-muted small fw-semibold">Total Expense</div>
-                                            <div class="fw-bold text-dark" id="expenseTotalAmount">₱{{ number_format($expenseTotalAmount, 2) }}</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalAmount">₱<?php echo e(number_format($expenseTotalAmount, 2)); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2636,7 +2639,7 @@
                                         <div class="mi-expense-summary-icon"><i class="bi bi-boxes"></i></div>
                                         <div>
                                             <div class="text-muted small fw-semibold">Materials Used</div>
-                                            <div class="fw-bold text-dark" id="expenseTotalQuantity">{{ number_format($expenseTotalQuantity, 0) }}</div>
+                                            <div class="fw-bold text-dark" id="expenseTotalQuantity"><?php echo e(number_format($expenseTotalQuantity, 0)); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2647,7 +2650,7 @@
                                         <div class="mi-expense-summary-icon"><i class="bi bi-building"></i></div>
                                         <div>
                                             <div class="text-muted small fw-semibold">Projects</div>
-                                            <div class="fw-bold text-dark" id="expenseProjectCount">{{ $expenseProjectCount }}</div>
+                                            <div class="fw-bold text-dark" id="expenseProjectCount"><?php echo e($expenseProjectCount); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2658,7 +2661,7 @@
                                         <div class="mi-expense-summary-icon"><i class="bi bi-bar-chart-steps"></i></div>
                                         <div>
                                             <div class="text-muted small fw-semibold">Phases</div>
-                                            <div class="fw-bold text-dark" id="expensePhaseCount">{{ $expensePhaseCount }}</div>
+                                            <div class="fw-bold text-dark" id="expensePhaseCount"><?php echo e($expensePhaseCount); ?></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2680,8 +2683,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="expensesTableBody">
-                                    @forelse($usageLogItems as $log)
-                                        @php
+                                    <?php $__empty_1 = true; $__currentLoopData = $usageLogItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $log): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        <?php
                                             $expenseProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
                                             $expensePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
                                             $expenseMaterial = $log->material ?? null;
@@ -2708,28 +2711,28 @@
                                                 (optional($log->recorder)->name ?? '') . ' ' .
                                                 ($log->remarks ?? '')
                                             ));
-                                        @endphp
+                                        ?>
                                         <tr data-expense-row="true"
-                                            data-project-id="{{ $expenseProjectId }}"
-                                            data-phase-id="{{ $expensePhaseId }}"
-                                            data-expense-search="{{ $expenseSearchText }}"
-                                            data-expense-amount="{{ $expenseAmount }}"
-                                            data-expense-quantity="{{ $expenseQuantity }}">
-                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
-                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($expenseMaterial)->name ?? 'N/A' }}</td>
-                                            <td class="fw-bold text-dark">{{ number_format($expenseQuantity, 0) }} {{ optional($expenseMaterial)->unit ?? 'Piece' }}</td>
-                                            <td class="text-muted">₱{{ number_format($expenseUnitCost, 2) }}</td>
-                                            <td class="fw-bold text-success">₱{{ number_format($expenseAmount, 2) }}</td>
-                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
+                                            data-project-id="<?php echo e($expenseProjectId); ?>"
+                                            data-phase-id="<?php echo e($expensePhaseId); ?>"
+                                            data-expense-search="<?php echo e($expenseSearchText); ?>"
+                                            data-expense-amount="<?php echo e($expenseAmount); ?>"
+                                            data-expense-quantity="<?php echo e($expenseQuantity); ?>">
+                                            <td class="text-muted"><?php echo e(optional($log->usage_date)->format('M d, Y') ?? '-'); ?></td>
+                                            <td class="fw-semibold text-dark"><?php echo e(optional($log->project)->project_name ?? 'N/A'); ?></td>
+                                            <td class="text-muted"><?php echo e(optional($log->phase)->phase_name ?? 'N/A'); ?></td>
+                                            <td class="fw-semibold text-dark"><?php echo e(optional($expenseMaterial)->name ?? 'N/A'); ?></td>
+                                            <td class="fw-bold text-dark"><?php echo e(number_format($expenseQuantity, 0)); ?> <?php echo e(optional($expenseMaterial)->unit ?? 'Piece'); ?></td>
+                                            <td class="text-muted">₱<?php echo e(number_format($expenseUnitCost, 2)); ?></td>
+                                            <td class="fw-bold text-success">₱<?php echo e(number_format($expenseAmount, 2)); ?></td>
+                                            <td><?php echo e(optional($log->recorder)->name ?? 'Unknown'); ?></td>
                                         </tr>
-                                    @empty
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                         <tr id="expenseEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No material expense records available.</td></tr>
-                                    @endforelse
-                                    @if($usageLogItems->count() > 0)
+                                    <?php endif; ?>
+                                    <?php if($usageLogItems->count() > 0): ?>
                                         <tr id="expenseEmptyStateRow" class="mi-empty-row"><td colspan="8" class="text-center text-muted py-4">No matching expense records found.</td></tr>
-                                    @endif
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -2750,17 +2753,17 @@
             <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Low Stock Alerts</h6>
                 <div class="d-flex flex-column gap-3">
-                    @forelse($lowStockMaterials as $lowMat)
+                    <?php $__empty_1 = true; $__currentLoopData = $lowStockMaterials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lowMat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
                         <div class="d-flex align-items-center gap-2">
                             <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #f97316;"></span>
-                            <span class="text-dark fw-semibold">{{ $lowMat->name }}</span>
+                            <span class="text-dark fw-semibold"><?php echo e($lowMat->name); ?></span>
                         </div>
-                        <span class="text-muted fw-bold">{{ number_format((float) $lowMat->current_stock, 0) }} / <span class="text-muted small fw-normal">{{ number_format((float) $lowMat->minimum_stock_level, 0) }} {{ $lowMat->unit }}</span></span>
+                        <span class="text-muted fw-bold"><?php echo e(number_format((float) $lowMat->current_stock, 0)); ?> / <span class="text-muted small fw-normal"><?php echo e(number_format((float) $lowMat->minimum_stock_level, 0)); ?> <?php echo e($lowMat->unit); ?></span></span>
                     </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <div class="text-muted small">No low-stock materials at the moment.</div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
                 <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#lowStockModal">View all low stock</button>
             </div>
@@ -2769,35 +2772,35 @@
             <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Recent Stock Received</h6>
                 <div class="d-flex flex-column gap-3">
-                    @forelse($recentlyUpdatedMaterials as $recMat)
+                    <?php $__empty_1 = true; $__currentLoopData = $recentlyUpdatedMaterials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $recMat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <div class="d-flex align-items-center justify-content-between" style="font-size: 13px;">
                         <div>
-                            <div class="text-dark fw-semibold">{{ $recMat->name }}</div>
-                            <div class="text-muted small" style="font-size: 11px;">{{ optional($recMat->updated_at)->format('M d, Y') ?? 'Recently updated' }}</div>
+                            <div class="text-dark fw-semibold"><?php echo e($recMat->name); ?></div>
+                            <div class="text-muted small" style="font-size: 11px;"><?php echo e(optional($recMat->updated_at)->format('M d, Y') ?? 'Recently updated'); ?></div>
                         </div>
-                        <span class="text-success fw-bold">{{ number_format((float) $recMat->current_stock, 0) }} {{ $recMat->unit }}</span>
+                        <span class="text-success fw-bold"><?php echo e(number_format((float) $recMat->current_stock, 0)); ?> <?php echo e($recMat->unit); ?></span>
                     </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <div class="text-muted small">No recent stock updates available.</div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
                 <button type="button" class="btn btn-link p-0 text-center text-primary fw-bold text-decoration-none mt-3 d-block small" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#recentStockModal">View all received</button>
             </div>
 
             <!-- Widget Component 3: Clean Analytics Donut Graphic representation -->
-            @php
+            <?php
                 $summaryAvailable = min(100, max(0, (float) ($metrics['available_percentage'] ?? 0)));
                 $summaryLow = min(100 - $summaryAvailable, max(0, (float) ($metrics['low_stock_percentage'] ?? 0)));
                 $summaryOut = max(0, 100 - $summaryAvailable - $summaryLow);
                 $inventorySummaryGradient = 'conic-gradient(#10b981 0% ' . $summaryAvailable . '%, #f97316 ' . $summaryAvailable . '% ' . ($summaryAvailable + $summaryLow) . '%, #ef4444 ' . ($summaryAvailable + $summaryLow) . '% 100%)';
-            @endphp
+            ?>
             <div class="card mi-side-widget border-0 shadow-sm rounded-4 p-3 bg-white">
                 <h6 class="fw-bold mb-3 text-dark" style="font-size: 14px;">Inventory Summary</h6>
                 <div class="d-flex justify-content-center mb-3">
-                    <div class="position-relative d-flex align-items-center justify-content-center" style="width: 115px; height: 115px; border-radius: 50%; background: {{ $inventorySummaryGradient }};">
+                    <div class="position-relative d-flex align-items-center justify-content-center" style="width: 115px; height: 115px; border-radius: 50%; background: <?php echo e($inventorySummaryGradient); ?>;">
                         <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 85px; height: 85px;">
                             <div class="text-center">
-                                <span class="fs-4 fw-bold text-dark lh-1 d-block">{{ $metrics['total_materials'] }}</span>
+                                <span class="fs-4 fw-bold text-dark lh-1 d-block"><?php echo e($metrics['total_materials']); ?></span>
                                 <span class="text-muted" style="font-size: 9px; text-transform: uppercase;">Total Items</span>
                             </div>
                         </div>
@@ -2810,21 +2813,21 @@
                             <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #10b981;"></span>
                             <span class="text-muted">Available</span>
                         </div>
-                        <span class="fw-bold text-dark">{{ $metrics['available_materials'] }}</span>
+                        <span class="fw-bold text-dark"><?php echo e($metrics['available_materials']); ?></span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #f97316;"></span>
                             <span class="text-muted">Low Stock</span>
                         </div>
-                        <span class="fw-bold text-dark">{{ $metrics['low_stock_alerts'] }}</span>
+                        <span class="fw-bold text-dark"><?php echo e($metrics['low_stock_alerts']); ?></span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #ef4444;"></span>
                             <span class="text-muted">Out of Stock</span>
                         </div>
-                        <span class="fw-bold text-dark">{{ $metrics['out_of_stock'] }}</span>
+                        <span class="fw-bold text-dark"><?php echo e($metrics['out_of_stock']); ?></span>
                     </div>
                 </div>
             </div>
@@ -2857,23 +2860,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($allLowStockMaterials as $material)
+                            <?php $__empty_1 = true; $__currentLoopData = $allLowStockMaterials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $material): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
-                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
-                                    <td class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }}</td>
-                                    <td class="text-muted">{{ number_format((float) $material->minimum_stock_level, 0) }}</td>
+                                    <td class="fw-semibold text-dark"><?php echo e($material->name); ?></td>
+                                    <td class="text-muted"><?php echo e($material->category ?? 'General'); ?></td>
+                                    <td class="fw-bold text-dark"><?php echo e(number_format((float) $material->current_stock, 0)); ?></td>
+                                    <td class="text-muted"><?php echo e(number_format((float) $material->minimum_stock_level, 0)); ?></td>
                                     <td><span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 py-1">Low Stock</span></td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr><td colspan="5" class="text-center text-muted py-4">No low stock items available.</td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
-                    <span class="text-muted small">Showing {{ $allLowStockMaterials->firstItem() ?? 0 }} to {{ $allLowStockMaterials->lastItem() ?? 0 }} of {{ $allLowStockMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                    <span class="text-muted small">Showing <?php echo e($allLowStockMaterials->firstItem() ?? 0); ?> to <?php echo e($allLowStockMaterials->lastItem() ?? 0); ?> of <?php echo e($allLowStockMaterials->total()); ?> items</span>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto"><?php echo e($allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5')); ?></div>
                 </div>
             </div>
         </div>
@@ -2902,22 +2905,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($allRecentlyUpdatedMaterials as $material)
+                            <?php $__empty_1 = true; $__currentLoopData = $allRecentlyUpdatedMaterials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $material): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td class="fw-semibold text-dark">{{ $material->name }}</td>
-                                    <td class="text-muted">{{ $material->category ?? 'General' }}</td>
-                                    <td class="fw-bold text-success">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</td>
-                                    <td class="text-muted">{{ optional($material->updated_at)->format('M d, Y H:i') ?? 'N/A' }}</td>
+                                    <td class="fw-semibold text-dark"><?php echo e($material->name); ?></td>
+                                    <td class="text-muted"><?php echo e($material->category ?? 'General'); ?></td>
+                                    <td class="fw-bold text-success"><?php echo e(number_format((float) $material->current_stock, 0)); ?> <?php echo e($material->unit); ?></td>
+                                    <td class="text-muted"><?php echo e(optional($material->updated_at)->format('M d, Y H:i') ?? 'N/A'); ?></td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr><td colspan="4" class="text-center text-muted py-4">No recent stock updates available.</td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
-                    <span class="text-muted small">Showing {{ $allRecentlyUpdatedMaterials->firstItem() ?? 0 }} to {{ $allRecentlyUpdatedMaterials->lastItem() ?? 0 }} of {{ $allRecentlyUpdatedMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                    <span class="text-muted small">Showing <?php echo e($allRecentlyUpdatedMaterials->firstItem() ?? 0); ?> to <?php echo e($allRecentlyUpdatedMaterials->lastItem() ?? 0); ?> of <?php echo e($allRecentlyUpdatedMaterials->total()); ?> items</span>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto"><?php echo e($allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5')); ?></div>
                 </div>
             </div>
         </div>
@@ -2970,8 +2973,8 @@
                     </div>
                 </div>
 
-                <form id="receiveStockForm" method="POST" action="{{ route('admin.inventory.materials.receive') }}">
-                    @csrf
+                <form id="receiveStockForm" method="POST" action="<?php echo e(route('admin.inventory.materials.receive')); ?>">
+                    <?php echo csrf_field(); ?>
                     <div class="row g-4 align-items-start receive-stock-form-layout">
                         <!-- Left Layout Form Parameter Fields -->
                         <div class="receive-stock-form-main">
@@ -2984,17 +2987,18 @@
                                             <i class="bi bi-box-seam input-icon-left"></i>
                                             <select id="receiveStockMaterialSelect" name="material_id" class="control-field-input" required>
                                                 <option value="">Select material</option>
-                                                @foreach($materials as $material)
-                                                    <option value="{{ $material->id }}"
-                                                            data-name="{{ $material->name }}"
-                                                            data-unit="{{ $material->unit }}"
-                                                            data-stock="{{ $material->current_stock }}"
-                                                            data-min="{{ $material->minimum_stock_level }}"
-                                                            data-category="{{ $material->category }}"
-                                                            {{ old('material_id') == $material->id ? 'selected' : '' }}>
-                                                        {{ $material->name }}
+                                                <?php $__currentLoopData = $materials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $material): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <option value="<?php echo e($material->id); ?>"
+                                                            data-name="<?php echo e($material->name); ?>"
+                                                            data-unit="<?php echo e($material->unit); ?>"
+                                                            data-stock="<?php echo e($material->current_stock); ?>"
+                                                            data-min="<?php echo e($material->minimum_stock_level); ?>"
+                                                            data-category="<?php echo e($material->category); ?>"
+                                                            <?php echo e(old('material_id') == $material->id ? 'selected' : ''); ?>>
+                                                        <?php echo e($material->name); ?>
+
                                                     </option>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
                                         </div>
                                         <div class="form-input-hint">Select an existing material to receive stock.</div>
@@ -3009,9 +3013,9 @@
                                             <select name="category" class="control-field-input" id="receiveStockMaterialCategoryInput">
                                                 <option value="">Select category</option>
                                                 <optgroup label="Common material categories">
-                                                    @foreach($predefinedMaterialCategories as $cat)
-                                                        <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                                    @endforeach
+                                                    <?php $__currentLoopData = $predefinedMaterialCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        <option value="<?php echo e($cat); ?>" <?php echo e(old('category') == $cat ? 'selected' : ''); ?>><?php echo e($cat); ?></option>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </optgroup>
                                                 <option value="Other">Other</option>
                                             </select>
@@ -3019,7 +3023,7 @@
                                         <div class="custom-category-input d-none mt-2" id="receiveStockCustomCategoryWrapper">
                                             <div class="input-container-group">
                                                 <i class="bi bi-pencil-square input-icon-left"></i>
-                                                <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="receiveStockCustomCategoryInput" value="{{ old('custom_category') }}">
+                                                <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="receiveStockCustomCategoryInput" value="<?php echo e(old('custom_category')); ?>">
                                             </div>
                                         </div>
                                         <div class="form-input-hint">Material category — stored in materials table.</div>
@@ -3033,7 +3037,7 @@
                                         <label class="form-label-custom">Quantity Received<span class="required-asterisk">*</span></label>
                                         <div class="input-container-group">
                                             <i class="bi bi-box input-icon-left"></i>
-                                            <input type="number" step="0.01" min="0.01" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" value="{{ old('quantity_received') }}" required>
+                                            <input type="number" step="0.01" min="0.01" id="inputQuantityReceived" name="quantity_received" class="control-field-input input-has-addon text-start" placeholder="Enter quantity received" value="<?php echo e(old('quantity_received')); ?>" required>
                                             <span class="input-addon-right" id="addonUnitText">Bags</span>
                                         </div>
                                         <div class="form-input-hint">Enter the total quantity of material received.</div>
@@ -3045,7 +3049,7 @@
                                         <label class="form-label-custom">Received Date<span class="required-asterisk">*</span></label>
                                         <div class="input-container-group select-caret-wrapper">
                                             <i class="bi bi-calendar3 input-icon-left"></i>
-                                            <input type="date" id="inputReceivedDate" name="received_date" class="control-field-input" value="{{ now()->toDateString() }}" required>
+                                            <input type="date" id="inputReceivedDate" name="received_date" class="control-field-input" value="<?php echo e(now()->toDateString()); ?>" required>
                                         </div>
                                         <div class="form-input-hint">Select the date when the stock was received.</div>
                                     </div>
@@ -3058,7 +3062,7 @@
                                         <label class="form-label-custom">Supplier</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-person input-icon-left"></i>
-                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)" value="{{ old('supplier') }}">
+                                            <input type="text" name="supplier" id="inputSupplierText" class="control-field-input" placeholder="Enter supplier name (optional)" value="<?php echo e(old('supplier')); ?>">
                                         </div>
                                         <div class="form-input-hint">Supplier who delivered the materials.</div>
                                     </div>
@@ -3068,7 +3072,7 @@
                                         <label class="form-label-custom">Reference / OR No.</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-file-earmark-text input-icon-left"></i>
-                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)" value="{{ old('notes') }}">
+                                            <input type="text" name="notes" class="control-field-input" placeholder="Enter reference or OR number (optional)" value="<?php echo e(old('notes')); ?>">
                                         </div>
                                         <div class="form-input-hint">Delivery receipt number or official receipt number.</div>
                                     </div>
@@ -3081,7 +3085,7 @@
                                         <label class="form-label-custom">Remarks (Optional)</label>
                                         <div class="input-container-group">
                                             <i class="bi bi-chat-square-dots input-icon-left" style="top: 14px; transform: none;"></i>
-                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;">{{ old('remarks') }}</textarea>
+                                            <textarea name="remarks" id="textareaRemarks" class="control-field-input" rows="3" maxlength="255" placeholder="Enter any remarks or notes..." style="padding-top: 0.55rem; resize: none;"><?php echo e(old('remarks')); ?></textarea>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-1">
                                             <div class="form-input-hint my-0">Additional notes about this stock receipt.</div>
@@ -3159,8 +3163,8 @@
                 </button>
             </div>
             <div class="modal-body-custom">
-                <form method="POST" action="{{ route('admin.inventory.materials.store') }}" class="inventory-form">
-                    @csrf
+                <form method="POST" action="<?php echo e(route('admin.inventory.materials.store')); ?>" class="inventory-form">
+                    <?php echo csrf_field(); ?>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="form-group-wrapper mb-0">
@@ -3180,9 +3184,9 @@
                                     <select name="category" class="control-field-input" id="addMaterialCategorySelect">
                                         <option value="">Select category</option>
                                         <optgroup label="Common material categories">
-                                            @foreach($predefinedMaterialCategories as $cat)
-                                                <option value="{{ $cat }}">{{ $cat }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $predefinedMaterialCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($cat); ?>"><?php echo e($cat); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </optgroup>
                                         <option value="Other">Other</option>
                                     </select>
@@ -3190,7 +3194,7 @@
                                 <div class="custom-category-input d-none mt-2" id="addMaterialCustomCategoryWrapper">
                                     <div class="input-container-group">
                                         <i class="bi bi-pencil-square input-icon-left"></i>
-                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="addMaterialCustomCategoryInput" value="<?php echo e(old('custom_category')); ?>">
                                     </div>
                                 </div>
                                 <div class="form-input-hint">Optional classification for grouping.</div>
@@ -3264,31 +3268,31 @@
     </div>
 </div>
 
-@foreach($materials as $material)
-<div class="modal fade" id="viewMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+<?php $__currentLoopData = $materials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $material): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<div class="modal fade" id="viewMaterialModal<?php echo e($material->id); ?>" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content rounded-4 border-0">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-dark">{{ $material->name }}</h5>
+                <h5 class="modal-title fw-bold text-dark"><?php echo e($material->name); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-2">Category Segment: <strong class="text-dark">{{ $material->category ?? 'General' }}</strong></p>
-                <p class="text-muted mb-2">Unit Classification: <strong class="text-dark">{{ $material->unit }}</strong></p>
-                <p class="text-muted mb-2">Current Active Stock: <strong class="text-dark">{{ number_format($material->current_stock, 2) }}</strong></p>
-                <p class="text-muted mb-2">Minimum Level Bound: <strong class="text-dark">{{ number_format($material->minimum_stock_level, 2) }}</strong></p>
-                <p class="text-muted mb-0">Assigned Vendor: <strong class="text-dark">{{ $material->supplier ?? 'Not specified' }}</strong></p>
+                <p class="text-muted mb-2">Category Segment: <strong class="text-dark"><?php echo e($material->category ?? 'General'); ?></strong></p>
+                <p class="text-muted mb-2">Unit Classification: <strong class="text-dark"><?php echo e($material->unit); ?></strong></p>
+                <p class="text-muted mb-2">Current Active Stock: <strong class="text-dark"><?php echo e(number_format($material->current_stock, 2)); ?></strong></p>
+                <p class="text-muted mb-2">Minimum Level Bound: <strong class="text-dark"><?php echo e(number_format($material->minimum_stock_level, 2)); ?></strong></p>
+                <p class="text-muted mb-0">Assigned Vendor: <strong class="text-dark"><?php echo e($material->supplier ?? 'Not specified'); ?></strong></p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="editMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editMaterialModal<?php echo e($material->id); ?>" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-4 border-0">
-            <form method="POST" action="{{ route('admin.inventory.materials.update', $material->id) }}" class="inventory-form">
-                @csrf
-                @method('PUT')
+            <form method="POST" action="<?php echo e(route('admin.inventory.materials.update', $material->id)); ?>" class="inventory-form">
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('PUT'); ?>
                 <div class="modal-header border-0 pb-0">
                     <div class="d-flex align-items-center gap-3">
                         <div class="inventory-card-icon available">
@@ -3306,47 +3310,47 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="text-muted small fw-semibold mb-1">Current Stock</div>
-                                <div class="fw-bold text-dark">{{ number_format((float) $material->current_stock, 0) }} {{ $material->unit }}</div>
+                                <div class="fw-bold text-dark"><?php echo e(number_format((float) $material->current_stock, 0)); ?> <?php echo e($material->unit); ?></div>
                             </div>
                             <div class="col-md-6">
                                 <div class="text-muted small fw-semibold mb-1">Status</div>
-                                <span class="inventory-stat-pill {{ $material->current_stock <= 0 ? 'bg-danger-subtle text-danger' : ($material->current_stock <= $material->minimum_stock_level ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success') }}">{{ $material->current_stock <= 0 ? 'Out of Stock' : ($material->current_stock <= $material->minimum_stock_level ? 'Low Stock' : 'Available') }}</span>
+                                <span class="inventory-stat-pill <?php echo e($material->current_stock <= 0 ? 'bg-danger-subtle text-danger' : ($material->current_stock <= $material->minimum_stock_level ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success')); ?>"><?php echo e($material->current_stock <= 0 ? 'Out of Stock' : ($material->current_stock <= $material->minimum_stock_level ? 'Low Stock' : 'Available')); ?></span>
                             </div>
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Material Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $material->name) }}" required>
+                            <input type="text" name="name" class="form-control" value="<?php echo e(old('name', $material->name)); ?>" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Category</label>
                             <select name="category" class="form-control" id="editMaterialCategorySelect">
                                 <option value="">Select category</option>
-                                @foreach($predefinedMaterialCategories as $cat)
-                                    <option value="{{ $cat }}" {{ old('category', $material->category ?? '') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $predefinedMaterialCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($cat); ?>" <?php echo e(old('category', $material->category ?? '') == $cat ? 'selected' : ''); ?>><?php echo e($cat); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <option value="Other">Other</option>
                             </select>
                             <div class="custom-category-input d-none mt-2" id="editMaterialCustomCategoryWrapper">
-                                <input type="text" name="custom_category" class="form-control" placeholder="Enter custom category" id="editMaterialCustomCategoryInput" value="{{ old('custom_category') }}">
+                                <input type="text" name="custom_category" class="form-control" placeholder="Enter custom category" id="editMaterialCustomCategoryInput" value="<?php echo e(old('custom_category')); ?>">
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Unit</label>
-                            <input type="text" name="unit" class="form-control" value="{{ old('unit', $material->unit) }}" required>
+                            <input type="text" name="unit" class="form-control" value="<?php echo e(old('unit', $material->unit)); ?>" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Minimum Stock Level</label>
-                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="{{ old('minimum_stock_level', $material->minimum_stock_level) }}" required>
+                            <input type="number" step="0.01" min="0" name="minimum_stock_level" class="form-control" value="<?php echo e(old('minimum_stock_level', $material->minimum_stock_level)); ?>" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Supplier</label>
-                            <input type="text" name="supplier" class="form-control" value="{{ old('supplier', $material->supplier ?? '') }}">
+                            <input type="text" name="supplier" class="form-control" value="<?php echo e(old('supplier', $material->supplier ?? '')); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label small text-muted fw-semibold">Description</label>
-                            <textarea name="description" class="form-control" rows="3">{{ old('description', $material->description) }}</textarea>
+                            <textarea name="description" class="form-control" rows="3"><?php echo e(old('description', $material->description)); ?></textarea>
                         </div>
                     </div>
                 </div>
@@ -3358,7 +3362,7 @@
         </div>
     </div>
 </div>
-@endforeach
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 <div class="modal fade" id="materialUsageDetailModal" tabindex="-1" aria-labelledby="materialUsageDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -3445,8 +3449,8 @@
                 </button>
             </div>
             <div class="modal-body-custom">
-                <form method="POST" action="{{ route('admin.inventory.tools.store') }}" class="receive-stock-form-main" id="addToolForm">
-                    @csrf
+                <form method="POST" action="<?php echo e(route('admin.inventory.tools.store')); ?>" class="receive-stock-form-main" id="addToolForm">
+                    <?php echo csrf_field(); ?>
                     <div class="alert alert-danger add-tool-errors d-none" role="alert"></div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
@@ -3477,16 +3481,16 @@
                                     <i class="bi bi-tags input-icon-left"></i>
                                     <select name="category" class="control-field-input" id="toolCategorySelect" required>
                                         <option value="">Select category</option>
-                                        @foreach($predefinedToolCategories as $cat)
-                                            <option value="{{ $cat }}">{{ $cat }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $predefinedToolCategories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($cat); ?>"><?php echo e($cat); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         <option value="Other">Other</option>
                                     </select>
                                 </div>
                                 <div class="custom-category-input d-none mt-2" id="customCategoryWrapper">
                                     <div class="input-container-group">
                                         <i class="bi bi-pencil-square input-icon-left"></i>
-                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="customCategoryInput" value="{{ old('custom_category') }}">
+                                        <input type="text" name="custom_category" class="control-field-input" placeholder="Enter custom category" id="customCategoryInput" value="<?php echo e(old('custom_category')); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -3591,7 +3595,7 @@
             </div>
             <div class="modal-body-custom">
                 <form method="POST" action="" class="receive-stock-form-main" id="issueToolForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <div class="alert alert-danger issue-tool-errors d-none" role="alert"></div>
                     <div class="meta-info-card mb-3">
                         <div class="row g-2 text-center text-sm-start">
@@ -3619,9 +3623,9 @@
                                     <i class="bi bi-person input-icon-left"></i>
                                     <select name="worker_id" class="control-field-input" required>
                                         <option value="">Select worker</option>
-                                        @foreach(\App\Models\Worker::where('is_active', true)->orderBy('first_name')->get() as $workerOption)
-                                            <option value="{{ $workerOption->worker_id }}">{{ $workerOption->full_name }} @if($workerOption->trade)({{ $workerOption->trade }})@endif</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = \App\Models\Worker::where('is_active', true)->orderBy('first_name')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $workerOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($workerOption->worker_id); ?>"><?php echo e($workerOption->full_name); ?> <?php if($workerOption->trade): ?>(<?php echo e($workerOption->trade); ?>)<?php endif; ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                             </div>
@@ -3633,10 +3637,10 @@
                                     <i class="bi bi-building input-icon-left"></i>
                                     <select name="project_id" class="control-field-input">
                                         <option value="">No project</option>
-                                        @foreach($projects as $projectOption)
-                                            @php $pid = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id'); $pname = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed'; @endphp
-                                            <option value="{{ $pid }}">{{ $pname }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projectOption): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php $pid = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id'); $pname = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed'; ?>
+                                            <option value="<?php echo e($pid); ?>"><?php echo e($pname); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                             </div>
@@ -3711,7 +3715,7 @@
             </div>
             <div class="modal-body-custom">
                 <form method="POST" action="" class="receive-stock-form-main" id="returnToolForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <div class="alert alert-danger return-tool-errors d-none" role="alert"></div>
                     <div class="meta-info-card mb-3">
                         <div class="row g-2 text-center text-sm-start">
@@ -3783,7 +3787,7 @@
             </div>
             <div class="modal-body-custom">
                 <form method="POST" action="" class="receive-stock-form-main" id="markLostToolForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <div class="alert alert-danger mark-lost-tool-errors d-none" role="alert"></div>
                     <div class="meta-info-card mb-3">
                         <div class="row g-2 text-center text-sm-start">
@@ -4368,7 +4372,7 @@
         const receiveStockSelect = document.getElementById('receiveStockMaterialSelect');
         const receiveStockTextInput = document.getElementById('receiveStockMaterialInput');
         const receiveStockCategoryInput = document.getElementById('receiveStockMaterialCategoryInput');
-        const receiveStockSubmitRoute = '{{ route('admin.inventory.materials.receive') }}';
+        const receiveStockSubmitRoute = '<?php echo e(route('admin.inventory.materials.receive')); ?>';
 
         const inputQty = document.getElementById('inputQuantityReceived');
         const txtRemarks = document.getElementById('textareaRemarks');
@@ -4841,4 +4845,5 @@
     });
 
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\dashboard\resources\views/admin/inventory.blade.php ENDPATH**/ ?>
