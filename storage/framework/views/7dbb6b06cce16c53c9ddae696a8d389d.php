@@ -567,10 +567,45 @@ unset($__errorArgs, $__bag); ?>
         justify-content: flex-end;
     }
 
+    @media (max-width: 1200px) {
+        .ug-hero-card {
+            grid-template-columns: 1fr;
+            align-items: flex-start;
+        }
+
+        .ug-add-user-btn {
+            justify-self: flex-start;
+        }
+    }
+
     @media (max-width: 900px) {
+        .ug-hero-card {
+            min-height: auto !important;
+            padding: 0.7rem 0.9rem;
+            gap: 0.45rem;
+        }
+
+        .dashboard-title-area {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .dashboard-title-area h2,
+        .dashboard-title-area h2 * {
+            font-size: 1.45rem !important;
+            line-height: 1.25 !important;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .dashboard-title-area p {
+            font-size: 0.74rem;
+        }
+
         .landing-gallery-hero {
-            min-height: 320px;
-            padding: 26px 20px 20px;
+            min-height: auto !important;
+            padding: 18px 16px;
         }
 
         .landing-gallery-hero__content {
@@ -595,6 +630,134 @@ unset($__errorArgs, $__bag); ?>
         .gallery-row-actions {
             width: 100%;
             justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .landing-gallery-page {
+            padding-top: 4px;
+        }
+
+        .ug-hero-card {
+            min-height: auto !important;
+            padding: 0.7rem 0.8rem;
+        }
+
+        .dashboard-title-area {
+            width: 100%;
+        }
+
+        .dashboard-title-area h2,
+        .dashboard-title-area h2 * {
+            font-size: 1.05rem !important;
+            line-height: 1.35 !important;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .dashboard-title-area p {
+            font-size: 0.72rem;
+        }
+
+        .ug-add-user-btn {
+            width: 100%;
+        }
+
+        .landing-gallery-panel {
+            padding: 14px 12px 12px;
+        }
+
+        .gallery-empty-state {
+            min-height: 300px;
+            padding: 20px 16px;
+        }
+
+        .gallery-row-item {
+            display: grid;
+            grid-template-columns: 96px 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .gallery-row-item img {
+            width: 96px;
+            height: 72px;
+        }
+
+        .gallery-row-copy {
+            min-width: 0;
+        }
+
+        .gallery-row-actions {
+            grid-column: 1 / -1;
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .ug-hero-card {
+            grid-template-columns: 1fr !important;
+        }
+
+        .dashboard-title-area {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            overflow: visible !important;
+        }
+
+        .dashboard-title-area h2,
+        .dashboard-title-area h2 * {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            font-size: 0.9rem !important;
+            line-height: 1.45 !important;
+            letter-spacing: -0.02em !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .upload-field-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .upload-field-icon {
+            display: none;
+        }
+
+        .upload-field-wrap .form-control {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .upload-field-wrap .file-name-display {
+            position: static;
+            transform: none;
+            display: block;
+            width: 100%;
+            max-width: none;
+            margin-top: 10px;
+            padding-left: 4px;
+            text-align: left;
+        }
+
+        .gallery-row-item {
+            grid-template-columns: 1fr;
+        }
+
+        .gallery-row-item img {
+            width: 100%;
+            height: 180px;
         }
     }
 </style>

@@ -66,4 +66,4 @@
         </div>
     </div>
 </aside>
-<?php /**PATH C:\xampp\htdocs\dashboard\resources\views/partials/admin/sidebar.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\xampp\htdocs\dashboard\resources\views\partials\admin\sidebar.blade.php ENDPATH**/ ?>

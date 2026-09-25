@@ -1,16 +1,14 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Landing Page Gallery - D&G Construction Monitor'); ?>
+<?php $__env->startSection('page_title', 'Landing Page Gallery'); ?>
 
-@section('title', 'Landing Page Gallery - D&G Construction Monitor')
-@section('page_title', 'Landing Page Gallery')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="landing-gallery-page">
-    @if(session('success'))
-        <div class="alert alert-success mb-4">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger mb-4 d-none" data-swal-error="{{ session('error') }}">{{ session('error') }}</div>
-    @endif
+    <?php if(session('success')): ?>
+        <div class="alert alert-success mb-4"><?php echo e(session('success')); ?></div>
+    <?php endif; ?>
+    <?php if(session('error')): ?>
+        <div class="alert alert-danger mb-4 d-none" data-swal-error="<?php echo e(session('error')); ?>"><?php echo e(session('error')); ?></div>
+    <?php endif; ?>
 
     <div class="ug-hero-card landing-gallery-hero mb-4" aria-label="Landing page gallery header">
         <div class="dashboard-title-area">
@@ -34,17 +32,17 @@
             </div>
         </div>
 
-        <form id="galleryCreateForm" action="{{ route('admin.landing-gallery.store') }}" method="POST" enctype="multipart/form-data" class="landing-gallery-form">
-            @csrf
+        <form id="galleryCreateForm" action="<?php echo e(route('admin.landing-gallery.store')); ?>" method="POST" enctype="multipart/form-data" class="landing-gallery-form">
+            <?php echo csrf_field(); ?>
 
             <div class="form-grid">
                 <div class="field-group field-group--project">
                     <label for="project_id">Project</label>
                     <select id="project_id" name="project_id" class="form-select" required>
                         <option value="">Select a completed project</option>
-                        @foreach($projects as $project)
-                            <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $project): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($project->project_id); ?>"><?php echo e($project->project_name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -59,18 +57,32 @@
 
             </div>
 
-            @error('project_id')
-                <div class="field-error">{{ $message }}</div>
-            @enderror
-            @error('image')
-                <div class="field-error">{{ $message }}</div>
-            @enderror
+            <?php $__errorArgs = ['project_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <div class="field-error"><?php echo e($message); ?></div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+            <?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <div class="field-error"><?php echo e($message); ?></div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
         </form>
     </section>
 
-    <form id="galleryReorderForm" action="{{ route('admin.landing-gallery.reorder') }}" method="POST">
-        @csrf
-        @method('PATCH')
+    <form id="galleryReorderForm" action="<?php echo e(route('admin.landing-gallery.reorder')); ?>" method="POST">
+        <?php echo csrf_field(); ?>
+        <?php echo method_field('PATCH'); ?>
     </form>
 
     <section class="landing-gallery-panel landing-gallery-panel--list">
@@ -83,38 +95,39 @@
             </div>
         </div>
 
-        @if($galleryImages->count())
+        <?php if($galleryImages->count()): ?>
             <div class="gallery-row-list">
-                @foreach($galleryImages as $galleryImage)
+                <?php $__currentLoopData = $galleryImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $galleryImage): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="gallery-row-item" data-gallery-row>
-                        <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->project->project_name }}">
+                        <img src="<?php echo e(asset('storage/' . ltrim($galleryImage->image_path, '/'))); ?>" alt="<?php echo e($galleryImage->project->project_name); ?>">
                         <div class="gallery-row-copy">
-                            <div class="gallery-row-name">{{ $galleryImage->project->project_name }}</div>
-                            <div class="gallery-row-meta">Position {{ $loop->iteration }} · {{ $galleryImage->is_active ? 'Visible' : 'Hidden' }}</div>
+                            <div class="gallery-row-name"><?php echo e($galleryImage->project->project_name); ?></div>
+                            <div class="gallery-row-meta">Position <?php echo e($loop->iteration); ?> · <?php echo e($galleryImage->is_active ? 'Visible' : 'Hidden'); ?></div>
                         </div>
-                        <input type="hidden" name="order[]" value="{{ $galleryImage->id }}" form="galleryReorderForm">
+                        <input type="hidden" name="order[]" value="<?php echo e($galleryImage->id); ?>" form="galleryReorderForm">
                         <div class="gallery-row-actions">
                             <div class="btn-group btn-group-sm" role="group" aria-label="Change gallery position">
                                 <button type="button" class="btn btn-outline-secondary" data-move-gallery="up" title="Move up"><i class="bi bi-chevron-up"></i></button>
                                 <button type="button" class="btn btn-outline-secondary" data-move-gallery="down" title="Move down"><i class="bi bi-chevron-down"></i></button>
                             </div>
-                            <form action="{{ route('admin.landing-gallery.toggle', $galleryImage) }}" method="POST" class="d-inline-block">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-sm {{ $galleryImage->is_active ? 'btn-outline-secondary' : 'btn-outline-success' }}">
-                                    <i class="bi bi-eye{{ $galleryImage->is_active ? '-slash' : '' }} me-1"></i>{{ $galleryImage->is_active ? 'Hide' : 'Show' }}
+                            <form action="<?php echo e(route('admin.landing-gallery.toggle', $galleryImage)); ?>" method="POST" class="d-inline-block">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PATCH'); ?>
+                                <button type="submit" class="btn btn-sm <?php echo e($galleryImage->is_active ? 'btn-outline-secondary' : 'btn-outline-success'); ?>">
+                                    <i class="bi bi-eye<?php echo e($galleryImage->is_active ? '-slash' : ''); ?> me-1"></i><?php echo e($galleryImage->is_active ? 'Hide' : 'Show'); ?>
+
                                 </button>
                             </form>
-                            <form action="{{ route('admin.landing-gallery.destroy', $galleryImage) }}" method="POST" onsubmit="return confirm('Remove this image from the landing page?');" class="d-inline-block">
-                                @csrf
-                                @method('DELETE')
+                            <form action="<?php echo e(route('admin.landing-gallery.destroy', $galleryImage)); ?>" method="POST" onsubmit="return confirm('Remove this image from the landing page?');" class="d-inline-block">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('DELETE'); ?>
                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
                             </form>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
-        @else
+        <?php else: ?>
             <div class="gallery-empty-state">
                 <div class="gallery-empty-illustration" aria-hidden="true">
                     <span class="gallery-empty-frame"></span>
@@ -123,12 +136,12 @@
                 <h4>No images yet</h4>
                 <p>Add a completed project and upload images to display them in the landing page gallery.</p>
             </div>
-        @endif
+        <?php endif; ?>
     </section>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .landing-gallery-page {
         width: 100%;
@@ -748,9 +761,9 @@
         }
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const fileInput = document.getElementById('image');
@@ -810,4 +823,5 @@
         });
     });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\dashboard\resources\views\admin\gallery\index.blade.php ENDPATH**/ ?>
