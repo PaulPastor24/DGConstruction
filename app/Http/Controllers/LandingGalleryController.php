@@ -16,7 +16,7 @@ class LandingGalleryController extends Controller
             ->orderBy('id')
             ->get();
         $projects = Project::query()
-            ->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))
+            ->whereNotNull('project_name')
             ->orderBy('project_name')
             ->get(['project_id', 'project_name']);
 
@@ -32,7 +32,7 @@ class LandingGalleryController extends Controller
 
         $project = Project::findOrFail($validated['project_id']);
         if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
-            return back()->withInput()->withErrors(['project_id' => 'Only completed projects can be added to the landing page gallery.']);
+            return back()->withInput()->with('error', 'Only completed projects can be added to the landing page gallery.');
         }
 
         $sortOrder = ((int) LandingGalleryImage::max('sort_order')) + 1;
