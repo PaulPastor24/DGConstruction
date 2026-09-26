@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('landing_gallery_images', function (Blueprint $table) {
+            $table->unsignedInteger('project_id')->nullable()->change();
             $table->boolean('is_external')->default(false)->after('is_active');
             $table->string('external_project_name')->nullable()->after('is_external');
             $table->string('external_project_location')->nullable()->after('external_project_name');

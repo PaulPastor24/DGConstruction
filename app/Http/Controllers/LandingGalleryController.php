@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Schema;
 
 class LandingGalleryController extends Controller
 {
+    protected function landingGalleryHasColumn(string $column): bool
+    {
+        return Schema::hasTable('landing_gallery_images') && Schema::hasColumn('landing_gallery_images', $column);
+    }
+
     public function index()
     {
         $galleryImages = collect();
@@ -31,45 +36,86 @@ class LandingGalleryController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'is_external' => ['nullable', 'boolean'],
-            'external_project_name' => ['nullable', 'string', 'max:255'],
-            'external_project_location' => ['nullable', 'string', 'max:255'],
-            'external_project_description' => ['nullable', 'string', 'max:2000'],
-            'external_project_url' => ['nullable', 'url', 'max:2000'],
-        ]);
+        ];
 
-<<<<<<< HEAD
-        $isExternal = (bool) ($validated['is_external'] ?? false);
+        if ($this->landingGalleryHasColumn('is_external')) {
+            $rules['is_external'] = ['nullable', 'boolean'];
+        }
 
-        if (!$isExternal && empty($validated['project_id'])) {
-            return back()->withInput()->withErrors(['project_id' => 'Please select a project or mark this as an external featured project.']);
+        if ($this->landingGalleryHasColumn('external_project_name')) {
+            $rules['external_project_name'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_location')) {
+            $rules['external_project_location'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_description')) {
+            $rules['external_project_description'] = ['nullable', 'string', 'max:2000'];
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_url')) {
+            $rules['external_project_url'] = ['nullable', 'url', 'max:2000'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $hasExternalColumns = $this->landingGalleryHasColumn('is_external')
+            && $this->landingGalleryHasColumn('external_project_name')
+            && $this->landingGalleryHasColumn('external_project_location')
+            && $this->landingGalleryHasColumn('external_project_description')
+            && $this->landingGalleryHasColumn('external_project_url');
+
+        $isExternal = $hasExternalColumns && (bool) ($validated['is_external'] ?? false);
+
+        if (! $isExternal && empty($validated['project_id'])) {
+            return back()->withInput()->withErrors([
+                'project_id' => 'Please select a project or mark this as an external featured project.',
+            ]);
         }
 
         if ($isExternal) {
             $validated['project_id'] = null;
-            $validated['is_external'] = true;
         } else {
             $project = Project::findOrFail($validated['project_id']);
             if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
-                return back()->withInput()->withErrors(['project_id' => 'Only completed projects can be added to the landing page gallery.']);
+                return back()->withInput()->withErrors([
+                    'project_id' => 'Only completed projects can be added to the landing page gallery.',
+                ]);
             }
-            $validated['is_external'] = false;
-=======
-        $project = Project::findOrFail($validated['project_id']);
-        if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
-            return back()->withInput()->with('error', 'Only completed projects can be added to the landing page gallery.');
->>>>>>> bfb86f3186b50144cd15438277ba77741e70e65b
         }
 
-        $sortOrder = ((int) LandingGalleryImage::max('sort_order')) + 1;
-        LandingGalleryImage::create(array_merge($validated, [
+        $galleryData = [
+            'project_id' => $validated['project_id'] ?? null,
             'image_path' => $request->file('image')->store('landing-gallery', 'public'),
-            'sort_order' => $sortOrder,
+            'sort_order' => ((int) LandingGalleryImage::max('sort_order')) + 1,
             'is_active' => true,
-        ]));
+        ];
+
+        if ($this->landingGalleryHasColumn('is_external')) {
+            $galleryData['is_external'] = $isExternal;
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_name')) {
+            $galleryData['external_project_name'] = $validated['external_project_name'] ?? null;
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_location')) {
+            $galleryData['external_project_location'] = $validated['external_project_location'] ?? null;
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_description')) {
+            $galleryData['external_project_description'] = $validated['external_project_description'] ?? null;
+        }
+
+        if ($this->landingGalleryHasColumn('external_project_url')) {
+            $galleryData['external_project_url'] = $validated['external_project_url'] ?? null;
+        }
+
+        LandingGalleryImage::create($galleryData);
 
         return back()->with('success', $isExternal ? 'External featured project added to landing page.' : 'Landing page gallery image added.');
     }

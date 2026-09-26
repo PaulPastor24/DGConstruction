@@ -22,15 +22,24 @@ Route::get('/', function () {
     $galleryImages = collect();
 
     if (Schema::hasTable('landing_gallery_images')) {
-        $galleryImages = \App\Models\LandingGalleryImage::query()
+        $galleryQuery = \App\Models\LandingGalleryImage::query()
             ->with('project')
-            ->where('is_active', true)
-            ->where(function ($query) {
+            ->where('is_active', true);
+
+        if (Schema::hasColumn('landing_gallery_images', 'is_external')) {
+            $galleryQuery->where(function ($query) {
                 $query->whereHas('project', function ($q) {
                     $q->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
                 })
                 ->orWhere('is_external', true);
-            })
+            });
+        } else {
+            $galleryQuery->whereHas('project', function ($q) {
+                $q->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
+            });
+        }
+
+        $galleryImages = $galleryQuery
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

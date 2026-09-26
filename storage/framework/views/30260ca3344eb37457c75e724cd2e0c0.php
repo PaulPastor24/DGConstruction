@@ -748,15 +748,22 @@
                     $heroAlt = 'D&G Construction Inc.';
                     if ($galleryImages->isNotEmpty()) {
                         $first = $galleryImages->first();
-                        $path = $first->image_path;
-                        $project = $first->project;
-                        $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
-                        if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
-                            $heroImage = $path;
-                        } elseif ($path) {
-                            $heroImage = asset('storage/' . ltrim($path, '/'));
+                        $path = $first->image_path ?? null;
+                        $project = $first->project ?? null;
+                        $isExternal = $first->is_external ?? false;
+
+                        if ($isExternal) {
+                            $heroImage = $path ? asset('storage/' . ltrim($path, '/')) : $heroImage;
+                            $heroAlt = $first->external_project_name ?? 'D&G Construction Inc.';
+                        } elseif ($project) {
+                            $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                            if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
+                                $heroImage = $path;
+                            } elseif ($path) {
+                                $heroImage = asset('storage/' . ltrim($path, '/'));
+                            }
+                            $heroAlt = $project->project_name ?? 'D&G Construction Inc.';
                         }
-                        $heroAlt = $project->project_name ?? 'D&G Construction Inc.';
                     }
                 ?>
                 <img src="<?php echo e($heroImage); ?>" alt="<?php echo e($heroAlt); ?>">
@@ -877,24 +884,36 @@
                 <div class="project-carousel-track">
                     <?php $__empty_1 = true; $__currentLoopData = $galleryImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $galleryImage): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <?php
-                            $project = $galleryImage->project;
-                            $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
-                            $demoSlug = $isDemo ? Str::of($project->project_name)->slug('-') : null;
-                            $projectUrl = $isDemo
-                                ? route('landing-gallery.demo.show', $demoSlug)
-                                : route('landing-gallery.projects.show', $project);
-                            $imageSrc = $isDemo
-                                ? $galleryImage->image_path
-                                : ($galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? ''));
+                            $project = $galleryImage->project ?? null;
+                            $isExternal = $galleryImage->is_external ?? false;
+                            $imageSrc = $galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? '');
+
+                            if ($isExternal) {
+                                $projectUrl = $galleryImage->external_project_url ?: 'javascript:void(0);';
+                                $projectName = $galleryImage->external_project_name ?? 'External Project';
+                                $projectLocation = $galleryImage->external_project_location ?: 'Past Featured Project';
+                            } elseif ($project) {
+                                $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                                $demoSlug = $isDemo ? Str::of($project->project_name)->slug('-') : null;
+                                $projectUrl = $isDemo
+                                    ? route('landing-gallery.demo.show', $demoSlug)
+                                    : route('landing-gallery.projects.show', $project);
+                                $projectName = $project->project_name ?? 'Unknown Project';
+                                $projectLocation = $project->location ?: 'Completed project';
+                            } else {
+                                $projectUrl = 'javascript:void(0);';
+                                $projectName = 'External Project';
+                                $projectLocation = 'Past Featured Project';
+                            }
                         ?>
                         <article class="project-card">
-                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="<?php echo e($projectUrl); ?>" aria-label="View details for <?php echo e($project->project_name); ?>">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="<?php echo e($projectUrl); ?>" data-project-external="<?php echo e($isExternal ? 'true' : 'false'); ?>" data-project-name="<?php echo e($projectName); ?>" data-project-location="<?php echo e($projectLocation); ?>" data-project-description="<?php echo e($galleryImage->external_project_description ?? ($project->description ?? '')); ?>" aria-label="View details for <?php echo e($projectName); ?>">
                                 <div class="project-img-container">
-                                    <img src="<?php echo e($imageSrc); ?>" alt="<?php echo e($project->project_name); ?>">
+                                    <img src="<?php echo e($imageSrc); ?>" alt="<?php echo e($projectName); ?>">
                                 </div>
                                 <div class="project-body">
-                                    <h3><?php echo e($project->project_name); ?></h3>
-                                    <p><?php echo e($project->location ?: 'Completed project'); ?></p>
+                                    <h3><?php echo e($projectName); ?></h3>
+                                    <p><?php echo e($projectLocation); ?></p>
                                 </div>
                                 <span class="project-arrow-btn" aria-hidden="true">→</span>
                             </button>
@@ -1354,9 +1373,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.js-open-gallery-project').forEach(button => {
         button.addEventListener('click', async () => {
+            const isExternal = button.dataset.projectExternal === 'true';
+            const externalUrl = button.dataset.projectUrl;
+
+            if (isExternal && externalUrl && externalUrl !== 'javascript:void(0);') {
+                window.open(externalUrl, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
             title.textContent = 'Project details';
             content.innerHTML = '<p class="gallery-project-modal-loading">Loading project details...</p>';
             openModal();
+
+            if (isExternal) {
+                const projectName = button.dataset.projectName || 'External Project';
+                const projectLocation = button.dataset.projectLocation || '';
+                const projectDescription = button.dataset.projectDescription || 'A past featured project by D&G Construction Inc.';
+                const imageSrc = button.querySelector('img')?.src || '';
+
+                title.textContent = projectName;
+
+                const metaHtml = projectLocation
+                    ? `<div class="project-detail-meta-icons">
+                        <div class="project-detail-meta-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                            <span>${escapeHtml(projectLocation)}</span>
+                        </div>
+                    </div>`
+                    : '';
+
+                content.innerHTML = `
+                    ${imageSrc ? `<div class="project-detail-hero"><img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(projectName)}"></div>` : ''}
+                    ${metaHtml}
+                    <div class="project-detail-section">
+                        <h3>About This Project</h3>
+                        <p>${escapeHtml(projectDescription)}</p>
+                    </div>
+                `;
+                return;
+            }
 
             try {
                 const response = await fetch(button.dataset.projectUrl, {

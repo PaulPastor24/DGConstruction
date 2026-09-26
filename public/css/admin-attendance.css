@@ -291,6 +291,45 @@ FILTER CARD
     color: #ffffff;
 }
 
+.attendance-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.attendance-actions-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.attendance-admin-entry-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 220px;
+    padding: 0.72rem 1rem;
+    border: 1px solid #173824;
+    border-radius: 12px;
+    background: #173824;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    box-shadow: 0 10px 24px rgba(23, 56, 36, 0.14);
+}
+
+.attendance-admin-entry-btn:hover,
+.attendance-admin-entry-btn:focus,
+.attendance-admin-entry-btn:active {
+    border-color: #204f36;
+    background: #204f36;
+    color: #ffffff;
+}
+
 .btn-filter-secondary,
 .btn-print {
     border: 1px solid #dfe6e1;
@@ -300,6 +339,7 @@ FILTER CARD
 
 .btn-filter-primary,
 .btn-filter-secondary,
+.attendance-admin-entry-btn,
 .attendance-preview-trigger,
 .attendance-schedule-panel .btn-primary,
 .attendance-schedule-panel button[type="submit"] {
@@ -1861,9 +1901,46 @@ RESPONSIVE
     color: #ffffff;
 }
 
+@media (max-width: 1200px) {
+    .attendance-stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .attendance-filter-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-search-wide {
+        grid-column: span 2;
+    }
+}
+
 @media (max-width: 992px) {
     .attendance-preview-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .attendance-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .attendance-toolbar-actions {
+        width: 100%;
+    }
+
+    .attendance-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .attendance-actions-left {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .attendance-admin-entry-btn {
+        width: 100%;
     }
 }
 
@@ -1883,6 +1960,54 @@ RESPONSIVE
 
     .attendance-preview-table {
         min-width: 640px;
+    }
+
+    .attendance-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-search-wide,
+    .filter-actions {
+        grid-column: span 1;
+    }
+
+    .attendance-toolbar {
+        gap: 14px;
+    }
+
+    .attendance-toolbar-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .attendance-search,
+    .btn-print,
+    .attendance-admin-entry-btn {
+        width: 100%;
+    }
+
+    .attendance-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .attendance-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-hero {
+        padding: 18px 16px;
+    }
+
+    .attendance-date-chip {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .attendance-filter-card {
+        padding: 12px 12px 14px;
     }
 }
 

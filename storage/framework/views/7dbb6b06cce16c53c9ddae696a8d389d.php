@@ -3,11 +3,20 @@
 
 <?php $__env->startSection('content'); ?>
 <div class="landing-gallery-page">
-    <?php if(session('success')): ?>
-        <div class="alert alert-success mb-4"><?php echo e(session('success')); ?></div>
+        <?php
+        $formErrorMessage = $errors->first();
+        $successMessage = session('success');
+        $flashErrorMessage = session('error');
+    ?>
+
+    <?php if($successMessage): ?>
+        <div class="alert alert-success mb-4 d-none" data-swal-success="<?php echo e($successMessage); ?>"><?php echo e($successMessage); ?></div>
     <?php endif; ?>
-    <?php if(session('error')): ?>
-        <div class="alert alert-danger mb-4 d-none" data-swal-error="<?php echo e(session('error')); ?>"><?php echo e(session('error')); ?></div>
+    <?php if($flashErrorMessage): ?>
+        <div class="alert alert-danger mb-4 d-none" data-swal-error="<?php echo e($flashErrorMessage); ?>"><?php echo e($flashErrorMessage); ?></div>
+    <?php endif; ?>
+    <?php if($formErrorMessage): ?>
+        <div class="alert alert-danger mb-4 d-none" data-swal-error="<?php echo e($formErrorMessage); ?>"><?php echo e($formErrorMessage); ?></div>
     <?php endif; ?>
 
     <div class="ug-hero-card landing-gallery-hero mb-4" aria-label="Landing page gallery header">
@@ -27,9 +36,14 @@
             <div class="panel-icon">
                 <i class="bi bi-folder2-open"></i>
             </div>
-            <div>
+            <div class="landing-gallery-panel__title-copy">
                 <h2>Project</h2>
             </div>
+
+            <label class="external-project-toggle" for="is_external">
+                <input class="form-check-input" type="checkbox" value="1" id="is_external" name="is_external" form="galleryCreateForm">
+                <span>This is an external / past featured project not in the system</span>
+            </label>
         </div>
 
         <form id="galleryCreateForm" action="<?php echo e(route('admin.landing-gallery.store')); ?>" method="POST" enctype="multipart/form-data" class="landing-gallery-form">
@@ -54,7 +68,6 @@
                         <span class="file-name-display">No file chosen</span>
                     </div>
                 </div>
-
             </div>
 
             <?php $__errorArgs = ['project_id'];
@@ -93,15 +106,18 @@ unset($__errorArgs, $__bag); ?>
                 </div>
                 <h3>Current carousel entries</h3>
             </div>
+            <button type="submit" form="galleryReorderForm" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-check2 me-1"></i>Save order
+            </button>
         </div>
 
         <?php if($galleryImages->count()): ?>
             <div class="gallery-row-list">
                 <?php $__currentLoopData = $galleryImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $galleryImage): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="gallery-row-item" data-gallery-row>
-                        <img src="<?php echo e(asset('storage/' . ltrim($galleryImage->image_path, '/'))); ?>" alt="<?php echo e($galleryImage->project->project_name); ?>">
+                        <img src="<?php echo e(asset('storage/' . ltrim($galleryImage->image_path, '/'))); ?>" alt="<?php echo e($galleryImage->display_name); ?>">
                         <div class="gallery-row-copy">
-                            <div class="gallery-row-name"><?php echo e($galleryImage->project->project_name); ?></div>
+                            <div class="gallery-row-name"><?php echo e($galleryImage->display_name); ?></div>
                             <div class="gallery-row-meta">Position <?php echo e($loop->iteration); ?> · <?php echo e($galleryImage->is_active ? 'Visible' : 'Hidden'); ?></div>
                         </div>
                         <input type="hidden" name="order[]" value="<?php echo e($galleryImage->id); ?>" form="galleryReorderForm">
@@ -159,18 +175,6 @@ unset($__errorArgs, $__bag); ?>
         border-radius: 18px;
         background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
         box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
-    }
-
-    .ug-page-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        margin-bottom: 0.35rem;
-        color: #1e7a4d;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.10em;
-        text-transform: uppercase;
     }
 
     .dashboard-title-area h2,
@@ -244,6 +248,54 @@ unset($__errorArgs, $__bag); ?>
         align-items: center;
         gap: 12px;
         margin-bottom: 18px;
+        flex-wrap: wrap;
+    }
+
+    .landing-gallery-panel__title-copy {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .external-project-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        padding: 10px 12px;
+        border: 1px solid rgba(30, 76, 49, 0.12);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.72);
+        color: #234936;
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.35;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .external-project-toggle:hover {
+        border-color: rgba(30, 76, 49, 0.22);
+        box-shadow: 0 8px 18px rgba(20, 61, 44, 0.06);
+    }
+
+    .external-project-toggle .form-check-input {
+        width: 18px;
+        height: 18px;
+        margin-top: 0;
+        border-color: rgba(28, 118, 77, 0.45);
+        background-color: #fff;
+        box-shadow: none;
+    }
+
+    .external-project-toggle .form-check-input:checked {
+        background-color: #1d7b4c;
+        border-color: #1d7b4c;
+    }
+
+    .external-project-toggle span {
+        color: #2b4d41;
+        font-weight: 600;
     }
 
     .panel-icon {
@@ -282,14 +334,6 @@ unset($__errorArgs, $__bag); ?>
         font-size: 1.05rem;
         letter-spacing: -0.02em;
         font-weight: 800;
-    }
-
-    .landing-gallery-panel__title-wrap p,
-    .landing-gallery-panel p {
-        margin: 4px 0 0;
-        color: #5b6d63;
-        font-size: 1rem;
-        line-height: 1.5;
     }
 
     .landing-gallery-form {
@@ -370,28 +414,6 @@ unset($__errorArgs, $__bag); ?>
         pointer-events: none;
     }
 
-    .gallery-action-btn {
-        width: 100%;
-        height: 54px;
-        border: 0;
-        border-radius: 12px;
-        background: linear-gradient(180deg, #0f7c54 0%, #0d6d4e 100%);
-        color: #fff;
-        font-size: 1.02rem;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        box-shadow: 0 10px 18px rgba(18, 99, 69, 0.18);
-    }
-
-    .gallery-action-btn:hover,
-    .gallery-action-btn:focus {
-        color: #fff;
-        background: linear-gradient(180deg, #0e6d4a 0%, #0b5c41 100%);
-    }
-
     .field-error {
         margin-top: 10px;
         color: #d13d3d;
@@ -409,25 +431,6 @@ unset($__errorArgs, $__bag); ?>
         justify-content: space-between;
         gap: 16px;
         margin-bottom: 20px;
-    }
-
-    .gallery-order-btn {
-        border: 1px solid rgba(27, 123, 78, 0.35);
-        background: rgba(255, 255, 255, 0.8);
-        color: #1d754d;
-        border-radius: 10px;
-        padding: 0.7rem 1.1rem;
-        font-weight: 700;
-        font-size: 0.95rem;
-        line-height: 1;
-        transition: all 0.2s ease;
-    }
-
-    .gallery-order-btn:hover,
-    .gallery-order-btn:focus {
-        background: #f4fbf7;
-        border-color: rgba(27, 123, 78, 0.48);
-        color: #1a623f;
     }
 
     .gallery-empty-state {
@@ -603,22 +606,6 @@ unset($__errorArgs, $__bag); ?>
             font-size: 0.74rem;
         }
 
-        .landing-gallery-hero {
-            min-height: auto !important;
-            padding: 18px 16px;
-        }
-
-        .landing-gallery-hero__content {
-            max-width: 100%;
-            padding-right: 0;
-        }
-
-        .landing-gallery-hero__visual {
-            width: 100%;
-            opacity: 0.65;
-            transform: scale(1.08);
-        }
-
         .form-grid {
             grid-template-columns: 1fr;
         }
@@ -767,6 +754,26 @@ unset($__errorArgs, $__bag); ?>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const fileInput = document.getElementById('image');
+        const externalToggle = document.getElementById('is_external');
+        const projectSelect = document.getElementById('project_id');
+
+        const syncProjectRequirement = () => {
+            if (!externalToggle || !projectSelect) {
+                return;
+            }
+
+            projectSelect.required = !externalToggle.checked;
+            projectSelect.disabled = externalToggle.checked;
+            if (externalToggle.checked) {
+                projectSelect.value = '';
+            }
+        };
+
+        if (externalToggle) {
+            externalToggle.addEventListener('change', syncProjectRequirement);
+            syncProjectRequirement();
+        }
+
         if (fileInput) {
             const target = fileInput.closest('.upload-field-wrap');
             if (target) {
@@ -801,8 +808,19 @@ unset($__errorArgs, $__bag); ?>
         if (swalError) {
             Swal.fire({
                 icon: 'error',
-                title: 'Project not eligible',
+                title: 'Notice',
                 text: swalError.dataset.swalError,
+                confirmButtonColor: '#1d7b4c',
+                confirmButtonText: 'OK'
+            });
+        }
+
+        const swalSuccess = document.querySelector('[data-swal-success]');
+        if (swalSuccess) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: swalSuccess.dataset.swalSuccess,
                 confirmButtonColor: '#1d7b4c',
                 confirmButtonText: 'OK'
             });
@@ -811,9 +829,16 @@ unset($__errorArgs, $__bag); ?>
         document.querySelectorAll('[data-move-gallery]').forEach(button => {
             button.addEventListener('click', () => {
                 const row = button.closest('[data-gallery-row]');
+                if (!row) {
+                    return;
+                }
+
                 const sibling = button.dataset.moveGallery === 'up' ? row.previousElementSibling : row.nextElementSibling;
 
-                if (!row || !sibling || !sibling.matches('[data-gallery-row]')) return;
+                if (!sibling || !sibling.matches('[data-gallery-row]')) {
+                    return;
+                }
+
                 if (button.dataset.moveGallery === 'up') {
                     row.parentElement.insertBefore(row, sibling);
                 } else {

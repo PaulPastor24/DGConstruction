@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('landing_gallery_images', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('project_id');
+            $table->unsignedInteger('project_id')->nullable();
             $table->string('image_path');
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);

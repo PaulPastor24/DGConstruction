@@ -320,15 +320,15 @@
             </div>
         </form>
 
-        <div class="mt-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="attendance-actions-row mt-3">
+            <div class="attendance-actions-left">
                 <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
                     <i class="bi bi-eye"></i>
                     Preview Attendance Report
                 </button>
                 <span class="text-muted small">Review records before sending.</span>
             </div>
-            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
+            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
                 <i class="bi bi-plus-circle"></i> Admin Attendance Entry
             </button>
         </div>

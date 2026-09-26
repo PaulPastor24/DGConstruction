@@ -324,12 +324,17 @@
             </div>
         </form>
 
-        <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
-            <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
-                <i class="bi bi-eye"></i>
-                Preview Attendance Report
+        <div class="attendance-actions-row mt-3">
+            <div class="attendance-actions-left">
+                <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
+                    <i class="bi bi-eye"></i>
+                    Preview Attendance Report
+                </button>
+                <span class="text-muted small">Review records before sending.</span>
+            </div>
+            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
+                <i class="bi bi-plus-circle"></i> Admin Attendance Entry
             </button>
-            <span class="text-muted small">Review records before sending.</span>
         </div>
     </section>
 
@@ -599,61 +604,6 @@
                 No attendance issues found for the selected filter.
             </div>
         <?php endif; ?>
-    </section>
-
-    <section class="attendance-entry-panel attendance-no-print">
-        <section class="attendance-filter-card" style="margin-bottom: 1rem;">
-            <div class="issues-header">
-                <div>
-                    <h2>Admin Attendance Entry</h2>
-                    <p>Set exact time in, break, and time out. OT is calculated from the worker schedule.</p>
-                </div>
-            </div>
-            <form method="POST" action="<?php echo e(route('admin.attendance.store')); ?>" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:end;">
-                <?php echo csrf_field(); ?>
-                <label>Worker<select name="worker_id" required style="width:100%;"><option value="">Select worker</option><?php $__currentLoopData = $workers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $worker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($worker->worker_id); ?>"><?php echo e($worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''))); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></select></label>
-                <label>Date<input type="date" name="log_date" value="<?php echo e($filters['date'] ?? now()->toDateString()); ?>" required style="width:100%;"></label>
-                <label>Time in<input type="time" name="time_in" style="width:100%;"></label>
-                <label>Break out<input type="time" name="break_out" style="width:100%;"></label>
-                <label>Break in<input type="time" name="break_in" style="width:100%;"></label>
-                <label>Time out<input type="time" name="time_out" style="width:100%;"></label>
-                <input type="hidden" name="status" value="present">
-                <input type="text" name="remarks" placeholder="Remarks" style="grid-column:span 5;">
-                <button type="submit" class="btn-filter-primary"><i class="bi bi-plus-circle"></i> Add attendance</button>
-            </form>
-            <details style="margin-top:12px;">
-                <summary style="cursor:pointer;font-weight:600;">Configure worker schedule</summary>
-                <form method="POST" action="#" id="workerScheduleForm" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px;align-items:end;">
-                    <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
-                    <label>Worker
-                        <select id="scheduleWorker" required style="width:100%;">
-                            <?php $__currentLoopData = $workers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $worker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <?php
-                                    $workerRole = data_get($worker, 'role', 'worker');
-                                    $workerStart = data_get($worker, 'schedule_start', '07:00');
-                                    $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
-                                    $workerBreak = data_get($worker, 'break_minutes', 60);
-                                    $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
-                                ?>
-                                <option value="<?php echo e($worker->worker_id); ?>"
-                                        data-role="<?php echo e($workerRole); ?>"
-                                        data-start="<?php echo e($workerStart); ?>"
-                                        data-end="<?php echo e($workerEnd); ?>"
-                                        data-break="<?php echo e($workerBreak); ?>">
-                                    <?php echo e($workerName); ?>
-
-                                </option>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        </select>
-                    </label>
-                    <label>Role<select name="role" id="scheduleRole" style="width:100%;"><option value="staff">Staff</option><option value="worker">Worker</option></select></label>
-                    <label>Start<input type="time" name="schedule_start" id="scheduleStart" required style="width:100%;"></label>
-                    <label>End<input type="time" name="schedule_end" id="scheduleEnd" required style="width:100%;"></label>
-                    <label>Break minutes<input type="number" name="break_minutes" id="scheduleBreak" min="0" max="480" required style="width:100%;"></label>
-                    <button type="submit" class="btn-filter-primary">Save schedule</button>
-                </form>
-            </details>
-        </section>
     </section>
 
     <section class="attendance-panel">
@@ -1051,6 +1001,71 @@
     </div>
 </div>
 
+<div class="modal fade" id="adminAttendanceEntryModal" tabindex="-1" aria-labelledby="adminAttendanceEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 py-3">
+                <h5 class="modal-title mb-0" id="adminAttendanceEntryModalLabel">Admin Attendance Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <section class="attendance-filter-card" style="margin-bottom: 1rem;">
+                    <div class="issues-header">
+                        <div>
+                            <h2>Admin Attendance Entry</h2>
+                            <p>Set exact time in, break, and time out. OT is calculated from the worker schedule.</p>
+                        </div>
+                    </div>
+                    <form method="POST" action="<?php echo e(route('admin.attendance.store')); ?>" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:end;">
+                        <?php echo csrf_field(); ?>
+                        <label>Worker<select name="worker_id" required style="width:100%;"><option value="">Select worker</option><?php $__currentLoopData = $workers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $worker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($worker->worker_id); ?>"><?php echo e($worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''))); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></select></label>
+                        <label>Date<input type="date" name="log_date" value="<?php echo e($filters['date'] ?? now()->toDateString()); ?>" required style="width:100%;"></label>
+                        <label>Time in<input type="time" name="time_in" style="width:100%;"></label>
+                        <label>Break out<input type="time" name="break_out" style="width:100%;"></label>
+                        <label>Break in<input type="time" name="break_in" style="width:100%;"></label>
+                        <label>Time out<input type="time" name="time_out" style="width:100%;"></label>
+                        <input type="hidden" name="status" value="present">
+                        <input type="text" name="remarks" placeholder="Remarks" style="grid-column:span 5;">
+                        <button type="submit" class="btn-filter-primary"><i class="bi bi-plus-circle"></i> Add attendance</button>
+                    </form>
+                    <details style="margin-top:12px;">
+                        <summary style="cursor:pointer;font-weight:600;">Configure worker schedule</summary>
+                        <form method="POST" action="#" id="workerScheduleForm" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px;align-items:end;">
+                            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
+                            <label>Worker
+                                <select id="scheduleWorker" required style="width:100%;">
+                                    <?php $__currentLoopData = $workers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $worker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $workerRole = data_get($worker, 'role', 'worker');
+                                            $workerStart = data_get($worker, 'schedule_start', '07:00');
+                                            $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
+                                            $workerBreak = data_get($worker, 'break_minutes', 60);
+                                            $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
+                                        ?>
+                                        <option value="<?php echo e($worker->worker_id); ?>"
+                                                data-role="<?php echo e($workerRole); ?>"
+                                                data-start="<?php echo e($workerStart); ?>"
+                                                data-end="<?php echo e($workerEnd); ?>"
+                                                data-break="<?php echo e($workerBreak); ?>">
+                                            <?php echo e($workerName); ?>
+
+                                        </option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </label>
+                            <label>Role<select name="role" id="scheduleRole" style="width:100%;"><option value="staff">Staff</option><option value="worker">Worker</option></select></label>
+                            <label>Start<input type="time" name="schedule_start" id="scheduleStart" required style="width:100%;"></label>
+                            <label>End<input type="time" name="schedule_end" id="scheduleEnd" required style="width:100%;"></label>
+                            <label>Break minutes<input type="number" name="break_minutes" id="scheduleBreak" min="0" max="480" required style="width:100%;"></label>
+                            <button type="submit" class="btn-filter-primary">Save schedule</button>
+                        </form>
+                    </details>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     (() => {
         const form = document.getElementById('workerScheduleForm');
@@ -1205,7 +1220,7 @@
         function attendancePageIsBusy() {
             return Boolean(
                 document.activeElement?.matches('input, select, textarea') ||
-                document.querySelector('.attendance-table details[open], .attendance-entry-panel details[open]')
+                document.querySelector('.attendance-table details[open], #adminAttendanceEntryModal details[open]')
             );
         }
 
