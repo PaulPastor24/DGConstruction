@@ -80,9 +80,24 @@ class Report extends Model
     {
         $images = $this->admin_site_images ?? $this->site_images ?? [];
 
-        return array_values(array_filter(array_map(function ($image) {
-            return is_string($image) && $image ? asset('storage/' . ltrim($image, '/')) : null;
-        }, (array) $images)));
+        return array_values(array_filter(array_map(fn ($image) => $this->imageUrl($image), (array) $images)));
+    }
+
+    public function imageUrl($image): ?string
+    {
+        if (! is_string($image) || trim($image) === '') {
+            return null;
+        }
+
+        $image = trim($image);
+
+        if (preg_match('/^(https?:)?\/\//i', $image) || str_starts_with($image, 'data:') || str_starts_with($image, 'blob:')) {
+            return $image;
+        }
+
+        $image = preg_replace('#^/?storage/#', '', $image);
+
+        return '/storage/' . ltrim($image, '/');
     }
 
     public function getClientExplanationAttribute(): string

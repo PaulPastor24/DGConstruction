@@ -2543,7 +2543,7 @@
                                             $images = ($selectedReport->approval_status ?? 'pending') === 'pending'
                                                 ? (array) ($selectedReport->site_images ?? [])
                                                 : (array) ($selectedReport->admin_site_images ?? []);
-                                            $fullImageUrls = collect($images)->filter(fn($img) => is_string($img) && $img !== '')->map(fn($img) => asset('storage/' . ltrim($img, '/')))->values();
+                                            $fullImageUrls = collect($images)->map(fn($img) => $selectedReport->imageUrl($img))->filter()->values();
                                         @endphp
                                         @if($fullImageUrls->isNotEmpty())
                                             <div class="modal-image-grid mb-3" data-gallery='{{ $fullImageUrls->toJson() }}' data-gallery-offset="0">

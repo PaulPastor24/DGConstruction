@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&G Construction Inc. | Design. Build. Deliver.</title>
+    <meta name="description" content="D&G Construction Inc. delivers residential, commercial, and renovation services with a modern, reliable approach.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo e(asset('css/responsive.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/landingpage.css')); ?>">
+
+    <style>
+        .button {
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .button-ghost-light {
+            border-color: rgba(23, 56, 36, 0.22);
+            background: #ffffff;
+            color: var(--forest, #173824);
+        }
+
+        .button-ghost-light:hover {
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--forest, #173824);
+            transform: translateY(-1px);
+        }
+
+        .cta-action-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .landing-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(10, 20, 14, 0.58);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .landing-modal-overlay.is-open {
+            display: flex;
+        }
+
+        .landing-modal-card {
+            width: min(760px, 100%);
+            max-height: min(88vh, 820px);
+            overflow: hidden;
+            border: 1px solid rgba(229, 236, 231, 0.85);
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at top right, rgba(23, 56, 36, 0.08), transparent 34%),
+                #ffffff;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+            animation: landingModalIn 180ms ease-out;
+        }
+
+        @keyframes landingModalIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .landing-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 24px 24px 18px;
+            border-bottom: 1px solid #eef3ef;
+        }
+
+        .landing-modal-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 8px;
+            color: var(--forest, #173824);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .landing-modal-title {
+            margin: 0 0 6px;
+            color: var(--text-dark, #10271b);
+            font-family: var(--font-heading, 'Syne', sans-serif);
+            font-size: clamp(1.35rem, 4vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+        }
+
+        .landing-modal-subtitle {
+            max-width: 560px;
+            margin: 0;
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.93rem;
+            line-height: 1.6;
+        }
+
+        .landing-modal-close {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            place-items: center;
+            border: 1px solid #e1e9e3;
+            border-radius: 50%;
+            background: #ffffff;
+            color: var(--forest, #173824);
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .landing-modal-close:hover {
+            background: var(--forest, #173824);
+            color: #ffffff;
+        }
+
+        .landing-modal-body {
+            max-height: calc(min(88vh, 820px) - 132px);
+            overflow-y: auto;
+            padding: 22px 24px 24px;
+        }
+
+        .landing-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .landing-form-field {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .landing-form-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .landing-form-field label {
+            color: #324338;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .landing-form-field input,
+        .landing-form-field select,
+        .landing-form-field textarea {
+            width: 100%;
+            border: 1px solid #dbe5df;
+            border-radius: 14px;
+            background: #fbfdfb;
+            color: var(--text-dark, #10271b);
+            font-size: 0.92rem;
+            outline: none;
+            padding: 13px 14px;
+            transition: all 0.2s ease;
+        }
+
+        .landing-form-field textarea {
+            min-height: 118px;
+            resize: vertical;
+        }
+
+        .landing-form-field input:focus,
+        .landing-form-field select:focus,
+        .landing-form-field textarea:focus {
+            border-color: var(--forest, #173824);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(23, 56, 36, 0.08);
+        }
+
+        .landing-form-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 16px 0 0;
+            padding: 13px 14px;
+            border: 1px solid #dfeae2;
+            border-radius: 16px;
+            background: #f7fbf8;
+            color: #516157;
+            font-size: 0.83rem;
+            line-height: 1.5;
+        }
+
+        .landing-form-note svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+            margin-top: 1px;
+            color: var(--forest, #173824);
+        }
+
+        .landing-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .landing-form-submit {
+            min-width: 180px;
+        }
+
+        .landing-form-cancel {
+            border-color: #dbe5df;
+            background: #ffffff;
+            color: var(--forest, #173824);
+        }
+
+        .landing-form-message {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .landing-form-message.is-visible {
+            display: block;
+        }
+
+        .landing-form-message.success {
+            border: 1px solid #bfefd0;
+            background: #effcf4;
+            color: #166534;
+        }
+
+        .gallery-project-modal-card {
+            width: min(900px, 100%);
+            max-height: min(94vh, 980px);
+        }
+
+        .gallery-project-modal-card .landing-modal-body {
+            max-height: calc(min(94vh, 980px) - 132px);
+        }
+
+        .gallery-project-modal-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .gallery-project-modal-image {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 18px;
+            background: #edf3ee;
+        }
+
+        .gallery-project-modal-meta {
+            display: grid;
+            gap: 14px;
+        }
+
+        .gallery-project-modal-meta dt {
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .gallery-project-modal-meta dd {
+            margin: 3px 0 0;
+            color: var(--text-dark, #10271b);
+            line-height: 1.55;
+        }
+
+        .gallery-project-modal-loading {
+            color: var(--text-muted, #6f7d74);
+            text-align: center;
+        }
+
+        .project-card-trigger {
+            width: 100%;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        @media (max-width: 700px) {
+            .gallery-project-modal-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .project-detail-scroll {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .project-detail-hero {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 18px;
+            background: #edf3ee;
+        }
+
+        .project-detail-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .project-detail-meta-icons {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .project-detail-meta-icon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid #e5ece7;
+            border-radius: 14px;
+            background: #f8fbf9;
+            color: var(--text-dark, #10271b);
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .project-detail-meta-icon svg {
+            width: 22px;
+            height: 22px;
+            flex: 0 0 22px;
+            color: var(--forest, #173824);
+        }
+
+        .project-detail-section h3 {
+            margin: 0 0 10px;
+            font-family: var(--font-heading, 'Syne', sans-serif);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-dark, #10271b);
+            letter-spacing: -0.02em;
+        }
+
+        .project-detail-section p,
+        .project-detail-section dd {
+            margin: 0;
+            color: var(--text-muted, #6f7d74);
+            font-size: 0.92rem;
+            line-height: 1.65;
+        }
+
+        .project-detail-highlights {
+            display: grid;
+            gap: 10px;
+        }
+
+        .project-detail-highlights ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .project-detail-highlights li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.92rem;
+            color: var(--text-dark, #10271b);
+            line-height: 1.5;
+        }
+
+        .project-detail-highlights li::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+            margin-top: 1px;
+            background: var(--forest, #173824);
+            border-radius: 50%;
+            mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 12l5 5L20 7' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 12l5 5L20 7' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+        }
+
+        .project-detail-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .project-detail-gallery-grid img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 14px;
+            background: #edf3ee;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .project-detail-gallery-grid img:hover {
+            transform: translateY(-2px);
+        }
+
+        .project-detail-timeline {
+            display: grid;
+            gap: 14px;
+        }
+
+        .project-detail-phase {
+            border: 1px solid #e5ece7;
+            border-radius: 14px;
+            background: #f8fbf9;
+            overflow: hidden;
+        }
+
+        .project-detail-phase-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e5ece7;
+            background: #fff;
+        }
+
+        .project-detail-phase-header span:first-child {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text-dark, #10271b);
+        }
+
+        .project-detail-phase-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e6f3ea;
+            color: #173824;
+        }
+
+        .project-detail-phase-badge.completed {
+            background: #e6f3ea;
+            color: #173824;
+        }
+
+        .project-detail-phase-badge.in-progress {
+            background: #fff7e6;
+            color: #8a5a00;
+        }
+
+        .project-detail-phase-badge.pending {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .project-detail-phase-badge.delayed {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .project-detail-milestones {
+            display: grid;
+            gap: 8px;
+            padding: 12px 14px;
+        }
+
+        .project-detail-milestone {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text-dark, #10271b);
+        }
+
+        .project-detail-milestone-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .project-detail-milestone-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            flex: 0 0 8px;
+        }
+
+        .project-detail-milestone-dot.completed {
+            background: #173824;
+        }
+
+        .project-detail-milestone-dot.delayed {
+            background: #ef4444;
+        }
+
+        .project-detail-milestone-dot.pending {
+            background: #cbd5e1;
+        }
+
+        .project-detail-milestone-date {
+            font-size: 0.78rem;
+            color: var(--text-muted, #6f7d74);
+            font-weight: 500;
+        }
+
+        @media (max-width: 700px) {
+            .project-detail-meta-icons {
+                grid-template-columns: 1fr;
+            }
+
+            .project-detail-gallery-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-project-modal-card {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cta-action-row {
+                flex-direction: column;
+            }
+
+            .landing-modal-overlay {
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                min-height: 100dvh;
+                padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+                overflow: hidden;
+            }
+
+            .landing-modal-card {
+                display: flex;
+                width: 100%;
+                max-height: calc(100vh - 20px);
+                max-height: calc(100dvh - 20px);
+                flex-direction: column;
+                border-radius: 24px;
+                overflow: hidden;
+            }
+
+            .landing-modal-header {
+                flex: 0 0 auto;
+                padding: 18px 16px 12px;
+                gap: 12px;
+            }
+
+            .landing-modal-title {
+                font-size: 1.42rem;
+                line-height: 1.08;
+            }
+
+            .landing-modal-subtitle {
+                font-size: 0.84rem;
+                line-height: 1.48;
+            }
+
+            .landing-modal-close {
+                width: 40px;
+                height: 40px;
+                box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+            }
+
+            .landing-modal-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                max-height: none;
+                overflow-y: auto;
+                padding: 14px 16px 0;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .landing-form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .landing-form-field {
+                gap: 5px;
+            }
+
+            .landing-form-field label {
+                font-size: 0.75rem;
+            }
+
+            .landing-form-field input,
+            .landing-form-field select,
+            .landing-form-field textarea {
+                min-height: 46px;
+                border-radius: 13px;
+                font-size: 0.9rem;
+                padding: 11px 13px;
+            }
+
+            .landing-form-field textarea {
+                min-height: 92px;
+            }
+
+            .landing-form-note {
+                margin-top: 12px;
+                padding: 11px 12px;
+                border-radius: 14px;
+                font-size: 0.78rem;
+                line-height: 1.45;
+            }
+
+            .landing-form-actions {
+                position: sticky;
+                bottom: 0;
+                z-index: 20;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 9px;
+                margin: 14px -16px 0;
+                padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+                border-top: 1px solid #eef3ef;
+                background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, #ffffff 45%, #ffffff 100%);
+                box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.07);
+            }
+
+            .landing-form-actions .button {
+                width: 100%;
+                min-height: 46px;
+                border-radius: 14px;
+                font-size: 0.9rem;
+            }
+
+            .landing-form-submit {
+                order: 1;
+            }
+
+            .landing-form-cancel {
+                order: 2;
+            }
+
+            .landing-form-message {
+                margin-bottom: 8px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .landing-modal-overlay {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .landing-modal-header {
+                padding: 16px 14px 11px;
+            }
+
+            .landing-modal-body {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .landing-form-actions {
+                margin-left: -14px;
+                margin-right: -14px;
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+        }
+    </style>
+</head>
+<body class="landing-page">
+<div class="page-shell">
+    
+    <nav class="site-nav">
+        <a class="brand" href="#top" aria-label="D&G Construction home">
+            <img src="<?php echo e(asset('images/D&G.png')); ?>" alt="D&G Construction logo">
+            <span class="brand-text">D&G CONSTRUCTION INC.</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="#top" class="active">Home</a>
+            <a href="#about">About Us</a>
+            <a href="#services">Services</a>
+            <a href="#projects">Projects</a>
+            <a href="#resources">Resources</a>
+            <a href="#contact">Contact</a>
+        </div>
+
+        <a class="nav-cta" href="<?php echo e(route('login')); ?>">Login</a>
+    </nav>
+
+    <main>
+        <!-- HERO SECTION -->
+        <section class="hero" id="top">
+            <div class="hero-copy">
+                <h1>Design. Build.<br>Deliver.</h1>
+                <p class="hero-lead">
+                    D&G Construction Inc. delivers quality craftsmanship and reliable construction solutions from concept to completion.
+                </p>
+                <div class="hero-actions">
+                    <button type="button" class="button button-primary js-open-landing-modal" data-target-modal="quoteModal">Get a Quote <span class="arrow">→</span></button>
+                    <a class="button button-secondary" href="#projects">
+                        View Our Work 
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <?php
+                    $heroImage = asset('images/h4.jpg');
+                    $heroAlt = 'D&G Construction Inc.';
+                    if ($galleryImages->isNotEmpty()) {
+                        $first = $galleryImages->first();
+                        $path = $first->image_path ?? null;
+                        $project = $first->project ?? null;
+                        $isExternal = $first->is_external ?? false;
+
+                        if ($isExternal) {
+                            $heroImage = $path ? asset('storage/' . ltrim($path, '/')) : $heroImage;
+                            $heroAlt = $first->external_project_name ?? 'D&G Construction Inc.';
+                        } elseif ($project) {
+                            $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                            if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
+                                $heroImage = $path;
+                            } elseif ($path) {
+                                $heroImage = asset('storage/' . ltrim($path, '/'));
+                            }
+                            $heroAlt = $project->project_name ?? 'D&G Construction Inc.';
+                        }
+                    }
+                ?>
+                <img src="<?php echo e($heroImage); ?>" alt="<?php echo e($heroAlt); ?>">
+            </div>
+        </section>
+
+        <!-- SERVICES ACCORDION/BAND -->
+        <section class="services-band" id="services">
+            <div class="service-grid">
+                <article class="service-card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 7 7-7 7"/><path d="M5 12h14"/></svg>
+                    </div>
+                    <h3>Design & Planning</h3>
+                    <p>Custom designs tailored to your vision and needs.</p>
+                </article>
+                <article class="service-card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    </div>
+                    <h3>Construction</h3>
+                    <p>Quality construction built to last.</p>
+                </article>
+                <article class="service-card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h3>Project Management</h3>
+                    <p>On-time, on-budget, every step of the way.</p>
+                </article>
+                <article class="service-card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7"/><path d="M18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                    </div>
+                    <h3>Renovations</h3>
+                    <p>Transforming spaces with expert care.</p>
+                </article>
+                <article class="service-card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3>Client Focused</h3>
+                    <p>Clear communication and trusted partnerships.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- ABOUT & METRICS SECTION -->
+        <section class="about-section" id="about">
+            <div class="about-copy">
+                <h2>Building With Integrity.<br>Delivering Excellence.</h2>
+                <p>
+                    At D&G Construction Inc., we take pride in our craftsmanship, attention to detail, and commitment to our clients. From residential to commercial projects, we build with purpose and precision.
+                </p>
+                <a class="button button-outline" href="#contact">Learn More About Us <span class="arrow">→</span></a>
+            </div>
+
+            <div class="about-metrics">
+                <div class="metric-card">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <strong>100+</strong>
+                    <span>Projects Completed</span>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="6"></circle>
+                            <path d="m9 14-1 8 4-2 4 2-1-8"></path>
+                            <path d="m12 5 1 2 2 .3-1.5 1.5.4 2.2L12 10l-1.9 1 .4-2.2L9 7.3l2-.3 1-2Z"></path>
+                        </svg>
+                    </div>
+                    <strong>15+</strong>
+                    <span>Years of Experience</span>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <path d="M9 9h.01"></path>
+                            <path d="M15 9h.01"></path>
+                        </svg>
+                    </div>
+                    <strong>75+</strong>
+                    <span>Happy Clients</span>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+                            <circle cx="12" cy="10" r="2.5"></circle>
+                        </svg>
+                    </div>
+                    <strong>Serving</strong>
+                    <span>Our Community with Pride</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROJECTS SECTION -->
+        <section class="projects-section" id="projects">
+            <div class="section-heading-row">
+                <h2>Featured Projects</h2>
+                <div class="carousel-controls">
+                    <button class="carousel-btn prev-btn" aria-label="Previous project" disabled>←</button>
+                    <button class="carousel-btn next-btn" aria-label="Next project">→</button>
+                </div>
+            </div>
+
+            <div class="carousel-view-window">
+                <div class="project-carousel-track">
+                    <?php $__empty_1 = true; $__currentLoopData = $galleryImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $galleryImage): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
+                            $project = $galleryImage->project ?? null;
+                            $isExternal = $galleryImage->is_external ?? false;
+                            $imageSrc = $galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? '');
+
+                            if ($isExternal) {
+                                $projectUrl = $galleryImage->external_project_url ?: 'javascript:void(0);';
+                                $projectName = $galleryImage->external_project_name ?? 'External Project';
+                                $projectLocation = $galleryImage->external_project_location ?: 'Past Featured Project';
+                            } elseif ($project) {
+                                $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
+                                $demoSlug = $isDemo ? Str::of($project->project_name)->slug('-') : null;
+                                $projectUrl = $isDemo
+                                    ? route('landing-gallery.demo.show', $demoSlug)
+                                    : route('landing-gallery.projects.show', $project);
+                                $projectName = $project->project_name ?? 'Unknown Project';
+                                $projectLocation = $project->location ?: 'Completed project';
+                            } else {
+                                $projectUrl = 'javascript:void(0);';
+                                $projectName = 'External Project';
+                                $projectLocation = 'Past Featured Project';
+                            }
+                        ?>
+                        <article class="project-card">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="<?php echo e($projectUrl); ?>" data-project-external="<?php echo e($isExternal ? 'true' : 'false'); ?>" data-project-name="<?php echo e($projectName); ?>" data-project-location="<?php echo e($projectLocation); ?>" data-project-description="<?php echo e($galleryImage->external_project_description ?? ($project->description ?? '')); ?>" aria-label="View details for <?php echo e($projectName); ?>">
+                                <div class="project-img-container">
+                                    <img src="<?php echo e($imageSrc); ?>" alt="<?php echo e($projectName); ?>">
+                                </div>
+                                <div class="project-body">
+                                    <h3><?php echo e($projectName); ?></h3>
+                                    <p><?php echo e($projectLocation); ?></p>
+                                </div>
+                                <span class="project-arrow-btn" aria-hidden="true">→</span>
+                            </button>
+                        </article>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                        <p class="gallery-project-modal-loading">Completed projects will appear here soon.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
+
+        <!-- TESTIMONIAL SLIDER -->
+        <section class="testimonial-strip" aria-label="Client testimonials">
+            <div class="testimonial-slides" aria-live="polite">
+                <article class="testimonial-slide is-active">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">D&G Construction Inc. exceeded our expectations. Their team was professional, reliable, and the quality of work is outstanding.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Mark & Sarah T.</strong>
+                                <span>Happy Homeowners</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">From the first consultation to the final walkthrough, D&G kept us informed and delivered exactly what they promised.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>James R.</strong>
+                                <span>Renovation Client</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">Our new space feels thoughtfully designed and beautifully built. The crew was respectful, organized, and easy to work with.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Priya & Daniel K.</strong>
+                                <span>Custom Home Clients</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                <article class="testimonial-slide">
+                    <div class="testimonial-content">
+                        <span class="quote-icon" aria-hidden="true">“</span>
+                        <p class="quote-text">D&G brought practical ideas, honest guidance, and excellent craftsmanship to our project. We would gladly recommend their team.</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="author-meta">
+                                <strong>Michael B.</strong>
+                                <span>Commercial Client</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="testimonial-dots">
+                <button type="button" class="dot active" aria-label="Show testimonial 1" aria-current="true"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 2"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 3"></button>
+                <button type="button" class="dot" aria-label="Show testimonial 4"></button>
+            </div>
+        </section>
+
+        <!-- CALL TO ACTION -->
+        <section class="cta-section" id="contact">
+            <div class="cta-container">
+                <h2>Ready to Start or Ask a Question?</h2>
+                <p>Request a project estimate or send a message to our team. We will review your concern and get back to you with the next steps.</p>
+                <div class="cta-action-row">
+                    <button type="button" class="button button-light js-open-landing-modal" data-target-modal="quoteModal">Get a Quote <span class="arrow">→</span></button>
+                    <button type="button" class="button button-ghost-light js-open-landing-modal" data-target-modal="contactModal">Get in Touch <span class="arrow">→</span></button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-brand-column">
+                <div class="footer-logo-row">
+                    <img src="<?php echo e(asset('images/bg.png')); ?>" alt="D&G Construction logo">
+                    <strong>D&G CONSTRUCTION INC.</strong>
+                </div>
+                <p>Designing and building spaces that stand the test of time.</p>
+            </div>
+            
+            <div class="footer-links-column">
+                <h4>Quick Links</h4>
+                <a href="#about">About Us</a>
+                <a href="#services">Services</a>
+                <a href="#projects">Projects</a>
+                <a href="#contact">Contact</a>
+            </div>
+            
+            <div class="footer-links-column">
+                <h4>Services</h4>
+                <a href="#services">Custom Homes</a>
+                <a href="#services">Renovations</a>
+                <a href="#services">Commercial</a>
+                <a href="#services">Project Management</a>
+            </div>
+            
+            <div class="footer-links-column">
+                <h4>Contact Us</h4>
+                <a href="tel:09431393749">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 3.2 2 2 0 0 1 4.11 1h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 8.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"></path></svg>
+                    0943 139 3749
+                </a>
+                <a href="mailto:dgconphil@gmail.com">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+                    dgconphil@gmail.com
+                </a>
+                <span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                    Barrie, Ontario
+                </span>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>&copy; 2026 D&G Construction Inc. All Rights Reserved.</span>
+            <div class="footer-socials">
+                <a href="https://www.facebook.com/dgconphil" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-3.31 0-5 1.69-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.67.33-1 1-1Z"></path></svg>
+                </a>
+                <a href="https://www.tiktok.com/@dgconphil?fbclid=IwY2xjawUOEjlwZG9mBWV4dG4DYWVtAjEwAGJyaWQRMUpMWDJXc2x4Q2Y0ZWVLelNzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeLJ0ctsEzAVBec_aAoZ4GX3U-svIiFqlonzfiGLWLTSNwkftDh_CX4q1RzCE_aem_Ek9dBz7yh8a1Lcl1dE5rpQ" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4c.3 2.3 1.7 3.7 4 4v3.2c-1.5-.1-2.8-.6-4-1.4V16a5 5 0 1 1-5-5c.4 0 .7 0 1 .1v3.3a2 2 0 1 0 1 1.7V4h3Z"></path></svg>
+                </a>
+                <a href="https://www.instagram.com/dgcon.phil?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r=".75" fill="currentColor" stroke="none"></circle></svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- PUBLIC PROJECT DETAILS MODAL -->
+    <div class="landing-modal-overlay" id="galleryProjectModal" aria-hidden="true">
+        <div class="landing-modal-card gallery-project-modal-card" role="dialog" aria-modal="true" aria-labelledby="galleryProjectTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Completed Project</span>
+                    <h2 class="landing-modal-title" id="galleryProjectTitle">Project details</h2>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close project details">×</button>
+            </div>
+            <div class="landing-modal-body">
+                <div class="project-detail-scroll" id="galleryProjectContent">
+                    <p class="gallery-project-modal-loading">Loading project details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUOTE REQUEST MODAL -->
+    <div class="landing-modal-overlay" id="quoteModal" aria-hidden="true">
+        <div class="landing-modal-card" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Estimate Request</span>
+                    <h2 class="landing-modal-title" id="quoteModalTitle">Tell us about your project</h2>
+                    <p class="landing-modal-subtitle">
+                        Use this form for quote requests. Share the basic project details so the team can review the scope before contacting you.
+                    </p>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close quote form">×</button>
+            </div>
+
+            <div class="landing-modal-body">
+                <form class="landing-contact-form" data-form-type="quote">
+                    <div class="landing-form-grid">
+                        <div class="landing-form-field">
+                            <label for="quoteName">Full Name</label>
+                            <input id="quoteName" name="Full Name" type="text" placeholder="Your name" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteEmail">Email Address</label>
+                            <input id="quoteEmail" name="Email" type="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quotePhone">Phone Number</label>
+                            <input id="quotePhone" name="Phone" type="tel" placeholder="09XX XXX XXXX">
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteProjectType">Project Type</label>
+                            <select id="quoteProjectType" name="Project Type" required>
+                                <option value="">Select project type</option>
+                                <option>Residential Construction</option>
+                                <option>Commercial Construction</option>
+                                <option>Renovation / Remodeling</option>
+                                <option>Project Management</option>
+                                <option>Other Construction Service</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteLocation">Project Location</label>
+                            <input id="quoteLocation" name="Location" type="text" placeholder="City / site location">
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="quoteTimeline">Target Timeline</label>
+                            <select id="quoteTimeline" name="Target Timeline">
+                                <option value="">Select timeline</option>
+                                <option>As soon as possible</option>
+                                <option>Within 1 month</option>
+                                <option>Within 3 months</option>
+                                <option>Planning stage only</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field full">
+                            <label for="quoteMessage">Project Details</label>
+                            <textarea id="quoteMessage" name="Project Details" placeholder="Briefly describe the work needed, estimated size, preferred schedule, or special requirements." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="landing-form-note">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+                        <span>This quote request will open your email app with the project details already prepared. You can review it before sending.</span>
+                    </div>
+
+                    <div class="landing-form-actions">
+                        <button type="button" class="button landing-form-cancel js-close-landing-modal">Cancel</button>
+                        <button type="submit" class="button button-primary landing-form-submit">Prepare Quote Request <span class="arrow">→</span></button>
+                    </div>
+
+                    <div class="landing-form-message success" role="status"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT / SUPPORT ASSISTANT MODAL -->
+    <div class="landing-modal-overlay" id="contactModal" aria-hidden="true">
+        <div class="landing-modal-card" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+            <div class="landing-modal-header">
+                <div>
+                    <span class="landing-modal-eyebrow">Support Assistant</span>
+                    <h2 class="landing-modal-title" id="contactModalTitle">How can we help?</h2>
+                    <p class="landing-modal-subtitle">
+                        Send a message to the D&G Construction team. Use this for general questions, project support, account access concerns, or follow-up requests.
+                    </p>
+                </div>
+                <button type="button" class="landing-modal-close js-close-landing-modal" aria-label="Close contact form">×</button>
+            </div>
+
+            <div class="landing-modal-body">
+                <form class="landing-contact-form" data-form-type="contact">
+                    <div class="landing-form-grid">
+                        <div class="landing-form-field">
+                            <label for="contactName">Full Name</label>
+                            <input id="contactName" name="Full Name" type="text" placeholder="Your name" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactEmail">Email Address</label>
+                            <input id="contactEmail" name="Email" type="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactConcern">Concern Type</label>
+                            <select id="contactConcern" name="Concern Type" required>
+                                <option value="">Select concern</option>
+                                <option>General Inquiry</option>
+                                <option>Project Update Question</option>
+                                <option>Client Portal Access</option>
+                                <option>Report / Timeline Concern</option>
+                                <option>Other Support Request</option>
+                            </select>
+                        </div>
+
+                        <div class="landing-form-field">
+                            <label for="contactProject">Project Name</label>
+                            <input id="contactProject" name="Project Name" type="text" placeholder="Optional">
+                        </div>
+
+                        <div class="landing-form-field full">
+                            <label for="contactMessage">Message</label>
+                            <textarea id="contactMessage" name="Message" placeholder="Write your question or concern here." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="landing-form-note">
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.5 9.5 0 0 1-4-.9L3 21l1.4-4A8.3 8.3 0 0 1 3 12.5 8.5 8.5 0 0 1 12 4a8.5 8.5 0 0 1 9 7.5Z"></path></svg>
+                        <span>This works like a simple support assistant: fill out the form, submit, then your email app will open with the message prepared.</span>
+                    </div>
+
+                    <div class="landing-form-actions">
+                        <button type="button" class="button landing-form-cancel js-close-landing-modal">Cancel</button>
+                        <button type="submit" class="button button-primary landing-form-submit">Prepare Message <span class="arrow">→</span></button>
+                    </div>
+
+                    <div class="landing-form-message success" role="status"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const track = document.querySelector('.project-carousel-track');
+    const cards = Array.from(document.querySelectorAll('.project-carousel-track .project-card'));
+    const prevBtn = document.querySelector('.carousel-controls .prev-btn');
+    const nextBtn = document.querySelector('.carousel-controls .next-btn');
+    const carouselWindow = document.querySelector('.carousel-view-window');
+
+    if (!track || cards.length === 0) return;
+
+    let currentIndex = 0;
+    let autoSlideInterval = null;
+    const slideDelay = 4000; // Time in milliseconds (4 seconds) between slides
+
+    function getVisibleCardsCount() {
+        const width = window.innerWidth;
+        if (width > 1024) return 3; 
+        if (width > 768) return 2;  
+        return 1;                   
+    }
+
+    function updateCarouselPosition() {
+        const visibleCount = getVisibleCardsCount();
+        const maxIndex = Math.max(0, cards.length - visibleCount);
+        
+        if (currentIndex > maxIndex) {
+            currentIndex = maxIndex;
+        }
+
+        const cardWidth = cards[0].getBoundingClientRect().width;
+        const gap = parseFloat(window.getComputedStyle(track).gap) || 0;
+        
+        const amountToMove = currentIndex * (cardWidth + gap);
+        track.style.transform = `translateX(-${amountToMove}px)`;
+
+        // Control button state flags
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex >= maxIndex;
+    }
+
+    function moveToNextSlide() {
+        const visibleCount = getVisibleCardsCount();
+        const maxIndex = Math.max(0, cards.length - visibleCount);
+
+        if (currentIndex < maxIndex) {
+            currentIndex++;
+        } else {
+            currentIndex = 0; // Loop back to the first slide seamlessly
+        }
+        updateCarouselPosition();
+    }
+
+    function moveToPrevSlide() {
+        if (currentIndex > 0) {
+            currentIndex--;
+        } else {
+            // Loop forward to the absolute end if they press back at index 0
+            const visibleCount = getVisibleCardsCount();
+            currentIndex = Math.max(0, cards.length - visibleCount);
+        }
+        updateCarouselPosition();
+    }
+
+    // Timer control functions
+    function startAutoSlide() {
+        if (autoSlideInterval === null) {
+            autoSlideInterval = setInterval(moveToNextSlide, slideDelay);
+        }
+    }
+
+    function stopAutoSlide() {
+        if (autoSlideInterval !== null) {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = null;
+        }
+    }
+
+    // Manual Event Listeners
+    nextBtn.addEventListener('click', () => {
+        moveToNextSlide();
+        // Restart timer on interaction so it doesn't jump immediately after a click
+        stopAutoSlide();
+        startAutoSlide();
+    });
+
+    prevBtn.addEventListener('click', () => {
+        moveToPrevSlide();
+        stopAutoSlide();
+        startAutoSlide();
+    });
+
+    // Pause on Hover for User Accessibility
+    if (carouselWindow) {
+        carouselWindow.addEventListener('mouseenter', stopAutoSlide);
+        carouselWindow.addEventListener('mouseleave', startAutoSlide);
+    }
+
+    // Handle viewport changes to keep positions stable
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateCarouselPosition();
+        }, 100);
+    });
+
+    // Initialize systems
+    updateCarouselPosition();
+    startAutoSlide();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('galleryProjectModal');
+    const content = document.getElementById('galleryProjectContent');
+    const title = document.getElementById('galleryProjectTitle');
+
+    if (!modal || !content || !title) return;
+
+    const escapeHtml = value => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const openModal = () => {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    };
+
+    document.querySelectorAll('.js-open-gallery-project').forEach(button => {
+        button.addEventListener('click', async () => {
+            const isExternal = button.dataset.projectExternal === 'true';
+            const externalUrl = button.dataset.projectUrl;
+
+            if (isExternal && externalUrl && externalUrl !== 'javascript:void(0);') {
+                window.open(externalUrl, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            title.textContent = 'Project details';
+            content.innerHTML = '<p class="gallery-project-modal-loading">Loading project details...</p>';
+            openModal();
+
+            if (isExternal) {
+                const projectName = button.dataset.projectName || 'External Project';
+                const projectLocation = button.dataset.projectLocation || '';
+                const projectDescription = button.dataset.projectDescription || 'A past featured project by D&G Construction Inc.';
+                const imageSrc = button.querySelector('img')?.src || '';
+
+                title.textContent = projectName;
+
+                const metaHtml = projectLocation
+                    ? `<div class="project-detail-meta-icons">
+                        <div class="project-detail-meta-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                            <span>${escapeHtml(projectLocation)}</span>
+                        </div>
+                    </div>`
+                    : '';
+
+                content.innerHTML = `
+                    ${imageSrc ? `<div class="project-detail-hero"><img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(projectName)}"></div>` : ''}
+                    ${metaHtml}
+                    <div class="project-detail-section">
+                        <h3>About This Project</h3>
+                        <p>${escapeHtml(projectDescription)}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch(button.dataset.projectUrl, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (!response.ok) throw new Error('Unable to load project details.');
+
+                const project = await response.json();
+                title.textContent = project.name;
+
+                const metaIcons = [];
+                if (project.bedrooms) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+                        <span>${escapeHtml(project.bedrooms)} Beds</span>
+                    </div>`);
+                }
+                if (project.bathrooms) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a1 1 0 0 1 1-1z"/><path d="M6 12V5a2 2 0 0 1 2-2h1.5a1 1 0 0 1 1 .8l1.2 4.2H16a2 2 0 0 1 2 2v1"/><path d="M8 21h8"/></svg>
+                        <span>${escapeHtml(project.bathrooms)} Baths</span>
+                    </div>`);
+                }
+                if (project.lot_area) {
+                    metaIcons.push(`<div class="project-detail-meta-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                        <span>${escapeHtml(project.lot_area)}</span>
+                    </div>`);
+                }
+
+                const highlightsHtml = (project.highlights && project.highlights.length)
+                    ? `<div class="project-detail-section project-detail-highlights">
+                        <h3>Project Highlights</h3>
+                        <ul>${project.highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ul>
+                    </div>`
+                    : '';
+
+                const featuresHtml = (project.features && project.features.length)
+                    ? `<div class="project-detail-section project-detail-highlights">
+                        <h3>Features</h3>
+                        <ul>${project.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
+                    </div>`
+                    : '';
+
+                const galleryHtml = (project.gallery_images && project.gallery_images.length)
+                    ? `<div class="project-detail-section">
+                        <h3>Project Gallery</h3>
+                        <div class="project-detail-gallery-grid">
+                            ${project.gallery_images.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(project.name)}" loading="lazy">`).join('')}
+                        </div>
+                    </div>`
+                    : '';
+
+                const timelineHtml = (project.timeline && project.timeline.length)
+                    ? `<div class="project-detail-section project-detail-timeline">
+                        <h3>Project Timeline</h3>
+                        ${project.timeline.map(phase => {
+                            const statusClass = phase.status === 'completed' ? 'completed' : (phase.status === 'in_progress' ? 'in-progress' : (phase.status === 'delayed' ? 'delayed' : 'pending'));
+                            const milestonesHtml = (phase.milestones && phase.milestones.length)
+                                ? phase.milestones.map(m => {
+                                    const dotClass = m.is_completed ? 'completed' : (m.is_delayed ? 'delayed' : 'pending');
+                                    return `<div class="project-detail-milestone">
+                                        <div class="project-detail-milestone-left">
+                                            <span class="project-detail-milestone-dot ${dotClass}"></span>
+                                            <span>${escapeHtml(m.name)}</span>
+                                        </div>
+                                        <span class="project-detail-milestone-date">${escapeHtml(m.start_date || '')}${m.end_date && m.end_date !== m.start_date ? ' - ' + escapeHtml(m.end_date) : ''}</span>
+                                    </div>`;
+                                }).join('')
+                                : '<p style="color:var(--text-muted,#6f7d74);font-size:0.88rem;">No milestones recorded.</p>';
+                            return `<div class="project-detail-phase">
+                                <div class="project-detail-phase-header">
+                                    <span>${escapeHtml(phase.name)}</span>
+                                    <span class="project-detail-phase-badge ${statusClass}">${escapeHtml(phase.status.replace('_', ' '))}</span>
+                                </div>
+                                <div class="project-detail-milestones">${milestonesHtml}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>`
+                    : '';
+
+                content.innerHTML = `
+                    ${project.image ? `<div class="project-detail-hero"><img src="${escapeHtml(project.image)}" alt="${escapeHtml(project.name)}"></div>` : ''}
+                    ${metaIcons.length ? `<div class="project-detail-meta-icons">${metaIcons.join('')}</div>` : ''}
+                    <div class="project-detail-section">
+                        <h3>About This Project</h3>
+                        <p>${escapeHtml(project.description || 'A completed D&G Construction project.')}</p>
+                    </div>
+                    ${highlightsHtml}
+                    ${featuresHtml}
+                    ${galleryHtml}
+                    ${timelineHtml}`;
+            } catch (error) {
+                content.innerHTML = '<p class="gallery-project-modal-loading">Project details are temporarily unavailable.</p>';
+            }
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const testimonialStrip = document.querySelector('.testimonial-strip');
+    const slides = Array.from(document.querySelectorAll('.testimonial-slide'));
+    const dots = Array.from(document.querySelectorAll('.testimonial-dots .dot'));
+
+    if (!testimonialStrip || slides.length === 0) return;
+
+    let currentIndex = 0;
+    let autoSlideInterval = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const slideDelay = 6000;
+
+    function showSlide(index) {
+        currentIndex = (index + slides.length) % slides.length;
+
+        slides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === currentIndex);
+        });
+
+        dots.forEach((dot, dotIndex) => {
+            const isActive = dotIndex === currentIndex;
+            dot.classList.toggle('active', isActive);
+            dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+        });
+    }
+
+    function stopAutoSlide() {
+        if (autoSlideInterval !== null) {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = null;
+        }
+    }
+
+    function startAutoSlide() {
+        stopAutoSlide();
+        autoSlideInterval = setInterval(() => showSlide(currentIndex + 1), slideDelay);
+    }
+
+    dots.forEach((dot, dotIndex) => {
+        dot.addEventListener('click', () => {
+            showSlide(dotIndex);
+            startAutoSlide();
+        });
+    });
+
+    testimonialStrip.addEventListener('mouseenter', stopAutoSlide);
+    testimonialStrip.addEventListener('mouseleave', startAutoSlide);
+
+    testimonialStrip.addEventListener('touchstart', event => {
+        stopAutoSlide();
+        touchStartX = event.changedTouches[0].clientX;
+        touchStartY = event.changedTouches[0].clientY;
+    }, { passive: true });
+
+    testimonialStrip.addEventListener('touchend', event => {
+        const touch = event.changedTouches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            showSlide(currentIndex + (deltaX < 0 ? 1 : -1));
+        }
+
+        startAutoSlide();
+    }, { passive: true });
+
+    showSlide(0);
+    startAutoSlide();
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const companyEmail = 'info@dgconstruction.ca';
+
+    function getModalByButton(button) {
+        const targetId = button?.dataset?.targetModal;
+        return targetId ? document.getElementById(targetId) : null;
+    }
+
+    function openLandingModal(modal) {
+        if (!modal) return;
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        const closeButton = modal.querySelector('.landing-modal-close');
+        setTimeout(() => closeButton?.focus({ preventScroll: true }), 80);
+    }
+
+    function closeLandingModal(modal) {
+        if (!modal) return;
+
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+
+        modal.querySelectorAll('.landing-form-message').forEach(message => {
+            message.classList.remove('is-visible');
+            message.textContent = '';
+        });
+    }
+
+    document.querySelectorAll('.js-open-landing-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            openLandingModal(getModalByButton(button));
+        });
+    });
+
+    document.querySelectorAll('.js-close-landing-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            closeLandingModal(button.closest('.landing-modal-overlay'));
+        });
+    });
+
+    document.querySelectorAll('.landing-modal-overlay').forEach(modal => {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeLandingModal(modal);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.landing-modal-overlay.is-open').forEach(closeLandingModal);
+        }
+    });
+
+    document.querySelectorAll('.landing-contact-form').forEach(form => {
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const formType = form.dataset.formType || 'contact';
+            const formData = new FormData(form);
+            const messageBox = form.querySelector('.landing-form-message');
+
+            const subject = formType === 'quote'
+                ? 'D&G Construction Quote Request'
+                : 'D&G Construction Contact / Support Request';
+
+            const lines = [
+                subject,
+                '',
+                ...Array.from(formData.entries()).map(([key, value]) => `${key}: ${value || 'N/A'}`),
+                '',
+                'Sent from the D&G Construction landing page.'
+            ];
+
+            const mailtoUrl = `mailto:${companyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+
+            if (messageBox) {
+                messageBox.textContent = formType === 'quote'
+                    ? 'Quote request prepared. Your email app will open so you can send it.'
+                    : 'Message prepared. Your email app will open so you can send it.';
+                messageBox.classList.add('is-visible');
+            }
+
+            window.location.href = mailtoUrl;
+        });
+    });
+});
+</script>
+
+</body>
+</html><?php /**PATH C:\xampp\htdocs\dashboard\resources\views/welcome.blade.php ENDPATH**/ ?>
