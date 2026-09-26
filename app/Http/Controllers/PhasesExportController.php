@@ -362,7 +362,7 @@ HTML;
         foreach ($phases as $phase) {
             $statusClass = 'status-' . $phase->status;
             $statusLabel = ucfirst(str_replace('_', ' ', $phase->status));
-            $progress = (float)($phase->completion_percentage ?? 0);
+            $progress = (float)($phase->progress_percentage ?? 0);
             $startDate = $phase->planned_start_date 
                 ? $phase->planned_start_date->format('M d, Y') 
                 : 'Pending';

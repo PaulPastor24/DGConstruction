@@ -126,7 +126,7 @@ class TimelineController extends Controller
         $overallProgress = 0;
         if ($phases->isNotEmpty()) {
             $overallProgress = round($phases->map(function ($phase) {
-                return $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
+                return $this->normalizeCompletionPercentage($phase->progress_percentage);
             })->average(), 1);
         }
 
@@ -163,7 +163,7 @@ class TimelineController extends Controller
             $phase->admin_progress_override_raw = $phase->admin_progress_override !== null
                 ? (float) $phase->admin_progress_override
                 : null;
-            $phase->progress = $this->normalizeCompletionPercentage($phase->completion_percentage ?? 0);
+            $phase->progress = $this->normalizeCompletionPercentage($phase->progress_percentage);
             $phase->duration_days = $this->calculateDurationDays($phase->planned_start_date, $phase->planned_end_date);
             $phase->milestone_count = (int) ($phase->milestones_count ?? 0);
 

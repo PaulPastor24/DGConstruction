@@ -631,7 +631,7 @@ class SupervisorController extends Controller
             $completedPhases = $phases->where('status', 'completed')->count();
             $inProgressPhases = $phases->where('status', 'in_progress')->count();
             $upcomingPhases = $phases->whereIn('status', ['not_started', 'delayed'])->count();
-            $progress = $phases->isEmpty() ? 0 : round((float) $phases->avg('completion_percentage'), 2);
+            $progress = $phases->isEmpty() ? 0 : round((float) $phases->avg('progress_percentage'), 2);
 
             $allMilestones = $phases->flatMap(function ($phase) {
                 return $phase->milestones->map(function ($milestone) use ($phase) {
@@ -710,7 +710,7 @@ class SupervisorController extends Controller
                         'end' => optional($phase->planned_end_date)->toDateString(),
                         'actual_start' => optional($phase->actual_start_date)->toDateString(),
                         'actual_end' => optional($phase->actual_end_date)->toDateString(),
-                        'progress' => (float) ($phase->completion_percentage ?? 0),
+                        'progress' => (float) ($phase->progress_percentage ?? 0),
                         'status' => $phase->status,
                         'display_status' => match ($phase->status) {
                             'completed' => 'completed',

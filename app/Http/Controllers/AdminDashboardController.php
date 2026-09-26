@@ -123,7 +123,7 @@ class AdminDashboardController extends Controller
                 $phases = $project->phases;
 
                 $progressPercentage = $phases->isNotEmpty()
-                    ? round($phases->avg('completion_percentage'), 2)
+                    ? round($phases->avg('progress_percentage'), 2)
                     : 0;
 
                 $color = 'blue';
@@ -175,7 +175,7 @@ class AdminDashboardController extends Controller
                     $phases = $project->phases;
 
                     return $carry + ($phases->isNotEmpty()
-                        ? $phases->avg('completion_percentage')
+                        ? $phases->avg('progress_percentage')
                         : 0);
                 }, 0);
 
@@ -184,7 +184,7 @@ class AdminDashboardController extends Controller
                 $delayedProjects = $allActiveProjects->filter(function ($project) {
                     $status = strtolower((string) ($project->status ?? 'planning'));
                     $phases = $project->phases;
-                    $averageProgress = $phases->isNotEmpty() ? $phases->avg('completion_percentage') : 0;
+                    $averageProgress = $phases->isNotEmpty() ? $phases->avg('progress_percentage') : 0;
                     $hasDelayedPhase = $phases->contains(function ($phase) {
                         return in_array(strtolower((string) ($phase->status ?? '')), ['delayed', 'on_hold'], true);
                     });
@@ -406,7 +406,7 @@ class AdminDashboardController extends Controller
                             'status_note' => $phase->description
                                 ?? 'Phase operations verified',
 
-                            'progress_percentage' => $phase->completion_percentage
+                            'progress_percentage' => $phase->progress_percentage
                                 ?? 0,
 
                             'status_text' => $statusText,

@@ -1,0 +1,1 @@
+<?php echo $__env->make('admin.projects.show', ['project' => $project, 'isModal' => $isModal ?? true], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Paul Pastor\DGConstruction\resources\views\admin\projects\partials\details-modal.blade.php ENDPATH**/ ?>

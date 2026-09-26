@@ -20,12 +20,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     $galleryImages = collect();
+
     if (Schema::hasTable('landing_gallery_images')) {
         $galleryImages = \App\Models\LandingGalleryImage::query()
             ->with('project')
             ->where('is_active', true)
-            ->whereHas('project', function ($query) {
-                $query->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
+            ->where(function ($query) {
+                $query->whereHas('project', function ($q) {
+                    $q->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
+                })
+                ->orWhere('is_external', true);
             })
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -43,6 +47,11 @@ Route::get('/', function () {
             return (object) [
                 'project' => $project,
                 'image_path' => $project->project_image,
+                'is_external' => false,
+                'external_project_name' => null,
+                'external_project_location' => null,
+                'external_project_description' => null,
+                'external_project_url' => null,
             ];
         });
     }
@@ -58,6 +67,11 @@ Route::get('/', function () {
                     'description' => 'A modern 2-story residential home with contemporary design and sustainable materials.',
                 ],
                 'image_path' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+                'is_external' => false,
+                'external_project_name' => null,
+                'external_project_location' => null,
+                'external_project_description' => null,
+                'external_project_url' => null,
             ],
             (object) [
                 'project' => (object) [
@@ -68,6 +82,11 @@ Route::get('/', function () {
                     'description' => 'A 5-story commercial office building with modern amenities and efficient workspace design.',
                 ],
                 'image_path' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+                'is_external' => false,
+                'external_project_name' => null,
+                'external_project_location' => null,
+                'external_project_description' => null,
+                'external_project_url' => null,
             ],
             (object) [
                 'project' => (object) [
@@ -78,6 +97,11 @@ Route::get('/', function () {
                     'description' => 'Complete renovation of a luxury villa featuring modern interiors and landscape design.',
                 ],
                 'image_path' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+                'is_external' => false,
+                'external_project_name' => null,
+                'external_project_location' => null,
+                'external_project_description' => null,
+                'external_project_url' => null,
             ],
         ];
 

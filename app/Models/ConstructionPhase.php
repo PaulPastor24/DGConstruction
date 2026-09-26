@@ -148,8 +148,12 @@ class ConstructionPhase extends Model
 
     public function getProgressPercentageAttribute(): float
     {
+        if ($this->admin_progress_override !== null && $this->admin_progress_override !== '') {
+            return (float) $this->admin_progress_override;
+        }
+
         if (!$this->relationLoaded('milestones') && !Schema::hasTable('timeline_milestones')) {
-            return (float) ($this->admin_progress_override ?? $this->getRawOriginal('completion_percentage', 0));
+            return (float) $this->getRawOriginal('completion_percentage', 0);
         }
 
         $milestones = $this->relationLoaded('milestones')
@@ -159,11 +163,7 @@ class ConstructionPhase extends Model
         $total = $milestones->count();
 
         if ($total === 0) {
-            return (float) ($this->admin_progress_override ?? 0);
-        }
-
-        if ($this->admin_progress_override !== null && $this->admin_progress_override !== '') {
-            return (float) $this->admin_progress_override;
+            return (float) $this->getRawOriginal('completion_percentage', 0);
         }
 
         return round(($milestones->where('is_completed', true)->count() / $total) * 100, 2);

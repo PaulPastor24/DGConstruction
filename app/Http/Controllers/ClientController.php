@@ -234,7 +234,7 @@ class ClientController extends Controller
                 'total_phases' => $phases->count(),
                 'completed_phases' => $completedPhases,
                 'current_phase' => $phases->firstWhere('status', 'in_progress'),
-                'completion' => round($phases->avg('completion_percentage') ?? 0, 2),
+                'completion' => round($phases->avg('progress_percentage') ?? 0, 2),
             ];
         })->sortByDesc('completion');
 
@@ -746,7 +746,7 @@ class ClientController extends Controller
                 'total_phases' => $phases->count(),
                 'completed_phases' => $completedPhases,
                 'current_phase' => $phases->firstWhere('status', 'in_progress'),
-                'completion' => round($phases->avg('completion_percentage') ?? 0, 2),
+                'completion' => round($phases->avg('progress_percentage') ?? 0, 2),
             ];
         })->sortByDesc('completion');
 

@@ -6,15 +6,21 @@ use App\Models\LandingGalleryImage;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class LandingGalleryController extends Controller
 {
     public function index()
     {
-        $galleryImages = LandingGalleryImage::with('project')
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+        $galleryImages = collect();
+
+        if (Schema::hasTable('landing_gallery_images')) {
+            $galleryImages = LandingGalleryImage::with('project')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+        }
+
         $projects = Project::query()
             ->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))
             ->orderBy('project_name')
@@ -26,24 +32,40 @@ class LandingGalleryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'project_id' => ['required', 'integer', 'exists:projects,project_id'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'is_external' => ['nullable', 'boolean'],
+            'external_project_name' => ['nullable', 'string', 'max:255'],
+            'external_project_location' => ['nullable', 'string', 'max:255'],
+            'external_project_description' => ['nullable', 'string', 'max:2000'],
+            'external_project_url' => ['nullable', 'url', 'max:2000'],
         ]);
 
-        $project = Project::findOrFail($validated['project_id']);
-        if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
-            return back()->withInput()->withErrors(['project_id' => 'Only completed projects can be added to the landing page gallery.']);
+        $isExternal = (bool) ($validated['is_external'] ?? false);
+
+        if (!$isExternal && empty($validated['project_id'])) {
+            return back()->withInput()->withErrors(['project_id' => 'Please select a project or mark this as an external featured project.']);
+        }
+
+        if ($isExternal) {
+            $validated['project_id'] = null;
+            $validated['is_external'] = true;
+        } else {
+            $project = Project::findOrFail($validated['project_id']);
+            if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
+                return back()->withInput()->withErrors(['project_id' => 'Only completed projects can be added to the landing page gallery.']);
+            }
+            $validated['is_external'] = false;
         }
 
         $sortOrder = ((int) LandingGalleryImage::max('sort_order')) + 1;
-        LandingGalleryImage::create([
-            'project_id' => $validated['project_id'],
+        LandingGalleryImage::create(array_merge($validated, [
             'image_path' => $request->file('image')->store('landing-gallery', 'public'),
             'sort_order' => $sortOrder,
             'is_active' => true,
-        ]);
+        ]));
 
-        return back()->with('success', 'Landing page gallery image added.');
+        return back()->with('success', $isExternal ? 'External featured project added to landing page.' : 'Landing page gallery image added.');
     }
 
     public function destroy(LandingGalleryImage $galleryImage)

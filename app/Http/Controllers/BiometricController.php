@@ -80,9 +80,10 @@ class BiometricController extends Controller
             ],
             'timeout' => 60000,
             'authenticatorSelection' => [
+                'authenticatorAttachment' => 'platform',
                 'residentKey' => 'preferred',
                 'requireResidentKey' => false,
-                'userVerification' => 'discouraged',
+                'userVerification' => 'preferred',
             ],
             'attestation' => 'none',
         ]);
@@ -180,7 +181,10 @@ class BiometricController extends Controller
             'challenge' => $challenge,
             'timeout' => 60000,
             'rpId' => request()->getHost(),
-            'userVerification' => 'discouraged',
+            'userVerification' => 'preferred',
+            'authenticatorSelection' => [
+                'authenticatorAttachment' => 'platform',
+            ],
             'allowCredentials' => $credentials,
         ]);
     }

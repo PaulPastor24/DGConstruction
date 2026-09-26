@@ -1149,10 +1149,10 @@ ATTENDANCE TABLE
             'hero hero'
             'stats stats'
             'filters issues'
-            'schedule entry'
-            'records entry';
+            'schedule schedule'
+            'records records';
         align-items: start;
-        gap: 14px;
+        gap: 10px;
     }
 
     .attendance-page > .attendance-hero {
@@ -1176,16 +1176,11 @@ ATTENDANCE TABLE
 
     .attendance-page > .attendance-schedule-panel {
         grid-area: schedule;
-        margin-bottom: 0 !important;
     }
 
     .attendance-page > .attendance-issues-panel {
         grid-area: issues;
         margin-bottom: 0;
-    }
-
-    .attendance-page > .attendance-entry-panel {
-        grid-area: entry;
     }
 
     .attendance-page > .attendance-panel {

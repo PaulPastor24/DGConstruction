@@ -798,11 +798,11 @@
                         </button>
 
                         <p class="fw-semibold text-dark mb-1">Ready to Identify</p>
-                        <span class="text-muted small">Click the fingerprint button to initialize physical reader stream.</span>
+                        <span class="text-muted small">Tap the fingerprint button to scan using Face ID, Touch ID, or fingerprint reader.</span>
                     </div>
 
                     <div id="globalScanStatus" class="alert alert-light border text-muted small py-2 mb-0">
-                        <i class="bi bi-info-circle-fill text-primary"></i> Awaiting hardware input node...
+                        <i class="bi bi-info-circle-fill text-primary"></i> Tap the fingerprint button to start biometric verification.
                     </div>
                 </div>
             </div>
@@ -913,7 +913,7 @@
                     <div class="card bg-light border-0 mb-2">
                         <div class="card-body text-center py-3">
                             <label class="d-block small fw-bold text-dark mb-2">
-                                <i class="bi bi-fingerprint"></i> Device Passkey Association Layer
+                                <i class="bi bi-fingerprint"></i> Biometric Authentication
                             </label>
 
                             <button type="button" class="btn btn-dark btn-sm fw-semibold" id="btnRegisterWorkerFingerprint">
@@ -1928,13 +1928,13 @@
         });
 
         btnGlobalScan?.addEventListener('click', async function () {
-            // Check WebAuthn support before proceeding
+            // Check biometric support before proceeding
             if (!webAuthnAvailable) {
                 globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
                 globalScanStatus.innerHTML = `
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    WebAuthn is not supported in this browser. Please use the 
-                    <strong>Manual Log</strong> option or try a different browser.
+                    Biometric authentication is not supported in this browser. Please use the 
+                    <strong>Manual Log</strong> option or try a different browser (Chrome, Firefox, Safari).
                 `;
                 return;
             }
@@ -1942,7 +1942,7 @@
             globalScanStatus.className = 'alert alert-warning border text-dark small py-2 mb-0';
             globalScanStatus.innerHTML = `
                 <span class="spinner-border spinner-border-sm me-2"></span>
-                Polling hardware credential layer...
+                Opening biometric scanner...
             `;
 
             try {
@@ -1996,9 +1996,9 @@
                 
                 // Provide user-friendly error messages
                 if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
-                    errorMessage = 'WebAuthn operation cancelled or not supported. Please try the Manual Log option.';
+                    errorMessage = 'Biometric verification was cancelled or not supported. Please try the Manual Log option.';
                 } else if (errorMessage.includes('NotSupportedError')) {
-                    errorMessage = 'WebAuthn is not supported on this device. Please use Manual Log instead.';
+                    errorMessage = 'Biometric authentication is not supported on this device. Please use Manual Log instead.';
                 } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
                     errorMessage = 'Biometric verification timed out. Please try again.';
                 }
@@ -2014,7 +2014,7 @@
         btnRegisterFingerprint?.addEventListener('click', async function () {
             // Check WebAuthn support before proceeding
             if (!webAuthnAvailable) {
-                regStatusLabel.innerText = 'WebAuthn is not supported in this browser. Please use Chrome, Firefox, or Safari.';
+                regStatusLabel.innerText = 'Biometric authentication is not supported in this browser. Please use Chrome, Firefox, or Safari.';
                 regStatusLabel.className = 'd-block text-danger small mt-1';
                 return;
             }
@@ -2023,7 +2023,7 @@
             const lastName = document.getElementById('regLastName').value.trim();
 
             if (!firstName || !lastName) {
-                alert('Please enter the worker first name and last name before capturing fingerprint.');
+                alert('Please enter the worker first name and last name before capturing biometrics.');
                 return;
             }
 
@@ -2073,7 +2073,7 @@
                 if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
                     errorMessage = 'Biometric capture cancelled or not supported. Please try with a different browser.';
                 } else if (errorMessage.includes('NotSupportedError')) {
-                    errorMessage = 'WebAuthn is not supported on this device.';
+                    errorMessage = 'Biometric authentication is not supported on this device.';
                 }
 
                 regStatusLabel.innerText = errorMessage;
