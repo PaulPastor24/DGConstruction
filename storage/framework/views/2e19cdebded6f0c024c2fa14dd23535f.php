@@ -191,4 +191,4 @@
             <?php endif; ?>
         </div>
     </div>
-</div><?php /**PATH C:\xampp\htdocs\dashboard\resources\views/admin/projects/partials/table.blade.php ENDPATH**/ ?>
+</div><?php /**PATH C:\xampp\htdocs\dashboard\resources\views\admin\projects\partials\table.blade.php ENDPATH**/ ?>

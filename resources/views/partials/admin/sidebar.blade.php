@@ -37,15 +37,15 @@
         <a class="nav-item {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}">
             <i class="bi bi-building"></i><span>Project Management</span>
         </a>
-        <a class="nav-item {{ request()->routeIs('admin.landing-gallery.*') ? 'active' : '' }}" href="{{ route('admin.landing-gallery.index') }}">
-            <i class="bi bi-images"></i><span>Landing Page</span>
-        </a>
         <a class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
             <i class="bi bi-people"></i><span>User Management</span>
         </a>
         <div class="nav-section-label">System</div>
+        <a class="nav-item {{ request()->routeIs('admin.landing-gallery.*') ? 'active' : '' }}" href="{{ route('admin.landing-gallery.index') }}">
+            <i class="bi bi-images"></i><span>Landing Page Gallery</span>
+        </a>
         <a class="nav-item {{ request()->routeIs('admin.alerts*') ? 'active' : '' }}" href="{{ route('admin.alerts') }}">
-            <i class="bi bi-bell"></i><span>Alerts</span>
+            <i class="bi bi-bell"></i><span>Notifications</span>
         </a>
     </nav>
 

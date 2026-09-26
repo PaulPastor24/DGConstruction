@@ -22,7 +22,7 @@ class LandingGalleryController extends Controller
         }
 
         $projects = Project::query()
-            ->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))
+            ->whereNotNull('project_name')
             ->orderBy('project_name')
             ->get(['project_id', 'project_name']);
 
@@ -41,6 +41,7 @@ class LandingGalleryController extends Controller
             'external_project_url' => ['nullable', 'url', 'max:2000'],
         ]);
 
+<<<<<<< HEAD
         $isExternal = (bool) ($validated['is_external'] ?? false);
 
         if (!$isExternal && empty($validated['project_id'])) {
@@ -56,6 +57,11 @@ class LandingGalleryController extends Controller
                 return back()->withInput()->withErrors(['project_id' => 'Only completed projects can be added to the landing page gallery.']);
             }
             $validated['is_external'] = false;
+=======
+        $project = Project::findOrFail($validated['project_id']);
+        if ($project->workflowStatus() !== Project::STATUS_COMPLETED) {
+            return back()->withInput()->with('error', 'Only completed projects can be added to the landing page gallery.');
+>>>>>>> bfb86f3186b50144cd15438277ba77741e70e65b
         }
 
         $sortOrder = ((int) LandingGalleryImage::max('sort_order')) + 1;
