@@ -876,7 +876,7 @@ class AdminDashboardController extends Controller
                     'submitted_by' => $report->submitted_by,
                     'report_text' => $report->report_text,
                     'admin_report_text' => $report->admin_report_text,
-                    'admin_site_images' => array_values(array_filter(array_map(function ($image) {
+                    'admin_site_images' => array_values(array_filter(array_map(function ($image) use ($report) {
                         return $report->imageUrl($image);
                     }, (array) ($report->admin_site_images ?? [])))),
                     'admin_explanation' => $report->admin_explanation,
@@ -884,7 +884,7 @@ class AdminDashboardController extends Controller
                     'approval_remarks' => $report->approval_remarks,
                     'approved_by' => optional($report->approvedBy)->name,
                     'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                    'site_images' => array_values(array_filter(array_map(function ($image) {
+                    'site_images' => array_values(array_filter(array_map(function ($image) use ($report) {
                         return $report->imageUrl($image);
                     }, (array) ($report->site_images ?? [])))),
                     'site_images_count' => count(array_filter((array) ($report->site_images ?? []))),
@@ -958,7 +958,7 @@ class AdminDashboardController extends Controller
                 'status_label' => $report->status_label,
                 'report_text' => $report->report_text,
                 'admin_report_text' => $report->admin_report_text,
-                'admin_site_images' => array_values(array_filter(array_map(function ($image) {
+                'admin_site_images' => array_values(array_filter(array_map(function ($image) use ($report) {
                     return $report->imageUrl($image);
                 }, (array) ($report->admin_site_images ?? [])))),
                 'admin_site_image_paths' => array_values((array) ($report->admin_site_images ?? [])),
@@ -967,7 +967,7 @@ class AdminDashboardController extends Controller
                 'approval_remarks' => $report->approval_remarks,
                 'approved_by' => optional($report->approvedBy)->name,
                 'approved_at' => optional($report->approved_at)->format('M d, Y h:i A'),
-                'site_images' => array_values(array_filter(array_map(function ($image) {
+                'site_images' => array_values(array_filter(array_map(function ($image) use ($report) {
                     return $report->imageUrl($image);
                 }, (array) ($report->site_images ?? [])))),
                 'site_image_paths' => array_values((array) ($report->site_images ?? [])),

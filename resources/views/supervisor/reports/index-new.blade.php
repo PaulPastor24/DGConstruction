@@ -1570,7 +1570,7 @@
                             </td>
                             <td>
                                 @php
-                                    $imageCount = count((array) ($report->site_images ?? []));
+                                    $imageCount = count($report->client_site_images);
                                 @endphp
                                 @if($imageCount > 0)
                                     <span class="badge bg-success-subtle text-success" style="font-size: 0.75rem;">
@@ -1590,20 +1590,7 @@
                         </tr>
 
                         @php
-                            $siteImages = is_array($report->site_images)
-                                ? $report->site_images
-                                : (json_decode((string) $report->site_images, true) ?: []);
-                            $siteImageUrls = collect($siteImages)
-                                ->map(function ($path) {
-                                    if (!$path) {
-                                        return null;
-                                    }
-                                    return str_starts_with($path, 'http://') || str_starts_with($path, 'https://')
-                                        ? $path
-                                        : asset('storage/' . ltrim($path, '/'));
-                                })
-                                ->filter()
-                                ->values();
+                            $siteImageUrls = collect($report->client_site_images);
                             $timelineStatus = $status === 'approved' ? 'active' : ($status === 'rejected' ? 'active' : 'current');
                         @endphp
                             <div class="modal fade report-details-modal" id="reportDetailsModal-{{ $report->report_id }}" data-report-status="{{ $status }}" data-gallery='@json($siteImageUrls->map(fn($url) => $url)->values())' tabindex="-1" aria-labelledby="reportDetailsModalLabel-{{ $report->report_id }}" aria-hidden="true">
@@ -1656,7 +1643,7 @@
                                                     <div class="js-report-view-section">
                                                         <div class="detail-report-text p-4 rounded-3 mb-4">
                                                             <div class="detail-section-title">Construction Accomplishment</div>
-                                                            <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->report_text ?? 'No description logs reported.' }}</p>
+                                                            <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->client_report_text ?: 'No description logs reported.' }}</p>
                                                         </div>
                                                     </div>
 
