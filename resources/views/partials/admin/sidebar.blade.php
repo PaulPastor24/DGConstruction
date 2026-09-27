@@ -2,7 +2,7 @@
     <div class="sidebar-logo">
         <div class="logo-badge">
             <div class="logo-icon">
-                <img src="{{ asset('images/image.png') }}" alt="D&G Logo">
+                <img src="{{ asset('images/D&G.png') }}" alt="D&G Logo">
             </div>
             <div>
                 <div class="logo-text">D&G Dev't Corp.</div>

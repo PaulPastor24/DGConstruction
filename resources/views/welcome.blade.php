@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D&G Construction Inc. | Design. Build. Deliver.</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/D&G.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/D&G.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/D&G.png') }}">
+    <meta name="msapplication-TileImage" content="{{ asset('images/D&G.png') }}">
     <meta name="description" content="D&G Construction Inc. delivers residential, commercial, and renovation services with a modern, reliable approach.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1015,7 +1019,7 @@
         <div class="footer-top">
             <div class="footer-brand-column">
                 <div class="footer-logo-row">
-                    <img src="{{ asset('images/bg.png') }}" alt="D&G Construction logo">
+                    <img src="{{ asset('images/D&G.png') }}" alt="D&G Construction logo">
                     <strong>D&G CONSTRUCTION INC.</strong>
                 </div>
                 <p>Designing and building spaces that stand the test of time.</p>
