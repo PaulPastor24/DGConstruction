@@ -673,6 +673,7 @@
                             }
 
                             $workerPosition = $worker?->position ?? $worker?->job_title ?? $worker?->trade ?? 'Worker';
+                            $workerContact = trim((string) ($worker?->contact_number ?? ''));
                             $projectName = $project?->project_name ?? $project?->name ?? 'No Project';
 
                             $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
@@ -733,9 +734,15 @@
                         >
                             <td data-label="Worker">
                                 <div class="worker-info">
-                                    <div class="worker-avatar">
-                                        {{ $initials ?: 'W' }}
-                                    </div>
+                                    @if($worker?->profile_image_url)
+                                        <button type="button" class="worker-photo-zoom-trigger" data-worker-photo-zoom="{{ $worker->profile_image_url }}" data-worker-photo-name="{{ $workerName }}" aria-label="Enlarge {{ $workerName }} profile photo" title="Enlarge profile photo">
+                                            <img src="{{ $worker->profile_image_url }}" alt="{{ $workerName }} profile photo" class="worker-avatar-img">
+                                        </button>
+                                    @elseif($worker)
+                                        {{ $worker->avatar }}
+                                    @else
+                                        <div class="worker-avatar">{{ $initials ?: 'W' }}</div>
+                                    @endif
 
                                     <div>
                                         <div class="worker-name">
@@ -745,6 +752,12 @@
                                         <div class="worker-secondary">
                                             {{ $workerPosition }}
                                         </div>
+                                        @if($workerContact !== '')
+                                            <a class="worker-contact" href="tel:{{ preg_replace('/[^0-9+]/', '', $workerContact) }}">
+                                                <i class="bi bi-telephone" aria-hidden="true"></i>
+                                                {{ $workerContact }}
+                                            </a>
+                                        @endif
                                         <details style="margin-top:6px;">
                                             <summary style="cursor:pointer;font-size:.75rem;">Edit times</summary>
                                             <form method="POST" action="{{ route('admin.attendance.update', $log) }}" style="display:grid;gap:4px;margin-top:6px;min-width:180px;">
@@ -916,6 +929,7 @@
                                     $project = $log->display_project ?? $log->deployment?->project;
                                     $workerName = trim(($worker?->first_name ?? '') . ' ' . ($worker?->last_name ?? '')) ?: ($worker?->full_name ?? $worker?->name ?? 'Unknown Worker');
                                     $projectName = $project?->project_name ?? $project?->name ?? 'No Project';
+                                    $workerContact = trim((string) ($worker?->contact_number ?? ''));
                                     $status = strtolower($log->status ?? 'unknown');
                                     $statusLabel = match ($status) {
                                         'half_day' => 'Half Day',
@@ -933,8 +947,19 @@
                                 <tr>
                                     <td>
                                         <div class="attendance-preview-worker">
-                                            <span class="attendance-preview-avatar">{{ strtoupper(substr(str_replace(' ', '', $workerName), 0, 2)) ?: 'W' }}</span>
-                                            <span>{{ $workerName }}</span>
+                                            @if($worker?->profile_image_url)
+                                                <button type="button" class="worker-photo-zoom-trigger attendance-preview-avatar-zoom-trigger" data-worker-photo-zoom="{{ $worker->profile_image_url }}" data-worker-photo-name="{{ $workerName }}" aria-label="Enlarge {{ $workerName }} profile photo" title="Enlarge profile photo">
+                                                    <img src="{{ $worker->profile_image_url }}" alt="{{ $workerName }} profile photo" class="attendance-preview-avatar-img">
+                                                </button>
+                                            @else
+                                                <span class="attendance-preview-avatar">{{ strtoupper(substr(str_replace(' ', '', $workerName), 0, 2)) ?: 'W' }}</span>
+                                            @endif
+                                            <span class="attendance-preview-worker-copy">
+                                                <span>{{ $workerName }}</span>
+                                                @if($workerContact !== '')
+                                                    <small><i class="bi bi-telephone" aria-hidden="true"></i> {{ $workerContact }}</small>
+                                                @endif
+                                            </span>
                                         </div>
                                     </td>
                                     <td>{{ $projectName }}</td>
@@ -978,90 +1003,177 @@
 
 <div class="modal fade" id="adminAttendanceEntryModal" tabindex="-1" aria-labelledby="adminAttendanceEntryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 px-4 py-3">
-                <h5 class="modal-title mb-0" id="adminAttendanceEntryModalLabel">Admin Attendance Entry</h5>
+        <div class="modal-content border-0 shadow-lg admin-attendance-entry-modal-content">
+            <div class="modal-header admin-attendance-entry-modal-header">
+                <span class="admin-attendance-entry-modal-icon" aria-hidden="true"><i class="bi bi-calendar2-plus"></i></span>
+                <div class="admin-attendance-entry-modal-heading">
+                    <span class="admin-attendance-entry-modal-kicker">Workforce operations</span>
+                    <h5 class="modal-title" id="adminAttendanceEntryModalLabel">Admin Attendance Entry</h5>
+                    <p>Record a worker’s time and break details.</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <section class="attendance-filter-card" style="margin-bottom: 1rem;">
-                    <div class="issues-header">
-                        <div>
-                            <h2>Admin Attendance Entry</h2>
-                            <p>Set exact time in, break, and time out. OT is calculated from the worker schedule.</p>
+            <div class="modal-body admin-attendance-entry-modal-body">
+                <form method="POST" action="{{ route('admin.attendance.store') }}" class="admin-attendance-entry-form">
+                    @csrf
+                    <section class="admin-attendance-entry-section admin-attendance-worker-section" aria-labelledby="adminEntryWorkerHeading">
+                        <div class="admin-attendance-section-heading">
+                            <span class="admin-attendance-section-number">01</span>
+                            <div>
+                                <h6 id="adminEntryWorkerHeading">Worker</h6>
+                                <p>Select the worker to record attendance for.</p>
+                            </div>
                         </div>
-                    </div>
-                    <form method="POST" action="{{ route('admin.attendance.store') }}" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;align-items:end;">
-                        @csrf
-                        <label>Worker<select name="worker_id" required style="width:100%;"><option value="">Select worker</option>@foreach($workers ?? [] as $worker)<option value="{{ $worker->worker_id }}">{{ $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? '')) }}</option>@endforeach</select></label>
-                        <label>Date<input type="date" name="log_date" value="{{ $filters['date'] ?? now()->toDateString() }}" required style="width:100%;"></label>
-                        <label>Time in<input type="time" name="time_in" style="width:100%;"></label>
-                        <label>Break out<input type="time" name="break_out" style="width:100%;"></label>
-                        <label>Break in<input type="time" name="break_in" style="width:100%;"></label>
-                        <label>Time out<input type="time" name="time_out" style="width:100%;"></label>
+                        <label class="admin-attendance-worker-field" for="adminAttendanceWorkerSelect">Worker
+                            <select name="worker_id" id="adminAttendanceWorkerSelect" required>
+                                <option value="">Select worker</option>
+                                @foreach($workers ?? [] as $worker)
+                                    <option value="{{ $worker->worker_id }}"
+                                            data-name="{{ $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? '')) }}"
+                                            data-trade="{{ $worker->trade ?? 'Worker' }}"
+                                            data-contact="{{ $worker->contact_number ?? '' }}"
+                                            data-photo="{{ !empty($worker->profile_image) ? asset('storage/' . ltrim($worker->profile_image, '/')) : '' }}">
+                                        {{ $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? '')) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span id="adminAttendanceWorkerPreview" class="admin-attendance-worker-preview" aria-live="polite" hidden></span>
+                        </label>
+                    </section>
+
+                    <section class="admin-attendance-entry-section" aria-labelledby="adminEntryTimesHeading">
+                        <div class="admin-attendance-section-heading">
+                            <span class="admin-attendance-section-number">02</span>
+                            <div>
+                                <h6 id="adminEntryTimesHeading">Attendance times</h6>
+                                <p>Enter the date and time values for this record.</p>
+                            </div>
+                        </div>
+                        <div class="admin-attendance-entry-time-grid">
+                            <label>Date<input type="date" name="log_date" value="{{ $filters['date'] ?? now()->toDateString() }}" required></label>
+                            <label>Time in<input type="time" name="time_in"></label>
+                            <label>Break out<input type="time" name="break_out"></label>
+                            <label>Break in<input type="time" name="break_in"></label>
+                            <label>Time out<input type="time" name="time_out"></label>
+                        </div>
+                    </section>
+
+                    <section class="admin-attendance-entry-actions" aria-label="Remarks and submit">
+                        <label class="admin-attendance-remarks-field">Remarks
+                            <input type="text" name="remarks" placeholder="Add a note (optional)">
+                        </label>
                         <input type="hidden" name="status" value="present">
-                        <input type="text" name="remarks" placeholder="Remarks" style="grid-column:span 5;">
-                        <button type="submit" class="btn-filter-primary"><i class="bi bi-plus-circle"></i> Add attendance</button>
+                        <button type="submit" class="btn-filter-primary"><i class="bi bi-plus-circle" aria-hidden="true"></i> Add attendance</button>
+                    </section>
+                </form>
+
+                <details class="admin-attendance-schedule-details">
+                    <summary><i class="bi bi-clock-history" aria-hidden="true"></i> Configure worker schedule</summary>
+                    <p>Set default work and break times for this worker.</p>
+                    <form method="POST" action="#" id="workerScheduleForm">
+                        @csrf @method('PUT')
+                        <label>Worker
+                            <select id="scheduleWorker" required>
+                                @foreach($workers ?? [] as $worker)
+                                    @php
+                                        $workerRole = data_get($worker, 'role', 'worker');
+                                        $workerStart = data_get($worker, 'schedule_start', '07:00');
+                                        $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
+                                        $workerBreak = data_get($worker, 'break_minutes', 60);
+                                        $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
+                                    @endphp
+                                    <option value="{{ $worker->worker_id }}"
+                                            data-role="{{ $workerRole }}"
+                                            data-start="{{ $workerStart }}"
+                                            data-end="{{ $workerEnd }}"
+                                            data-break="{{ $workerBreak }}">
+                                        {{ $workerName }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Role<select name="role" id="scheduleRole"><option value="staff">Staff</option><option value="worker">Worker</option></select></label>
+                        <label>Start<input type="time" name="schedule_start" id="scheduleStart" required></label>
+                        <label>End<input type="time" name="schedule_end" id="scheduleEnd" required></label>
+                        <label>Break minutes<input type="number" name="break_minutes" id="scheduleBreak" min="0" max="480" required></label>
+                        <button type="submit" class="btn-filter-primary">Save schedule</button>
                     </form>
-                    <details style="margin-top:12px;">
-                        <summary style="cursor:pointer;font-weight:600;">Configure worker schedule</summary>
-                        <form method="POST" action="#" id="workerScheduleForm" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px;align-items:end;">
-                            @csrf @method('PUT')
-                            <label>Worker
-                                <select id="scheduleWorker" required style="width:100%;">
-                                    @foreach($workers ?? [] as $worker)
-                                        @php
-                                            $workerRole = data_get($worker, 'role', 'worker');
-                                            $workerStart = data_get($worker, 'schedule_start', '07:00');
-                                            $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
-                                            $workerBreak = data_get($worker, 'break_minutes', 60);
-                                            $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
-                                        @endphp
-                                        <option value="{{ $worker->worker_id }}"
-                                                data-role="{{ $workerRole }}"
-                                                data-start="{{ $workerStart }}"
-                                                data-end="{{ $workerEnd }}"
-                                                data-break="{{ $workerBreak }}">
-                                            {{ $workerName }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-                            <label>Role<select name="role" id="scheduleRole" style="width:100%;"><option value="staff">Staff</option><option value="worker">Worker</option></select></label>
-                            <label>Start<input type="time" name="schedule_start" id="scheduleStart" required style="width:100%;"></label>
-                            <label>End<input type="time" name="schedule_end" id="scheduleEnd" required style="width:100%;"></label>
-                            <label>Break minutes<input type="number" name="break_minutes" id="scheduleBreak" min="0" max="480" required style="width:100%;"></label>
-                            <button type="submit" class="btn-filter-primary">Save schedule</button>
-                        </form>
-                    </details>
-                </section>
+                </details>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    (() => {
-        const form = document.getElementById('workerScheduleForm');
-        const worker = document.getElementById('scheduleWorker');
-        if (!form || !worker) return;
-        const sync = () => {
-            const option = worker.options[worker.selectedIndex];
-            document.getElementById('scheduleRole').value = option.dataset.role || 'worker';
-            document.getElementById('scheduleStart').value = (option.dataset.start || '07:00').slice(0, 5);
-            document.getElementById('scheduleEnd').value = (option.dataset.end || '17:00').slice(0, 5);
-            document.getElementById('scheduleBreak').value = option.dataset.break || '60';
-            form.action = `${@json(url('/admin/attendance/workers'))}/${option.value}/schedule`;
-        };
-        worker.addEventListener('change', sync);
-        sync();
-    })();
-</script>
+@include('admin.partials.worker-photo-lightbox')
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const workerSelect = document.getElementById('adminAttendanceWorkerSelect');
+        const workerPreview = document.getElementById('adminAttendanceWorkerPreview');
+
+        if (workerSelect && workerPreview) {
+            const updateWorkerPreview = () => {
+                const option = workerSelect.options[workerSelect.selectedIndex];
+
+                if (!option?.value) {
+                    workerPreview.hidden = true;
+                    workerPreview.replaceChildren();
+                    return;
+                }
+
+                const workerName = option.dataset.name || option.textContent.trim();
+                const initials = workerName.replace(/\s+/g, '').slice(0, 2).toUpperCase() || 'W';
+                const photo = option.dataset.photo || '';
+                const avatar = photo ? document.createElement('button') : document.createElement('span');
+
+                if (photo) {
+                    avatar.type = 'button';
+                    avatar.className = 'admin-attendance-worker-photo-trigger';
+                    avatar.dataset.workerPhotoZoom = photo;
+                    avatar.dataset.workerPhotoName = workerName;
+                    avatar.setAttribute('aria-label', `Enlarge ${workerName} profile photo`);
+
+                    const image = document.createElement('img');
+                    image.src = photo;
+                    image.alt = `${workerName} profile photo`;
+                    image.className = 'admin-attendance-worker-avatar';
+                    image.addEventListener('error', function () {
+                        const fallback = document.createElement('span');
+                        fallback.className = 'admin-attendance-worker-initials';
+                        fallback.textContent = initials;
+                        avatar.replaceWith(fallback);
+                    }, { once: true });
+                    avatar.append(image);
+                } else {
+                    avatar.className = 'admin-attendance-worker-initials';
+                    avatar.textContent = initials;
+                }
+
+                const copy = document.createElement('span');
+                copy.className = 'admin-attendance-worker-copy';
+
+                const name = document.createElement('span');
+                name.className = 'admin-attendance-worker-name';
+                name.textContent = workerName;
+                copy.append(name);
+
+                const trade = option.dataset.trade || 'Worker';
+                const contact = option.dataset.contact || '';
+                const meta = document.createElement('span');
+                meta.className = 'admin-attendance-worker-meta';
+                meta.textContent = contact ? `${trade} | ${contact}` : trade;
+                copy.append(meta);
+
+                workerPreview.replaceChildren(avatar, copy);
+                workerPreview.hidden = false;
+            };
+
+            workerSelect.addEventListener('change', updateWorkerPreview);
+            updateWorkerPreview();
+        }
+
         let activeStatFilter = 'all';
 
         const filterLabels = {

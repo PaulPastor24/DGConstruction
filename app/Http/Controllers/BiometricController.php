@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\WorkerPasskeyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,10 @@ class BiometricController extends Controller
             'first_name' => $worker['first_name'] ?? '',
             'last_name' => $worker['last_name'] ?? '',
             'trade' => $worker['trade'] ?? 'General',
+            'contact_number' => $worker['contact_number'] ?? null,
+            'profile_image_url' => ! empty($worker['profile_image'])
+                ? asset('storage/'.ltrim($worker['profile_image'], '/'))
+                : null,
             'created_at' => $worker['created_at'] ?? now()->toDateTimeString(),
         ];
     }
@@ -37,56 +42,12 @@ class BiometricController extends Controller
         return (string) $credentialId;
     }
 
-    public function registerOptions(Request $request)
+    public function registerOptions(Request $request, WorkerPasskeyService $workerPasskeys)
     {
-        $firstName = trim($request->input('first_name', 'Pending'));
-        $lastName = trim($request->input('last_name', 'Worker'));
+        $firstName = trim($request->input('first_name', 'Pending')) ?: 'Pending';
+        $lastName = trim($request->input('last_name', 'Worker')) ?: 'Worker';
 
-        $displayName = trim($firstName . ' ' . $lastName);
-
-        if ($displayName === '') {
-            $displayName = 'Pending Worker';
-        }
-
-        $challenge = $this->base64UrlEncode(random_bytes(32));
-        $userId = $this->base64UrlEncode(random_bytes(16));
-
-        session([
-            'webauthn_challenge' => $challenge,
-            'webauthn_user_id' => $userId,
-            'webauthn_pending_worker_name' => $displayName,
-        ]);
-
-        return response()->json([
-            'rp' => [
-                'name' => env('APP_NAME', 'D&G Construction Inc.'),
-                'id' => request()->getHost(),
-            ],
-            'user' => [
-                'id' => $userId,
-                'name' => strtolower(str_replace(' ', '.', $displayName)) . '@workers.local',
-                'displayName' => $displayName,
-            ],
-            'challenge' => $challenge,
-            'pubKeyCredParams' => [
-                [
-                    'type' => 'public-key',
-                    'alg' => -7,
-                ],
-                [
-                    'type' => 'public-key',
-                    'alg' => -257,
-                ],
-            ],
-            'timeout' => 60000,
-            'authenticatorSelection' => [
-                'authenticatorAttachment' => 'platform',
-                'residentKey' => 'preferred',
-                'requireResidentKey' => false,
-                'userVerification' => 'preferred',
-            ],
-            'attestation' => 'none',
-        ]);
+        return response()->json($workerPasskeys->createRegistrationOptions($firstName, $lastName));
     }
 
     public function registerWorkerBiometric(Request $request)
@@ -154,54 +115,30 @@ class BiometricController extends Controller
         return response()->json($workers);
     }
 
-    public function loginOptions(Request $request)
+    public function loginOptions(Request $request, WorkerPasskeyService $workerPasskeys)
     {
-        $challenge = $this->base64UrlEncode(random_bytes(32));
-
-        session([
-            'webauthn_challenge' => $challenge,
-        ]);
-
         $credentials = DB::table('workers')
             ->where('is_active', 1)
             ->whereNotNull('credential_id')
-            ->pluck('credential_id')
-            ->filter()
-            ->values()
-            ->map(function ($credentialId) {
-                return [
-                    'id' => $credentialId,
-                    'type' => 'public-key',
-                ];
-            })
-            ->values()
-            ->all();
+            ->whereNotNull('credential_json')
+            ->get(['credential_id']);
 
-        return response()->json([
-            'challenge' => $challenge,
-            'timeout' => 60000,
-            'rpId' => request()->getHost(),
-            'userVerification' => 'preferred',
-            'authenticatorSelection' => [
-                'authenticatorAttachment' => 'platform',
-            ],
-            'allowCredentials' => $credentials,
-        ]);
+        return response()->json($workerPasskeys->createAuthenticationOptions($credentials));
     }
 
-    public function login(Request $request)
+    public function login(Request $request, WorkerPasskeyService $workerPasskeys)
     {
-        $credentialId = $request->input('id') ?: $request->input('rawId');
-
-        if (!$credentialId) {
-            return response()->json([
-                'message' => 'No credential ID received from biometric scan.',
-            ], 422);
-        }
+        $validated = $request->validate([
+            'id' => ['required', 'string'],
+            'rawId' => ['required', 'string'],
+            'type' => ['required', 'in:public-key'],
+            'response' => ['required', 'array'],
+        ]);
 
         $worker = DB::table('workers')
             ->where('is_active', 1)
-            ->where('credential_id', $credentialId)
+            ->where('credential_id', $validated['id'])
+            ->whereNotNull('credential_json')
             ->first();
 
         if (!$worker) {
@@ -209,6 +146,28 @@ class BiometricController extends Controller
                 'message' => 'Authentication failed: Worker not recognized.',
             ], 404);
         }
+
+        try {
+            $credentialSource = $workerPasskeys->verifyAssertion($request->all(), $worker);
+        } catch (\Throwable $error) {
+            Log::warning('Worker biometric assertion verification failed.', [
+                'worker_id' => $worker->worker_id,
+                'error' => $error->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Biometric verification failed. Please try scanning again.',
+            ], 422);
+        }
+
+        DB::table('workers')
+            ->where('worker_id', $worker->worker_id)
+            ->update([
+                'credential_json' => $workerPasskeys->serializeCredentialSource($credentialSource),
+                'updated_at' => now(),
+            ]);
+
+        $worker = DB::table('workers')->where('worker_id', $worker->worker_id)->first();
 
         return response()->json([
             'success' => true,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 
 class Worker extends Model
 {
@@ -15,6 +16,7 @@ class Worker extends Model
         'first_name',
         'last_name',
         'trade',
+        'profile_image',
         'role',
         'schedule_start',
         'schedule_end',
@@ -54,5 +56,30 @@ class Worker extends Model
     public function getFullNameAttribute()
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        if (! $this->profile_image) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($this->profile_image, '/'));
+    }
+
+    public function getAvatarAttribute(): HtmlString
+    {
+        $name = $this->full_name ?: 'Worker';
+        $initials = strtoupper(substr($this->first_name ?? '', 0, 1) . substr($this->last_name ?? '', 0, 1));
+
+        if ($initials === '') {
+            $initials = strtoupper(substr(preg_replace('/\s+/', '', $name), 0, 2));
+        }
+
+        if ($this->profile_image_url) {
+            return new HtmlString('<img class="worker-avatar-img" src="' . e($this->profile_image_url) . '" alt="' . e($name) . '">');
+        }
+
+        return new HtmlString('<div class="worker-avatar" aria-label="' . e($name) . '">' . e($initials ?: 'W') . '</div>');
     }
 }

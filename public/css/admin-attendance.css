@@ -764,6 +764,43 @@ ATTENDANCE TABLE
     font-weight: 700;
 }
 
+.worker-avatar-img {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border: 2px solid #eef5ef;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.worker-photo-zoom-trigger,
+.admin-attendance-worker-photo-trigger {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: zoom-in;
+}
+
+.worker-photo-zoom-trigger:focus-visible,
+.admin-attendance-worker-photo-trigger:focus-visible {
+    outline: 3px solid #6f9a75;
+    outline-offset: 3px;
+}
+
+.worker-photo-zoom-trigger .worker-avatar-img {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.worker-photo-zoom-trigger:hover .worker-avatar-img {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 2px #d9e8dc;
+}
+
 .worker-name {
     color: #17291f;
     font-size: 13px;
@@ -774,6 +811,445 @@ ATTENDANCE TABLE
     margin-top: 3px;
     color: #98a29c;
     font-size: 11px;
+}
+
+.worker-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    color: #54715b;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.worker-contact:hover {
+    color: #315c35;
+    text-decoration: underline;
+}
+
+.attendance-preview-worker-copy {
+    display: grid;
+    gap: 2px;
+}
+
+.attendance-preview-worker-copy small {
+    color: #718174;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.attendance-preview-worker-copy small i {
+    color: #54715b;
+}
+
+.admin-attendance-entry-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+#adminAttendanceEntryModal .modal-dialog {
+    --bs-modal-width: min(1020px, calc(100vw - 2rem));
+}
+
+#adminAttendanceEntryModal .modal-content {
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    border: 1px solid #dfe9e1 !important;
+    border-radius: 16px !important;
+    background: #fff;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 19px 24px;
+    border-bottom: 1px solid #e5eee7;
+    background: linear-gradient(115deg, #f1f7f1 0%, #ffffff 76%);
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-icon {
+    display: inline-flex;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: #173824;
+    color: #fff;
+    font-size: 18px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-heading {
+    min-width: 0;
+    flex: 1;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-kicker {
+    display: block;
+    margin-bottom: 3px;
+    color: #64806a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-heading h5 {
+    margin: 0;
+    color: #1c3024;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-heading p {
+    margin: 4px 0 0;
+    color: #718178;
+    font-size: 12px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 24px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-form {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-section {
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid #e3ece4;
+    border-radius: 12px;
+    background: #fbfdfb;
+}
+
+#adminAttendanceEntryModal .admin-attendance-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 13px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-section-number {
+    display: inline-flex;
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #e8f1e9;
+    color: #315c35;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#adminAttendanceEntryModal .admin-attendance-section-heading h6 {
+    margin: 0;
+    color: #203b28;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+#adminAttendanceEntryModal .admin-attendance-section-heading p {
+    margin: 3px 0 0;
+    color: #7b887f;
+    font-size: 11px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-worker-field,
+#adminAttendanceEntryModal .admin-attendance-entry-time-grid > label,
+#adminAttendanceEntryModal .admin-attendance-remarks-field,
+#adminAttendanceEntryModal #workerScheduleForm > label {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+    color: #55675a;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+#adminAttendanceEntryModal .admin-attendance-worker-field select,
+#adminAttendanceEntryModal .admin-attendance-entry-time-grid input,
+#adminAttendanceEntryModal .admin-attendance-remarks-field input,
+#adminAttendanceEntryModal #workerScheduleForm select,
+#adminAttendanceEntryModal #workerScheduleForm input {
+    width: 100% !important;
+    min-width: 0;
+    height: 40px;
+    padding: 0 11px;
+    border: 1px solid #dfe8e0;
+    border-radius: 9px;
+    background: #fff;
+    color: #304339;
+    font-size: 13px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+    align-items: end;
+    gap: 12px;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-actions .btn-filter-primary {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 10px;
+    background: #173824;
+    font-weight: 800;
+}
+
+#adminAttendanceEntryModal .admin-attendance-entry-actions .btn-filter-primary:hover {
+    background: #245638;
+}
+
+#adminAttendanceEntryModal .admin-attendance-schedule-details {
+    padding: 14px 16px;
+    border: 1px solid #e3ece4;
+    border-radius: 12px;
+    background: #fff;
+}
+
+#adminAttendanceEntryModal .admin-attendance-schedule-details summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #315c35;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#adminAttendanceEntryModal .admin-attendance-schedule-details > p {
+    margin: 7px 0 12px;
+    color: #7b887f;
+    font-size: 11px;
+}
+
+#adminAttendanceEntryModal #workerScheduleForm {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: end;
+    margin-top: 12px;
+}
+
+#adminAttendanceEntryModal #workerScheduleForm > button {
+    min-height: 40px;
+    border-radius: 9px;
+    background: #173824;
+}
+
+#adminAttendanceEntryModal #workerScheduleForm > button:hover {
+    background: #245638;
+}
+
+.admin-attendance-worker-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 9px 10px;
+    border: 1px solid #e2ebe3;
+    border-radius: 10px;
+    background: #f7faf7;
+}
+
+.admin-attendance-worker-preview[hidden] {
+    display: none;
+}
+
+.admin-attendance-worker-avatar,
+.admin-attendance-worker-initials {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #e8f0e9;
+    color: #315c35;
+    font-size: 12px;
+    font-weight: 800;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px #d8e7da;
+}
+
+.admin-attendance-worker-photo-trigger {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+}
+
+.admin-attendance-worker-photo-trigger .admin-attendance-worker-avatar {
+    transition: transform 150ms ease;
+}
+
+.admin-attendance-worker-photo-trigger:hover .admin-attendance-worker-avatar {
+    transform: scale(1.06);
+}
+
+.admin-attendance-worker-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+}
+
+.admin-attendance-worker-name {
+    color: #263a2b;
+    font-size: 12px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.admin-attendance-worker-meta {
+    color: #718174;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.admin-worker-photo-lightbox[hidden] {
+    display: none !important;
+}
+
+.admin-worker-photo-lightbox {
+    position: fixed;
+    z-index: 2100;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4.5rem 1.25rem 2rem;
+    background: rgba(15, 28, 18, 0.94);
+}
+
+.admin-worker-photo-lightbox-close {
+    position: absolute;
+    top: max(1rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    display: inline-flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: #fff;
+    color: #315c35;
+    font-size: 18px;
+}
+
+.admin-worker-photo-lightbox-close:hover,
+.admin-worker-photo-lightbox-close:focus-visible {
+    background: #eaf3eb;
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+.admin-worker-photo-lightbox-content {
+    display: flex;
+    max-width: 100%;
+    max-height: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-worker-photo-lightbox-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(100%, 1200px);
+    max-height: calc(100dvh - 8rem);
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    background: #f3f7f3;
+    object-fit: contain;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.admin-worker-photo-lightbox-caption {
+    margin: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 575.98px) {
+    .admin-worker-photo-lightbox {
+        padding: 4rem 0.75rem max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .admin-worker-photo-lightbox-image {
+        max-width: 100%;
+        max-height: calc(100dvh - 7rem);
+    }
+}
+
+@media (max-width: 767.98px) {
+    #adminAttendanceEntryModal .admin-attendance-entry-time-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #adminAttendanceEntryModal .admin-attendance-entry-modal-header {
+        gap: 10px;
+        padding: 14px 16px;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-modal-icon {
+        width: 39px;
+        height: 39px;
+        flex-basis: 39px;
+        border-radius: 11px;
+        font-size: 16px;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-modal-heading h5 {
+        font-size: 16px;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-modal-body {
+        padding: 14px;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-section {
+        padding: 13px;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-time-grid,
+    #adminAttendanceEntryModal #workerScheduleForm {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    #adminAttendanceEntryModal .admin-attendance-entry-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .project-name {
@@ -1873,6 +2349,15 @@ RESPONSIVE
     color: #20432d;
     font-size: 10px;
     font-weight: 800;
+}
+
+.attendance-preview-avatar-img {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border: 2px solid #eef5ef;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .attendance-preview-empty {

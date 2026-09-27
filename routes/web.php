@@ -310,6 +310,18 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/workers/register-biometric', [SupervisorController::class, 'registerWorkerBiometric'])
         ->name('supervisor.workers.register_biometric');
 
+    Route::post('/supervisor/workers/{workerId}/profile-image', [SupervisorController::class, 'updateWorkerProfileImage'])
+        ->whereNumber('workerId')
+        ->name('supervisor.workers.profile-image');
+
+    Route::put('/supervisor/workers/{workerId}', [SupervisorController::class, 'updateWorker'])
+        ->whereNumber('workerId')
+        ->name('supervisor.workers.update');
+
+    Route::delete('/supervisor/workers/{workerId}', [SupervisorController::class, 'deactivateWorker'])
+        ->whereNumber('workerId')
+        ->name('supervisor.workers.deactivate');
+
     Route::get('/supervisor/workers/list', [SupervisorController::class, 'getWorkersList'])
         ->name('supervisor.workers.list');
 });

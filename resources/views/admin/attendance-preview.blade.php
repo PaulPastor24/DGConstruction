@@ -3,6 +3,10 @@
 @section('title', 'Attendance Report Preview')
 @section('page_title', 'Attendance Report Preview')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/admin-attendance.css') }}?v={{ time() }}">
+@endpush
+
 @section('content')
 @php
     $records = $records ?? collect();
@@ -124,6 +128,7 @@
                             }
 
                             $projectName = $project?->project_name ?? $project?->name ?? 'No Project';
+                            $workerContact = trim((string) ($worker?->contact_number ?? ''));
                             $scheduleStart = $worker?->schedule_start ?? '07:00';
                             $scheduleEnd = $worker?->schedule_end ?? '17:00';
                             $status = strtolower($record->status ?? 'unknown');
@@ -150,8 +155,18 @@
                         <tr>
                             <td data-label="Worker">
                                 <div class="worker-info">
-                                    <div class="worker-name">
-                                        {{ $workerName }}
+                                    @if($worker?->profile_image_url)
+                                        <button type="button" class="worker-photo-zoom-trigger" data-worker-photo-zoom="{{ $worker->profile_image_url }}" data-worker-photo-name="{{ $workerName }}" aria-label="Enlarge {{ $workerName }} profile photo" title="Enlarge profile photo">
+                                            <img src="{{ $worker->profile_image_url }}" alt="{{ $workerName }} profile photo" class="worker-avatar-img">
+                                        </button>
+                                    @else
+                                        <span class="worker-avatar">{{ strtoupper(substr(str_replace(' ', '', $workerName), 0, 2)) ?: 'W' }}</span>
+                                    @endif
+                                    <div class="attendance-preview-worker-copy">
+                                        <span class="worker-name">{{ $workerName }}</span>
+                                        @if($workerContact !== '')
+                                            <small class="worker-contact-text"><i class="bi bi-telephone" aria-hidden="true"></i> {{ $workerContact }}</small>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -206,4 +221,6 @@
         </div>
     </section>
 </div>
+
+@include('admin.partials.worker-photo-lightbox')
 @endsection

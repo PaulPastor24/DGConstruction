@@ -14,6 +14,7 @@ use App\Models\Report;
 use App\Models\SupervisorNotification;
 use App\Models\SystemLog;
 use App\Services\NotificationService;
+use App\Services\WorkerPasskeyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -39,6 +40,11 @@ class SupervisorController extends Controller
         }
 
         return (string) $credentialId;
+    }
+
+    private function workerPhotoUrl(?string $path): ?string
+    {
+        return $path ? asset('storage/' . ltrim($path, '/')) : null;
     }
 
     private function resolveAttendanceStatusFromTimeIn($timeIn): string
@@ -103,6 +109,7 @@ class SupervisorController extends Controller
             'first_name' => $record['first_name'] ?? '',
             'last_name' => $record['last_name'] ?? '',
             'trade' => $record['trade'] ?? 'General',
+            'profile_image_url' => $this->workerPhotoUrl($record['profile_image'] ?? null),
             'log_date' => $record['log_date'] ?? null,
             'time_in' => $record['time_in'] ?? null,
             'break_out' => $record['break_out'] ?? null,
@@ -159,6 +166,7 @@ class SupervisorController extends Controller
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',
+                'workers.profile_image',
                 'attendance_logs.log_date',
                 'attendance_logs.time_in',
                 'attendance_logs.break_out',
@@ -176,10 +184,131 @@ class SupervisorController extends Controller
         $workers = DB::table('workers')
             ->where('is_active', 1)
             ->orderByDesc('created_at')
-            ->select('worker_id', 'first_name', 'last_name', 'trade', 'created_at')
+            ->select('worker_id', 'first_name', 'last_name', 'trade', 'contact_number', 'profile_image', 'created_at')
             ->paginate(10);
 
+        $workers->getCollection()->transform(function ($worker) {
+            $worker->profile_image_url = $this->workerPhotoUrl($worker->profile_image);
+
+            return $worker;
+        });
+
         return response()->json($workers);
+    }
+
+    public function updateWorker(Request $request, int $workerId)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'trade' => ['nullable', 'string', 'max:100'],
+            'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+().\-\s]+$/'],
+            'profile_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $worker = DB::table('workers')
+            ->where('worker_id', $workerId)
+            ->where('is_active', 1)
+            ->first();
+
+        if (! $worker) {
+            return response()->json(['message' => 'Active worker not found.'], 404);
+        }
+
+        $updates = [
+            'first_name' => trim($validated['first_name']),
+            'last_name' => trim($validated['last_name']),
+            'trade' => trim((string) ($validated['trade'] ?? '')) ?: 'General',
+            'contact_number' => trim((string) ($validated['contact_number'] ?? '')) ?: null,
+            'updated_at' => now(),
+        ];
+        $newPhotoPath = null;
+
+        if ($request->hasFile('profile_image')) {
+            $newPhotoPath = $request->file('profile_image')->storePublicly('workers', 'public');
+            $updates['profile_image'] = $newPhotoPath;
+        }
+
+        try {
+            DB::table('workers')->where('worker_id', $workerId)->update($updates);
+        } catch (\Throwable $error) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $error;
+        }
+
+        if ($newPhotoPath && $worker->profile_image) {
+            Storage::disk('public')->delete($worker->profile_image);
+        }
+
+        $updatedWorker = DB::table('workers')->where('worker_id', $workerId)->first();
+
+        return response()->json([
+            'message' => 'Worker information updated.',
+            'worker' => [
+                'worker_id' => $updatedWorker->worker_id,
+                'first_name' => $updatedWorker->first_name,
+                'last_name' => $updatedWorker->last_name,
+                'trade' => $updatedWorker->trade ?: 'General',
+                'contact_number' => $updatedWorker->contact_number,
+                'profile_image_url' => $this->workerPhotoUrl($updatedWorker->profile_image),
+                'created_at' => $updatedWorker->created_at,
+            ],
+        ]);
+    }
+
+    public function deactivateWorker(int $workerId)
+    {
+        $deactivated = DB::table('workers')
+            ->where('worker_id', $workerId)
+            ->where('is_active', 1)
+            ->update([
+                'is_active' => 0,
+                'updated_at' => now(),
+            ]);
+
+        if (! $deactivated) {
+            return response()->json(['message' => 'Active worker not found.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Worker removed from the active roster. Historical records were preserved.',
+            'worker_id' => $workerId,
+        ]);
+    }
+
+    public function updateWorkerProfileImage(Request $request, int $workerId)
+    {
+        $validated = $request->validate([
+            'profile_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $worker = DB::table('workers')->where('worker_id', $workerId)->first();
+
+        if (! $worker) {
+            abort(404);
+        }
+
+        $newPath = $validated['profile_image']->storePublicly('workers', 'public');
+
+        DB::table('workers')
+            ->where('worker_id', $workerId)
+            ->update([
+                'profile_image' => $newPath,
+                'updated_at' => now(),
+            ]);
+
+        if ($worker->profile_image) {
+            Storage::disk('public')->delete($worker->profile_image);
+        }
+
+        return response()->json([
+            'message' => 'Worker profile photo updated.',
+            'profile_image' => $newPath,
+            'profile_image_url' => $this->workerPhotoUrl($newPath),
+        ]);
     }
 
     public function getTodayAttendance(Request $request)
@@ -202,6 +331,7 @@ class SupervisorController extends Controller
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',
+                'workers.profile_image',
                 'attendance_logs.log_date',
                 'attendance_logs.time_in',
                 'attendance_logs.break_out',
@@ -287,13 +417,15 @@ class SupervisorController extends Controller
                 'remarks' => $status === 'late'
                     ? 'Late time-in. Time-in after 8:30 AM.'
                     : 'Present. Time-in within 8:00 AM to 8:30 AM.',
-                'biometric_matched' => 1,
+                'biometric_matched' => $manualMode ? 0 : 1,
                 'created_at' => $now,
             ]);
         } else {
             $updates = [];
 
             if ($manualMode) {
+                $updates['biometric_matched'] = 0;
+
                 if ($requestedTimeIn) {
                     $updates['time_in'] = $requestedTimeIn;
                 }
@@ -414,6 +546,7 @@ class SupervisorController extends Controller
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',
+                'workers.profile_image',
                 'attendance_logs.log_date',
                 'attendance_logs.time_in',
                 'attendance_logs.break_out',
@@ -1739,50 +1872,57 @@ class SupervisorController extends Controller
         ]);
     }
 
-    public function registerWorkerBiometric(Request $request)
+    public function registerWorkerBiometric(Request $request, WorkerPasskeyService $workerPasskeys)
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'trade' => ['nullable', 'string', 'max:100'],
+            'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+().\-\s]+$/'],
             'credential' => ['required', 'array'],
         ]);
 
-        $credentialId = $this->extractCredentialId($validated['credential']);
+        try {
+            $credentialSource = $workerPasskeys->verifyRegistration($validated['credential']);
+            $credentialId = $workerPasskeys->credentialId($credentialSource);
+            $credentialJson = $workerPasskeys->serializeCredentialSource($credentialSource);
+        } catch (\Throwable $error) {
+            report($error);
 
-        if (! $credentialId) {
             return response()->json([
-                'message' => 'Credential ID was not received from the browser.',
+                'message' => 'Biometric registration could not be verified. Capture the fingerprint again.',
+            ], 422);
+        }
+
+        if (DB::table('workers')->where('credential_id', $credentialId)->exists()) {
+            return response()->json([
+                'message' => 'This biometric credential is already enrolled.',
             ], 422);
         }
 
         try {
-            $workerId = DB::table('workers')->insertGetId([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'trade' => $validated['trade'] ?: 'General',
-                'contact_number' => null,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ], 'worker_id');
-
-            DB::table('workers')
-                ->where('worker_id', $workerId)
-                ->update([
+            $workerId = DB::transaction(function () use ($validated, $credentialId, $credentialJson) {
+                $workerId = DB::table('workers')->insertGetId([
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'trade' => $validated['trade'] ?: 'General',
+                    'contact_number' => trim((string) ($validated['contact_number'] ?? '')) ?: null,
+                    'is_active' => 1,
                     'credential_id' => $credentialId,
-                    'credential_json' => json_encode($validated['credential']),
+                    'credential_json' => $credentialJson,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], 'worker_id');
+
+                DB::table('worker_biometric_profiles')->insert([
+                    'worker_id' => $workerId,
+                    'fingerprint_template' => $credentialJson,
+                    'enrolled_at' => now(),
+                    'enrolled_by' => Auth::id(),
                 ]);
 
-            DB::table('worker_biometric_profiles')->insert([
-                'worker_id' => $workerId,
-                'fingerprint_template' => json_encode([
-                    'credential_id' => $credentialId,
-                    'credential' => $validated['credential'],
-                ]),
-                'enrolled_at' => now(),
-                'enrolled_by' => Auth::id(),
-            ]);
+                return $workerId;
+            });
 
             $worker = DB::table('workers')
                 ->where('worker_id', $workerId)
@@ -1796,6 +1936,8 @@ class SupervisorController extends Controller
                     'first_name' => $worker->first_name,
                     'last_name' => $worker->last_name,
                     'trade' => $worker->trade ?: 'General',
+                    'contact_number' => $worker->contact_number,
+                    'profile_image_url' => $this->workerPhotoUrl($worker->profile_image),
                     'created_at' => $worker->created_at,
                 ],
             ]);
