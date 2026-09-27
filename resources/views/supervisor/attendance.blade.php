@@ -882,6 +882,11 @@
                         <input type="text" id="regFirstName" class="form-control" required placeholder="e.g. Juan">
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Last Name</label>
+                        <input type="text" id="regLastName" class="form-control" required placeholder="e.g. Dela Cruz">
+                    </div>
+
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-semibold text-muted">Specific Time In</label>
@@ -899,10 +904,6 @@
                             <label class="form-label small fw-semibold text-muted">Specific Break In</label>
                             <input type="time" id="manualBreakInInput" class="form-control" step="1">
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-muted">Last Name</label>
-                        <input type="text" id="regLastName" class="form-control" required placeholder="e.g. Dela Cruz">
                     </div>
 
                     <div class="mb-3">
