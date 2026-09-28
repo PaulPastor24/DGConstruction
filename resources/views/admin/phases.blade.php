@@ -28,6 +28,37 @@
         transform: translateY(-2px);
         box-shadow: 0 16px 32px rgba(15, 32, 21, 0.1);
     }
+    .delayed-metric-card { position: relative; z-index: 1; cursor: help; }
+    .delayed-metric-card:hover,
+    .delayed-metric-card:focus-visible { z-index: 20; outline: 2px solid rgba(220, 38, 38, 0.2); outline-offset: 2px; }
+    .delayed-phase-tooltip {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 50;
+        width: min(320px, calc(100vw - 2rem));
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16);
+        color: #334155;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    }
+    .delayed-metric-card:hover .delayed-phase-tooltip,
+    .delayed-metric-card:focus-visible .delayed-phase-tooltip,
+    .delayed-metric-card:focus-within .delayed-phase-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .delayed-phase-tooltip ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+    .delayed-phase-tooltip li + li { margin-top: 0.25rem; }
     .metric-icon {
         width: 45px;
         height: 45px;
@@ -1179,7 +1210,7 @@
             </div>
         </div>
         <div class="col">
-            <div class="card h-100 bg-white metric-card p-3 shadow-sm">
+            <div class="card h-100 bg-white metric-card delayed-metric-card p-3 shadow-sm" aria-label="Delayed phases. Focus or hover to see the phase names." aria-describedby="delayedPhaseTooltip" tabindex="0">
                 <div class="d-flex align-items-center gap-3">
                     <div class="metric-icon">
                         <i class="bi bi-exclamation-triangle-fill fs-5"></i>
@@ -1189,6 +1220,18 @@
                         <h3 id="delayedPhasesCount" class="mb-0 fw-bold text-dark">{{ $stats['delayed'] }}</h3>
                         <span class="text-muted" style="font-size: 11px;">Behind schedule</span>
                     </div>
+                </div>
+                <div class="delayed-phase-tooltip" id="delayedPhaseTooltip" role="tooltip">
+                    <strong>Delayed phases</strong>
+                    @if($delayedPhases->isNotEmpty())
+                        <ul>
+                            @foreach($delayedPhases as $delayedPhase)
+                                <li>{{ $delayedPhase->phase_name }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="mb-0 mt-2">No delayed phases for this project.</p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1229,15 +1272,6 @@
                             <option value="in_progress">In Progress</option>
                             <option value="delayed">Delayed</option>
                             <option value="not_started">Pending</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm-4 col-md-2">
-                        <select id="phaseProgressFilter" class="form-select rounded-2 bg-light border-0 py-2 text-muted" style="font-size: 13px;">
-                            <option value="all">All Progress</option>
-                            <option value="0-24">0% - 24%</option>
-                            <option value="25-49">25% - 49%</option>
-                            <option value="50-74">50% - 74%</option>
-                            <option value="75-100">75% - 100%</option>
                         </select>
                     </div>
                     <div class="col-12 col-sm-4 col-md-4 ms-auto">
@@ -1341,7 +1375,7 @@
                                         'project_name' => optional($phase->project)->project_name ?? optional($selectedProject)->project_name ?? 'N/A',
                                     ];
                                 @endphp
-                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $phase->status }}" data-phase-progress="{{ (float) ($phase->progress_percentage ?? 0) }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
+                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $phase->status }}" data-phase-end-date="{{ optional($phase->planned_end_date)->toDateString() }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
                                     <td class="ps-4 text-center">
                                         <div class="order-badge bg-forest-light text-forest-green mx-auto">{{ $phase->phase_order }}</div>
                                     </td>
@@ -1640,7 +1674,6 @@
         const searchDropdown = document.getElementById('phaseSearchDropdown');
         const searchClearBtn = document.getElementById('phaseSearchClearBtn');
         const statusFilter = document.getElementById('phaseStatusFilter');
-        const progressFilter = document.getElementById('phaseProgressFilter');
         const sortSelect = document.getElementById('phaseSortSelect');
         const phaseTableBody = document.getElementById('phaseTableBody');
         const allPhaseRows = phaseTableBody ? Array.from(phaseTableBody.querySelectorAll('tr[data-phase-row="true"]')) : [];
@@ -1712,7 +1745,6 @@
         function applyPhaseFilters() {
             const searchTerm = (searchInput?.value || '').trim().toLowerCase();
             const statusValue = statusFilter?.value || 'all';
-            const progressValue = progressFilter?.value || 'all';
             const sortValue = sortSelect?.value || 'order_asc';
             const allRows = getPhaseRows();
 
@@ -1720,18 +1752,10 @@
                 const name = (row.dataset.phaseName || '').toLowerCase();
                 const title = (row.dataset.phaseTitle || '').toLowerCase();
                 const status = row.dataset.phaseStatus || '';
-                const progress = Number(row.dataset.phaseProgress || 0);
-
                 const matchesSearch = !searchTerm || name.includes(searchTerm) || title.includes(searchTerm);
                 const matchesStatus = statusValue === 'all' || status === statusValue;
-                let matchesProgress = true;
 
-                if (progressValue !== 'all') {
-                    const [min, max] = progressValue.split('-').map(Number);
-                    matchesProgress = progress >= min && progress <= max;
-                }
-
-                return matchesSearch && matchesStatus && matchesProgress;
+                return matchesSearch && matchesStatus;
             });
 
             if (sortValue === 'order_desc') {
@@ -1852,7 +1876,6 @@
 
             if (selectedValue === '') {
                 if (statusFilter) statusFilter.value = 'all';
-                if (progressFilter) progressFilter.value = 'all';
                 if (sortSelect) sortSelect.value = 'order_asc';
             }
 
@@ -2277,8 +2300,8 @@
 
                     if (payload.success) {
                         const updated = payload.phase;
-                        updatePhaseRow(updated);
-                        updateDashboardCounters();
+                        const previousPhase = updatePhaseRow(updated);
+                        updateDashboardCounters(previousPhase, updated);
 
                         if (payload.auto_completed) {
                             Swal.fire({ title: 'Phase Completed', text: 'The phase has automatically been marked as Completed because progress reached 100%.', icon: 'success', confirmButtonColor: '#045a33' });
@@ -2501,35 +2524,39 @@
             }
         }
 
-        function updateDashboardCounters() {
-            const rows = Array.from(document.querySelectorAll('#phaseTableBody > tr[data-phase-row="true"]')).filter((row) => row.style.display !== 'none');
-            const counts = {
-                total: rows.length,
-                completed: 0,
-                in_progress: 0,
-                pending: 0,
-                delayed: 0,
+        function updateDashboardCounters(previousPhase, nextPhase) {
+            if (!previousPhase || !nextPhase) return;
+
+            const statusCounters = {
+                completed: document.getElementById('completedPhasesCount'),
+                in_progress: document.getElementById('inProgressPhasesCount'),
+                not_started: document.getElementById('pendingPhasesCount'),
             };
+            const statusKeys = { completed: 'completed', in_progress: 'in_progress', not_started: 'not_started' };
+            const previousCounter = statusCounters[statusKeys[previousPhase.status]];
+            const nextCounter = statusCounters[statusKeys[nextPhase.status]];
 
-            rows.forEach((row) => {
-                const status = row.dataset.phaseStatus || '';
-                if (status === 'completed') counts.completed += 1;
-                else if (status === 'in_progress') counts.in_progress += 1;
-                else if (status === 'delayed') counts.delayed += 1;
-                else if (status === 'not_started') counts.pending += 1;
-            });
+            if (previousPhase.status !== nextPhase.status) {
+                if (previousCounter) {
+                    previousCounter.textContent = Math.max(0, (Number(previousCounter.textContent) || 0) - 1);
+                }
+                if (nextCounter) {
+                    nextCounter.textContent = (Number(nextCounter.textContent) || 0) + 1;
+                }
+            }
 
-            const totalEl = document.getElementById('totalPhasesCount');
-            const inProgressEl = document.getElementById('inProgressPhasesCount');
-            const completedEl = document.getElementById('completedPhasesCount');
-            const pendingEl = document.getElementById('pendingPhasesCount');
-            const delayedEl = document.getElementById('delayedPhasesCount');
+            const today = new Date();
+            const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const isDelayed = (phase) => phase.status !== 'completed'
+                && (phase.status === 'delayed' || (phase.endDate && phase.endDate < todayDate));
+            const wasDelayed = isDelayed(previousPhase);
+            const isNowDelayed = isDelayed({ status: nextPhase.status, endDate: nextPhase.planned_end_date_raw });
+            const delayedCounter = document.getElementById('delayedPhasesCount');
 
-            if (totalEl) totalEl.textContent = counts.total;
-            if (inProgressEl) inProgressEl.textContent = counts.in_progress;
-            if (completedEl) completedEl.textContent = counts.completed;
-            if (pendingEl) pendingEl.textContent = counts.pending;
-            if (delayedEl) delayedEl.textContent = counts.delayed;
+            if (delayedCounter && wasDelayed !== isNowDelayed) {
+                const count = Number(delayedCounter.textContent) || 0;
+                delayedCounter.textContent = wasDelayed ? Math.max(0, count - 1) : count + 1;
+            }
         }
 
         function progressBarClass(percent) {
@@ -2545,9 +2572,11 @@
                 const row = document.querySelector(`tr[data-phase-id="${phase.phase_id}"]`);
                 if (!row) return;
 
+                const previousStatus = row.dataset.phaseStatus || '';
+                const previousEndDate = row.dataset.phaseEndDate || '';
                 row.dataset.phaseName = (phase.phase_name || '').toLowerCase();
                 row.dataset.phaseStatus = phase.status || '';
-                row.dataset.phaseProgress = String(phase.completion_percentage || 0);
+                row.dataset.phaseEndDate = phase.planned_end_date_raw || '';
                 row.dataset.phaseOrder = String(phase.phase_order || 0);
                 row.dataset.phaseTitle = ((phase.phase_name || '') + ' ' + (phase.project_name || '')).toLowerCase();
 
@@ -2610,6 +2639,7 @@
                 if (viewBtn) {
                     viewBtn.dataset.phaseDetails = editBtn?.dataset.phaseEdit || '';
                 }
+                return { status: previousStatus, endDate: previousEndDate };
             } catch (e) {
                 // quietly fail
                 console.error('Failed to update phase row', e);
@@ -2712,7 +2742,7 @@
             }
         }
 
-        [statusFilter, progressFilter, sortSelect].forEach((control) => {
+        [statusFilter, sortSelect].forEach((control) => {
             if (control) {
                 control.addEventListener('input', applyPhaseFilters);
                 control.addEventListener('change', applyPhaseFilters);

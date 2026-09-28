@@ -362,6 +362,10 @@
         max-height: min(92vh, 860px);
     }
 
+    .material-usage-modal {
+        height: min(92vh, 860px);
+    }
+
     .material-modal-header {
         background: linear-gradient(135deg, #ffffff 0%, #f7fbf7 100%) !important;
     }
@@ -378,7 +382,8 @@
     }
 
     .material-modal-form {
-        max-height: calc(92vh - 92px);
+        flex: 1 1 auto;
+        min-height: 0;
         overflow-y: auto;
         scrollbar-width: thin;
         scrollbar-color: #cbdccf transparent;
@@ -429,12 +434,10 @@
     }
 
     .material-modal-actions {
-        position: sticky;
-        bottom: -1.5rem;
-        z-index: 2;
-        margin: 0 -1.5rem -1.5rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0.9rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
         background: rgba(255, 255, 255, 0.96) !important;
         backdrop-filter: blur(8px);
     }
@@ -444,12 +447,18 @@
             max-height: calc(100vh - 1rem);
         }
 
+        .material-usage-modal {
+            height: calc(100vh - 1rem);
+            height: calc(100dvh - 1rem);
+        }
+
         .material-modal-header {
             padding: 1rem !important;
         }
 
         .material-modal-form {
-            max-height: calc(100vh - 92px);
+            flex: 1 1 auto;
+            min-height: 0;
             padding: 1rem !important;
         }
 
@@ -468,9 +477,8 @@
         }
 
         .material-modal-actions {
-            bottom: -1rem;
-            margin: 0 -1rem -1rem;
-            padding: 0.85rem 1rem 1rem;
+            flex-wrap: wrap;
+            padding: 0.85rem 1rem;
         }
 
         .material-modal-actions button {
@@ -1059,7 +1067,7 @@
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                  class="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-4xl material-modal material-usage-modal border border-gray-100">
+                  class="relative flex transform flex-col overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-4xl material-modal material-usage-modal border border-gray-100">
                  
                 <div class="material-modal-header px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
                     <div class="flex items-center gap-3 text-brand-dark">
@@ -1176,15 +1184,16 @@
                     </div>
                     </div>
 
-                    <div class="material-modal-actions pt-5 border-t border-gray-200 flex items-center justify-end gap-3 bg-white">
+                </form>
+
+                <div class="material-modal-actions flex items-center justify-end gap-3 bg-white">
                         <button type="button" @click="openUsageModal = false; previewUrl = ''" class="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-btn shadow-saas hover:bg-gray-50 transition">
                             Cancel
                         </button>
-                        <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-brand-dark rounded-btn shadow-saas hover:bg-green-900 transition hover:scale-[1.01] active:scale-[0.99]">
+                        <button type="submit" form="material_usage_form" class="px-6 py-2.5 text-sm font-bold text-white bg-brand-dark rounded-btn shadow-saas hover:bg-green-900 transition hover:scale-[1.01] active:scale-[0.99]">
                             Save Usage
                         </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>

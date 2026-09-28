@@ -810,10 +810,15 @@ class AdminDashboardController extends Controller
             ]);
         }
 
+        $sortDirection = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
         $query = $this->buildReportQuery($request);
-        $reports = $query->orderByDesc('created_at')->paginate(10)->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search']));
+        $reports = $query
+            ->orderByRaw("COALESCE(report_date, created_at) {$sortDirection}")
+            ->orderBy('report_id', $sortDirection)
+            ->paginate(10)
+            ->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search', 'sort_order']));
 
-        $stats = $this->buildReportStats($request);
+        $stats = $this->buildReportStats();
         $projects = Project::query()
             ->whereIn('status', ['planning', 'ongoing'], 'and', false)
             ->orderBy('project_name', 'asc')
@@ -821,13 +826,8 @@ class AdminDashboardController extends Controller
         $phases = $this->buildPhaseOptions($request->input('project_id'));
         $supervisors = User::query()
             ->where('role', 'supervisor')
-            ->whereHas('submittedReports')
             ->orderBy('user_id', 'asc')
-            ->select([
-                'user_id',
-                DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
-            ])
-            ->get();
+            ->get(['user_id', 'first_name', 'last_name']);
         
         $projectId = $request->filled('project_id') ? $request->input('project_id') : session('admin_selected_project_id');
         
@@ -854,8 +854,13 @@ class AdminDashboardController extends Controller
             ]);
         }
 
+        $sortDirection = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
         $query = $this->buildReportQuery($request);
-        $reports = $query->orderByDesc('created_at')->paginate(10)->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search']));
+        $reports = $query
+            ->orderByRaw("COALESCE(report_date, created_at) {$sortDirection}")
+            ->orderBy('report_id', $sortDirection)
+            ->paginate(10)
+            ->appends($request->only(['project_id', 'phase_id', 'supervisor_id', 'status', 'search', 'sort_order']));
 
         $payload = $predefinedMaterialCategories = [
             'reports' => $reports->getCollection()->map(function (Report $report) {
@@ -890,7 +895,7 @@ class AdminDashboardController extends Controller
                     'site_images_count' => count(array_filter((array) ($report->site_images ?? []))),
                 ];
             })->values(),
-            'stats' => $this->buildReportStats($request),
+            'stats' => $this->buildReportStats(),
             'projects' => Project::query()
                 ->whereIn('status', ['planning', 'ongoing'], 'and', false)
                 ->orderBy('project_name', 'asc')
@@ -899,13 +904,13 @@ class AdminDashboardController extends Controller
             'phases' => $this->buildPhaseOptions($request->input('project_id')),
             'supervisors' => User::query()
                 ->where('role', 'supervisor')
-                ->whereHas('submittedReports')
                 ->orderBy('user_id')
-                ->select([
-                    'user_id',
-                    DB::raw("COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') as name"),
+                ->get(['user_id', 'first_name', 'last_name'])
+                ->map(fn (User $supervisor) => [
+                    'user_id' => $supervisor->user_id,
+                    'name' => $supervisor->name,
                 ])
-                ->get(),
+                ->values(),
             'pagination' => [
                 'current_page' => $reports->currentPage(),
                 'last_page' => $reports->lastPage(),
@@ -1128,9 +1133,9 @@ class AdminDashboardController extends Controller
         return $query;
     }
 
-    private function buildReportStats(Request $request)
+    private function buildReportStats()
     {
-        $query = $this->buildReportQuery($request);
+        $query = Report::query();
 
         return [
             'total' => (clone $query)->count(),

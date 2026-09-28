@@ -916,6 +916,7 @@ class ProjectController extends Controller
 
         $selectedProject = null;
         $phases = collect();
+        $delayedPhases = collect();
         $selectedPhase = null;
         $stats = [
             'total' => 0,
@@ -944,6 +945,12 @@ class ProjectController extends Controller
             }]);
 
             $allPhases = $selectedProject->phases;
+            $delayedPhases = $allPhases->filter(function ($phase) {
+                return $phase->status !== 'completed'
+                    && ($phase->status === 'delayed'
+                        || ($phase->planned_end_date
+                            && $phase->planned_end_date->lt(now()->startOfDay())));
+            })->values();
             $phases = $selectedProject->phases()
                 ->with('milestones')
                 ->orderBy('phase_order')
@@ -956,7 +963,7 @@ class ProjectController extends Controller
                 'completed' => $allPhases->where('status', 'completed')->count(),
                 'in_progress' => $allPhases->where('status', 'in_progress')->count(),
                 'pending' => $allPhases->where('status', 'not_started')->count(),
-                'delayed' => $allPhases->where('status', 'delayed')->count(),
+                'delayed' => $delayedPhases->count(),
             ];
         }
 
@@ -964,6 +971,7 @@ class ProjectController extends Controller
             'projects',
             'selectedProject',
             'phases',
+            'delayedPhases',
             'selectedPhase',
             'stats'
         ));

@@ -2360,6 +2360,13 @@
                     </select>
                 </div>
 
+                <div class="toolbar-group">
+                    <select id="reportSortOrder" class="toolbar-select" name="sort_order" aria-label="Sort reports by date">
+                        <option value="desc" {{ request('sort_order', 'desc') === 'desc' ? 'selected' : '' }}>Newest reports first</option>
+                        <option value="asc" {{ request('sort_order') === 'asc' ? 'selected' : '' }}>Oldest reports first</option>
+                    </select>
+                </div>
+
                 @if(request('project_id'))
                     <div class="toolbar-group">
                         <a href="{{ route('admin.reports.imagesPdf', request('project_id')) }}" class="btn-export" target="_blank">
@@ -2381,7 +2388,7 @@
                 <table class="table table-hover align-middle mb-0 reports-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Report ID</th>
                             <th>Project</th>
                             <th>Phase</th>
                             <th>Supervisor</th>
@@ -2393,7 +2400,7 @@
                     <tbody id="reportsTableBody">
                         @forelse($reports as $report)
                             <tr data-report-id="{{ $report->report_id }}">
-                                <td class="cell-bold" data-label="ID">{{ $report->report_id }}</td>
+                                <td class="cell-bold" data-label="Report ID">{{ $report->report_id }}</td>
                                 <td data-label="Project">{{ optional($report->project)->project_name ?? 'Unassigned Project' }}</td>
                                 <td data-label="Phase">{{ optional($report->phase)->phase_name ?? 'Unassigned Phase' }}</td>
                                 <td data-label="Supervisor">
@@ -2433,14 +2440,16 @@
                     @endif
                 </div>
                 <div id="reportsPagination" class="pagination-bar">
-                    @if($reports->currentPage() > 1)
-                        <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() - 1 }}" aria-label="Previous page">‹</button>
-                    @endif
-                    @foreach(range(1, $reports->lastPage()) as $page)
-                        <button type="button" class="pagination-button {{ $page == $reports->currentPage() ? 'active' : '' }}" data-page="{{ $page }}" aria-label="Page {{ $page }}">{{ $page }}</button>
-                    @endforeach
-                    @if($reports->hasMorePages())
-                        <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() + 1 }}" aria-label="Next page">›</button>
+                    @if($reports->lastPage() > 1)
+                        @if($reports->currentPage() > 1)
+                            <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() - 1 }}" aria-label="Previous page">‹</button>
+                        @endif
+                        @foreach(range(1, $reports->lastPage()) as $page)
+                            <button type="button" class="pagination-button {{ $page == $reports->currentPage() ? 'active' : '' }}" data-page="{{ $page }}" aria-label="Page {{ $page }}">{{ $page }}</button>
+                        @endforeach
+                        @if($reports->hasMorePages())
+                            <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() + 1 }}" aria-label="Next page">›</button>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -2643,6 +2652,7 @@
             const phaseFilter = document.getElementById('phaseFilter');
             const supervisorFilter = document.getElementById('supervisorFilter');
             const statusFilter = document.getElementById('statusFilter');
+            const reportSortOrder = document.getElementById('reportSortOrder');
             const tableBody = document.getElementById('reportsTableBody');
             const heading = document.getElementById('reportsListHeading');
             const workspaceLayout = document.getElementById('reportsWorkspaceLayout');
@@ -2983,19 +2993,24 @@
                 const phaseId = phaseFilter?.value || '';
                 const supervisorId = supervisorFilter?.value || '';
                 const status = statusFilter?.value || '';
+                const sortOrder = reportSortOrder?.value || 'desc';
                 const search = searchInput?.value.trim() || '';
 
                 if (projectId) params.set('project_id', projectId);
                 if (phaseId) params.set('phase_id', phaseId);
                 if (supervisorId) params.set('supervisor_id', supervisorId);
                 if (status) params.set('status', status);
+                params.set('sort_order', sortOrder);
                 if (search) params.set('search', search);
                 if (activePage > 1) params.set('page', activePage);
 
                 return params.toString();
             }
 
+            let latestReportsRequest = 0;
+
             function loadReports() {
+                const requestId = ++latestReportsRequest;
                 const query = buildQueryParams();
                 const url = `${reportsDataUrl}${query ? '?' + query : ''}`;
 
@@ -3011,6 +3026,8 @@
                         return response.json();
                     })
                     .then(payload => {
+                        if (requestId !== latestReportsRequest) return;
+
                         (payload.reports || []).forEach(report => {
                             reportDetailsCache.set(Number(report.id), report);
                         });
@@ -3034,6 +3051,8 @@
                         }
                     })
                     .catch((error) => {
+                        if (requestId !== latestReportsRequest) return;
+
                         console.error('Report filter load failed:', error);
                         Swal.fire({ title: 'Unable to load reports', text: 'Please refresh and try again.', icon: 'error' });
                     });
@@ -3063,6 +3082,11 @@
                 activePage = pagination.current_page;
                 reportsPaginationInfo.textContent = `Showing ${pagination.from} to ${pagination.to} of ${pagination.total} reports`;
 
+                if (pagination.last_page <= 1) {
+                    reportsPagination.innerHTML = '';
+                    return;
+                }
+
                 const buttons = [];
                 buttons.push(`<button type="button" class="pagination-button" data-page="${Math.max(1, pagination.current_page - 1)}" ${pagination.current_page === 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>`);
 
@@ -3087,7 +3111,7 @@
 
                 tableBody.innerHTML = reports.map(report => `
                     <tr data-report-id="${report.id}">
-                        <td class="cell-bold" data-label="ID">${report.report_id}</td>
+                        <td class="cell-bold" data-label="Report ID">${report.report_id}</td>
                         <td data-label="Project">${report.project_name}</td>
                         <td data-label="Phase">${report.phase_name}</td>
                         <td data-label="Supervisor"><div class="user-cell"><span>${report.supervisor_name}</span></div></td>
@@ -3919,7 +3943,7 @@
                 });
             }
 
-            [projectFilter, phaseFilter, supervisorFilter, statusFilter].forEach(control => {
+            [projectFilter, phaseFilter, supervisorFilter, statusFilter, reportSortOrder].forEach(control => {
                 control?.addEventListener('change', () => {
                     clearTimeout(debounceTimer);
                     activePage = 1;

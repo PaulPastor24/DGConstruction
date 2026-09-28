@@ -39,6 +39,38 @@
     $scheduleHealthClass = $scheduleHealth === 'ON TRACK' ? 'health-on-track' : 'health-delayed';
 @endphp
 
+@push('styles')
+<style>
+    .schedule-health-tooltip-card { position: relative; z-index: 1; cursor: help; }
+    .schedule-health-tooltip-card:hover,
+    .schedule-health-tooltip-card:focus-visible { z-index: 20; }
+    .schedule-health-tooltip {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 50;
+        width: min(320px, calc(100vw - 2rem));
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16);
+        color: #334155;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    }
+    .schedule-health-tooltip-card:hover .schedule-health-tooltip,
+    .schedule-health-tooltip-card:focus-visible .schedule-health-tooltip,
+    .schedule-health-tooltip-card:focus-within .schedule-health-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+    .schedule-health-tooltip ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+    .schedule-health-tooltip li + li { margin-top: 0.25rem; }
+</style>
+@endpush
+
 @section('content')
 <div class="phases-container">
     
@@ -85,7 +117,7 @@
             </div>
         </div>
 
-        <div class="metric-card health-metric-card">
+        <div class="metric-card health-metric-card schedule-health-tooltip-card" aria-label="Schedule health. Hover or focus to see delayed phases." aria-describedby="supervisorDelayedPhaseTooltip" tabindex="0">
             <span class="metric-label">Schedule Health</span>
             <div class="health-status-wrapper {{ $scheduleHealthClass }}" id="scheduleHealthWrapper">
                 <div class="pulse-icon-container">
@@ -96,6 +128,18 @@
                 <span class="health-text" id="scheduleHealthText"><i class="bi bi-plus"></i> {{ $scheduleHealth }}</span>
             </div>
             <span class="health-detail" id="scheduleHealthReason">{{ $scheduleHealthReason ?? 'No delayed or overdue phases' }}</span>
+            <div class="schedule-health-tooltip" id="supervisorDelayedPhaseTooltip" role="tooltip">
+                <strong>Delayed phases</strong>
+                @if($delayedPhases->isNotEmpty())
+                    <ul>
+                        @foreach($delayedPhases as $delayedPhase)
+                            <li>{{ $delayedPhase->phase_name }}</li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p>No delayed phases for this project. Schedule health may reflect milestones or project status.</p>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -209,19 +253,19 @@
                 @if($projectPhases->onFirstPage())
                     <button class="pag-btn" disabled><i class="bi bi-chevron-left"></i></button>
                 @else
-                    <a href="{{ $projectPhases->previousPageUrl() }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
+                    <a href="{{ $projectPhases->previousPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
                 @endif
                 
                 @for($i = 1; $i <= $projectPhases->lastPage(); $i++)
                     @if($i == $projectPhases->currentPage())
                         <button class="pag-btn pag-btn-active">{{ $i }}</button>
                     @else
-                        <a href="{{ $projectPhases->url($i) }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn">{{ $i }}</a>
+                        <a href="{{ $projectPhases->url($i) }}" class="pag-btn">{{ $i }}</a>
                     @endif
                 @endfor
                 
                 @if($projectPhases->hasMorePages())
-                    <a href="{{ $projectPhases->nextPageUrl() }}&project_id={{ $primaryProject?->project_id }}" class="pag-btn"><i class="bi bi-chevron-right"></i></a>
+                    <a href="{{ $projectPhases->nextPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-right"></i></a>
                 @else
                     <button class="pag-btn" disabled><i class="bi bi-chevron-right"></i></button>
                 @endif

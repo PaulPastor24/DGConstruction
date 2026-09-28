@@ -609,6 +609,13 @@ class SupervisorController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
+            $pendingReportsCount = Report::query()
+                ->where('project_id', $selectedProjectId)
+                ->where('submitted_by', $user->user_id)
+                ->when($hasApprovalStatus, function ($query) {
+                    return $query->where('approval_status', 'pending');
+                })
+                ->count();
 
             $approvedReports = $hasApprovalStatus
                 ? Report::query()
@@ -675,6 +682,7 @@ class SupervisorController extends Controller
             $currentPhases = collect();
             $delayedMilestones = collect();
             $pendingReports = collect();
+            $pendingReportsCount = 0;
             $approvedReports = collect();
             $rejectedReports = collect();
             $upcomingMilestones = collect();
@@ -728,6 +736,7 @@ class SupervisorController extends Controller
             'delayedMilestones',
             'upcomingMilestones',
             'pendingReports',
+            'pendingReportsCount',
             'approvedReports',
             'rejectedReports',
             'stats',
@@ -901,6 +910,7 @@ class SupervisorController extends Controller
                 'primaryProject' => null,
                 'primaryPhase' => null,
                 'projectPhases' => collect(),
+                'delayedPhases' => collect(),
                 'overallProgress' => 0,
                 'scheduleHealth' => 'ON TRACK',
                 'scheduleHealthReason' => 'No assigned project schedule',
@@ -916,6 +926,13 @@ class SupervisorController extends Controller
         if ($primaryProject) {
             session(['supervisor_selected_project_id' => $primaryProject->project_id]);
         }
+
+        $delayedPhases = $primaryProject->phases->filter(function ($phase) {
+            return $phase->status !== 'completed'
+                && ($phase->status === 'delayed'
+                    || ($phase->planned_end_date
+                        && $phase->planned_end_date->lt(now()->startOfDay())));
+        })->values();
 
         // Get phases for the primary project with pagination
         $query = ConstructionPhase::query()
@@ -933,7 +950,10 @@ class SupervisorController extends Controller
             $query->where('status', $status);
         }
 
-        $projectPhases = $query->paginate(10);
+        $projectPhases = $query->paginate(10)->appends(array_merge(
+            $request->only(['search', 'status']),
+            ['project_id' => $primaryProject->project_id]
+        ));
 
         // Get the current phase (first one in progress)
         $primaryPhase = ConstructionPhase::query()
@@ -1005,6 +1025,7 @@ class SupervisorController extends Controller
             'primaryProject',
             'primaryPhase',
             'projectPhases',
+            'delayedPhases',
             'overallProgress',
             'scheduleHealth',
             'scheduleHealthReason'
@@ -1309,6 +1330,7 @@ class SupervisorController extends Controller
         }
 
         $inventoryCollection = collect();
+        $metricsInventoryCollection = collect();
         $projectPhases = collect();
         $selectedPhase = null;
 
@@ -1331,6 +1353,14 @@ class SupervisorController extends Controller
                 ->get()
                 ->keyBy('material_id');
 
+            $metricsUsageRows = MaterialUsage::query()
+                ->where('project_id', $selectedProject->project_id);
+            $metricsUsageRows = $metricsUsageRows
+                ->selectRaw('material_id, SUM(quantity_used) as total_used')
+                ->groupBy('material_id')
+                ->get()
+                ->keyBy('material_id');
+
             $usageQuery = MaterialUsage::query()
                 ->where('project_id', $selectedProject->project_id);
 
@@ -1350,15 +1380,26 @@ class SupervisorController extends Controller
                 ->unique()
                 ->values();
 
-            if ($materialIds->isNotEmpty()) {
-                $materialIdList = $materialIds->filter(fn ($id) => is_numeric($id))->map(fn ($id) => (int) $id)->values()->all();
+            $metricsMaterialIds = $projectMaterialRows->keys()
+                ->merge($metricsUsageRows->keys())
+                ->filter(fn ($id) => $id !== null)
+                ->unique()
+                ->values();
+
+            if ($materialIds->isNotEmpty() || $metricsMaterialIds->isNotEmpty()) {
+                $materialIdList = $materialIds->merge($metricsMaterialIds)
+                    ->unique()
+                    ->filter(fn ($id) => is_numeric($id))
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
 
                 $materialRows = Material::query()
                     ->whereIn('id', $materialIdList, 'and', false)
                     ->get()
                     ->keyBy('id');
 
-                $inventoryCollection = $materialIds->map(function ($materialId) use ($materialRows, $projectMaterialRows, $usageRows) {
+                $buildInventoryItem = function ($materialId, $sourceUsageRows) use ($materialRows, $projectMaterialRows) {
                     $material = $materialRows->get($materialId);
                     if (! $material) {
                         return null;
@@ -1367,7 +1408,7 @@ class SupervisorController extends Controller
                     $row = $projectMaterialRows->get($materialId);
                     $plannedFromRow = max(0.0, (float) ($row->planned_quantity ?? 0));
                     $usedFromProject = max(0.0, (float) ($row->used_quantity ?? 0));
-                    $usedFromUsageTable = max(0.0, (float) ($usageRows->get($materialId)->total_used ?? 0));
+                    $usedFromUsageTable = max(0.0, (float) ($sourceUsageRows->get($materialId)->total_used ?? 0));
                     $used = max($usedFromProject, $usedFromUsageTable);
 
                     $actualStock = 0.0;
@@ -1407,7 +1448,16 @@ class SupervisorController extends Controller
                         'status_text' => $statusText,
                         'status_color' => $statusColor,
                     ];
-                })->filter()->values();
+                };
+
+                $inventoryCollection = $materialIds
+                    ->map(fn ($materialId) => $buildInventoryItem($materialId, $usageRows))
+                    ->filter()
+                    ->values();
+                $metricsInventoryCollection = $metricsMaterialIds
+                    ->map(fn ($materialId) => $buildInventoryItem($materialId, $metricsUsageRows))
+                    ->filter()
+                    ->values();
             }
 
             if ($search !== '') {
@@ -1446,10 +1496,10 @@ class SupervisorController extends Controller
         );
 
         $metrics = [
-            'total_materials' => $inventoryCollection->count(),
-            'materials_used' => $inventoryCollection->filter(fn ($item) => (float) $item->used > 0)->count(),
-            'low_stock_alerts' => $inventoryCollection->filter(fn ($item) => $item->status_key === 'low_stock')->count(),
-            'critical_materials' => $inventoryCollection->filter(fn ($item) => in_array($item->status_key, ['critical', 'out_of_stock'], true))->count(),
+            'total_materials' => $metricsInventoryCollection->count(),
+            'materials_used' => $metricsInventoryCollection->filter(fn ($item) => (float) $item->used > 0)->count(),
+            'low_stock_alerts' => $metricsInventoryCollection->filter(fn ($item) => $item->status_key === 'low_stock')->count(),
+            'critical_materials' => $metricsInventoryCollection->filter(fn ($item) => in_array($item->status_key, ['critical', 'out_of_stock'], true))->count(),
         ];
 
         $recentUsages = new LengthAwarePaginator([], 0, 10, 1, [
@@ -1510,6 +1560,10 @@ class SupervisorController extends Controller
             $materialRequestsQuery = MaterialRequest::query()
                 ->where('requested_by', $user->user_id)
                 ->with(['project', 'material']);
+
+            if ($selectedProject) {
+                $materialRequestsQuery->where('project_id', $selectedProject->project_id);
+            }
 
             if (in_array($requestStatus, ['pending', 'approved', 'rejected'], true)) {
                 $materialRequestsQuery->where('status', $requestStatus);

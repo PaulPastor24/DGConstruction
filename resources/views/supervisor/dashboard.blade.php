@@ -11,6 +11,50 @@
         width: 100%;
     }
 
+    .supervisor-dashboard-page .stat-card.priority-stat-card {
+        min-height: 112px !important;
+        height: 100%;
+        padding: 0.8rem !important;
+        border-radius: 14px !important;
+    }
+
+    .supervisor-dashboard-page .priority-stat-card .stat-title {
+        margin-bottom: 0.35rem !important;
+        font-size: 0.66rem !important;
+        line-height: 1.25 !important;
+    }
+
+    .supervisor-dashboard-page .priority-stat-card .stat-value {
+        font-size: 1.25rem !important;
+        line-height: 1.15 !important;
+    }
+
+    .supervisor-dashboard-page .priority-stat-card .stat-meta,
+    .supervisor-dashboard-page .priority-stat-card .small {
+        font-size: 0.72rem !important;
+        line-height: 1.3 !important;
+    }
+
+    @media (max-width: 820px) {
+        .supervisor-dashboard-page .stat-card.priority-stat-card {
+            min-height: 104px !important;
+            padding: 0.65rem !important;
+        }
+
+        .supervisor-dashboard-page .priority-stat-card .stat-title {
+            font-size: 0.58rem !important;
+        }
+
+        .supervisor-dashboard-page .priority-stat-card .stat-value {
+            font-size: 1rem !important;
+        }
+
+        .supervisor-dashboard-page .priority-stat-card .stat-meta,
+        .supervisor-dashboard-page .priority-stat-card .small {
+            font-size: 0.66rem !important;
+        }
+    }
+
     .supervisor-project-selector {
         display: flex;
         flex-direction: column;
@@ -428,7 +472,7 @@
                     </div>
             <div class="row g-3 mt-1">
                 <div class="col-12 col-xl-3">
-                    <div class="stat-card">
+                    <div class="stat-card priority-stat-card">
                         @php
                             $attendanceTotal = max(1, $projectWorkersCount ?: 1);
                             $attendancePercent = $projectWorkersCount > 0 ? round(($attendancePresentCount / $attendanceTotal) * 100) : 0;
@@ -444,21 +488,21 @@
                     </div>
                 </div>
                 <div class="col-12 col-xl-3">
-                    <div class="stat-card">
+                    <div class="stat-card priority-stat-card">
                         <div class="stat-title">Current Site Phase</div>
                         <div class="stat-value">{{ $primaryPhase->phase_name ?? 'No active phase' }}</div>
                         <div class="stat-meta">Live site focus</div>
                     </div>
                 </div>
                 <div class="col-12 col-xl-3">
-                    <div class="stat-card">
-                        <div class="stat-title">Today&apos;s Site Tasks</div>
-                        <div class="stat-value">{{ $pendingTasksCount }}</div>
-                        <div class="stat-meta">Pending follow-up items</div>
+                    <div class="stat-card priority-stat-card">
+                        <div class="stat-title">Pending Reports</div>
+                        <div class="stat-value">{{ $pendingReportsCount }}</div>
+                        <div class="stat-meta">Awaiting review</div>
                     </div>
                 </div>
                 <div class="col-12 col-xl-3">
-                    <div class="stat-card">
+                    <div class="stat-card priority-stat-card">
                         <div class="stat-title">Upcoming Deadline</div>
                         <div class="stat-value">{{ $upcomingMilestone ? optional($upcomingMilestone->end_date ?? $upcomingMilestone->start_date)->format('M d') : 'No date' }}</div>
                         <div class="stat-meta">{{ $upcomingMilestone->milestone_name ?? 'No upcoming milestone' }}</div>

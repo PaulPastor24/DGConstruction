@@ -326,7 +326,6 @@
                     <i class="bi bi-eye"></i>
                     Preview Attendance Report
                 </button>
-                <span class="text-muted small">Review records before sending.</span>
             </div>
             <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
                 <i class="bi bi-plus-circle"></i> Admin Attendance Entry

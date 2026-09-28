@@ -2,6 +2,38 @@
 
 @section('title', 'Project Timeline - Supervisor View')
 
+@push('styles')
+<style>
+    .schedule-health-tooltip-card { position: relative; z-index: 1; cursor: help; }
+    .schedule-health-tooltip-card:hover,
+    .schedule-health-tooltip-card:focus-visible { z-index: 20; }
+    .schedule-health-tooltip {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 50;
+        width: min(320px, calc(100vw - 2rem));
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16);
+        color: #334155;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    }
+    .schedule-health-tooltip-card:hover .schedule-health-tooltip,
+    .schedule-health-tooltip-card:focus-visible .schedule-health-tooltip,
+    .schedule-health-tooltip-card:focus-within .schedule-health-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+    .schedule-health-tooltip ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+    .schedule-health-tooltip li + li { margin-top: 0.25rem; }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid p-0">
     @if(isset($projectsWithStats) && count($projectsWithStats) > 0)
@@ -13,6 +45,14 @@
                     $projectProgress = (float) data_get($project, 'progress', 0);
                     $projectTargetEnd = data_get($project, 'targetEndDate');
                     $phases = data_get($project, 'phases', []);
+                    $delayedPhaseNames = collect($phases)->filter(function ($phase) {
+                        $status = strtolower((string) data_get($phase, 'status', ''));
+                        $endDate = data_get($phase, 'end');
+
+                        return $status !== 'completed'
+                            && ($status === 'delayed'
+                                || ($endDate && \Carbon\Carbon::parse($endDate)->lt(now()->startOfDay())));
+                    })->pluck('name')->filter()->values();
                     
                     // Filter or find the currently running phase dynamically for the top hero component
                     $currentPhase = collect($phases)->first(function($p) {
@@ -227,12 +267,24 @@
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-xl-2.4 custom-col-five kpi-secondary-card">
-                            <div class="kpi-panel-card">
+                            <div class="kpi-panel-card schedule-health-tooltip-card" aria-label="Schedule health. Hover or focus to see delayed phases." aria-describedby="scheduleHealthTooltip-{{ $projectId }}" tabindex="0">
                                 <span class="kpi-label">Schedule Health</span>
                                 <div class="mt-2">
                                     <h3 class="kpi-value {{ $scheduleHealthClass }} mb-0">{{ $scheduleHealthLabel }}</h3>
                                 </div>
                                 <span class="kpi-subtext text-muted mt-2 d-block">Based on phase milestones</span>
+                                <div class="schedule-health-tooltip" id="scheduleHealthTooltip-{{ $projectId }}" role="tooltip">
+                                    <strong>Delayed phases</strong>
+                                    @if($delayedPhaseNames->isNotEmpty())
+                                        <ul>
+                                            @foreach($delayedPhaseNames as $delayedPhaseName)
+                                                <li>{{ $delayedPhaseName }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <p>No delayed phases for this project. Schedule health may reflect milestones or project status.</p>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>

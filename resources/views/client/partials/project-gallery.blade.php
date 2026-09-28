@@ -24,7 +24,12 @@
         };
         
         $projectMilestones = $projectItem->phases->flatMap(fn ($phase) => $phase->milestones ?? collect());
-        $hasDelayedPhase = $projectItem->phases->contains(fn ($phase) => in_array($phase->status, ['delayed', 'on_hold'], true));
+        $delayedPhases = $projectItem->phases->filter(function ($phase) {
+            return $phase->status !== 'completed'
+                && (in_array($phase->status, ['delayed', 'on_hold'], true)
+                    || ($phase->planned_end_date && $phase->planned_end_date->lt(now()->startOfDay())));
+        })->values();
+        $hasDelayedPhase = $delayedPhases->isNotEmpty();
         $hasDelayedMilestone = $projectMilestones->contains(fn ($milestone) => $milestone->is_delayed && ! $milestone->is_completed);
         $hasOverduePhase = $projectItem->phases->contains(function ($phase) {
             return $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->isPast();
@@ -192,12 +197,24 @@
                             </div>
                         </div>
 
-                        <div class="command-panel-card card-highlight-border">
+                        <div class="command-panel-card card-highlight-border client-schedule-health-tooltip-card" aria-label="Schedule health. Hover or focus to see delayed phases." aria-describedby="clientScheduleHealthTooltip-{{ $projectItem->project_id }}" tabindex="0">
                             <span class="command-panel-lbl">Schedule Health</span>
                             <div class="command-panel-main-val-group">
                                 <span class="project-command-status-badge {{ $scheduleHealthClass }} project-command-schedule-badge">{{ $scheduleHealth }}</span>
                             </div>
                             <span class="command-panel-subtext-lbl mt-1">Timeline Baseline Status</span>
+                            <div class="client-schedule-health-tooltip" id="clientScheduleHealthTooltip-{{ $projectItem->project_id }}" role="tooltip">
+                                <strong>Delayed phases</strong>
+                                @if($delayedPhases->isNotEmpty())
+                                    <ul>
+                                        @foreach($delayedPhases as $delayedPhase)
+                                            <li>{{ $delayedPhase->phase_name }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p>No delayed phases for this project. Schedule health may reflect milestones or project status.</p>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="command-panel-card">
@@ -663,6 +680,33 @@
         height: 100%;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    .client-schedule-health-tooltip-card { position: relative; z-index: 1; cursor: help; }
+    .client-schedule-health-tooltip-card:hover,
+    .client-schedule-health-tooltip-card:focus-visible { z-index: 20; }
+    .client-schedule-health-tooltip {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 50;
+        width: min(320px, calc(100vw - 2rem));
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16);
+        color: #334155;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    }
+    .client-schedule-health-tooltip-card:hover .client-schedule-health-tooltip,
+    .client-schedule-health-tooltip-card:focus-visible .client-schedule-health-tooltip,
+    .client-schedule-health-tooltip-card:focus-within .client-schedule-health-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+    .client-schedule-health-tooltip ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+    .client-schedule-health-tooltip li + li { margin-top: 0.25rem; }
     .command-panel-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);

@@ -122,6 +122,13 @@
             text-transform: uppercase;
         }
 
+        #supervisorAttendanceTable thead th {
+            padding: 0.55rem 0.4rem !important;
+            font-size: 0.66rem !important;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
         #viewWorkersModal .workers-roster-table tbody td {
             padding: 0.75rem 0.9rem;
             border-color: #edf2ed;
@@ -1529,7 +1536,18 @@
 
             .attendance-main-grid {
                 display: grid !important;
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 1rem !important;
+            }
+
+            .attendance-main-grid > [class*="col-"] {
+                width: 100% !important;
+                max-width: none !important;
+            }
+
+            .attendance-log-card .table-responsive {
+                max-width: 100%;
+                overflow-x: auto;
             }
         }
 
