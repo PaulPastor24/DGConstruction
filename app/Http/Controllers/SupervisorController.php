@@ -772,7 +772,7 @@ class SupervisorController extends Controller
             $phases = $project->phases->sortBy('phase_order')->values();
             $completedPhases = $phases->where('status', 'completed')->count();
             $inProgressPhases = $phases->where('status', 'in_progress')->count();
-            $upcomingPhases = $phases->whereIn('status', ['not_started', 'delayed'])->count();
+            $upcomingPhases = $phases->where('status', 'not_started')->count();
             $progress = $phases->isEmpty() ? 0 : round((float) $phases->avg('progress_percentage'), 2);
 
             $allMilestones = $phases->flatMap(function ($phase) {
@@ -857,6 +857,7 @@ class SupervisorController extends Controller
                         'display_status' => match ($phase->status) {
                             'completed' => 'completed',
                             'in_progress' => 'in-progress',
+                            'delayed' => 'delayed',
                             default => 'planning',
                         },
                         'milestones' => $phase->milestones->map(function ($milestone) {
@@ -928,10 +929,7 @@ class SupervisorController extends Controller
         }
 
         $delayedPhases = $primaryProject->phases->filter(function ($phase) {
-            return $phase->status !== 'completed'
-                && ($phase->status === 'delayed'
-                    || ($phase->planned_end_date
-                        && $phase->planned_end_date->lt(now()->startOfDay())));
+            return $phase->status === 'delayed';
         })->values();
 
         // Get phases for the primary project with pagination

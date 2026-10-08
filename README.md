@@ -54,6 +54,21 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## Hostinger deployment
+
+The GitHub Actions deployment keeps the Laravel application one level above
+`public_html` and copies the contents of `public/` directly into
+`public_html/`. This prevents a nested `public_html/public` directory.
+
+After the first deployment, run these commands from the application root on
+Hostinger:
+
+```bash
+php artisan storage:link
+php artisan optimize:clear
+php artisan config:cache
+```
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

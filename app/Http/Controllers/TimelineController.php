@@ -137,7 +137,7 @@ class TimelineController extends Controller
         // Map database status to display status
         $completedPhases = $phases->where('status', 'completed')->count();
         $inProgressPhases = $phases->where('status', 'in_progress')->count();
-        $upcomingPhases = $phases->whereIn('status', ['not_started', 'delayed'])->count();
+        $upcomingPhases = $phases->where('status', 'not_started')->count();
 
         // Enrich each phase with display status and database-backed fields for the timeline UI
         $phases = $phases->map(function ($phase) {

@@ -19,10 +19,12 @@ jobs:
 
       - name: Install dependencies and build assets
         run: |
-          npm install
+          npm ci
           npm run build
 
-      - name: Sync files to Hostinger via SFTP
+      # The Laravel application lives one level above public_html on Hostinger.
+      # Keep public/ out of this sync so it is not recreated as a nested folder.
+      - name: Sync Laravel application to domain root
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -30,5 +32,23 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 65002
           protocol: sftp
-          local-dir: public/build/
-          server-dir: domains/system.dgconphil.com/public_html/build/
+          local-dir: ./
+          server-dir: domains/system.dgconphil.com/
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/public/**
+            **/tests/**
+
+      # Upload the contents of public/ into public_html/, not public_html/public/.
+      - name: Sync public files to Hostinger document root
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          protocol: sftp
+          local-dir: public/
+          server-dir: domains/system.dgconphil.com/public_html/

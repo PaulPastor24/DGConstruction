@@ -1660,7 +1660,32 @@
             }
         }
 
-</style>
+        .attendance-worker-info {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .attendance-worker-avatar {
+            width: 56px !important;
+            height: 56px !important;
+            min-width: 56px !important;
+            max-width: 56px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            flex-shrink: 0 !important;
+        }
+
+        @media (max-width: 576px) {
+            .attendance-worker-avatar {
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 40px !important;
+                max-width: 40px !important;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')

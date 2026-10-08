@@ -47,11 +47,8 @@
                     $phases = data_get($project, 'phases', []);
                     $delayedPhaseNames = collect($phases)->filter(function ($phase) {
                         $status = strtolower((string) data_get($phase, 'status', ''));
-                        $endDate = data_get($phase, 'end');
 
-                        return $status !== 'completed'
-                            && ($status === 'delayed'
-                                || ($endDate && \Carbon\Carbon::parse($endDate)->lt(now()->startOfDay())));
+                        return $status === 'delayed';
                     })->pluck('name')->filter()->values();
                     
                     // Filter or find the currently running phase dynamically for the top hero component
@@ -246,7 +243,7 @@
                                 <span class="kpi-label">Remaining Phases</span>
                                 <div class="d-flex align-items-center gap-2 mt-2">
                                     <div class="kpi-icon-warning"><i class="bi bi-hourglass-top"></i></div>
-                                    <h3 class="kpi-value mb-0">{{ collect($phases)->whereIn('status', ['upcoming', 'planned', 'not_started', 'delayed'])->count() }}</h3>
+                                    <h3 class="kpi-value mb-0">{{ collect($phases)->whereIn('status', ['not_started', 'in_progress'])->count() }}</h3>
                                 </div>
                                 <span class="kpi-subtext text-muted mt-2 d-block">Still active or pending</span>
                             </div>
