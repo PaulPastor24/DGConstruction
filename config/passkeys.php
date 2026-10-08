@@ -13,7 +13,7 @@ return [
     'relying_party' => [
         'name' => env('APP_NAME', 'D&G Construction Inc.'),
         // Let's use an environmental look-up key for strict routing stability
-        'id' => env('PASSKEY_RP_ID', 'localhost'),
+        'id' => env('PASSKEY_RP_ID', 'system.dgconphil.com'),
     ],
 
     /*

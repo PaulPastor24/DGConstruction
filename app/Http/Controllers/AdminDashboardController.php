@@ -1297,8 +1297,11 @@ class AdminDashboardController extends Controller
 
         if (! empty($filters['search'])) {
             $keyword = '%'.$filters['search'].'%';
+            $projectLocationColumn = Schema::hasColumn('projects', 'project_location')
+                ? 'project_location'
+                : (Schema::hasColumn('projects', 'location') ? 'location' : null);
 
-            $query->where(function ($searchQuery) use ($keyword) {
+            $query->where(function ($searchQuery) use ($keyword, $projectLocationColumn) {
                 $searchQuery
                     ->where('status', 'like', $keyword)
                     ->orWhere('remarks', 'like', $keyword)
@@ -1314,10 +1317,12 @@ class AdminDashboardController extends Controller
                             ->orWhere('last_name', 'like', $keyword)
                             ->orWhere('trade', 'like', $keyword);
                     })
-                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword) {
-                        $projectQuery
-                            ->where('project_name', 'like', $keyword)
-                            ->orWhere('project_location', 'like', $keyword);
+                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword, $projectLocationColumn) {
+                        $projectQuery->where('project_name', 'like', $keyword);
+
+                        if ($projectLocationColumn) {
+                            $projectQuery->orWhere($projectLocationColumn, 'like', $keyword);
+                        }
                     })
                     ->orWhereHas('recordedBy', function ($userQuery) use ($keyword) {
                         $userQuery
@@ -1466,8 +1471,11 @@ class AdminDashboardController extends Controller
 
         if (! empty($validated['search'])) {
             $keyword = '%'.$validated['search'].'%';
+            $projectLocationColumn = Schema::hasColumn('projects', 'project_location')
+                ? 'project_location'
+                : (Schema::hasColumn('projects', 'location') ? 'location' : null);
 
-            $query->where(function ($searchQuery) use ($keyword) {
+            $query->where(function ($searchQuery) use ($keyword, $projectLocationColumn) {
                 $searchQuery
                     ->where('status', 'like', $keyword)
                     ->orWhere('remarks', 'like', $keyword)
@@ -1483,10 +1491,12 @@ class AdminDashboardController extends Controller
                             ->orWhere('last_name', 'like', $keyword)
                             ->orWhere('trade', 'like', $keyword);
                     })
-                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword) {
-                        $projectQuery
-                            ->where('project_name', 'like', $keyword)
-                            ->orWhere('project_location', 'like', $keyword);
+                    ->orWhereHas('deployment.project', function ($projectQuery) use ($keyword, $projectLocationColumn) {
+                        $projectQuery->where('project_name', 'like', $keyword);
+
+                        if ($projectLocationColumn) {
+                            $projectQuery->orWhere($projectLocationColumn, 'like', $keyword);
+                        }
                     })
                     ->orWhereHas('recordedBy', function ($userQuery) use ($keyword) {
                         $userQuery
@@ -2685,7 +2695,5 @@ class AdminDashboardController extends Controller
         }
     }
 }
-
-
 
 

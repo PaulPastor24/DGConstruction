@@ -23,7 +23,6 @@
             display: flex !important;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.6);
         }
 
         /* Desktop / web modal size */
@@ -2232,12 +2231,24 @@
         let returnToRosterAfterDetails = false;
         let photoLightboxReturnFocus = null;
 
+        function cleanupStaleModalBackdrop() {
+            if (document.querySelector('.modal.show')) {
+                return;
+            }
+
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
+
         // ========================================================================
         // WEBAUTHN BROWSER SUPPORT CHECK
         // ========================================================================
         const isWebAuthnSupported = () => {
             return (
                 typeof window !== 'undefined' &&
+                window.isSecureContext === true &&
                 typeof window.PublicKeyCredential !== 'undefined' &&
                 typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
             );
@@ -3235,6 +3246,7 @@
 
         viewWorkersModal?.addEventListener('hidden.bs.modal', function () {
             delete viewWorkersModal.dataset.modalReady;
+            setTimeout(cleanupStaleModalBackdrop, 0);
         });
 
         function openWorkerDetailsModal(worker) {
@@ -3290,7 +3302,10 @@
             if (returnToRosterAfterDetails) {
                 returnToRosterAfterDetails = false;
                 bootstrap.Modal.getOrCreateInstance(viewWorkersModal).show();
+                return;
             }
+
+            setTimeout(cleanupStaleModalBackdrop, 0);
         });
 
         function openWorkerPhotoLightbox(button, photoUrl, name) {
@@ -3383,7 +3398,10 @@
             if (returnToRosterAfterEdit) {
                 returnToRosterAfterEdit = false;
                 bootstrap.Modal.getOrCreateInstance(viewWorkersModal).show();
+                return;
             }
+
+            setTimeout(cleanupStaleModalBackdrop, 0);
         });
 
         editWorkerProfileImageInput?.addEventListener('change', function () {
@@ -3651,6 +3669,15 @@
                 return;
             }
 
+            if (!window.SimpleWebAuthnBrowser?.startAuthentication) {
+                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
+                globalScanStatus.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    The biometric component could not be loaded. Refresh the page and try again.
+                `;
+                return;
+            }
+
             if (btnGlobalScan.disabled) {
                 return;
             }
@@ -3739,6 +3766,12 @@
             // Check WebAuthn support before proceeding
             if (!webAuthnAvailable) {
                 regStatusLabel.innerText = 'Biometric authentication is not supported in this browser. Please use Chrome, Firefox, or Safari.';
+                regStatusLabel.className = 'd-block text-danger small mt-1';
+                return;
+            }
+
+            if (!window.SimpleWebAuthnBrowser?.startRegistration) {
+                regStatusLabel.innerText = 'The biometric component could not be loaded. Refresh the page and try again.';
                 regStatusLabel.className = 'd-block text-danger small mt-1';
                 return;
             }
@@ -3948,9 +3981,7 @@
 
         document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                document.querySelectorAll('.modal-backdrop').forEach(function (el) {
-                    el.remove();
-                });
+                setTimeout(cleanupStaleModalBackdrop, 0);
             });
         });
 

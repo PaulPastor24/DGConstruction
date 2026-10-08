@@ -69,6 +69,17 @@ php artisan optimize:clear
 php artisan config:cache
 ```
 
+For biometric attendance, production `.env` must use the same stable relying
+party domain as the deployed site:
+
+```env
+APP_URL=https://system.dgconphil.com
+PASSKEY_RP_ID=system.dgconphil.com
+```
+
+The deployment workflow refreshes Laravel's cached configuration and preserves
+the `public_html/storage` link automatically after each deployment.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -52,3 +52,19 @@ jobs:
           protocol: sftp
           local-dir: public/
           server-dir: domains/system.dgconphil.com/public_html/
+
+      - name: Refresh Laravel runtime on Hostinger
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 65002
+          script_stop: true
+          script: |
+            cd /home/u381418166/domains/system.dgconphil.com
+            if [ ! -e public_html/storage ]; then
+              ln -s ../storage/app/public public_html/storage
+            fi
+            php artisan optimize:clear
+            php artisan config:cache
