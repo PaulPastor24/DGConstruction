@@ -15,6 +15,15 @@
             z-index: 1060 !important;
         }
 
+        /*
+         * Bootstrap positions modals relative to the viewport. Keep the modal
+         * roots outside the scrolling page shell so mobile overflow and
+         * stacking contexts cannot leave an untouchable backdrop behind.
+         */
+        body > .modal {
+            position: fixed;
+        }
+
         /* Desktop / web modal size */
         .workers-modal-dialog {
             width: min(960px, calc(100vw - 2rem)) !important;
@@ -2229,8 +2238,22 @@
         let photoLightboxReturnFocus = null;
         let editingWorker = null;
 
+        const pageModalElements = [
+            viewWorkersModal,
+            workerDetailsModalElement,
+            editWorkerModalElement,
+            manualAttendanceModal,
+            document.getElementById('registerWorkerModal')
+        ].filter(Boolean);
+
+        pageModalElements.forEach((modal) => {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+
         function cleanupStaleModalBackdrop() {
-            if (document.querySelector('.modal.show')) {
+            if (document.querySelector('.modal.show, .modal.showing')) {
                 return;
             }
 
@@ -2240,9 +2263,9 @@
             document.body.style.removeProperty('padding-right');
         }
 
-        document.querySelectorAll('.modal').forEach(modal => {
+        pageModalElements.forEach(modal => {
             modal.addEventListener('hidden.bs.modal', function () {
-                setTimeout(cleanupStaleModalBackdrop, 50);
+                window.setTimeout(cleanupStaleModalBackdrop, 100);
             });
         });
 
