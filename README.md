@@ -81,6 +81,11 @@ future Git push from deleting uploaded images. Do not commit uploaded files
 to Git; keep them on Hostinger or move the public disk to durable object
 storage such as S3 for multi-server deployments.
 
+The post-deployment check verifies that `public_html/storage` points to
+`../storage/app/public`. If an older deployment created a real
+`public_html/storage` directory, the workflow copies its existing files into
+Laravel's runtime storage before recreating the link.
+
 For biometric attendance, production `.env` must use the same stable relying
 party domain as the deployed site:
 

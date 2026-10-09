@@ -40,6 +40,11 @@ jobs:
             **/node_modules/**
             **/public/**
             **/storage/**
+            **/storage
+            storage/**
+            storage
+            **/public_html/storage/**
+            **/public_html/storage
             **/tests/**
 
       # Upload the contents of public/ into public_html/, not public_html/public/.
@@ -54,7 +59,10 @@ jobs:
           local-dir: public/
           server-dir: domains/system.dgconphil.com/public_html/
           exclude: |
+            **/storage/**
+            **/storage
             storage/**
+            storage
 
       - name: Refresh Laravel runtime on Hostinger
         uses: appleboy/ssh-action@v1.2.2
@@ -66,18 +74,29 @@ jobs:
           script_stop: true
           script: |
             cd /home/u381418166/domains/system.dgconphil.com
+            mkdir -p storage/app/public
             if [ -L public_html/storage ]; then
               target="$(readlink public_html/storage)"
               if [ "$target" != "../storage/app/public" ]; then
                 rm public_html/storage
               fi
             elif [ -e public_html/storage ]; then
-              echo "public_html/storage exists as a directory or file; refusing to overwrite it"
-              exit 1
+              if [ -d public_html/storage ]; then
+                echo "Migrating existing public_html/storage files into Laravel storage..."
+                cp -a public_html/storage/. storage/app/public/
+                rm -rf public_html/storage
+              else
+                echo "public_html/storage exists as an unsupported file; refusing to overwrite it"
+                exit 1
+              fi
             fi
             if [ ! -L public_html/storage ]; then
               ln -s ../storage/app/public public_html/storage
             fi
+            test -L public_html/storage
+            test "$(readlink public_html/storage)" = "../storage/app/public"
+            echo "Verified public_html/storage -> $(readlink public_html/storage)"
+            echo "Runtime upload files currently present: $(find storage/app/public -type f ! -name .gitignore | wc -l)"
             php artisan migrate --force
             php artisan optimize:clear
             php artisan config:cache

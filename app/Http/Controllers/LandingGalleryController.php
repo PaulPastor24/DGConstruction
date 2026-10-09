@@ -32,20 +32,22 @@ class LandingGalleryController extends Controller
                 ->get();
         }
 
+        $projectColumns = $this->availableProjectColumns([
+            'project_id',
+            'project_name',
+            'location',
+            'description',
+            'bedrooms',
+            'bathrooms',
+            'lot_area',
+            'highlights',
+            'features',
+        ]);
+
         $projects = Project::query()
             ->whereNotNull('project_name')
             ->orderBy('project_name')
-            ->get([
-                'project_id',
-                'project_name',
-                'location',
-                'description',
-                'bedrooms',
-                'bathrooms',
-                'lot_area',
-                'highlights',
-                'features',
-            ]);
+            ->get($projectColumns);
 
         $fallbackFeaturedProjects = collect();
         if ($galleryImages->isEmpty()) {
@@ -54,7 +56,13 @@ class LandingGalleryController extends Controller
                 ->whereNotNull('project_image')
                 ->whereNotNull('project_name')
                 ->orderBy('project_name')
-                ->get(['project_id', 'project_name', 'location', 'project_image', 'description']);
+                ->get($this->availableProjectColumns([
+                    'project_id',
+                    'project_name',
+                    'location',
+                    'project_image',
+                    'description',
+                ]));
         }
 
         $landingPageSetting = Schema::hasTable('landing_page_settings')
@@ -62,6 +70,14 @@ class LandingGalleryController extends Controller
             : null;
 
         return view('admin.gallery.index', compact('galleryImages', 'projects', 'fallbackFeaturedProjects', 'landingPageSetting'));
+    }
+
+    protected function availableProjectColumns(array $columns): array
+    {
+        return collect($columns)
+            ->filter(fn (string $column) => Schema::hasColumn('projects', $column))
+            ->values()
+            ->all();
     }
 
     public function updateHero(Request $request)
