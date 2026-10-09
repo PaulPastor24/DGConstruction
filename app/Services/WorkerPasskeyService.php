@@ -225,7 +225,7 @@ class WorkerPasskeyService
             return $configuredId;
         }
 
-        if ($configuredId === $currentHost || str_ends_with($currentHost, '.'.$configuredId)) {
+        if ($configuredId !== '' && ($configuredId === $currentHost || str_ends_with($currentHost, '.'.$configuredId))) {
             return $configuredId;
         }
 
@@ -234,12 +234,6 @@ class WorkerPasskeyService
 
     private function clientHost(): string
     {
-        $configuredId = strtolower(trim((string) config('passkeys.relying_party.id', '')));
-
-        if (str_ends_with($configuredId, 'ngrok-free.dev') || str_ends_with($configuredId, 'asse.devtunnels.ms')) {
-            return $configuredId;
-        }
-
         return request()->getHost();
     }
 

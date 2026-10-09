@@ -314,6 +314,10 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
         ->whereNumber('workerId')
         ->name('supervisor.workers.profile-image');
 
+    Route::post('/supervisor/workers/{workerId}/biometric', [SupervisorController::class, 'reenrollWorkerBiometric'])
+        ->whereNumber('workerId')
+        ->name('supervisor.workers.biometric');
+
     Route::put('/supervisor/workers/{workerId}', [SupervisorController::class, 'updateWorker'])
         ->whereNumber('workerId')
         ->name('supervisor.workers.update');

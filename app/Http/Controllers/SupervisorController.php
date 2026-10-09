@@ -311,6 +311,57 @@ class SupervisorController extends Controller
         ]);
     }
 
+    public function reenrollWorkerBiometric(Request $request, int $workerId, WorkerPasskeyService $workerPasskeys)
+    {
+        $validated = $request->validate([
+            'credential' => ['required', 'array'],
+        ]);
+
+        $worker = DB::table('workers')
+            ->where('worker_id', $workerId)
+            ->where('is_active', 1)
+            ->first();
+
+        if (! $worker) {
+            return response()->json(['message' => 'Active worker not found.'], 404);
+        }
+
+        try {
+            $credentialSource = $workerPasskeys->verifyRegistration($validated['credential']);
+            $credentialId = $workerPasskeys->credentialId($credentialSource);
+            $credentialJson = $workerPasskeys->serializeCredentialSource($credentialSource);
+        } catch (\Throwable $error) {
+            report($error);
+
+            return response()->json([
+                'message' => 'Biometric registration could not be verified. Capture the fingerprint again.',
+            ], 422);
+        }
+
+        $existingCredential = DB::table('workers')
+            ->where('credential_id', $credentialId)
+            ->where('worker_id', '!=', $workerId)
+            ->exists();
+
+        if ($existingCredential) {
+            return response()->json([
+                'message' => 'This biometric credential is already enrolled to another worker.',
+            ], 422);
+        }
+
+        DB::table('workers')
+            ->where('worker_id', $workerId)
+            ->update([
+                'credential_id' => $credentialId,
+                'credential_json' => $credentialJson,
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'message' => 'Worker biometric enrollment updated.',
+        ]);
+    }
+
     public function getTodayAttendance(Request $request)
     {
         $date = $request->query('date', now()->toDateString());

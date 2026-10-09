@@ -63,7 +63,16 @@ jobs:
           script_stop: true
           script: |
             cd /home/u381418166/domains/system.dgconphil.com
-            if [ ! -e public_html/storage ]; then
+            if [ -L public_html/storage ]; then
+              target="$(readlink public_html/storage)"
+              if [ "$target" != "../storage/app/public" ]; then
+                rm public_html/storage
+              fi
+            elif [ -e public_html/storage ]; then
+              echo "public_html/storage exists as a directory or file; refusing to overwrite it"
+              exit 1
+            fi
+            if [ ! -L public_html/storage ]; then
               ln -s ../storage/app/public public_html/storage
             fi
             php artisan optimize:clear

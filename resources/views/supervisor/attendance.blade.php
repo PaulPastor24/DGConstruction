@@ -15,16 +15,6 @@
             z-index: 1060 !important;
         }
 
-        .modal.fade {
-            display: none !important;
-        }
-
-        .modal.fade.show {
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-        }
-
         /* Desktop / web modal size */
         .workers-modal-dialog {
             width: min(960px, calc(100vw - 2rem)) !important;
@@ -2009,6 +1999,12 @@
                                     <div class="form-text">JPG, PNG, or WebP, up to 2 MB. Leave empty to keep the current photo.</div>
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="btnReenrollWorkerFingerprint">
+                                    <i class="bi bi-fingerprint me-1"></i> Re-enroll fingerprint / Face ID
+                                </button>
+                                <div class="form-text">Use this once if the worker was enrolled on another device or site address.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2196,6 +2192,7 @@
         const editWorkerProfileImageInput = document.getElementById('editWorkerProfileImage');
         const editWorkerAvatarPreview = document.getElementById('editWorkerAvatarPreview');
         const btnSaveEditedWorker = document.getElementById('btnSaveEditedWorker');
+        const btnReenrollWorkerFingerprint = document.getElementById('btnReenrollWorkerFingerprint');
         const manualAttendanceModal = document.getElementById('manualAttendanceModal');
         const manualWorkerSelect = document.getElementById('manualWorkerSelect');
         const manualWorkerPicker = document.getElementById('manualWorkerPicker');
@@ -2230,6 +2227,7 @@
         let returnToRosterAfterEdit = false;
         let returnToRosterAfterDetails = false;
         let photoLightboxReturnFocus = null;
+        let editingWorker = null;
 
         function cleanupStaleModalBackdrop() {
             if (document.querySelector('.modal.show')) {
@@ -2241,6 +2239,12 @@
             document.body.style.removeProperty('overflow');
             document.body.style.removeProperty('padding-right');
         }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('hidden.bs.modal', function () {
+                setTimeout(cleanupStaleModalBackdrop, 50);
+            });
+        });
 
         // ========================================================================
         // WEBAUTHN BROWSER SUPPORT CHECK
@@ -3361,6 +3365,7 @@
         }
 
         function openEditWorkerModal(worker) {
+            editingWorker = worker;
             editWorkerForm.reset();
             editWorkerIdInput.value = worker.worker_id;
             editWorkerFirstNameInput.value = worker.first_name;
@@ -3457,6 +3462,7 @@
                     },
                     body: formData
                 });
+
                 const result = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
@@ -3474,6 +3480,60 @@
             } finally {
                 btnSaveEditedWorker.disabled = false;
                 btnSaveEditedWorker.innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
+            }
+        });
+
+        btnReenrollWorkerFingerprint?.addEventListener('click', async function () {
+            if (!editingWorker || !webAuthnAvailable || !window.SimpleWebAuthnBrowser?.startRegistration) {
+                await showAttendanceAlert('warning', 'Biometrics unavailable', 'Use the deployed HTTPS site and a browser with fingerprint, Face ID, or passkey support.');
+                return;
+            }
+
+            btnReenrollWorkerFingerprint.disabled = true;
+            btnReenrollWorkerFingerprint.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Capturing...';
+
+            try {
+                const optionsResponse = await fetch(supervisorRoutes.passkeyRegisterOptions, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        first_name: editingWorker.first_name,
+                        last_name: editingWorker.last_name
+                    })
+                });
+                const options = await optionsResponse.json().catch(() => ({}));
+
+                if (!optionsResponse.ok) {
+                    throw new Error(options.message || 'Unable to start biometric enrollment.');
+                }
+
+                const credential = await SimpleWebAuthnBrowser.startRegistration(options);
+                const response = await fetch(`${supervisorRoutes.workerProfileBase}/${encodeURIComponent(editingWorker.worker_id)}/biometric`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ credential })
+                });
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Unable to update biometric enrollment.');
+                }
+
+                await showAttendanceAlert('success', 'Biometric updated', 'The worker can now use fingerprint or Face ID on this site.');
+            } catch (error) {
+                console.error(error);
+                await showAttendanceAlert('error', 'Biometric update failed', error.message || 'Unable to update biometric enrollment.');
+            } finally {
+                btnReenrollWorkerFingerprint.disabled = false;
+                btnReenrollWorkerFingerprint.innerHTML = '<i class="bi bi-fingerprint me-1"></i> Re-enroll fingerprint / Face ID';
             }
         });
 
@@ -3977,12 +4037,6 @@
                 btnSaveWorker.disabled = false;
                 btnSaveWorker.innerHTML = 'Save Worker Record';
             }
-        });
-
-        document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                setTimeout(cleanupStaleModalBackdrop, 0);
-            });
         });
 
         /*
