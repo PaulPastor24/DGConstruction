@@ -39,6 +39,7 @@ jobs:
             **/.github/**
             **/node_modules/**
             **/public/**
+            **/storage/**
             **/tests/**
 
       # Upload the contents of public/ into public_html/, not public_html/public/.
@@ -52,6 +53,8 @@ jobs:
           protocol: sftp
           local-dir: public/
           server-dir: domains/system.dgconphil.com/public_html/
+          exclude: |
+            storage/**
 
       - name: Refresh Laravel runtime on Hostinger
         uses: appleboy/ssh-action@v1.2.2

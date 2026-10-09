@@ -64,10 +64,22 @@ After the first deployment, run these commands from the application root on
 Hostinger:
 
 ```bash
-php artisan storage:link
 php artisan optimize:clear
 php artisan config:cache
 ```
+
+Hostinger serves `public_html`, while Laravel stores uploaded worker photos
+and report images in `storage/app/public`. Ensure this link exists:
+
+```bash
+ln -s ../storage/app/public public_html/storage
+```
+
+The deployment workflow deliberately excludes the runtime `storage/` data
+and `public_html/storage` link from SFTP synchronization. This prevents a
+future Git push from deleting uploaded images. Do not commit uploaded files
+to Git; keep them on Hostinger or move the public disk to durable object
+storage such as S3 for multi-server deployments.
 
 For biometric attendance, production `.env` must use the same stable relying
 party domain as the deployed site:
