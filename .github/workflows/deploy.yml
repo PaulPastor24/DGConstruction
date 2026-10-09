@@ -78,5 +78,6 @@ jobs:
             if [ ! -L public_html/storage ]; then
               ln -s ../storage/app/public public_html/storage
             fi
+            php artisan migrate --force
             php artisan optimize:clear
             php artisan config:cache

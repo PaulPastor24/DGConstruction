@@ -750,16 +750,23 @@
                 @php
                     $heroImage = asset('images/h4.jpg');
                     $heroAlt = 'D&G Construction Inc.';
+                    $firstGalleryImageId = null;
+
+                    if (! empty($landingPageSetting?->hero_image_path)) {
+                        $heroImage = asset('storage/' . ltrim($landingPageSetting->hero_image_path, '/'));
+                    }
+
                     if ($galleryImages->isNotEmpty()) {
                         $first = $galleryImages->first();
                         $path = $first->image_path ?? null;
                         $project = $first->project ?? null;
                         $isExternal = $first->is_external ?? false;
+                        $firstGalleryImageId = $first->id ?? null;
 
-                        if ($isExternal) {
+                        if (! $landingPageSetting?->hero_image_path && $isExternal) {
                             $heroImage = $path ? asset('storage/' . ltrim($path, '/')) : $heroImage;
                             $heroAlt = $first->external_project_name ?? 'D&G Construction Inc.';
-                        } elseif ($project) {
+                        } elseif (! $landingPageSetting?->hero_image_path && $project) {
                             $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
                             if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
                                 $heroImage = $path;
@@ -770,7 +777,7 @@
                         }
                     }
                 @endphp
-                <img src="{{ $heroImage }}" alt="{{ $heroAlt }}">
+                <img src="{{ $heroImage }}" alt="{{ $heroAlt }}" data-landing-hero-image="true" @if($firstGalleryImageId) data-gallery-image-id="{{ $firstGalleryImageId }}" @endif>
             </div>
         </section>
 
@@ -890,6 +897,7 @@
                         @php
                             $project = $galleryImage->project ?? null;
                             $isExternal = $galleryImage->is_external ?? false;
+                            $galleryImageId = $galleryImage->id ?? null;
                             $imageSrc = $galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? '');
 
                             if ($isExternal) {
@@ -909,9 +917,12 @@
                                 $projectName = 'External Project';
                                 $projectLocation = 'Past Featured Project';
                             }
+                            $projectGalleryImages = ($galleryImage->projectGalleryImages ?? collect())
+                                ->map(fn ($projectImage) => asset('storage/' . ltrim($projectImage->image_path, '/')))
+                                ->values();
                         @endphp
                         <article class="project-card">
-                            <button type="button" class="project-card-trigger js-open-gallery-project" data-project-url="{{ $projectUrl }}" data-project-external="{{ $isExternal ? 'true' : 'false' }}" data-project-name="{{ $projectName }}" data-project-location="{{ $projectLocation }}" data-project-description="{{ $galleryImage->external_project_description ?? ($project->description ?? '') }}" aria-label="View details for {{ $projectName }}">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" @if($galleryImageId) data-gallery-image-id="{{ $galleryImageId }}" @endif data-project-url="{{ $projectUrl }}" data-project-external="{{ $isExternal ? 'true' : 'false' }}" data-project-name="{{ $projectName }}" data-project-location="{{ $projectLocation }}" data-project-description="{{ $galleryImage->external_project_description ?? ($project->description ?? '') }}" data-project-bedrooms="{{ $galleryImage->external_bedrooms ?? '' }}" data-project-bathrooms="{{ $galleryImage->external_bathrooms ?? '' }}" data-project-lot-area="{{ $galleryImage->external_lot_area ?? '' }}" data-project-highlights='@json($galleryImage->external_highlights ?? [])' data-project-features='@json($galleryImage->external_features ?? [])' data-project-gallery-images='@json($projectGalleryImages)' aria-label="View details for {{ $projectName }}">
                                 <div class="project-img-container">
                                     <img src="{{ $imageSrc }}" alt="{{ $projectName }}">
                                 </div>
@@ -1394,6 +1405,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const projectLocation = button.dataset.projectLocation || '';
                 const projectDescription = button.dataset.projectDescription || 'A past featured project by D&G Construction Inc.';
                 const imageSrc = button.querySelector('img')?.src || '';
+                const parseItems = name => {
+                    try {
+                        return JSON.parse(button.dataset[name] || '[]');
+                    } catch {
+                        return [];
+                    }
+                };
+                const projectGalleryImages = parseItems('projectGalleryImages');
+                const detailItems = (title, items) => items.length
+                    ? `<div class="project-detail-section project-detail-highlights"><h3>${title}</h3><ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`
+                    : '';
+                const externalMeta = [
+                    button.dataset.projectBedrooms ? `${escapeHtml(button.dataset.projectBedrooms)} Beds` : '',
+                    button.dataset.projectBathrooms ? `${escapeHtml(button.dataset.projectBathrooms)} Baths` : '',
+                    button.dataset.projectLotArea ? `${escapeHtml(button.dataset.projectLotArea)} sqm` : ''
+                ].filter(Boolean);
 
                 title.textContent = projectName;
 
@@ -1409,10 +1436,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.innerHTML = `
                     ${imageSrc ? `<div class="project-detail-hero"><img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(projectName)}"></div>` : ''}
                     ${metaHtml}
+                    ${externalMeta.length ? `<div class="project-detail-meta-icons">${externalMeta.map(item => `<div class="project-detail-meta-icon"><span>${item}</span></div>`).join('')}</div>` : ''}
                     <div class="project-detail-section">
                         <h3>About This Project</h3>
                         <p>${escapeHtml(projectDescription)}</p>
                     </div>
+                    ${detailItems('Project Highlights', parseItems('projectHighlights'))}
+                    ${detailItems('Features', parseItems('projectFeatures'))}
+                    ${projectGalleryImages.length ? `<div class="project-detail-section"><h3>Project Gallery</h3><div class="project-detail-gallery-grid">${projectGalleryImages.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(projectName)}" loading="lazy">`).join('')}</div></div>` : ''}
                 `;
                 return;
             }

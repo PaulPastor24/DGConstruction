@@ -27,29 +27,88 @@
             <p class="text-muted small mb-0">Upload and organize the images shown on the public landing page of your project. Add new images and keep your gallery up to date.</p>
         </div>
 
-        <button type="submit" form="galleryCreateForm" class="ug-add-user-btn">
+        <button type="button" class="ug-add-user-btn" data-bs-toggle="modal" data-bs-target="#addFeaturedProjectPanel" aria-controls="addFeaturedProjectPanel">
             <span class="ug-add-icon"><i class="bi bi-plus-lg"></i></span>
-            <span>Add Image</span>
+            <span>Add Featured Project</span>
         </button>
     </div>
 
-    <section class="landing-gallery-panel landing-gallery-panel--upload">
-        <div class="landing-gallery-panel__title-wrap">
+    <section class="landing-preview-panel mb-4" aria-labelledby="landingPreviewTitle">
+        <div class="landing-preview-panel__header">
+            <div>
+                <h3 id="landingPreviewTitle">Landing page preview</h3>
+                <p>Click the hero image or a featured project image in the preview to edit that specific item. Adding a project creates a new item and does not replace existing projects.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editHeroModal">
+                    <i class="bi bi-image me-1"></i>Replace Hero Image
+                </button>
+                <a href="{{ url('/') }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Open public page
+                </a>
+            </div>
+        </div>
+        <div class="landing-preview-frame">
+            <iframe id="landingPagePreview" src="{{ url('/') }}?admin_gallery_preview=1" title="Live landing page preview"></iframe>
+            <div class="landing-preview-loading" id="landingPreviewLoading">
+                <span class="spinner-border spinner-border-sm me-2"></span>Loading landing page preview...
+            </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="editHeroModal" tabindex="-1" aria-labelledby="editHeroModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="editHeroModalLabel">Replace hero image</h5>
+                        <p class="text-muted small mb-0">This changes only the hero image. Featured projects will not be removed or replaced.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('admin.landing-gallery.hero.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        @if($landingPageSetting?->hero_image_path)
+                            <div class="edit-gallery-preview mb-3">
+                                <img src="{{ asset('storage/' . ltrim($landingPageSetting->hero_image_path, '/')) }}" alt="Current landing page hero image">
+                            </div>
+                        @endif
+                        <label for="hero_image" class="form-label fw-semibold">New hero image</label>
+                        <input id="hero_image" name="hero_image" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp" required>
+                        <div class="form-text">JPG, PNG, or WebP. Maximum 5 MB.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check2 me-1"></i>Save hero image</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addFeaturedProjectPanel" tabindex="-1" aria-labelledby="addFeaturedProjectPanelLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+        <div class="modal-header">
             <div class="panel-icon">
                 <i class="bi bi-folder2-open"></i>
             </div>
             <div class="landing-gallery-panel__title-copy">
-                <h2>Project</h2>
+                <h5 class="modal-title" id="addFeaturedProjectPanelLabel">Add Featured Project</h5>
+                <p class="text-muted small mb-0">Add a new project without replacing existing featured projects.</p>
             </div>
-
-            <label class="external-project-toggle" for="is_external">
-                <input class="form-check-input" type="checkbox" value="1" id="is_external" name="is_external" form="galleryCreateForm">
-                <span>This is an external / past featured project not in the system</span>
-            </label>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <form id="galleryCreateForm" action="{{ route('admin.landing-gallery.store') }}" method="POST" enctype="multipart/form-data" class="landing-gallery-form">
             @csrf
+            <div class="modal-body">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" value="1" id="is_external" name="is_external">
+                    <label class="form-check-label fw-semibold" for="is_external">External / past project not in the system</label>
+                </div>
 
             <div class="form-grid">
                 <div class="field-group field-group--project">
@@ -57,7 +116,16 @@
                     <select id="project_id" name="project_id" class="form-select" required>
                         <option value="">Select a completed project</option>
                         @foreach($projects as $project)
-                            <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
+                        <option
+                            value="{{ $project->project_id }}"
+                            data-project-location="{{ $project->location }}"
+                            data-project-description="{{ $project->description }}"
+                            data-project-bedrooms="{{ $project->bedrooms }}"
+                            data-project-bathrooms="{{ $project->bathrooms }}"
+                            data-project-lot-area="{{ $project->lot_area }}"
+                            data-project-highlights='@json($project->highlights ?? [])'
+                            data-project-features='@json($project->features ?? [])'
+                        >{{ $project->project_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -70,6 +138,74 @@
                         <span class="file-name-display">No file chosen</span>
                     </div>
                 </div>
+
+                <div id="systemProjectInfo" class="project-info-preview mt-3" hidden>
+                    <div class="project-info-preview__header">
+                        <strong>Project information</strong>
+                        <span>Loaded from the selected system project</span>
+                    </div>
+                    <div class="project-info-preview__grid">
+                        <div><span>Location</span><strong data-project-info="location">-</strong></div>
+                        <div><span>Bedrooms</span><strong data-project-info="bedrooms">-</strong></div>
+                        <div><span>Bathrooms</span><strong data-project-info="bathrooms">-</strong></div>
+                        <div><span>Lot area</span><strong data-project-info="lot_area">-</strong></div>
+                    </div>
+                    <p data-project-info="description" class="mb-2">Select a project to view its description.</p>
+                    <div class="project-info-preview__lists">
+                        <div><span>Highlights</span><ul data-project-info-list="highlights"><li>-</li></ul></div>
+                        <div><span>Features</span><ul data-project-info-list="features"><li>-</li></ul></div>
+                    </div>
+                    <a href="{{ url('/admin/projects') }}" target="_blank" rel="noopener" class="small">Edit this project’s information in Project Management</a>
+                </div>
+
+                <div class="field-group mt-3">
+                    <label for="project_gallery_images">Project gallery images (optional)</label>
+                    <input id="project_gallery_images" name="project_gallery_images[]" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp" multiple>
+                    <div class="form-text">These images appear in the expanded Project Gallery. You can add up to 12 images.</div>
+                </div>
+
+                <div id="externalProjectFields" class="external-project-fields mt-3" hidden>
+                    <div class="form-grid">
+                        <div class="field-group">
+                            <label for="external_project_name">Featured project name</label>
+                            <input id="external_project_name" name="external_project_name" type="text" class="form-control" maxlength="255" placeholder="e.g. Modern Residential Home">
+                        </div>
+                        <div class="field-group">
+                            <label for="external_project_location">Location</label>
+                            <input id="external_project_location" name="external_project_location" type="text" class="form-control" maxlength="255" placeholder="e.g. Quezon City">
+                        </div>
+                    </div>
+                    <div class="field-group mt-3">
+                        <label for="external_project_description">Description</label>
+                        <textarea id="external_project_description" name="external_project_description" class="form-control" rows="3" maxlength="2000" placeholder="Information clients should see about this project"></textarea>
+                    </div>
+                    <div class="field-group mt-3">
+                        <label for="external_project_url">Project link (optional)</label>
+                        <input id="external_project_url" name="external_project_url" type="url" class="form-control" maxlength="2000" placeholder="https://example.com/project">
+                    </div>
+                    <div class="form-grid mt-3">
+                        <div class="field-group">
+                            <label for="external_bedrooms">Bedrooms</label>
+                            <input id="external_bedrooms" name="external_bedrooms" type="number" class="form-control" min="0" max="99" placeholder="e.g. 4">
+                        </div>
+                        <div class="field-group">
+                            <label for="external_bathrooms">Bathrooms</label>
+                            <input id="external_bathrooms" name="external_bathrooms" type="number" class="form-control" min="0" max="99" placeholder="e.g. 3">
+                        </div>
+                        <div class="field-group">
+                            <label for="external_lot_area">Lot area (sqm)</label>
+                            <input id="external_lot_area" name="external_lot_area" type="number" class="form-control" min="0" step="0.01" placeholder="e.g. 250">
+                        </div>
+                    </div>
+                    <div class="field-group mt-3">
+                        <label for="external_highlights">Project highlights</label>
+                        <textarea id="external_highlights" name="external_highlights" class="form-control" rows="3" placeholder="One highlight per line"></textarea>
+                    </div>
+                    <div class="field-group mt-3">
+                        <label for="external_features">Features</label>
+                        <textarea id="external_features" name="external_features" class="form-control" rows="3" placeholder="One feature per line"></textarea>
+                    </div>
+                </div>
             </div>
 
             @error('project_id')
@@ -78,8 +214,20 @@
             @error('image')
                 <div class="field-error">{{ $message }}</div>
             @enderror
+            @foreach(['external_project_name', 'external_project_location', 'external_project_description', 'external_project_url', 'external_bedrooms', 'external_bathrooms', 'external_lot_area', 'external_highlights', 'external_features'] as $externalField)
+                @error($externalField)
+                    <div class="field-error">{{ $message }}</div>
+                @enderror
+            @endforeach
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Add Featured Project</button>
+            </div>
         </form>
-    </section>
+            </div>
+        </div>
+    </div>
 
     <form id="galleryReorderForm" action="{{ route('admin.landing-gallery.reorder') }}" method="POST">
         @csrf
@@ -103,13 +251,19 @@
             <div class="gallery-row-list">
                 @foreach($galleryImages as $galleryImage)
                     <div class="gallery-row-item" data-gallery-row>
-                        <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->display_name }}">
+                        <button type="button" class="gallery-image-button" data-bs-toggle="modal" data-bs-target="#editGalleryModal{{ $galleryImage->id }}" aria-label="Edit {{ $galleryImage->display_name }}">
+                            <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->display_name }}">
+                            <span class="gallery-image-edit-hint"><i class="bi bi-pencil"></i> Edit</span>
+                        </button>
                         <div class="gallery-row-copy">
                             <div class="gallery-row-name">{{ $galleryImage->display_name }}</div>
                             <div class="gallery-row-meta">Position {{ $loop->iteration }} · {{ $galleryImage->is_active ? 'Visible' : 'Hidden' }}</div>
                         </div>
                         <input type="hidden" name="order[]" value="{{ $galleryImage->id }}" form="galleryReorderForm">
                         <div class="gallery-row-actions">
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editGalleryModal{{ $galleryImage->id }}">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
                             <div class="btn-group btn-group-sm" role="group" aria-label="Change gallery position">
                                 <button type="button" class="btn btn-outline-secondary" data-move-gallery="up" title="Move up"><i class="bi bi-chevron-up"></i></button>
                                 <button type="button" class="btn btn-outline-secondary" data-move-gallery="down" title="Move down"><i class="bi bi-chevron-down"></i></button>
@@ -126,6 +280,120 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
                             </form>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="editGalleryModal{{ $galleryImage->id }}" tabindex="-1" aria-labelledby="editGalleryModalLabel{{ $galleryImage->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <div>
+                                        <h5 class="modal-title" id="editGalleryModalLabel{{ $galleryImage->id }}">Edit landing page item</h5>
+                                        <p class="text-muted small mb-0">Replace the image or update the information clients see.</p>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="{{ route('admin.landing-gallery.update', $galleryImage) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-body">
+                                        <div class="edit-gallery-preview mb-3">
+                                            <img src="{{ asset('storage/' . ltrim($galleryImage->image_path, '/')) }}" alt="{{ $galleryImage->display_name }}">
+                                        </div>
+                                        <div class="form-grid">
+                                            <div class="field-group">
+                                                <label for="edit_project_id_{{ $galleryImage->id }}">Project</label>
+                                                <select id="edit_project_id_{{ $galleryImage->id }}" name="project_id" class="form-select edit-project-select" data-external-target="edit-external-{{ $galleryImage->id }}" {{ $galleryImage->is_external ? '' : 'required' }}>
+                                                    <option value="">Select a completed project</option>
+                                                    @foreach($projects as $project)
+                                                        <option value="{{ $project->project_id }}" @selected((string) $galleryImage->project_id === (string) $project->project_id)>{{ $project->project_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="field-group">
+                                                <label for="edit_image_{{ $galleryImage->id }}">Replace image (optional)</label>
+                                                <input id="edit_image_{{ $galleryImage->id }}" name="image" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp">
+                                            </div>
+                                        </div>
+                                        <div class="form-check form-switch mt-3">
+                                            <input class="form-check-input edit-external-toggle" type="checkbox" value="1" id="edit_is_external_{{ $galleryImage->id }}" name="is_external" data-fields-target="edit-external-{{ $galleryImage->id }}" @checked($galleryImage->is_external)>
+                                            <label class="form-check-label" for="edit_is_external_{{ $galleryImage->id }}">This is an external / past featured project</label>
+                                        </div>
+                                        @if(!$galleryImage->is_external && $galleryImage->project)
+                                            <div class="alert alert-info d-flex align-items-center justify-content-between gap-2 mt-3 mb-0">
+                                                <span><i class="bi bi-info-circle me-1"></i>Project information is managed in Project Management.</span>
+                                                <a href="{{ route('admin.projects.show', $galleryImage->project) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success flex-shrink-0">
+                                                    <i class="bi bi-pencil me-1"></i>Edit project info
+                                                </a>
+                                            </div>
+                                        @endif
+                                        <div id="edit-external-{{ $galleryImage->id }}" class="external-project-fields mt-3" @if(!$galleryImage->is_external) hidden @endif>
+                                            <div class="form-grid">
+                                                <div class="field-group">
+                                                    <label for="edit_external_name_{{ $galleryImage->id }}">Featured project name</label>
+                                                    <input id="edit_external_name_{{ $galleryImage->id }}" name="external_project_name" type="text" class="form-control" maxlength="255" value="{{ $galleryImage->external_project_name }}" @required($galleryImage->is_external)>
+                                                </div>
+                                                <div class="field-group">
+                                                    <label for="edit_external_location_{{ $galleryImage->id }}">Location</label>
+                                                    <input id="edit_external_location_{{ $galleryImage->id }}" name="external_project_location" type="text" class="form-control" maxlength="255" value="{{ $galleryImage->external_project_location }}">
+                                                </div>
+                                            </div>
+                                            <div class="field-group mt-3">
+                                                <label for="edit_external_description_{{ $galleryImage->id }}">Description</label>
+                                                <textarea id="edit_external_description_{{ $galleryImage->id }}" name="external_project_description" class="form-control" rows="3" maxlength="2000">{{ $galleryImage->external_project_description }}</textarea>
+                                            </div>
+                                            <div class="field-group mt-3">
+                                                <label for="edit_external_url_{{ $galleryImage->id }}">Project link (optional)</label>
+                                                <input id="edit_external_url_{{ $galleryImage->id }}" name="external_project_url" type="url" class="form-control" maxlength="2000" value="{{ $galleryImage->external_project_url }}">
+                                            </div>
+                                        </div>
+                                        <div class="field-group mt-3">
+                                            <label for="edit_project_gallery_images_{{ $galleryImage->id }}">Add project gallery images (optional)</label>
+                                            <input id="edit_project_gallery_images_{{ $galleryImage->id }}" name="project_gallery_images[]" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp" multiple>
+                                            <div class="form-text">New images are added to the existing project gallery.</div>
+                                            @if($galleryImage->projectGalleryImages->count())
+                                                <div class="project-gallery-admin-grid mt-2">
+                                                    @foreach($galleryImage->projectGalleryImages as $projectImage)
+                                                        <img src="{{ asset('storage/' . ltrim($projectImage->image_path, '/')) }}" alt="Project gallery image">
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-success"><i class="bi bi-check2 me-1"></i>Save changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @elseif($fallbackFeaturedProjects->count())
+            <div class="gallery-row-list">
+                <div class="alert alert-info mb-1">
+                    These completed projects are currently shown from the project records. Add them to the carousel to manage their landing-page image separately.
+                </div>
+                @foreach($fallbackFeaturedProjects as $project)
+                    <div class="gallery-row-item" data-gallery-row>
+                        <img src="{{ asset('storage/' . ltrim($project->project_image, '/')) }}" alt="{{ $project->project_name }}">
+                        <div class="gallery-row-copy">
+                            <div class="gallery-row-name">{{ $project->project_name }}</div>
+                            <div class="gallery-row-meta">
+                                {{ $project->location ?: 'No location provided' }} · Current project image
+                            </div>
+                            @if($project->description)
+                                <div class="gallery-row-description">{{ $project->description }}</div>
+                            @endif
+                        </div>
+                        <div class="gallery-row-actions">
+                            <a href="{{ route('admin.projects.show', $project) }}" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-pencil me-1"></i>Edit information
+                            </a>
+                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addFeaturedProjectPanel">
+                                <i class="bi bi-plus-lg me-1"></i>Add to carousel
+                            </button>
                         </div>
                     </div>
                 @endforeach
@@ -150,6 +418,68 @@
         width: 100%;
         max-width: 100%;
         padding: 6px 0 32px;
+    }
+
+    .landing-preview-panel {
+        overflow: hidden;
+        border: 1px solid rgba(23, 79, 49, 0.12);
+        border-radius: 18px;
+        background: #f3f7f4;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+    }
+
+    .landing-preview-panel__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.15rem;
+        background: #fff;
+    }
+
+    .landing-preview-panel__header h3 {
+        margin: 0;
+        color: #1b3d30;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .landing-preview-panel__header p {
+        margin: 0.35rem 0 0;
+        color: #62766a;
+        font-size: 0.82rem;
+    }
+
+    .landing-preview-frame {
+        position: relative;
+        height: min(72vh, 760px);
+        min-height: 520px;
+        background: #fff;
+    }
+
+    .landing-preview-frame iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+    }
+
+    .landing-preview-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        color: #315c35;
+        font-size: 0.9rem;
+        transition: opacity 0.2s ease;
+    }
+
+    .landing-preview-loading.is-ready {
+        pointer-events: none;
+        opacity: 0;
     }
 
     .ug-hero-card {
@@ -332,6 +662,39 @@
         grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.35fr);
         gap: 18px;
         align-items: end;
+    }
+
+    #addFeaturedProjectPanel .modal-dialog {
+        max-width: 900px;
+        max-height: calc(100vh - 2rem);
+    }
+
+    #addFeaturedProjectPanel .modal-content {
+        max-height: calc(100vh - 2rem);
+    }
+
+    #addFeaturedProjectPanel .landing-gallery-form {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+    }
+
+    #addFeaturedProjectPanel .landing-gallery-form > .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #addFeaturedProjectPanel .landing-gallery-form > .modal-body > .form-grid > #externalProjectFields {
+        grid-column: 1 / -1;
+    }
+
+    #addFeaturedProjectPanel textarea.form-control {
+        height: auto;
+        min-height: 92px;
+        resize: vertical;
     }
 
     .field-group {
@@ -522,6 +885,121 @@
         padding: 14px 16px;
     }
 
+    .gallery-image-button {
+        position: relative;
+        flex: 0 0 auto;
+        padding: 0;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .gallery-image-button img {
+        display: block;
+        width: 132px;
+        height: 94px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+
+    .gallery-image-edit-hint {
+        position: absolute;
+        inset: auto 0 0;
+        padding: 0.3rem;
+        background: rgba(16, 61, 39, 0.86);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .gallery-image-button:hover .gallery-image-edit-hint,
+    .gallery-image-button:focus-visible .gallery-image-edit-hint {
+        opacity: 1;
+    }
+
+    .external-project-fields {
+        padding: 1rem;
+        border: 1px solid rgba(23, 79, 49, 0.12);
+        border-radius: 14px;
+        background: rgba(244, 250, 246, 0.82);
+    }
+
+    .project-info-preview {
+        padding: 1rem;
+        border: 1px solid rgba(23, 79, 49, 0.14);
+        border-radius: 14px;
+        background: #f4faf6;
+    }
+
+    .project-info-preview__header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 0.8rem;
+    }
+
+    .project-info-preview__header span,
+    .project-info-preview__grid span,
+    .project-info-preview__lists > div > span {
+        color: #61756a;
+        font-size: 0.78rem;
+    }
+
+    .project-info-preview__grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 0.8rem;
+    }
+
+    .project-info-preview__grid div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .project-info-preview__lists {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 0.8rem;
+    }
+
+    .project-info-preview ul {
+        margin: 0.25rem 0 0;
+        padding-left: 1.1rem;
+    }
+
+    .edit-gallery-preview {
+        overflow: hidden;
+        border-radius: 14px;
+        background: #edf4ef;
+    }
+
+    .edit-gallery-preview img {
+        display: block;
+        width: 100%;
+        max-height: 280px;
+        object-fit: cover;
+    }
+
+    .project-gallery-admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+    .project-gallery-admin-grid img {
+        width: 100%;
+        height: 72px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
     .gallery-row-item img {
         width: 118px;
         height: 82px;
@@ -608,6 +1086,42 @@
     }
 
     @media (max-width: 640px) {
+        #addFeaturedProjectPanel .modal-dialog {
+            width: calc(100% - 1rem);
+            max-width: none;
+            margin: 0.5rem auto;
+        }
+
+        #addFeaturedProjectPanel .landing-gallery-form > .modal-body > .form-grid > #externalProjectFields {
+            grid-column: auto;
+        }
+
+        #addFeaturedProjectPanel .modal-content {
+            max-height: calc(100dvh - 1rem);
+            border-radius: 16px;
+        }
+
+        #addFeaturedProjectPanel .landing-gallery-form > .modal-body {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #addFeaturedProjectPanel .modal-body {
+            padding: 1rem;
+        }
+
+        #addFeaturedProjectPanel .project-info-preview__grid,
+        #addFeaturedProjectPanel .project-info-preview__lists {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        #addFeaturedProjectPanel .modal-footer {
+            padding: 0.8rem 1rem;
+        }
+
+        #addFeaturedProjectPanel .modal-footer .btn {
+            flex: 1 1 0;
+        }
+
         .landing-gallery-page {
             padding-top: 4px;
         }
@@ -743,6 +1257,11 @@
         const fileInput = document.getElementById('image');
         const externalToggle = document.getElementById('is_external');
         const projectSelect = document.getElementById('project_id');
+        const externalProjectFields = document.getElementById('externalProjectFields');
+        const externalProjectName = document.getElementById('external_project_name');
+        const systemProjectInfo = document.getElementById('systemProjectInfo');
+        const landingPagePreview = document.getElementById('landingPagePreview');
+        const landingPreviewLoading = document.getElementById('landingPreviewLoading');
 
         const syncProjectRequirement = () => {
             if (!externalToggle || !projectSelect) {
@@ -751,15 +1270,125 @@
 
             projectSelect.required = !externalToggle.checked;
             projectSelect.disabled = externalToggle.checked;
+            if (externalProjectFields) {
+                externalProjectFields.hidden = !externalToggle.checked;
+            }
+            if (externalProjectName) {
+                externalProjectName.required = externalToggle.checked;
+            }
             if (externalToggle.checked) {
                 projectSelect.value = '';
             }
+
+            if (systemProjectInfo) {
+                systemProjectInfo.hidden = externalToggle.checked || !projectSelect.value;
+            }
         };
+
+        const updateSystemProjectInfo = () => {
+            if (!projectSelect || !systemProjectInfo || externalToggle?.checked) {
+                return;
+            }
+
+            const option = projectSelect.selectedOptions[0];
+            if (!option || !option.value) {
+                systemProjectInfo.hidden = true;
+                return;
+            }
+
+            systemProjectInfo.hidden = false;
+            const getInfo = name => systemProjectInfo.querySelector(`[data-project-info="${name}"]`);
+            const setText = (name, value, fallback = '-') => {
+                const target = getInfo(name);
+                if (target) target.textContent = value || fallback;
+            };
+            setText('location', option.dataset.projectLocation);
+            setText('bedrooms', option.dataset.projectBedrooms);
+            setText('bathrooms', option.dataset.projectBathrooms);
+            setText('lot_area', option.dataset.projectLotArea ? `${option.dataset.projectLotArea} sqm` : '');
+            setText('description', option.dataset.projectDescription, 'No description provided.');
+
+            ['highlights', 'features'].forEach(name => {
+                const list = systemProjectInfo.querySelector(`[data-project-info-list="${name}"]`);
+                if (!list) return;
+                let items = [];
+                try {
+                    items = JSON.parse(option.dataset[`project${name[0].toUpperCase()}${name.slice(1)}`] || '[]');
+                } catch {
+                    items = [];
+                }
+                list.innerHTML = items.length
+                    ? items.map(item => `<li>${String(item).replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]))}</li>`).join('')
+                    : '<li>-</li>';
+            });
+        };
+
+        projectSelect?.addEventListener('change', updateSystemProjectInfo);
 
         if (externalToggle) {
             externalToggle.addEventListener('change', syncProjectRequirement);
             syncProjectRequirement();
+            updateSystemProjectInfo();
         }
+
+        landingPagePreview?.addEventListener('load', function () {
+            landingPreviewLoading?.classList.add('is-ready');
+
+            try {
+                const previewDocument = landingPagePreview.contentDocument;
+                previewDocument.querySelectorAll('[data-landing-hero-image]').forEach((image) => {
+                    image.style.cursor = 'pointer';
+                    image.title = 'Click to replace the hero image';
+                    image.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const heroModal = document.getElementById('editHeroModal');
+                        if (heroModal && window.bootstrap) {
+                            bootstrap.Modal.getOrCreateInstance(heroModal).show();
+                        }
+                    });
+                });
+
+                previewDocument.querySelectorAll('[data-gallery-image-id]').forEach((image) => {
+                    image.style.cursor = 'pointer';
+                    image.title = 'Click to edit this featured project';
+                    image.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const galleryId = image.dataset.galleryImageId;
+                        const editModal = document.getElementById(`editGalleryModal${galleryId}`);
+                        if (editModal && window.bootstrap) {
+                            bootstrap.Modal.getOrCreateInstance(editModal).show();
+                        }
+                    });
+                });
+            } catch (error) {
+                console.warn('Landing page preview editing is unavailable.', error);
+            }
+        });
+
+        document.querySelectorAll('.edit-external-toggle').forEach(toggle => {
+            const fields = document.getElementById(toggle.dataset.fieldsTarget);
+            const project = document.querySelector(`[data-external-target="${toggle.dataset.fieldsTarget}"]`);
+            const name = fields?.querySelector('[name="external_project_name"]');
+
+            const syncEditFields = () => {
+                const isExternal = toggle.checked;
+                if (fields) {
+                    fields.hidden = !isExternal;
+                }
+                if (project) {
+                    project.required = !isExternal;
+                    project.disabled = isExternal;
+                }
+                if (name) {
+                    name.required = isExternal;
+                }
+            };
+
+            toggle.addEventListener('change', syncEditFields);
+            syncEditFields();
+        });
 
         if (fileInput) {
             const target = fileInput.closest('.upload-field-wrap');

@@ -25,18 +25,8 @@ Route::get('/', function () {
         $galleryQuery = \App\Models\LandingGalleryImage::query()
             ->with('project')
             ->where('is_active', true);
-
-        if (Schema::hasColumn('landing_gallery_images', 'is_external')) {
-            $galleryQuery->where(function ($query) {
-                $query->whereHas('project', function ($q) {
-                    $q->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
-                })
-                ->orWhere('is_external', true);
-            });
-        } else {
-            $galleryQuery->whereHas('project', function ($q) {
-                $q->whereIn('status', \App\Models\Project::statusVariants(\App\Models\Project::STATUS_COMPLETED));
-            });
+        if (Schema::hasTable('landing_gallery_project_images')) {
+            $galleryQuery->with('projectGalleryImages');
         }
 
         $galleryImages = $galleryQuery
@@ -44,6 +34,10 @@ Route::get('/', function () {
             ->orderBy('id')
             ->get();
     }
+
+    $landingPageSetting = Schema::hasTable('landing_page_settings')
+        ? \App\Models\LandingPageSetting::query()->first()
+        : null;
 
     if ($galleryImages->isEmpty() && Schema::hasTable('projects')) {
         $completedProjects = \App\Models\Project::query()
@@ -117,7 +111,7 @@ Route::get('/', function () {
         $galleryImages = collect($demoProjects);
     }
 
-    return view('welcome', compact('galleryImages'));
+    return view('welcome', compact('galleryImages', 'landingPageSetting'));
 });
 
 Route::get('/api/landing-gallery/projects/{project}', [LandingGalleryController::class, 'publicProject'])
@@ -202,6 +196,8 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::prefix('admin/landing-gallery')->name('admin.landing-gallery.')->group(function () {
         Route::get('/', [LandingGalleryController::class, 'index'])->name('index');
         Route::post('/', [LandingGalleryController::class, 'store'])->name('store');
+        Route::put('/hero', [LandingGalleryController::class, 'updateHero'])->name('hero.update');
+        Route::put('/{galleryImage}', [LandingGalleryController::class, 'update'])->name('update');
         Route::patch('/{galleryImage}/toggle', [LandingGalleryController::class, 'toggle'])->name('toggle');
         Route::patch('/reorder', [LandingGalleryController::class, 'reorder'])->name('reorder');
         Route::delete('/{galleryImage}', [LandingGalleryController::class, 'destroy'])->name('destroy');

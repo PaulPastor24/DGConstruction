@@ -16,17 +16,29 @@ class LandingGalleryImage extends Model
         'external_project_location',
         'external_project_description',
         'external_project_url',
+        'external_bedrooms',
+        'external_bathrooms',
+        'external_lot_area',
+        'external_highlights',
+        'external_features',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
         'is_active' => 'boolean',
         'is_external' => 'boolean',
+        'external_highlights' => 'array',
+        'external_features' => 'array',
     ];
 
     public function project()
     {
         return $this->belongsTo(Project::class, 'project_id', 'project_id');
+    }
+
+    public function projectGalleryImages()
+    {
+        return $this->hasMany(LandingGalleryProjectImage::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function getDisplayNameAttribute(): string
