@@ -29,7 +29,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'string'],
+            'portal' => ['required', 'in:staff,client'],
         ];
     }
 
@@ -42,36 +42,19 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $rawRole = trim(strtolower($this->input('role')));
-        $inputRole = match($rawRole) {
-            'engineer' => 'engineer',
-            'supervisor', 'site supervisor', 'site_supervisor' => 'supervisor',
-            'client' => 'client',
-            default => $rawRole,
-        };
+        $allowedRoles = $this->input('portal') === 'client'
+            ? ['client']
+            : ['engineer', 'admin', 'administrator', 'supervisor'];
 
         $user = User::query()
             ->where('email', $this->input('email'))
-            ->where('role', $inputRole)
+            ->whereIn('role', $allowedRoles)
             ->first();
-
-        // 4. Fallback check: If matching by role fails, try matching by email only 
-        // to see if the account actually exists in the database
-        if (!$user) {
-            $userByEmail = User::query()->where('email', '=', $this->input('email'))->first();
-            
-            if ($userByEmail) {
-                // If the user exists but the role mismatched, throw an informative error
-                throw ValidationException::withMessages([
-                    'email' => "Account found, but role mismatch. Form sent: '{$this->input('role')}', Database expects: '{$userByEmail->role}'.",
-                ]);
-            }
-        }
 
         // 5. Verify password against your custom column
         $storedHash = $user ? ($user->password ?? null) : null;
 
-        if (!$user || !$storedHash || !Hash::check($this->input('password'), $storedHash)) {
+        if (! $user || ! $storedHash || ! Hash::check($this->input('password'), $storedHash)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

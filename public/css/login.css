@@ -189,17 +189,17 @@ RIGHT FORM PANEL
     font-size: 0.9rem;
 }
 
-.role-tabs {
+.portal-switch {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0.75rem;
     padding: 0.3rem;
     border-radius: 10px;
     background-color: #f0f2f0;
 }
 
-.role-tab {
+.portal-option {
     padding: 0.65rem 0;
     border: none;
     border-radius: 8px;
@@ -211,14 +211,27 @@ RIGHT FORM PANEL
     transition: var(--transition);
 }
 
-.role-tab:hover {
+.portal-option:hover {
     color: var(--text-dark);
 }
 
-.role-tab.active {
+.portal-option.active {
     background-color: var(--bg-white);
     color: var(--forest);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.portal-option:focus-visible {
+    outline: 2px solid var(--forest);
+    outline-offset: 2px;
+}
+
+.portal-description {
+    min-height: 1.4em;
+    margin: 0 0 1.4rem;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.4;
 }
 
 .login-message,
@@ -312,6 +325,75 @@ RIGHT FORM PANEL
     background-color: var(--forest-light);
     box-shadow: 0 8px 16px rgba(42, 64, 40, 0.1);
     transform: translateY(-1px);
+}
+
+#loginBtn {
+    border: 1px solid var(--forest);
+    box-shadow: 0 8px 18px rgba(42, 64, 40, 0.16);
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+#loginBtn:hover {
+    border-color: #3c6742;
+    background-color: #3c6742;
+    box-shadow: 0 12px 24px rgba(42, 64, 40, 0.24);
+    transform: translateY(-2px);
+}
+
+#loginBtn:active {
+    background-color: var(--forest);
+    box-shadow: 0 4px 10px rgba(42, 64, 40, 0.18);
+    transform: translateY(0);
+}
+
+#loginBtn:focus-visible {
+    outline: 3px solid rgba(60, 103, 66, 0.32);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #loginBtn {
+        transition: none;
+    }
+}
+
+.google-login-btn,
+.google-login-btn:visited {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-top: 0.75rem;
+    border: 1px solid #b8dec3;
+    background: linear-gradient(135deg, #f3fbf5 0%, #e7f5eb 100%);
+    color: #234b31;
+    text-decoration: none;
+    box-shadow: 0 5px 14px rgba(22, 101, 52, 0.08);
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.google-login-btn:hover,
+.google-login-btn:focus-visible {
+    border-color: #86bd96;
+    background: linear-gradient(135deg, #e9f7ed 0%, #d9efdf 100%);
+    color: #173d24;
+    box-shadow: 0 8px 20px rgba(22, 101, 52, 0.14);
+    transform: translateY(-1px);
+}
+
+.google-login-btn:focus-visible {
+    outline: 3px solid rgba(34, 123, 64, 0.3);
+    outline-offset: 2px;
+}
+
+.google-login-btn[hidden] {
+    display: none !important;
+}
+
+.google-mark {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
 }
 
 .demo-credentials {
@@ -573,11 +655,11 @@ RESPONSIVE
         font-size: 34px;
     }
 
-    .role-tabs {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    .portal-switch {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .role-tab {
+    .portal-option {
         font-size: 12px;
     }
 

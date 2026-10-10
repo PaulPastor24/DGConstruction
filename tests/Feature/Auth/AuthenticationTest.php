@@ -24,11 +24,11 @@ class AuthenticationTest extends TestCase
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-            'role' => $user->role,
+            'portal' => 'staff',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('admin.dashboard'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -38,8 +38,35 @@ class AuthenticationTest extends TestCase
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
-            'role' => $user->role,
+            'portal' => 'staff',
         ]);
+
+        $this->assertGuest();
+    }
+
+    public function test_client_portal_authenticates_client_accounts(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+
+        $response = $this->post('/login', [
+            'email' => $client->email,
+            'password' => 'password',
+            'portal' => 'client',
+        ]);
+
+        $this->assertAuthenticatedAs($client);
+        $response->assertRedirect(route('client.dashboard'));
+    }
+
+    public function test_client_portal_rejects_staff_accounts(): void
+    {
+        $staff = User::factory()->create(['role' => 'supervisor']);
+
+        $this->post('/login', [
+            'email' => $staff->email,
+            'password' => 'password',
+            'portal' => 'client',
+        ])->assertSessionHasErrors('email');
 
         $this->assertGuest();
     }

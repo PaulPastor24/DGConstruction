@@ -57,16 +57,23 @@
     <!-- RIGHT SIDE INTERACTIVE FORM PANEL -->
     <section class="login-panel">
         <div class="login-card">
+            @php
+                $selectedPortal = old('portal', 'staff');
+                $selectedPortal = in_array($selectedPortal, ['staff', 'client'], true) ? $selectedPortal : 'staff';
+            @endphp
+
             <div class="login-header">
                 <h2>Portal Access</h2>
                 <span class="subtitle">D&G Construction Management Hub</span>
             </div>
 
-            <div class="role-tabs" id="roleTabs">
-                <button type="button" class="role-tab active" onclick="selectRole(this, 'engineer')">Engineer</button>
-                <button type="button" class="role-tab" onclick="selectRole(this, 'supervisor')">Supervisor</button>
-                <button type="button" class="role-tab" onclick="selectRole(this, 'client')">Client</button>
+            <div class="portal-switch" id="portalSwitch" role="group" aria-label="Choose your portal">
+                <button type="button" class="portal-option {{ $selectedPortal === 'staff' ? 'active' : '' }}" data-portal="staff" aria-pressed="{{ $selectedPortal === 'staff' ? 'true' : 'false' }}">Staff</button>
+                <button type="button" class="portal-option {{ $selectedPortal === 'client' ? 'active' : '' }}" data-portal="client" aria-pressed="{{ $selectedPortal === 'client' ? 'true' : 'false' }}">Client</button>
             </div>
+            <p class="portal-description" id="portalDescription">
+                {{ $selectedPortal === 'staff' ? 'For administrators, engineers, and supervisors.' : 'For clients viewing their construction projects.' }}
+            </p>
 
             @if (session('error'))
                 <div class="login-message error-banner">
@@ -78,7 +85,7 @@
                 @csrf
                 <div class="form-group">
                     <label class="form-label" for="loginEmail">Email Address</label>
-                    <input type="email" name="email" class="form-input" id="loginEmail" placeholder="name@company.com" value="admin@dg-corp.ph" required>
+                    <input type="email" name="email" class="form-input" id="loginEmail" placeholder="name@company.com" value="{{ old('email') }}" autocomplete="username" required>
                 </div>
 
                 <div class="form-group password-group">
@@ -86,22 +93,29 @@
                         <label class="form-label" for="loginPassword">Password</label>
                     </div>
                     <div class="input-container">
-                        <input type="password" name="password" class="form-input" id="loginPassword" placeholder="••••••••" value="password123" required>
+                        <input type="password" name="password" class="form-input" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required>
                         <button type="button" class="password-toggle" id="passwordToggle" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">Show</button>
                     </div>
                 </div>
 
-                <input type="hidden" id="selectedRole" name="role" value="engineer">
+                <input type="hidden" id="selectedPortal" name="portal" value="{{ $selectedPortal }}">
 
                 <button type="submit" class="login-btn" id="loginBtn">
-                    Sign In to Dashboard
+                    <span id="loginBtnText">{{ $selectedPortal === 'staff' ? 'Sign in to Staff Portal' : 'Sign in to Client Portal' }}</span>
                 </button>
             </form>
 
-            <a href="{{ route('auth.google.redirect') }}" class="login-btn" style="display:block;text-align:center;text-decoration:none;margin-top:12px;background:#fff;color:#1f2937;border:1px solid #d1d5db;">
-                Continue with Google (Client)
+            <a id="googleClientLogin" href="{{ route('auth.google.redirect') }}" class="login-btn google-login-btn" @if($selectedPortal !== 'client') hidden @endif>
+                <svg class="google-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                    <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/>
+                    <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/>
+                    <path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 17.9l6.8-5.2Z"/>
+                    <path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/>
+                </svg>
+                <span>Continue with Google</span>
             </a>
 
+            @if(app()->environment('local'))
             <div class="demo-credentials">
                 <div class="demo-title">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
@@ -114,24 +128,34 @@
                     <span><strong>Pass:</strong> password123</span>
                 </div>
             </div>
+            @endif
         </div>
     </section>
 </div>
 
 <script>
-    let currentRole = 'engineer';
+    function selectPortal(button, portal) {
+        document.querySelectorAll('.portal-option').forEach(function (option) {
+            const isActive = option === button;
+            option.classList.toggle('active', isActive);
+            option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
 
-    function selectRole(el, role) {
-        document.querySelectorAll('.role-tab').forEach(tab => tab.classList.remove('active'));
-        el.classList.add('active');
-        currentRole = role;
-        document.getElementById('selectedRole').value = role;
-        
-        const emailInput = document.getElementById('loginEmail');
-        if(role === 'engineer') emailInput.value = 'admin@dg-corp.ph';
-        if(role === 'supervisor') emailInput.value = 'supervisor@dg-corp.ph';
-        if(role === 'client') emailInput.value = 'client@dg-corp.ph';
+        document.getElementById('selectedPortal').value = portal;
+        document.getElementById('portalDescription').textContent = portal === 'client'
+            ? 'For clients viewing their construction projects.'
+            : 'For administrators, engineers, and supervisors.';
+        document.getElementById('loginBtnText').textContent = portal === 'client'
+            ? 'Sign in to Client Portal'
+            : 'Sign in to Staff Portal';
+        document.getElementById('googleClientLogin').hidden = portal !== 'client';
     }
+
+    document.querySelectorAll('.portal-option').forEach(function (button) {
+        button.addEventListener('click', function () {
+            selectPortal(button, button.dataset.portal);
+        });
+    });
 
     function togglePasswordVisibility() {
         const passwordInput = document.getElementById('loginPassword');
