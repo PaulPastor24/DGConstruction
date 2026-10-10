@@ -2119,7 +2119,7 @@
             <button type="button" class="milestone-modal-close" data-close-milestone-modal aria-label="Close modal"><i class="bi bi-x-lg"></i></button>
         </div>
 
-        <form id="milestoneModalForm" class="milestone-modal-form" data-mode="create" novalidate>
+        <form id="milestoneModalForm" class="milestone-modal-form" data-no-global-loading="true" data-mode="create" novalidate>
             <input type="hidden" name="project_id" id="milestoneProjectId">
             <input type="hidden" name="milestone_id" id="milestoneId">
             <input type="hidden" name="original_phase_id" id="milestoneOriginalPhaseId">
@@ -2363,7 +2363,7 @@
     function getMilestoneStatus(milestone) {
         if (milestone?.is_completed) return 'completed';
         if (milestone?.is_delayed) return 'delayed';
-        return 'upcoming';
+        return normalizeStatus(milestone?.status ?? milestone?.display_status ?? 'pending');
     }
 
     function getFilteredMilestones(project) {
@@ -3225,7 +3225,7 @@ let milestoneFormSnapshot = null;
             return 'A planned date is required.';
         }
 
-        if (mode === 'edit' && !['pending', 'completed', 'delayed'].includes(status)) {
+        if (mode === 'edit' && !['pending', 'in_progress', 'completed', 'delayed'].includes(status)) {
             return 'Please select a valid milestone status.';
         }
 
@@ -3427,6 +3427,12 @@ let milestoneFormSnapshot = null;
         submitButton.disabled = true;
         submitButton.innerHTML = mode === 'edit' ? 'Updating...' : 'Creating...';
         let swalLoading = null;
+        const closeSwalLoading = () => {
+            if (swalLoading) {
+                swalLoading.close();
+                swalLoading = null;
+            }
+        };
         if (window.Swal) {
             swalLoading = Swal.fire({
                 title: mode === 'edit' ? 'Updating milestone...' : 'Creating milestone...',
@@ -3455,6 +3461,7 @@ let milestoneFormSnapshot = null;
             const data = await response.json().catch(() => ({}));
 
             if (response.ok && data.success) {
+                closeSwalLoading();
                 if (window.Swal) {
                     Swal.fire({
                         title: 'Success',
@@ -3470,6 +3477,7 @@ let milestoneFormSnapshot = null;
             } else {
                 const errorMessage = data?.message || (data?.errors ? Object.values(data.errors).flat()[0] : 'Please verify the information and try again.');
                 console.warn('Milestone save failed', response.status, data);
+                closeSwalLoading();
                 if (window.Swal) {
                     Swal.fire({
                         title: 'Unable to save milestone',
@@ -3482,6 +3490,7 @@ let milestoneFormSnapshot = null;
                 }
             }
         } catch (error) {
+            closeSwalLoading();
             if (window.Swal) {
                 Swal.fire({
                     title: 'Unable to save milestone',
@@ -3493,9 +3502,7 @@ let milestoneFormSnapshot = null;
                 window.alert('The request could not be completed. Please try again.');
             }
         } finally {
-            if (swalLoading) {
-                swalLoading.close();
-            }
+            closeSwalLoading();
             submitButton.disabled = false;
             submitButton.innerHTML = mode === 'edit' ? '<i class="bi bi-pencil-square"></i> Update Milestone' : '<i class="bi bi-save2-fill"></i> Save Milestone';
         }

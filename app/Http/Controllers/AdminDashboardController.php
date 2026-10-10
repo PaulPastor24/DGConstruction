@@ -490,7 +490,7 @@ class AdminDashboardController extends Controller
         $usageCategory = trim((string) $request->input('usage_category', ''));
         $usageStatus = trim((string) $request->input('usage_status', ''));
         $activeView = $request->input('view', 'inventory');
-        $activeView = in_array($activeView, ['inventory', 'usage', 'expenses', 'requests', 'tools'], true) ? $activeView : 'inventory';
+        $activeView = in_array($activeView, ['inventory', 'allocated', 'usage', 'expenses', 'requests', 'tools'], true) ? $activeView : 'inventory';
         $searchForUsage = $search;
 
         $query = Material::query();
@@ -650,8 +650,44 @@ class AdminDashboardController extends Controller
         ];
 
         $projects = Project::query()
+            ->notArchived()
             ->orderBy('project_name', 'asc')
             ->get(['project_id', 'project_name']);
+
+        $allocatedSearch = trim((string) $request->input('allocated_search', ''));
+        $allocatedProjectId = trim((string) $request->input('allocated_project_id', ''));
+        $allocatedCategory = trim((string) $request->input('allocated_category', ''));
+        $allocatedMaterials = new LengthAwarePaginator([], 0, 10);
+
+        if (Schema::hasTable('project_materials')) {
+            $allocatedMaterialsQuery = ProjectMaterial::query()->with(['project', 'material']);
+
+            if ($allocatedProjectId !== '') {
+                $allocatedMaterialsQuery->where('project_id', $allocatedProjectId);
+            }
+
+            if ($allocatedCategory !== '') {
+                $allocatedMaterialsQuery->whereHas('material', function ($materialQuery) use ($allocatedCategory) {
+                    $materialQuery->where('category', $allocatedCategory);
+                });
+            }
+
+            if ($allocatedSearch !== '') {
+                $allocatedMaterialsQuery->where(function ($query) use ($allocatedSearch) {
+                    $query->whereHas('material', function ($materialQuery) use ($allocatedSearch) {
+                        $materialQuery->where('name', 'like', '%'.$allocatedSearch.'%')
+                            ->orWhere('category', 'like', '%'.$allocatedSearch.'%');
+                    })->orWhereHas('project', function ($projectQuery) use ($allocatedSearch) {
+                        $projectQuery->where('project_name', 'like', '%'.$allocatedSearch.'%');
+                    });
+                });
+            }
+
+            $allocatedMaterials = $allocatedMaterialsQuery
+                ->orderByDesc('updated_at')
+                ->paginate(10, ['*'], 'allocated_page')
+                ->appends($request->only(['allocated_search', 'allocated_project_id', 'allocated_category', 'view']));
+        }
 
         $materialRequests = collect();
         $requestStats = [
@@ -789,7 +825,7 @@ class AdminDashboardController extends Controller
             $predefinedToolCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**

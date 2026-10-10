@@ -910,6 +910,7 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody,
+    .inventory-green-theme #allocatedMaterialsTableBody,
     .inventory-green-theme #usageLogsTableBody,
     .inventory-green-theme #expensesTableBody,
     .inventory-green-theme #toolsTableBody {
@@ -918,6 +919,7 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody tr,
+    .inventory-green-theme #allocatedMaterialsTableBody tr,
     .inventory-green-theme #usageLogsTableBody tr,
     .inventory-green-theme #expensesTableBody tr,
     .inventory-green-theme #toolsTableBody tr {
@@ -949,6 +951,7 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody td,
+    .inventory-green-theme #allocatedMaterialsTableBody td,
     .inventory-green-theme #usageLogsTableBody td,
     .inventory-green-theme #expensesTableBody td,
     .inventory-green-theme #toolsTableBody td {
@@ -968,6 +971,7 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody td::before,
+    .inventory-green-theme #allocatedMaterialsTableBody td::before,
     .inventory-green-theme #usageLogsTableBody td::before,
     .inventory-green-theme #expensesTableBody td::before,
     .inventory-green-theme #toolsTableBody td::before {
@@ -990,6 +994,14 @@
     .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(5)::before { content: 'Minimum Stock' !important; }
     .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(6)::before { content: 'Status' !important; }
     .inventory-green-theme #inventoryMaterialsTableBody td:nth-child(7)::before { content: 'Actions' !important; }
+
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(1)::before { content: 'Material' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(2)::before { content: 'Project' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(3)::before { content: 'Category' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(4)::before { content: 'Planned' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(5)::before { content: 'Used' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(6)::before { content: 'Remaining' !important; }
+    .inventory-green-theme #allocatedMaterialsTableBody td:nth-child(7)::before { content: 'Status' !important; }
 
     .inventory-green-theme #usageLogsTableBody td:nth-child(1)::before { content: 'Date' !important; }
     .inventory-green-theme #usageLogsTableBody td:nth-child(2)::before { content: 'Project' !important; }
@@ -1020,6 +1032,7 @@
     .inventory-green-theme #toolsTableBody td:nth-child(9)::before { content: 'Actions' !important; }
 
     .inventory-green-theme #inventoryMaterialsTableBody td > *,
+    .inventory-green-theme #allocatedMaterialsTableBody td > *,
     .inventory-green-theme #usageLogsTableBody td > *,
     .inventory-green-theme #expensesTableBody td > *,
     .inventory-green-theme #toolsTableBody td > * {
@@ -1246,11 +1259,11 @@
             flex-wrap: nowrap !important;
             white-space: nowrap !important;
             overflow: hidden !important;
-            gap: 0.2rem !important;
+            gap: 0.1rem !important;
         }
 
         .inventory-green-theme .card-header .nav-item {
-            flex: 1 1 auto !important;
+            flex: 1 1 0 !important;
             min-width: 0 !important;
         }
 
@@ -1259,19 +1272,20 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
+            width: 100% !important;
             min-width: 0 !important;
-            padding-left: 0.65rem !important;
-            padding-right: 0.65rem !important;
-            font-size: 0.74rem !important;
+            padding-left: 0.2rem !important;
+            padding-right: 0.2rem !important;
+            font-size: 0.62rem !important;
             line-height: 1.2 !important;
         }
 
         .inventory-green-theme .tab-full {
-            display: inline !important;
+            display: none !important;
         }
 
         .inventory-green-theme .tab-short {
-            display: none !important;
+            display: inline !important;
         }
     }
 @media (min-width: 990px) and (max-width: 1600px) {
@@ -1280,11 +1294,11 @@
         flex-wrap: nowrap !important;
         white-space: nowrap !important;
         overflow: hidden !important;
-        gap: 0.2rem !important;
+        gap: 0.1rem !important;
     }
 
     .inventory-green-theme .card-header .nav-item {
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
         min-width: 0 !important;
     }
 
@@ -1293,19 +1307,60 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        width: 100% !important;
         min-width: 0 !important;
-        padding-left: 0.65rem !important;
-        padding-right: 0.65rem !important;
-        font-size: 0.74rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+        font-size: 0.62rem !important;
         line-height: 1.2 !important;
     }
 
     .inventory-green-theme .tab-full {
-        display: inline !important;
+        display: none !important;
     }
 
     .inventory-green-theme .tab-short {
+        display: inline !important;
+    }
+}
+
+@media (min-width: 990px) {
+    .inventory-green-theme .card-header .nav-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        gap: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .inventory-green-theme .card-header .nav-item {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 0.1rem !important;
+        padding-right: 0.1rem !important;
+        font-size: 0.62rem !important;
+        line-height: 1.1 !important;
+        white-space: nowrap !important;
+    }
+
+    .inventory-green-theme .card-header .nav-link i {
+        margin-right: 0.2rem !important;
+    }
+
+    .inventory-green-theme .tab-full {
         display: none !important;
+    }
+
+    .inventory-green-theme .tab-short {
+        display: inline !important;
     }
 }
 
@@ -1368,33 +1423,36 @@
     }
 
     .inventory-green-theme .card-header .nav-tabs {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 6px !important;
-        overflow: visible !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
         padding: 5px !important;
         border-radius: 999px !important;
         background: #f2f7f3 !important;
+        scrollbar-width: none !important;
     }
 
     .inventory-green-theme .card-header .nav-item {
-        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        min-width: max-content !important;
     }
 
     .inventory-green-theme .card-header .nav-link {
         width: 100% !important;
-        min-height: 42px !important;
+        min-height: 36px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 4px !important;
-        padding: 8px 5px !important;
+        padding: 6px 8px !important;
         border: 0 !important;
         border-radius: 999px !important;
-        font-size: 11.5px !important;
+        font-size: 9.5px !important;
         line-height: 1.15 !important;
         text-align: center !important;
-        white-space: normal !important;
+        white-space: nowrap !important;
     }
 
     .inventory-green-theme .card-header .nav-link.active {
@@ -1409,6 +1467,10 @@
 
     .inventory-green-theme .tab-short {
         display: inline !important;
+    }
+
+    .inventory-green-theme .card-header .nav-tabs::-webkit-scrollbar {
+        display: none !important;
     }
 
     .inventory-green-theme .card-body.pt-3 {
@@ -1544,7 +1606,7 @@
 <div class="mi-page inventory-green-theme">
     @php
         $activeInventoryView = request('view', $activeView ?? 'inventory');
-        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'allocated', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
 
         $usageLogItems = collect();
         if (isset($usageLogs)) {
@@ -1562,6 +1624,7 @@
             $inventoryProjectOptions = $usageLogItems
                 ->map(fn ($log) => $log->project ?? null)
                 ->filter()
+                ->filter(fn ($project) => \App\Models\Project::normalizeStatus(data_get($project, 'status')) !== \App\Models\Project::STATUS_ARCHIVED)
                 ->unique(fn ($project) => data_get($project, 'project_id') ?? data_get($project, 'id') ?? data_get($project, 'project_name') ?? (is_object($project) ? spl_object_id($project) : md5(json_encode($project))))
                 ->values();
         }
@@ -1775,6 +1838,9 @@
                     <ul class="nav nav-tabs border-bottom-0">
                         <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'inventory' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="inventory-view"><i class="bi bi-box-seam me-1"></i><span>Inventory</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'allocated' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="allocated-view"><i class="bi bi-boxes me-1"></i><span class="tab-full">Allocated Materials</span><span class="tab-short">Allocated</span></a>
                         </li>
                         <li class="nav-item">
                             <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'requests' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="requests-view"><i class="bi bi-cart-plus me-1"></i><span class="tab-full">Material Requests</span><span class="tab-short">Requests</span></a>
@@ -2004,6 +2070,80 @@
                         <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
                     </div>
                 </div>
+
+            <div id="allocated-view" class="inventory-view-panel {{ $activeInventoryView !== 'allocated' ? 'd-none' : '' }}">
+                <div class="mi-filter-card p-3 mb-3">
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="allocated-search-form">
+                        <input type="hidden" name="view" value="allocated" id="allocated-view-input">
+                        <div class="col-lg-5 col-md-6 col-12 position-relative search-container">
+                            <input type="search" name="allocated_search" value="{{ $allocatedSearch }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or projects..." aria-label="Search allocated materials">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <select name="allocated_project_id" class="form-select form-select-sm text-muted" aria-label="Filter by project" onchange="this.form.submit()">
+                                <option value="">All Projects</option>
+                                @foreach($projects as $projectOption)
+                                    <option value="{{ $projectOption->project_id }}" {{ (string) $allocatedProjectId === (string) $projectOption->project_id ? 'selected' : '' }}>{{ $projectOption->project_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <select name="allocated_category" class="form-select form-select-sm text-muted" aria-label="Filter by material category" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                @foreach($categories as $categoryOption)
+                                    <option value="{{ $categoryOption }}" {{ $allocatedCategory === $categoryOption ? 'selected' : '' }}>{{ $categoryOption }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                            <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                <tr>
+                                    <th class="border-0">Material</th>
+                                    <th class="border-0">Project</th>
+                                    <th class="border-0">Category</th>
+                                    <th class="border-0 text-end">Planned</th>
+                                    <th class="border-0 text-end">Used</th>
+                                    <th class="border-0 text-end">Remaining</th>
+                                    <th class="border-0">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allocatedMaterialsTableBody">
+                                @forelse($allocatedMaterials as $allocation)
+                                    @php
+                                        $plannedQuantity = (float) $allocation->planned_quantity;
+                                        $usedQuantity = (float) $allocation->used_quantity;
+                                        $remainingQuantity = max(0, $plannedQuantity - $usedQuantity);
+                                        $allocationStatus = $remainingQuantity <= 0 ? 'Fully Used' : ($usedQuantity > 0 ? 'Partially Used' : 'Allocated');
+                                        $allocationBadgeClass = $remainingQuantity <= 0 ? 'badge-out-of-stock' : ($usedQuantity > 0 ? 'badge-low-stock' : 'badge-available');
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold text-dark">{{ $allocation->material->name ?? 'Unknown Material' }}</td>
+                                        <td class="text-muted">{{ $allocation->project->project_name ?? 'Unknown Project' }}</td>
+                                        <td class="text-muted">{{ $allocation->material->category ?? 'General' }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($plannedQuantity, 2) }} {{ $allocation->unit ?? $allocation->material->unit ?? 'unit' }}</td>
+                                        <td class="text-end">{{ number_format($usedQuantity, 2) }} {{ $allocation->unit ?? $allocation->material->unit ?? 'unit' }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($remainingQuantity, 2) }} {{ $allocation->unit ?? $allocation->material->unit ?? 'unit' }}</td>
+                                        <td><span class="badge rounded-pill {{ $allocationBadgeClass }}">{{ $allocationStatus }}</span></td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No allocated materials match these filters.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($allocatedMaterials instanceof \Illuminate\Pagination\LengthAwarePaginator && $allocatedMaterials->hasPages())
+                        <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                            <span class="text-muted small">Showing {{ $allocatedMaterials->firstItem() ?? 0 }} to {{ $allocatedMaterials->lastItem() ?? 0 }} of {{ $allocatedMaterials->total() }} allocations</span>
+                            <div>{{ $allocatedMaterials->links('pagination::bootstrap-5') }}</div>
+                        </div>
+                    @endif
+                </div>
+            </div>
 
             <div id="requests-view" class="inventory-view-panel {{ $activeInventoryView !== 'requests' ? 'd-none' : '' }}">
                 <div class="mi-filter-card p-3 mb-3">
@@ -3890,7 +4030,7 @@
                 link.classList.toggle('border-2', isActive);
             });
 
-            document.querySelectorAll('#inventory-view-input, #usage-view-input, #requests-view-input, #tools-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+            document.querySelectorAll('#inventory-view-input, #allocated-view-input, #usage-view-input, #requests-view-input, #tools-view-input, #expenses-view input[name="view"]').forEach(function (input) {
                 input.value = getPanelViewValue(targetId);
             });
         }
@@ -3919,6 +4059,10 @@
         }
 
         function getPanelViewValue(panelId) {
+            if (panelId === 'allocated-view') {
+                return 'allocated';
+            }
+
             if (panelId === 'usage-view') {
                 return 'usage';
             }

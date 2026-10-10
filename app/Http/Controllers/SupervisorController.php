@@ -621,7 +621,7 @@ class SupervisorController extends Controller
 
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
-        })->with(['phases', 'client.user', 'engineer'])
+        })->notArchived()->with(['phases', 'client.user', 'engineer'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -808,7 +808,7 @@ class SupervisorController extends Controller
 
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
-        })
+        })->notArchived()
             ->with(['supervisors' => function ($query) {
                 $query->select('users.user_id', 'users.first_name', 'users.last_name');
             }, 'phases' => function ($query) {
@@ -950,6 +950,7 @@ class SupervisorController extends Controller
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
         })
+            ->notArchived()
             ->with(['phases' => function ($query) {
                 $query->orderBy('phase_order')->orderBy('planned_start_date');
             }])
@@ -961,7 +962,7 @@ class SupervisorController extends Controller
                 'assignedProjects' => $assignedProjects,
                 'primaryProject' => null,
                 'primaryPhase' => null,
-                'projectPhases' => collect(),
+                'projectPhases' => new LengthAwarePaginator([], 0, 10),
                 'delayedPhases' => collect(),
                 'overallProgress' => 0,
                 'scheduleHealth' => 'ON TRACK',
@@ -1103,7 +1104,7 @@ class SupervisorController extends Controller
         $user = Auth::user();
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
-        })->with(['projectWorkers.worker'])->get();
+        })->notArchived()->with(['projectWorkers.worker'])->get();
 
         $deployments = $assignedProjects->flatMap(fn ($project) => $project->projectWorkers)->unique('deployment_id')->values();
         $workers = $deployments->map(fn ($d) => $d->worker)->unique('worker_id')->values();
@@ -1119,7 +1120,7 @@ class SupervisorController extends Controller
         $user = Auth::user();
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
-        })->orderBy('created_at', 'desc')->get();
+        })->notArchived()->orderBy('created_at', 'desc')->get();
 
         $assignedProjectIds = $assignedProjects->pluck('project_id')->all();
 
@@ -1318,6 +1319,7 @@ class SupervisorController extends Controller
         $user = Auth::user();
 
         $assignedProjects = Project::query()
+            ->notArchived()
             ->whereHas('supervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
@@ -1705,6 +1707,7 @@ class SupervisorController extends Controller
 
                 $project = Project::query()
                     ->where('project_id', $validated['project_id'])
+                    ->notArchived()
                     ->whereHas('supervisors', function ($q) use ($user) {
                         $q->where('supervisor_id', $user->user_id);
                     })
@@ -1839,6 +1842,7 @@ class SupervisorController extends Controller
 
         // Get the phase and verify authorization
         $phase = ConstructionPhase::with('project', 'milestones', 'reports')
+            ->whereHas('project', fn ($query) => $query->notArchived())
             ->where('phase_id', $phaseId)
             ->first();
 
@@ -1847,7 +1851,7 @@ class SupervisorController extends Controller
         }
 
         // Verify supervisor has access to this project
-        $hasAccess = Project::query()->where('project_id', $phase->project_id)
+        $hasAccess = Project::query()->notArchived()->where('project_id', $phase->project_id)
             ->whereHas('supervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
@@ -1912,7 +1916,7 @@ class SupervisorController extends Controller
         $projectId = $request->input('project_id') ?: session('supervisor_selected_project_id');
 
         // Verify authorization
-        $project = Project::query()->where('project_id', $projectId)
+        $project = Project::query()->notArchived()->where('project_id', $projectId)
             ->whereHas('supervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
@@ -2074,7 +2078,7 @@ class SupervisorController extends Controller
             'remarks.max' => 'Remarks must not exceed 1000 characters.',
         ]);
 
-        $project = Project::findOrFail($validated['project_id']);
+        $project = Project::query()->notArchived()->findOrFail($validated['project_id']);
         $material = Material::findOrFail($validated['material_id']);
         $requestedQuantity = (float) $validated['requested_quantity'];
         $availableStock = (float) ($material->current_stock ?? 0);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
@@ -133,6 +134,16 @@ class Project extends Model
             self::STATUS_ARCHIVED => ['archived'],
             default => ['planning', 'pending', 'not_started', 'paused', 'delayed'],
         };
+    }
+
+    public function scopeNotArchived(Builder $query): Builder
+    {
+        $statusColumn = $this->qualifyColumn('status');
+
+        return $query->where(function (Builder $statusQuery) use ($statusColumn) {
+            $statusQuery->whereNull($statusColumn)
+                ->orWhereNotIn($statusColumn, self::statusVariants(self::STATUS_ARCHIVED));
+        });
     }
 
     public function canTransitionTo(?string $requestedStatus): bool

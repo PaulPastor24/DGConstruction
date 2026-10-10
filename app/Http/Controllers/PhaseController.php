@@ -454,9 +454,21 @@ class PhaseController extends Controller
                 $finalStatus = 'completed';
             }
 
+            $completionProgress = $phase->progress_percentage;
+            if (array_key_exists('admin_progress_override', $validated)) {
+                $completionProgress = $validated['admin_progress_override'] !== null
+                    ? (float) $validated['admin_progress_override']
+                    : (float) $phase->getRawOriginal('completion_percentage', 0);
+            }
+            if ($finalStatus === ConstructionPhase::STATUS_COMPLETED && $completionProgress < 100) {
+                throw ValidationException::withMessages([
+                    'status' => ['Cannot complete this phase until its progress reaches 100%.'],
+                ]);
+            }
+
             $milestonesComplete = !Schema::hasTable('timeline_milestones')
                 || !$phase->milestones()->where('is_completed', false)->exists();
-            if ($submittedStatus === ConstructionPhase::STATUS_COMPLETED && !$milestonesComplete) {
+            if ($finalStatus === ConstructionPhase::STATUS_COMPLETED && !$milestonesComplete) {
                 throw ValidationException::withMessages([
                     'status' => ['Cannot complete this phase until all milestones are completed.'],
                 ]);

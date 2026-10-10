@@ -910,6 +910,7 @@ class ProjectController extends Controller
     public function phaseManagement(Request $request)
     {
         $projects = Project::query()
+            ->notArchived()
             ->select(['project_id', 'project_name'])
             ->orderBy('project_name')
             ->get();
@@ -936,9 +937,7 @@ class ProjectController extends Controller
             $selectedProject = $projects->firstWhere('project_id', (int) $projectId)
                 ?: $projects->first();
 
-            if ($request->filled('project_id')) {
-                session(['admin_selected_project_id' => $selectedProject->project_id]);
-            }
+            session(['admin_selected_project_id' => $selectedProject->project_id]);
 
             $selectedProject->load(['phases' => function ($query) {
                 $query->orderBy('phase_order')->with(['milestones', 'project']);

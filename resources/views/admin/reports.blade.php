@@ -163,10 +163,10 @@
     }
     /* Milestone-style toolbar (copied from timeline) */
     .top-toolbar {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(220px, 2fr) repeat(5, minmax(125px, 1fr));
         align-items: end;
-        gap: 0.9rem;
+        gap: 0.65rem;
         padding: 0.9rem 1rem;
         border-radius: 12px;
         background: linear-gradient(135deg, #ffffff 0%, #f8fcf8 100%);
@@ -178,12 +178,11 @@
         display: flex;
         flex-direction: column;
         gap: 0.35rem;
-        min-width: 160px;
+        min-width: 0;
     }
     .toolbar-group.search-group {
-        min-width: 260px;
-        max-width: 520px;
-        flex: 0 1 520px;
+        min-width: 0;
+        max-width: none;
     }
     .toolbar-input, .toolbar-select {
         width: 100%;
@@ -393,9 +392,9 @@
     }
     .reports-table th:nth-child(6),
     .reports-table td:nth-child(6) {
-        width: 12%;
-        min-width: 110px;
-        padding-left: 0.9rem;
+        width: 14%;
+        min-width: 140px;
+        padding-left: 0.65rem;
         padding-right: 0.5rem;
     }
     .reports-table th:nth-child(7),
@@ -452,6 +451,13 @@
     .status-pill.approved { background: #e6f9ea; color: #196d34; border-color: #cce7d4; }
     .status-pill.published { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
     .status-pill.rejected { background: #ffe6e7; color: #a82f32; border-color: #f3c6c8; }
+    .reports-table .status-pill {
+        min-width: 0;
+        padding: 0.3rem 0.55rem;
+        font-size: 0.72rem;
+        line-height: 1.1;
+        white-space: nowrap;
+    }
 
     /* Inline action row icons - green theme */
     .action-icons-group {
@@ -1487,8 +1493,8 @@
             justify-self: center;
             width: fit-content;
         }
-        .top-toolbar { flex-direction: column; align-items: stretch; }
-        .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; flex: 1 1 100%; }
+        .top-toolbar { grid-template-columns: minmax(180px, 1.6fr) repeat(5, minmax(105px, 1fr)); }
+        .toolbar-group, .toolbar-group.search-group { width: 100%; min-width: 0; max-width: none; }
         .toolbar-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
     }
     @media (max-width: 768px) {
@@ -1756,12 +1762,12 @@
             width: fit-content !important;
             max-width: 100% !important;
             margin: 0 !important;
-            padding: 7px 10px !important;
+            padding: 0.32rem 0.48rem !important;
             border-radius: 999px !important;
-            white-space: normal !important;
+            white-space: nowrap !important;
             text-align: center !important;
-            line-height: 1.15 !important;
-            font-size: 11px !important;
+            line-height: 1.1 !important;
+            font-size: 10px !important;
             font-weight: 800 !important;
         }
 
@@ -2036,8 +2042,9 @@
 
         #pg-reports .status-pill {
             min-width: 0 !important;
-            padding: 0.42rem 0.7rem !important;
-            font-size: 0.68rem !important;
+            padding: 0.32rem 0.48rem !important;
+            font-size: 0.64rem !important;
+            white-space: nowrap !important;
         }
 
         #pg-reports .table-pagination-strip {

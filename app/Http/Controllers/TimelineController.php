@@ -34,6 +34,7 @@ class TimelineController extends Controller
         $user = Auth::user();
         
         $projects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+            ->notArchived()
             ->whereHas('supervisors', function ($query) use ($user) {
                 $query->where('project_supervisors.supervisor_id', $user->user_id)
                     ->where('project_supervisors.is_active', true);
@@ -202,7 +203,7 @@ class TimelineController extends Controller
                     'actual_end_date' => $phase->actual_end_date?->toDateString(),
                     'is_completed' => (bool) $milestone->is_completed,
                     'is_delayed' => (bool) $milestone->is_delayed,
-                    'status' => $milestone->is_completed ? 'completed' : ($milestone->is_delayed ? 'delayed' : 'upcoming'),
+                    'status' => $milestone->display_status,
                     'phase_name' => $phase->phase_name,
                     'phase_code' => $phase->phase_code,
                 ];

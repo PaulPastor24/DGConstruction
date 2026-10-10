@@ -142,6 +142,52 @@ class SupervisorPhaseUpdateTest extends TestCase
             ->assertJsonPath('unchanged', true);
     }
 
+    public function test_archived_assigned_projects_are_not_shown_in_supervisor_phases(): void
+    {
+        $user = User::create([
+            'name' => 'Supervisor Archived Project',
+            'email' => 'supervisor-archived-project@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'supervisor',
+            'is_active' => true,
+        ]);
+
+        $client = Client::create([
+            'user_id' => $user->user_id,
+            'company_name' => 'Test Company',
+            'address' => 'Test Address',
+        ]);
+
+        $project = Project::create([
+            'project_name' => 'Archived Supervisor Project',
+            'project_location' => 'Test Location',
+            'client_id' => $client->client_id,
+            'engineer_id' => $user->user_id,
+            'start_date' => now()->toDateString(),
+            'target_end_date' => now()->addMonth()->toDateString(),
+            'status' => 'archived',
+        ]);
+        $project->supervisors()->attach($user->user_id, ['assigned_date' => now()->toDateString(), 'is_active' => true]);
+        $phase = ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Archived Foundation',
+            'phase_order' => 1,
+            'planned_start_date' => now()->toDateString(),
+            'planned_end_date' => now()->addWeek()->toDateString(),
+            'completion_percentage' => 0,
+            'status' => 'not_started',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('supervisor.phases'))
+            ->assertOk()
+            ->assertViewHas('assignedProjects', fn ($projects) => $projects->isEmpty())
+            ->assertViewHas('primaryProject', null);
+
+        $this->getJson(route('supervisor.api.phases.details', ['id' => $phase->phase_id]))
+            ->assertNotFound();
+    }
+
     public function test_it_rejects_no_change_phase_status_update(): void
     {
         /** @var User $user */

@@ -199,7 +199,7 @@
 
                         <div class="row g-3 align-items-center pt-2 border-top">
                             <div class="col-12 col-md-7">
-                                <div class="schedule-insight-box">
+                                <div class="schedule-insight-box {{ $insightClass }}">
                                     <div class="d-flex align-items-start gap-3">
                                         <div class="insight-icon-shell {{ $insightClass }}"><i class="bi {{ $insightClass === 'on-track-bg' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' }}"></i></div>
                                         <div>
@@ -667,10 +667,16 @@
         border-radius: 12px;
         padding: 12px 16px;
     }
+    .schedule-insight-box.on-track-bg {
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
+    }
     .insight-icon-shell { color: #d97706; font-size: 1.2rem; }
     .insight-icon-shell.on-track-bg { color: #15803d; }
     .insight-title { font-size: 0.88rem; color: #451a03; font-weight: 500; }
+    .schedule-insight-box.on-track-bg .insight-title { color: #14532d; }
     .insight-desc { font-size: 0.8rem; color: #78350f; }
+    .schedule-insight-box.on-track-bg .insight-desc { color: #166534; }
     .text-amber-deep { color: #d97706 !important; }
     .badge-alert-pill.delay-bg { background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}
     .badge-alert-pill.on-track-bg { background-color: #ecfdf3; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 30px;}

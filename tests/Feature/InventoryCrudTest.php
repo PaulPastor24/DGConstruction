@@ -6,6 +6,8 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Models\Material;
 use App\Models\MaterialDelivery;
 use App\Models\MaterialUsage;
+use App\Models\Project;
+use App\Models\ProjectMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
@@ -19,6 +21,7 @@ class InventoryCrudTest extends TestCase
 
         Schema::dropIfExists('material_usages');
         Schema::dropIfExists('material_deliveries');
+        Schema::dropIfExists('project_materials');
         Schema::dropIfExists('materials');
         Schema::dropIfExists('projects');
 
@@ -37,6 +40,7 @@ class InventoryCrudTest extends TestCase
         Schema::create('projects', function ($table) {
             $table->id('project_id');
             $table->string('project_name');
+            $table->string('status')->default('planning');
             $table->timestamps();
         });
 
@@ -182,6 +186,61 @@ class InventoryCrudTest extends TestCase
 
         $this->assertCount(1, $data['usageLogs']);
         $this->assertSame('Portland Cement', $data['usageLogs']->first()->material->name);
+    }
+
+    public function test_allocated_materials_can_be_filtered_by_project_and_category(): void
+    {
+        Schema::create('project_materials', function ($table) {
+            $table->id();
+            $table->unsignedInteger('project_id');
+            $table->unsignedBigInteger('material_id');
+            $table->decimal('planned_quantity', 12, 2)->default(0);
+            $table->decimal('used_quantity', 12, 2)->default(0);
+            $table->string('unit')->nullable();
+            $table->timestamps();
+        });
+
+        $cement = Material::create([
+            'name' => 'Portland Cement',
+            'category' => 'Masonry',
+            'unit' => 'Bag',
+        ]);
+        $steel = Material::create([
+            'name' => 'Steel Rebar',
+            'category' => 'Structural',
+            'unit' => 'Ton',
+        ]);
+        $project = Project::create(['project_name' => 'North Wing']);
+        $otherProject = Project::create(['project_name' => 'South Wing']);
+        $archivedProject = Project::create(['project_name' => 'Archived Wing', 'status' => 'archived']);
+
+        ProjectMaterial::create([
+            'project_id' => $project->project_id,
+            'material_id' => $cement->id,
+            'planned_quantity' => 30,
+            'used_quantity' => 8,
+            'unit' => 'Bag',
+        ]);
+        ProjectMaterial::create([
+            'project_id' => $otherProject->project_id,
+            'material_id' => $steel->id,
+            'planned_quantity' => 12,
+            'used_quantity' => 2,
+            'unit' => 'Ton',
+        ]);
+
+        $response = (new AdminDashboardController())->inventory(Request::create('/admin/inventory', 'GET', [
+            'view' => 'allocated',
+            'allocated_search' => 'Cement',
+            'allocated_project_id' => $project->project_id,
+            'allocated_category' => 'Masonry',
+        ]));
+        $data = $response->getData();
+
+        $this->assertCount(1, $data['allocatedMaterials']);
+        $this->assertSame($project->project_id, $data['allocatedMaterials']->first()->project_id);
+        $this->assertSame($cement->id, $data['allocatedMaterials']->first()->material_id);
+        $this->assertNotContains($archivedProject->project_id, $data['projects']->pluck('project_id')->all());
     }
 
     public function test_receive_stock_can_create_new_material_when_name_is_provided(): void

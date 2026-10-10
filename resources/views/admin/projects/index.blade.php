@@ -1295,7 +1295,7 @@
                 @method('PATCH')
                 <button type="submit" class="btn btn-sm" style="border:1px solid #c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-archive"></i> Archive</button>
             </form>
-            <form id="sideDeleteForm" action="{{ route('admin.projects.destroy', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-project-confirm="delete" data-confirm-title="Delete Project?" data-confirm-text="This project has no construction records. This action is permanent and cannot be undone." data-confirm-button="Delete" data-cancel-button="Cancel">
+            <form id="sideDeleteForm" action="{{ route('admin.projects.destroy', ['project' => '__PROJECT_ID__']) }}" method="POST" class="d-inline project-action-form" data-no-global-loading="true" data-project-confirm="delete" data-confirm-title="Delete Project?" data-confirm-text="This project has no construction records. This action is permanent and cannot be undone." data-confirm-button="Delete" data-cancel-button="Cancel">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-sm px-3 py-2" style="border:1px solid #fecaca; color:#b91c1c; background:#fff7f7;"><i class="bi bi-trash"></i> Delete</button>

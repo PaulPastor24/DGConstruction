@@ -136,6 +136,7 @@ class MilestoneController extends Controller
                 'milestone_name' => $validated['milestone_name'],
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'] ?? null,
+                'status' => 'pending',
                 'is_completed' => (bool) ($validated['is_completed'] ?? false),
                 'is_delayed' => (bool) ($validated['is_delayed'] ?? false),
             ]);
@@ -564,6 +565,10 @@ class MilestoneController extends Controller
      */
     private function authorizeProject(Project $project)
     {
+        if ($project->workflowStatus() === Project::STATUS_ARCHIVED) {
+            abort(404);
+        }
+
         if ($project->engineer_id !== auth('web')->user()->user_id) {
             abort(403, 'Unauthorized to manage milestones for this project');
         }

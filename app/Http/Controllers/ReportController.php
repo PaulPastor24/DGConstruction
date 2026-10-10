@@ -406,7 +406,7 @@ class ReportController extends Controller
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        $project = Project::findOrFail($validated['project_id']);
+        $project = Project::query()->notArchived()->findOrFail($validated['project_id']);
         $phase = ConstructionPhase::findOrFail($validated['phase_id']);
 
         if ($phase->status === 'completed' || (float) ($phase->completion_percentage ?? 0) >= 100) {
@@ -786,7 +786,7 @@ class ReportController extends Controller
         // Get all projects assigned to supervisor
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
-        })->with(['phases' => function ($query) {
+        })->notArchived()->with(['phases' => function ($query) {
             $query->orderBy('phase_order', 'asc');
         }])->orderBy('project_name')->get();
 
@@ -904,6 +904,7 @@ class ReportController extends Controller
 
         // Calculate statistics for selected project
         $statsQuery = Report::whereHas('project', function ($q) use ($selectedProject, $user) {
+            $q->notArchived();
             if ($selectedProject) {
                 $q->where('project_id', $selectedProject->project_id);
             }
@@ -938,6 +939,7 @@ class ReportController extends Controller
         $user = auth('web')->user();
 
         $project = Project::query()->where('project_id', $projectId)
+            ->notArchived()
             ->whereHas('supervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })->firstOrFail();
@@ -974,6 +976,7 @@ class ReportController extends Controller
         $report = Report::with(['project', 'phase', 'submittedBy', 'approvedBy', 'reviewedBy'])
             ->where('report_id', $reportId)
             ->whereHas('project', function ($q) use ($user) {
+                $q->notArchived();
                 $q->whereHas('supervisors', function ($sq) use ($user) {
                     $sq->where('supervisor_id', $user->user_id);
                 });
@@ -1025,6 +1028,7 @@ class ReportController extends Controller
         $report = Report::with(['project', 'phase', 'submittedBy', 'reviewedBy', 'approvedBy', 'phase.milestones'])
             ->where('report_id', $reportId)
             ->whereHas('project', function ($q) use ($user) {
+                $q->notArchived();
                 $q->whereHas('supervisors', function ($sq) use ($user) {
                     $sq->where('supervisor_id', $user->user_id);
                 });
@@ -1093,7 +1097,8 @@ class ReportController extends Controller
 
         // Supervisor can view reports from their assigned projects
         if ($user->role === 'supervisor') {
-            if ($report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+            if ($report->project->workflowStatus() !== Project::STATUS_ARCHIVED
+                && $report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
                 return true;
             }
         }
@@ -1108,6 +1113,10 @@ class ReportController extends Controller
     {
         if (auth('web')->user()->role !== 'supervisor') {
             abort(403, 'Only supervisors can submit reports');
+        }
+
+        if ($project->workflowStatus() === Project::STATUS_ARCHIVED) {
+            abort(404);
         }
 
         if (!$project->supervisors()->where('supervisor_id', auth('web')->user()->user_id)->exists()) {
@@ -1157,6 +1166,7 @@ class ReportController extends Controller
         ]);
 
         $project = Project::query()
+            ->notArchived()
             ->where('project_id', $validated['project_id'])
             ->whereHas('supervisors', function ($query) use ($user) {
                 $query->where('supervisor_id', $user->user_id);

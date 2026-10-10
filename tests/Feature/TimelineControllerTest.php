@@ -119,6 +119,15 @@ class TimelineControllerTest extends TestCase
             'is_completed' => false,
             'is_delayed' => false,
         ]);
+        Milestone::create([
+            'phase_id' => $phase->phase_id,
+            'milestone_name' => 'Foundation Work',
+            'start_date' => '2026-07-11',
+            'end_date' => null,
+            'status' => 'in_progress',
+            'is_completed' => false,
+            'is_delayed' => false,
+        ]);
 
         $controller = new TimelineController();
         $method = new \ReflectionMethod($controller, 'enrichProjectData');
@@ -127,9 +136,10 @@ class TimelineControllerTest extends TestCase
         $data = $method->invoke($controller, $project);
 
         $this->assertArrayHasKey('milestones', $data);
-        $this->assertCount(1, $data['milestones']);
+        $this->assertCount(2, $data['milestones']);
         $this->assertSame('Excavation Complete', $data['milestones'][0]['milestone_name']);
-        $this->assertSame('upcoming', $data['milestones'][0]['status']);
+        $this->assertSame('pending', $data['milestones'][0]['status']);
+        $this->assertSame('in_progress', $data['milestones'][1]['status']);
     }
 
     public function test_completing_final_milestone_completes_phase_and_project(): void

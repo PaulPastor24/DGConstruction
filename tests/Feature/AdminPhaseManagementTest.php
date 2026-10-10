@@ -105,6 +105,68 @@ class AdminPhaseManagementTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('success', true);
     }
+
+    public function test_archived_projects_are_not_available_in_admin_phase_management(): void
+    {
+        $engineer = User::create([
+            'name' => 'Engineer Archived Project',
+            'email' => 'engineer-archived-phase@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'engineer',
+            'is_active' => true,
+        ]);
+
+        $activeProject = Project::create([
+            'project_name' => 'Active Phase Project',
+            'project_location' => 'Test Location',
+            'client_id' => 1,
+            'engineer_id' => $engineer->user_id,
+            'start_date' => now()->toDateString(),
+            'target_end_date' => now()->addMonth()->toDateString(),
+            'status' => 'ongoing',
+        ]);
+
+        $archivedProject = Project::create([
+            'project_name' => 'Archived Phase Project',
+            'project_location' => 'Test Location',
+            'client_id' => 1,
+            'engineer_id' => $engineer->user_id,
+            'start_date' => now()->toDateString(),
+            'target_end_date' => now()->addMonth()->toDateString(),
+            'status' => 'archived',
+        ]);
+
+        $this->actingAs($engineer)
+            ->get(route('admin.phases', ['project_id' => $archivedProject->project_id]))
+            ->assertOk()
+            ->assertViewHas('projects', fn ($projects) => $projects->pluck('project_id')->all() === [$activeProject->project_id])
+            ->assertViewHas('selectedProject', fn ($selectedProject) => $selectedProject->project_id === $activeProject->project_id);
+    }
+
+    public function test_archived_project_milestones_are_not_accessible(): void
+    {
+        $engineer = User::create([
+            'name' => 'Engineer Archived Milestones',
+            'email' => 'engineer-archived-milestones@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'engineer',
+            'is_active' => true,
+        ]);
+
+        $project = Project::create([
+            'project_name' => 'Archived Milestone Project',
+            'project_location' => 'Test Location',
+            'client_id' => 1,
+            'engineer_id' => $engineer->user_id,
+            'start_date' => now()->toDateString(),
+            'target_end_date' => now()->addMonth()->toDateString(),
+            'status' => 'archived',
+        ]);
+
+        $this->actingAs($engineer)
+            ->get(route('admin.milestones.index', [$project->project_id, 1]))
+            ->assertNotFound();
+    }
     public function test_phase_cannot_depend_on_a_later_phase_in_sequence(): void
     {
         $engineer = User::create([
@@ -313,11 +375,11 @@ class AdminPhaseManagementTest extends TestCase
                 'planned_end_date' => $phase->planned_end_date->toDateString(),
                 'status' => 'completed',
             ])
-            ->assertStatus(200)
-            ->assertJsonPath('success', true);
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
     }
 
-    public function test_completion_100_auto_sets_status_completed(): void
+    public function test_can_mark_phase_completed_when_progress_is_100(): void
     {
         $engineer = User::create([
             'name' => 'Engineer User Five',
@@ -343,12 +405,10 @@ class AdminPhaseManagementTest extends TestCase
             'phase_order' => 1,
             'planned_start_date' => now()->toDateString(),
             'planned_end_date' => now()->addWeek()->toDateString(),
-            'completion_percentage' => 0.00,
+            'completion_percentage' => 100.00,
             'status' => 'in_progress',
         ]);
 
-        // Verify auto-completion when progress >= 100 via milestone-based calculation
-        // (accessor checks milestones, which don't exist, so returns 0)
         $this->actingAs($engineer)
             ->putJson(route('admin.phases.update', [$project->project_id, $phase->phase_id]), [
                 'phase_name' => 'Finishing',
