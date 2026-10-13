@@ -498,6 +498,7 @@
         #editWorkerModal .modal-body {
             min-height: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 1.25rem;
         }
 
@@ -555,6 +556,25 @@
         }
 
         @media (max-width: 575.98px) {
+            #editWorkerModal {
+                overflow-y: auto;
+            }
+
+            #editWorkerModal .modal-dialog {
+                width: calc(100vw - 1rem);
+                max-width: none;
+                min-height: calc(100dvh - 1rem);
+                margin: 0.5rem auto;
+                align-items: flex-start;
+            }
+
+            #editWorkerModal .modal-content {
+                height: calc(100dvh - 1rem);
+                max-height: calc(100dvh - 1rem);
+                display: flex;
+                flex-direction: column;
+            }
+
             #workerDetailsModal .modal-content {
                 border-radius: 12px;
             }
@@ -593,12 +613,15 @@
                 max-width: 100%;
                 max-height: calc(100dvh - 7rem);
             }
-        }
+
             #editWorkerModal .modal-content {
                 border-radius: 12px;
             }
 
             #editWorkerModal .modal-body {
+                flex: 1 1 auto;
+                max-height: none;
+                overflow-y: auto;
                 padding: 1rem;
             }
 
@@ -3815,12 +3838,18 @@
                         `${worker.first_name} ${worker.last_name} has been timed in successfully.`
                     );
                 } else {
-                    throw new Error(result.message || 'Authentication failed: Worker not recognized.');
+                    const error = new Error(result.message || 'Authentication failed: Worker not recognized.');
+                    error.requiresReenrollment = result.requires_reenrollment === true;
+                    throw error;
                 }
             } catch (err) {
                 console.error(err);
 
                 let errorMessage = err.message || 'Unknown error occurred';
+
+                if (err.requiresReenrollment) {
+                    errorMessage = 'This fingerprint is linked to an older site address or saved credential. Open Enrolled Workers, choose Edit, and initialize the fingerprint again on this site.';
+                }
                 
                 // Provide user-friendly error messages
                 if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {

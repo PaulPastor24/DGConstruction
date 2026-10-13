@@ -159,13 +159,16 @@ class BiometricController extends Controller
             $requiresReenrollment = str_contains($errorMessage, 'rp id')
                 || str_contains($errorMessage, 'relying party')
                 || str_contains($errorMessage, 'origin')
-                || str_contains($errorMessage, 'credential source');
+                || str_contains($errorMessage, 'credential source')
+                || str_contains($errorMessage, 'does not match')
+                || str_contains($errorMessage, 'needs to be enrolled');
 
             return response()->json([
                 'message' => $requiresReenrollment
                     ? 'This biometric was enrolled on a different site address. Open Enrolled Workers, choose Edit, and initialize the fingerprint again.'
                     : 'Biometric verification failed. Please try scanning again.',
                 'requires_reenrollment' => $requiresReenrollment,
+                'error_code' => $requiresReenrollment ? 'reenrollment_required' : 'verification_failed',
             ], 422);
         }
 
