@@ -33,7 +33,9 @@ jobs:
           port: 65002
           protocol: sftp
           local-dir: ./
-          server-dir: domains/system.dgconphil.com/
+          # Use the absolute Hostinger path so SFTP cannot resolve this inside
+          # public_html or another server-side working directory.
+          server-dir: /home/u381418166/domains/system.dgconphil.com/
           dangerous-clean-slate: false
           exclude: |
             **/.git*
@@ -58,7 +60,8 @@ jobs:
           port: 65002
           protocol: sftp
           local-dir: public/
-          server-dir: domains/system.dgconphil.com/public_html/
+          # Only the contents of public/ belong in the web document root.
+          server-dir: /home/u381418166/domains/system.dgconphil.com/public_html/
           dangerous-clean-slate: false
           exclude: |
             **/storage
