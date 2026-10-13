@@ -2469,7 +2469,7 @@
                 type: (!end || end === start) ? 'milestone' : 'task',
                 parent: phase.parent_id ? String(phase.parent_id) : 0,
                 open: true,
-                color: status === 'completed' ? '#166534' : status === 'in-progress' ? '#1565C0' : status === 'delayed' ? '#C62828' : status === 'pending' ? '#6B7280' : '#B7791F',
+                color: status === 'completed' ? '#166534' : status === 'in-progress' ? '#1565C0' : ['delayed', 'late'].includes(status) ? '#C62828' : status === 'pending' ? '#6B7280' : '#B7791F',
                 milestones,
                 phase_name: phase.phase_name || phase.name || 'Phase',
                 phase_code: phase.phase_code || phase.code || ''
@@ -2679,7 +2679,8 @@
             || allProjectPhases.find((phase) => normalizeStatus(phase.display_status ?? phase.status) === 'pending')
             || allProjectPhases[0];
         const normalizedProjectStatus = String(project.status || '').toLowerCase();
-        const projectStatusLabel = {
+        const projectIsLate = Boolean(project.isLate);
+        const projectStatusLabel = projectIsLate ? 'Late' : ({
             ongoing: 'In Progress',
             in_progress: 'In Progress',
             completed: 'Completed',
@@ -2688,7 +2689,7 @@
             on_hold: 'On Hold',
             at_risk: 'At Risk',
             behind_schedule: 'Behind Schedule',
-        }[normalizedProjectStatus] || (project.status ? String(project.status).replace(/_/g, ' ') : 'Active');
+        }[normalizedProjectStatus] || (project.status ? String(project.status).replace(/_/g, ' ') : 'Active'));
         const hasDelayedSchedule = allProjectPhases.some((phase) => ['delayed', 'on_hold'].includes(String(phase.status || '').toLowerCase()))
             || allProjectMilestones.some((milestone) => milestone.is_delayed && !milestone.is_completed)
             || ['delayed', 'on_hold', 'at_risk', 'behind_schedule'].includes(normalizedProjectStatus);
@@ -2699,7 +2700,7 @@
             });
         const projectScheduleLabel = normalizedProjectStatus === 'completed'
             ? 'Completed'
-            : (hasDelayedSchedule || hasOverdueSchedule ? 'At Risk' : 'On Track');
+            : (projectIsLate ? 'Late' : (hasDelayedSchedule || hasOverdueSchedule ? 'At Risk' : 'On Track'));
 
         const statusSummary = [
             { key: 'completed', label: 'Completed', count: completedCount, color: '#E8F5E9', textColor: '#2E7D32' },

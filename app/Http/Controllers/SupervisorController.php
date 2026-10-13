@@ -180,13 +180,24 @@ class SupervisorController extends Controller
 
     private function fetchAttendanceRecord(int $workerId, string $date)
     {
+        $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
+
         return DB::table('attendance_logs')
-            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
-            ->where('attendance_logs.worker_id', $workerId)
+            ->when(
+                $hasWorkerId,
+                fn ($query) => $query->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+                    ->where('attendance_logs.worker_id', $workerId),
+                fn ($query) => $query
+                    ->join('project_workers', 'attendance_logs.deployment_id', '=', 'project_workers.deployment_id')
+                    ->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
+                    ->where('project_workers.worker_id', $workerId)
+            )
             ->whereDate('attendance_logs.log_date', $date)
             ->select(
                 'attendance_logs.log_id',
-                'attendance_logs.worker_id',
+                DB::raw($hasWorkerId
+                    ? 'attendance_logs.worker_id as worker_id'
+                    : 'project_workers.worker_id as worker_id'),
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',
@@ -389,6 +400,7 @@ class SupervisorController extends Controller
     public function getTodayAttendance(Request $request)
     {
         $date = $request->query('date', now()->toDateString());
+        $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
         /*
             IMPORTANT:
@@ -397,12 +409,20 @@ class SupervisorController extends Controller
             View all workers stays inside your "View Enrolled Workers" modal.
         */
         $attendance = DB::table('attendance_logs')
-            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+            ->when(
+                $hasWorkerId,
+                fn ($query) => $query->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id'),
+                fn ($query) => $query
+                    ->join('project_workers', 'attendance_logs.deployment_id', '=', 'project_workers.deployment_id')
+                    ->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
+            )
             ->whereDate('attendance_logs.log_date', $date)
             ->where('workers.is_active', 1)
             ->select(
                 'attendance_logs.log_id',
-                'attendance_logs.worker_id',
+                DB::raw($hasWorkerId
+                    ? 'attendance_logs.worker_id as worker_id'
+                    : 'project_workers.worker_id as worker_id'),
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',
@@ -459,9 +479,17 @@ class SupervisorController extends Controller
         $requestedBreakOut = $this->normalizeAttendanceTimeValue($request->input('break_out'));
         $requestedBreakIn = $this->normalizeAttendanceTimeValue($request->input('break_in'));
         $requestedTimeOut = $this->normalizeAttendanceTimeValue($request->input('time_out'));
+        $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
         $existingLog = DB::table('attendance_logs')
-            ->where('worker_id', $validated['worker_id'])
+            ->when(
+                $hasWorkerId,
+                fn ($query) => $query->where('worker_id', $validated['worker_id']),
+                fn ($query) => $query
+                    ->whereIn('deployment_id', DB::table('project_workers')
+                        ->where('worker_id', $validated['worker_id'])
+                        ->pluck('deployment_id'))
+            )
             ->whereDate('log_date', $date)
             ->first();
 
@@ -479,7 +507,7 @@ class SupervisorController extends Controller
                     ->first();
             }
 
-            DB::table('attendance_logs')->insert([
+            $attendanceData = [
                 'project_id' => $deployment->project_id ?? null,
                 'worker_id' => $validated['worker_id'],
                 'deployment_id' => $deployment->deployment_id ?? null,
@@ -495,7 +523,15 @@ class SupervisorController extends Controller
                     : 'Present. Time-in was on or before the scheduled start.',
                 'biometric_matched' => $manualMode ? 0 : 1,
                 'created_at' => $now,
-            ]);
+            ];
+
+            $attendanceData = array_filter(
+                $attendanceData,
+                fn ($value, $column) => Schema::hasColumn('attendance_logs', $column),
+                ARRAY_FILTER_USE_BOTH
+            );
+
+            DB::table('attendance_logs')->insert($attendanceData);
         } else {
             $updates = [];
 
@@ -617,12 +653,21 @@ class SupervisorController extends Controller
         }
 
         $attendance = DB::table('attendance_logs')
-            ->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
-            ->where('attendance_logs.worker_id', $validated['worker_id'])
+            ->when(
+                $hasWorkerId,
+                fn ($query) => $query->join('workers', 'attendance_logs.worker_id', '=', 'workers.worker_id')
+                    ->where('attendance_logs.worker_id', $validated['worker_id']),
+                fn ($query) => $query
+                    ->join('project_workers', 'attendance_logs.deployment_id', '=', 'project_workers.deployment_id')
+                    ->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
+                    ->where('project_workers.worker_id', $validated['worker_id'])
+            )
             ->whereDate('attendance_logs.log_date', $date)
             ->select(
                 'attendance_logs.log_id',
-                'attendance_logs.worker_id',
+                DB::raw($hasWorkerId
+                    ? 'attendance_logs.worker_id as worker_id'
+                    : 'project_workers.worker_id as worker_id'),
                 'workers.first_name',
                 'workers.last_name',
                 'workers.trade',

@@ -23,11 +23,12 @@
     $pdSetupReady = $project->setup_status_badge_class === 'success';
     $pdPhasePercent = $project->phase_count > 0 ? round(($pdCompletedPhases / max(1, $project->phase_count)) * 100) : 0;
     $pdNormalizedStatus = $project->workflowStatus();
-    $pdStatusLabel = $project->workflow_status_label;
-    $pdStatusBadgeClass = in_array($pdNormalizedStatus, [
+    $pdIsLate = $project->isLate();
+    $pdStatusLabel = $pdIsLate ? 'Late' : $project->workflow_status_label;
+    $pdStatusBadgeClass = $pdIsLate ? 'danger' : (in_array($pdNormalizedStatus, [
         \App\Models\Project::STATUS_ONGOING,
         \App\Models\Project::STATUS_COMPLETED,
-    ], true) ? 'success' : 'warning';
+    ], true) ? 'success' : 'warning');
 @endphp
 
 <div class="ps-header">

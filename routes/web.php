@@ -297,12 +297,6 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
         ->name('admin.attendance.schedules.update');
     Route::delete('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
         ->name('admin.attendance.schedules.destroy');
-    Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
-        ->name('supervisor.attendance.today');
-
-    Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
-        ->name('supervisor.attendance.logWorker');
-
     Route::post('/supervisor/workers/register-biometric', [SupervisorController::class, 'registerWorkerBiometric'])
         ->name('supervisor.workers.register_biometric');
 

@@ -34,6 +34,7 @@ jobs:
           protocol: sftp
           local-dir: ./
           server-dir: domains/system.dgconphil.com/
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.github/**
@@ -58,11 +59,10 @@ jobs:
           protocol: sftp
           local-dir: public/
           server-dir: domains/system.dgconphil.com/public_html/
+          dangerous-clean-slate: false
           exclude: |
-            **/storage/**
             **/storage
-            storage/**
-            storage
+            **/storage/**
 
       - name: Refresh Laravel runtime on Hostinger
         uses: appleboy/ssh-action@v1.2.2
