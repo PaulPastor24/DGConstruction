@@ -1855,23 +1855,19 @@
 
                     <section class="enrollment-schedule-panel mb-4" aria-labelledby="enrollmentScheduleHeading">
                         <h6 class="enrollment-section-heading mb-1" id="enrollmentScheduleHeading">Attendance Schedule</h6>
-                        <p class="enrollment-section-help">Optional time overrides for this worker.</p>
+                        <p class="enrollment-section-help">Defaults are 7:00 AM to 5:00 PM with a 1-hour break. You can customize this worker's schedule.</p>
                         <div class="row g-2">
                             <div class="col-6">
-                                <label for="manualTimeInInput" class="form-label small fw-semibold">Time in</label>
-                                <input type="time" id="manualTimeInInput" class="form-control" step="1">
+                                <label for="workerScheduleStart" class="form-label small fw-semibold">Work starts</label>
+                                <input type="time" id="workerScheduleStart" class="form-control" value="07:00" step="60" required>
                             </div>
                             <div class="col-6">
-                                <label for="manualTimeOutInput" class="form-label small fw-semibold">Time out</label>
-                                <input type="time" id="manualTimeOutInput" class="form-control" step="1">
+                                <label for="workerScheduleEnd" class="form-label small fw-semibold">Work ends</label>
+                                <input type="time" id="workerScheduleEnd" class="form-control" value="17:00" step="60" required>
                             </div>
                             <div class="col-6">
-                                <label for="manualBreakOutInput" class="form-label small fw-semibold">Break out</label>
-                                <input type="time" id="manualBreakOutInput" class="form-control" step="1">
-                            </div>
-                            <div class="col-6">
-                                <label for="manualBreakInInput" class="form-label small fw-semibold">Break in</label>
-                                <input type="time" id="manualBreakInInput" class="form-control" step="1">
+                                <label for="workerBreakMinutes" class="form-label small fw-semibold">Break duration (minutes)</label>
+                                <input type="number" id="workerBreakMinutes" class="form-control" value="60" min="0" max="480" step="1" required>
                             </div>
                         </div>
                     </section>
@@ -3940,6 +3936,9 @@
             const lastName = document.getElementById('regLastName').value.trim();
             const contactNumber = regContactNumberInput.value.trim();
             const trade = document.getElementById('regTrade').value.trim() || 'General';
+            const scheduleStart = document.getElementById('workerScheduleStart').value || '07:00';
+            const scheduleEnd = document.getElementById('workerScheduleEnd').value || '17:00';
+            const breakMinutes = document.getElementById('workerBreakMinutes').value || '60';
             const profileImageFile = regProfileImageInput.files?.[0];
 
             if (!firstName || !lastName) {
@@ -3954,6 +3953,11 @@
 
             if (!isValidContactNumber(contactNumber)) {
                 showAttendanceAlert('warning', 'Invalid contact number', 'Use up to 20 digits or common phone-number characters such as +, spaces, parentheses, periods, or hyphens.');
+                return;
+            }
+
+            if (scheduleEnd <= scheduleStart) {
+                showAttendanceAlert('warning', 'Invalid schedule', 'Work end must be later than work start.');
                 return;
             }
 
@@ -3981,6 +3985,9 @@
                         last_name: lastName,
                         contact_number: contactNumber,
                         trade: trade,
+                        schedule_start: scheduleStart,
+                        schedule_end: scheduleEnd,
+                        break_minutes: Number(breakMinutes),
                         credential: capturedPasskeyCredential
                     })
                 });

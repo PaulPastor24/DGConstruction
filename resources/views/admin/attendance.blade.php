@@ -561,8 +561,10 @@
                                 $breakOut = \Carbon\Carbon::parse($issueDate . ' ' . $issue->break_out);
                                 $breakIn = \Carbon\Carbon::parse($issueDate . ' ' . $issue->break_in);
 
-                                if ($breakOut->diffInMinutes($breakIn, false) > 60) {
-                                    $issueReason = 'Break exceeded 1 hour';
+                                $allowedBreakMinutes = (int) ($issueWorker?->break_minutes ?: 60);
+                                if ($breakOut->diffInMinutes($breakIn, false) > $allowedBreakMinutes) {
+                                    $excessMinutes = $breakOut->diffInMinutes($breakIn, false) - $allowedBreakMinutes;
+                                    $issueReason = 'Break exceeded by '.$excessMinutes.' minute(s)';
                                 }
                             } catch (\Throwable $error) {
                                 // Keep default issue reason.
@@ -1077,7 +1079,7 @@
                                     @php
                                         $workerRole = data_get($worker, 'role', 'worker');
                                         $workerStart = data_get($worker, 'schedule_start', '07:00');
-                                        $workerEnd = data_get($worker, 'schedule_end', $workerRole === 'staff' ? '15:00' : '17:00');
+                                        $workerEnd = data_get($worker, 'schedule_end', '17:00');
                                         $workerBreak = data_get($worker, 'break_minutes', 60);
                                         $workerName = $worker->full_name ?? trim(($worker->first_name ?? '').' '.($worker->last_name ?? ''));
                                     @endphp

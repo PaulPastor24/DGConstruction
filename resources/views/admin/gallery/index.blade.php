@@ -1336,6 +1336,31 @@
 
             try {
                 const previewDocument = landingPagePreview.contentDocument;
+                const previewLoginPath = new URL(@json(route('login')), previewDocument.baseURI).pathname;
+
+                previewDocument.querySelectorAll('a[href]').forEach((link) => {
+                    let linkPath;
+
+                    try {
+                        linkPath = new URL(link.href, previewDocument.baseURI).pathname;
+                    } catch {
+                        return;
+                    }
+
+                    if (linkPath !== previewLoginPath) {
+                        return;
+                    }
+
+                    link.setAttribute('aria-disabled', 'true');
+                    link.setAttribute('tabindex', '-1');
+                    link.title = 'Login is disabled in the admin preview.';
+                    link.style.cursor = 'not-allowed';
+                    link.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    });
+                });
+
                 previewDocument.querySelectorAll('[data-landing-hero-image]').forEach((image) => {
                     image.style.cursor = 'pointer';
                     image.title = 'Click to replace the hero image';

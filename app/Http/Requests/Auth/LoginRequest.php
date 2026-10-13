@@ -52,7 +52,7 @@ class LoginRequest extends FormRequest
             ->first();
 
         // 5. Verify password against your custom column
-        $storedHash = $user ? ($user->password ?? null) : null;
+        $storedHash = $user?->getAuthPassword();
 
         if (! $user || ! $storedHash || ! Hash::check($this->input('password'), $storedHash)) {
             RateLimiter::hit($this->throttleKey());

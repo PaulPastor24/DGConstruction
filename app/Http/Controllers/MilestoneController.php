@@ -33,8 +33,8 @@ class MilestoneController extends Controller
         $stats = [
             'total' => $milestones->count(),
             'completed' => $milestones->where('is_completed', true)->count(),
-            'delayed' => $milestones->where('is_delayed', true)->count(),
-            'upcoming' => $milestones->where('is_completed', false)->where('is_delayed', false)->count(),
+            'delayed' => $milestones->filter(fn ($milestone) => $milestone->is_delayed || $milestone->isLate())->count(),
+            'upcoming' => $milestones->filter(fn ($milestone) => !$milestone->is_completed && !$milestone->is_delayed && !$milestone->isLate())->count(),
         ];
 
         return view('admin.milestones.index', compact('project', 'phase', 'milestones', 'stats'));

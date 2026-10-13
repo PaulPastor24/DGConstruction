@@ -37,7 +37,7 @@ class Worker extends Model
 
     public function getScheduleEndAttribute($value): string
     {
-        return $value ?: ($this->role === 'staff' ? '15:00:00' : '17:00:00');
+        return $value ?: '17:00:00';
     }
 
     public function getBreakMinutesAttribute($value): int

@@ -1141,6 +1141,7 @@
     .status-pill-badge.in-progress { background: #E3F2FD; color: #1565C0; }
     .status-pill-badge.upcoming { background: #FFF8E1; color: #B7791F; }
     .status-pill-badge.delayed { background: #FDECEC; color: #C62828; }
+    .status-pill-badge.late { background: #FEE2E2; color: #B91C1C; }
     .status-pill-badge.pending { background: #F3F4F6; color: #6B7280; }
 
     .timeline-table-footer {
@@ -2096,6 +2097,7 @@
                 <option value="in-progress">In Progress</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="delayed">Delayed</option>
+                <option value="late">Late</option>
                 <option value="pending">Pending</option>
             </select>
         </div>
@@ -2286,7 +2288,8 @@
         const norm = String(status || 'pending').trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '-');
         if (norm === 'completed') return 'completed';
         if (norm === 'in-progress' || norm === 'ongoing' || norm === 'in_progress') return 'in-progress';
-        if (norm === 'delayed' || norm === 'overdue') return 'delayed';
+        if (norm === 'late' || norm === 'overdue') return 'late';
+        if (norm === 'delayed') return 'delayed';
         if (norm === 'pending' || norm === 'not-started' || norm === 'not_started') return 'pending';
         return 'upcoming';
     }
@@ -2362,8 +2365,20 @@
 
     function getMilestoneStatus(milestone) {
         if (milestone?.is_completed) return 'completed';
+        if (milestone?.is_late === true) return 'late';
         if (milestone?.is_delayed) return 'delayed';
         return normalizeStatus(milestone?.status ?? milestone?.display_status ?? 'pending');
+    }
+
+    function getStatusLabel(status) {
+        return {
+            'in-progress': 'In Progress',
+            upcoming: 'Upcoming',
+            delayed: 'Delayed',
+            late: 'Late',
+            pending: 'Pending',
+            completed: 'Completed',
+        }[status] || String(status || '').replace(/-/g, ' ');
     }
 
     function getFilteredMilestones(project) {
@@ -2512,7 +2527,7 @@
             const phaseName = getDisplayPhaseName(phase);
             const start = formatDateFull(getPhaseActualOrPlannedStart(phase));
             const end = formatDateFull(getPhaseActualOrPlannedEnd(phase));
-            const statusLabel = status.replace('-', ' ');
+            const statusLabel = getStatusLabel(status);
 
             return `
                 <article class="mobile-gantt-card">
@@ -2578,7 +2593,7 @@
                         </div>
                         <div class="timeline-mobile-detail status">
                             <span class="timeline-mobile-label">Status</span>
-                            <span class="status-pill-badge ${status}">${escapeHtml(status.replace('-', ' '))}</span>
+                            <span class="status-pill-badge ${status}">${escapeHtml(getStatusLabel(status))}</span>
                         </div>
                         <div class="timeline-mobile-detail progress">
                             <span class="timeline-mobile-label">Progress</span>
@@ -2612,7 +2627,7 @@
                         <div class="timeline-mobile-title">
                             <h4>${escapeHtml(milestoneName)}</h4>
                         </div>
-                        <span class="status-pill-badge ${status}">${escapeHtml(status.replace('-', ' '))}</span>
+                        <span class="status-pill-badge ${status}">${escapeHtml(getStatusLabel(status))}</span>
                     </div>
                     <div class="timeline-mobile-detail-grid">
                         <div class="timeline-mobile-detail full">
@@ -2649,7 +2664,7 @@
         const completedCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'completed').length;
         const inProgressCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'in-progress').length;
         const upcomingCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'upcoming').length;
-        const delayedCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'delayed').length;
+        const delayedCount = filteredPhases.filter((phase) => ['delayed', 'late'].includes(normalizeStatus(phase.display_status ?? phase.status ?? 'planning'))).length;
         const pendingCount = filteredPhases.filter((phase) => normalizeStatus(phase.display_status ?? phase.status ?? 'planning') === 'pending').length;
         const projectProgress = clampPercentage(project.progress ?? 0);
         const allProjectPhases = getProjectPhases(project);
@@ -2690,7 +2705,7 @@
             { key: 'completed', label: 'Completed', count: completedCount, color: '#E8F5E9', textColor: '#2E7D32' },
             { key: 'in-progress', label: 'In Progress', count: inProgressCount, color: '#E3F2FD', textColor: '#1565C0' },
             { key: 'upcoming', label: 'Upcoming', count: upcomingCount, color: '#FFF8E1', textColor: '#B7791F' },
-            { key: 'delayed', label: 'Delayed', count: delayedCount, color: '#FDECEC', textColor: '#C62828' },
+            { key: 'delayed', label: 'Delayed / Late', count: delayedCount, color: '#FDECEC', textColor: '#C62828' },
             { key: 'pending', label: 'Pending', count: pendingCount, color: '#F3F4F6', textColor: '#6B7280' }
         ];
 
@@ -2780,7 +2795,7 @@
                                                     </td>
                                                     <td data-label="Start">${formatDateFull(getPhaseActualOrPlannedStart(phase))}</td>
                                                     <td data-label="End">${formatDateFull(getPhaseActualOrPlannedEnd(phase))}</td>
-                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
+                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${getStatusLabel(status)}</span></td>
                                                     <td data-label="Progress">${Math.round(percentage)}%</td>
                                                 </tr>
                                             `;
@@ -2827,7 +2842,7 @@
                                                     <td data-label="Phase">${escapeHtml(stripRedundantSequenceLabel(milestone.phase_name || 'Unnamed phase'))}</td>
                                                     <td data-label="Start Planned Date">${formatDateFull(milestone.planned_start_date || milestone.start_date || milestone.start)}</td>
                                                     <td data-label="End Planned Date">${formatDateFull(milestone.planned_end_date || milestone.end_date || milestone.end)}</td>
-                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${status.replace('-', ' ')}</span></td>
+                                                    <td data-label="Status"><span class="status-pill-badge ${status}">${getStatusLabel(status)}</span></td>
                                                     <td data-label="Actions">
                                                         <div class="action-icons-flex">
                                                             <button type="button" class="btn-icon-table" data-open-edit="${milestone.phase_id ?? ''}" data-milestone-id="${milestone.milestone_id ?? milestone.id ?? ''}"><i class="bi bi-pencil"></i></button>

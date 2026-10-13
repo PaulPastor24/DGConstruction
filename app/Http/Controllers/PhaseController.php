@@ -602,6 +602,7 @@ class PhaseController extends Controller
                     'planned_end_date_raw' => $phase->planned_end_date ? \Illuminate\Support\Carbon::parse($phase->planned_end_date)->toDateString() : null,
                     'completion_percentage' => (float) $phase->progress_percentage,
                     'status' => $phase->status,
+                    'is_late' => $phase->isLate(),
                     'project_name' => optional($project)->project_name ?? null,
                     'admin_progress_override' => $phase->admin_progress_override ?? null,
                     'override_reason' => $phase->override_reason ?? null,

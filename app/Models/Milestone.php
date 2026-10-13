@@ -36,11 +36,22 @@ class Milestone extends Model
             return 'completed';
         }
 
+        if ($this->isLate()) {
+            return 'late';
+        }
+
         if ($this->is_delayed) {
             return 'delayed';
         }
 
         return $this->status ?? 'pending';
+    }
+
+    public function isLate(): bool
+    {
+        return !$this->is_completed
+            && $this->end_date
+            && $this->end_date->lt(now()->startOfDay());
     }
 
     public function phase()

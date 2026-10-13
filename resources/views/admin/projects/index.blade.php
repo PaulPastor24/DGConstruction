@@ -287,6 +287,7 @@
     .status-pill.on-hold { background-color: var(--status-hold-bg); color: var(--status-hold-text); }
     .status-pill.completed { background-color: var(--status-completed-bg); color: var(--status-completed-text); }
     .status-pill.planning { background-color: var(--status-planning-bg); color: var(--status-planning-text); }
+    .status-pill.late { background-color: #fee2e2; color: #b91c1c; }
 
     /* Custom Team Layout */
     .supervisor-cell-info {

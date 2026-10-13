@@ -69,9 +69,33 @@ class SupervisorController extends Controller
         }
 
         $time = Carbon::parse($timeIn);
-        $presentCutoff = Carbon::parse($time->format('Y-m-d').' '.$scheduledStart)->addMinutes(30);
+        $presentCutoff = Carbon::parse($time->format('Y-m-d').' '.$scheduledStart);
 
         return $time->lte($presentCutoff) ? 'present' : 'late';
+    }
+
+    private function lateMinutes($timeIn, string $scheduledStart = '07:00:00'): int
+    {
+        $time = Carbon::parse($timeIn);
+        $start = Carbon::parse($time->format('Y-m-d').' '.$scheduledStart);
+
+        return max(0, $start->diffInMinutes($time, false));
+    }
+
+    private function formatDuration(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $remainingMinutes = $minutes % 60;
+        $parts = [];
+
+        if ($hours > 0) {
+            $parts[] = $hours.' hour'.($hours === 1 ? '' : 's');
+        }
+        if ($remainingMinutes > 0 || $hours === 0) {
+            $parts[] = $remainingMinutes.' minute'.($remainingMinutes === 1 ? '' : 's');
+        }
+
+        return implode(' ', $parts);
     }
 
     private function normalizeAttendanceTimeValue($value): ?string
@@ -443,7 +467,8 @@ class SupervisorController extends Controller
 
         if (! $existingLog) {
             $timeInValue = $requestedTimeIn ?? $now->format('H:i:s');
-            $status = $this->computeTimeInStatus($timeInValue, $worker->schedule_start ?: '07:00:00');
+            $scheduleStart = data_get($worker, 'schedule_start') ?: '07:00:00';
+            $status = $this->computeTimeInStatus($timeInValue, $scheduleStart);
 
             $deployment = null;
 
@@ -466,8 +491,8 @@ class SupervisorController extends Controller
                 'time_out' => $manualMode && $requestedTimeOut ? $requestedTimeOut : null,
                 'status' => $status,
                 'remarks' => $status === 'late'
-                    ? 'Late time-in. Time-in after 8:30 AM.'
-                    : 'Present. Time-in within 8:00 AM to 8:30 AM.',
+                    ? 'Late time-in by '.$this->lateMinutes($timeInValue, $scheduleStart).' minute(s).'
+                    : 'Present. Time-in was on or before the scheduled start.',
                 'biometric_matched' => $manualMode ? 0 : 1,
                 'created_at' => $now,
             ]);
@@ -529,20 +554,24 @@ class SupervisorController extends Controller
                 }
 
                 $breakOutDateTime = Carbon::parse($date.' '.$existingLog->break_out);
-                $breakMinutes = $breakOutDateTime->diffInMinutes($now);
+                $breakInValue = $requestedBreakIn ?? $now->format('H:i:s');
+                $breakInDateTime = Carbon::parse($date.' '.$breakInValue);
+                $breakMinutes = $breakOutDateTime->diffInMinutes($breakInDateTime);
 
-                $updates['break_in'] = $requestedBreakIn ?? $now->format('H:i:s');
+                $updates['break_in'] = $breakInValue;
 
-                if ($breakMinutes > (int) ($worker->break_minutes ?: 60)) {
+                $allowedBreakMinutes = (int) (data_get($worker, 'break_minutes') ?: 60);
+                if ($breakMinutes > $allowedBreakMinutes) {
                     $updates['status'] = 'late';
-                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break exceeded 1 hour.');
+                    $excessMinutes = $breakMinutes - $allowedBreakMinutes;
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break exceeded the allowed duration by '.$this->formatDuration($excessMinutes).'.');
                 } else {
                     $updates['remarks'] = trim(($existingLog->remarks ?? '').' Break completed within 1 hour.');
                 }
             }
 
             if ($action === 'time_out') {
-                $scheduledEnd = $worker->schedule_end ?: '17:00:00';
+                $scheduledEnd = data_get($worker, 'schedule_end') ?: '17:00:00';
                 $timeOutAllowed = Carbon::parse($date.' '.$scheduledEnd);
 
                 if ($now->lt($timeOutAllowed)) {
@@ -1383,6 +1412,7 @@ class SupervisorController extends Controller
         $inventoryCollection = collect();
         $metricsInventoryCollection = collect();
         $projectPhases = collect();
+        $projectPhasesForUsage = collect();
         $selectedPhase = null;
 
         if ($selectedProject) {
@@ -1986,6 +2016,9 @@ class SupervisorController extends Controller
             'last_name' => ['required', 'string', 'max:100'],
             'trade' => ['nullable', 'string', 'max:100'],
             'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+().\-\s]+$/'],
+            'schedule_start' => ['nullable', 'date_format:H:i'],
+            'schedule_end' => ['nullable', 'date_format:H:i', 'after:schedule_start'],
+            'break_minutes' => ['nullable', 'integer', 'min:0', 'max:480'],
             'credential' => ['required', 'array'],
         ]);
 
@@ -2009,7 +2042,7 @@ class SupervisorController extends Controller
 
         try {
             $workerId = DB::transaction(function () use ($validated, $credentialId, $credentialJson) {
-                $workerId = DB::table('workers')->insertGetId([
+                $workerData = [
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
                     'trade' => $validated['trade'] ?: 'General',
@@ -2019,7 +2052,19 @@ class SupervisorController extends Controller
                     'credential_json' => $credentialJson,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ], 'worker_id');
+                ];
+
+                foreach ([
+                    'schedule_start' => ($validated['schedule_start'] ?? '07:00').':00',
+                    'schedule_end' => ($validated['schedule_end'] ?? '17:00').':00',
+                    'break_minutes' => (int) ($validated['break_minutes'] ?? 60),
+                ] as $column => $value) {
+                    if (Schema::hasColumn('workers', $column)) {
+                        $workerData[$column] = $value;
+                    }
+                }
+
+                $workerId = DB::table('workers')->insertGetId($workerData, 'worker_id');
 
                 DB::table('worker_biometric_profiles')->insert([
                     'worker_id' => $workerId,

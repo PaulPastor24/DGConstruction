@@ -149,6 +149,9 @@ class TimelineController extends Controller
                 'not_started' => 'planning',
                 default => 'planning'
             };
+            if ($phase->isLate()) {
+                $phase->display_status = 'late';
+            }
             $phase->name = $phase->phase_name;
             $phase->phase_code = 'P' . str_pad((string) ($phase->phase_order ?? 1), 2, '0', STR_PAD_LEFT);
             $phase->start = $phase->actual_start_date?->toDateString() ?? $phase->planned_start_date?->toDateString();
@@ -203,6 +206,7 @@ class TimelineController extends Controller
                     'actual_end_date' => $phase->actual_end_date?->toDateString(),
                     'is_completed' => (bool) $milestone->is_completed,
                     'is_delayed' => (bool) $milestone->is_delayed,
+                    'is_late' => $milestone->isLate(),
                     'status' => $milestone->display_status,
                     'phase_name' => $phase->phase_name,
                     'phase_code' => $phase->phase_code,
@@ -239,6 +243,7 @@ class TimelineController extends Controller
             'startDate' => $project->start_date,
             'targetEndDate' => $project->target_end_date,
             'actualEndDate' => $project->actual_end_date,
+            'isLate' => $project->isLate(),
             'client' => $project->client,
             'engineer' => $project->engineer,
             'supervisors' => $project->supervisors,

@@ -58,7 +58,7 @@ class User extends Authenticatable implements HasPasskeys
      */
     public function getAuthPassword()
     {
-        return $this->password;
+        return $this->password ?? $this->password_hash ?? null;
     }
 
     /**

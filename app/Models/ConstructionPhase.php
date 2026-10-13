@@ -112,6 +112,13 @@ class ConstructionPhase extends Model
             && (!Schema::hasTable('timeline_milestones') || !$this->milestones()->where('is_completed', false)->exists());
     }
 
+    public function isLate(): bool
+    {
+        return $this->status !== self::STATUS_COMPLETED
+            && $this->planned_end_date
+            && $this->planned_end_date->lt(now()->startOfDay());
+    }
+
     public function syncStatusFromMilestones(): void
     {
         if (!Schema::hasTable('timeline_milestones')) {

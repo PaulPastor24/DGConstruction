@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('attendance_logs')) {
+            return;
+        }
+
         Schema::table('attendance_logs', function (Blueprint $table) {
             if (! Schema::hasColumn('attendance_logs', 'deployment_id')) {
                 $table->unsignedInteger('deployment_id')->nullable()->after('worker_id');

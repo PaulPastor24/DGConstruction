@@ -6,6 +6,7 @@ const statusPalette = {
     'in-progress': '#1565C0',
     upcoming: '#B7791F',
     delayed: '#C62828',
+    late: '#B91C1C',
     pending: '#6B7280'
 };
 

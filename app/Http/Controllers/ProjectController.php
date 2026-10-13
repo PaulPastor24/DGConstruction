@@ -11,6 +11,7 @@ use App\Models\Report; // Added explicitly to prevent class structural errors
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,26 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
+        $countRelations = [
+            'phases as phase_count',
+        ];
+
+        if (Schema::hasTable('timeline_milestones') && Schema::hasTable('construction_phases')) {
+            $countRelations[] = 'milestones as milestone_count';
+        }
+
+        if (Schema::hasTable('accomplishment_reports') && Schema::hasTable('construction_phases')) {
+            $countRelations[] = 'reports as report_count';
+        }
+
+        if (Schema::hasTable('project_materials')) {
+            $countRelations[] = 'projectMaterials as material_count';
+        }
+
+        if (Schema::hasTable('attendance_logs') && Schema::hasTable('project_workers')) {
+            $countRelations[] = 'attendanceLogs as attendance_count';
+        }
+
         $query = Project::with([
                 'client.user',
                 'engineer',
@@ -38,13 +59,7 @@ class ProjectController extends Controller
                     ])->orderBy('phase_order');
                 },
             ])
-            ->withCount([
-                'phases as phase_count',
-                'milestones as milestone_count',
-                'reports as report_count',
-                'projectMaterials as material_count',
-                'attendanceLogs as attendance_count',
-            ]);
+            ->withCount($countRelations);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -916,7 +931,13 @@ class ProjectController extends Controller
             ->get();
 
         $selectedProject = null;
-        $phases = collect();
+        $phases = new LengthAwarePaginator(
+            [],
+            0,
+            10,
+            1,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
         $delayedPhases = collect();
         $selectedPhase = null;
         $stats = [
@@ -945,10 +966,7 @@ class ProjectController extends Controller
 
             $allPhases = $selectedProject->phases;
             $delayedPhases = $allPhases->filter(function ($phase) {
-                return $phase->status !== 'completed'
-                    && ($phase->status === 'delayed'
-                        || ($phase->planned_end_date
-                            && $phase->planned_end_date->lt(now()->startOfDay())));
+                return $phase->status === 'delayed' || $phase->isLate();
             })->values();
             $phases = $selectedProject->phases()
                 ->with('milestones')

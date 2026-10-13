@@ -1697,7 +1697,7 @@ class AdminDashboardController extends Controller
         $scheduledStart = Carbon::parse($data['log_date'].' '.$worker->schedule_start);
         $timeIn = Carbon::parse($data['log_date'].' '.$data['time_in']);
 
-        return $timeIn->lte($scheduledStart->copy()->addMinutes(30)) ? 'present' : 'late';
+        return $timeIn->lte($scheduledStart) ? 'present' : 'late';
     }
 
     private function deploymentForWorker(int $workerId, ?int $deploymentId = null): ?int
@@ -2731,5 +2731,4 @@ class AdminDashboardController extends Controller
         }
     }
 }
-
 

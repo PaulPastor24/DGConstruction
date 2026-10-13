@@ -28,9 +28,10 @@
                         $projectAttendanceCount = $project->attendance_count;
                         $storedStatus = strtolower((string) ($project->getRawOriginal('status') ?? $project->status ?? 'planning'));
                         $normalizedStatus = $project->workflowStatus();
+                        $projectIsLate = $project->isLate();
                         $projectDaysLeft = $normalizedStatus === 'completed' ? 0 : ($project->target_end_date ? max(0, (int) now()->diffInDays($project->target_end_date, false)) : 0);
-                        $projectStatusLabel = $project->workflow_status_label;
-                        $projectStatusClass = $project->workflow_status_class;
+                        $projectStatusLabel = $projectIsLate ? 'Late' : $project->workflow_status_label;
+                        $projectStatusClass = $projectIsLate ? 'late' : $project->workflow_status_class;
                         $projectProgressPct = number_format($project->overall_progress_percentage, 0);
                         $projectProgressSubtitle = match ($normalizedStatus) {
                             'completed' => 'Completed',
@@ -96,8 +97,10 @@
                                 <div class="duration-primary-txt">
                                     @if($normalizedStatus === 'completed')
                                         Completed
+                                    @elseif($projectIsLate)
+                                        Late
                                     @else
-                                        {{ $project->start_date ? $project->start_date->diffInDays($project->target_end_date) : 169 }} days left
+                                        {{ $project->target_end_date ? max(0, (int) now()->diffInDays($project->target_end_date, false)) : 0 }} days left
                                     @endif
                                 </div>
                                 <div class="duration-secondary-pct">({{ $projectProgressPct }}%)</div>

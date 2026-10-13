@@ -526,7 +526,7 @@
 
     @php
         $projectPhase = $primaryPhase?->phase_name ?? optional($primaryProject?->phases?->first())->phase_name ?? 'Mobilization';
-        $projectTargetDate = optional($primaryProject->target_end_date);
+        $projectTargetDate = optional($primaryProject?->target_end_date);
         $daysRemaining = $projectTargetDate ? max(0, (int) round($projectTargetDate->diffInDays(now(), false))) : null;
         $projectClient = $primaryProject?->client?->company_name ?? optional($primaryProject?->client?->user)->name ?? 'Not specified';
         $projectLocation = $primaryProject?->location ?? $primaryProject?->project_location ?? 'Not specified';
@@ -546,8 +546,8 @@
             'delayed' => 'bg-warning-subtle text-warning-emphasis',
             default => 'bg-secondary-subtle text-secondary-emphasis'
         };
-        $phaseStart = optional($primaryPhase?->planned_start_date)->format('M d, Y') ?? optional($primaryProject->start_date)->format('M d, Y') ?? 'Pending';
-        $phaseEnd = optional($primaryPhase?->planned_end_date)->format('M d, Y') ?? optional($primaryProject->target_end_date)->format('M d, Y') ?? 'Pending';
+        $phaseStart = optional($primaryPhase?->planned_start_date)->format('M d, Y') ?? optional($primaryProject?->start_date)->format('M d, Y') ?? 'Pending';
+        $phaseEnd = optional($primaryPhase?->planned_end_date)->format('M d, Y') ?? optional($primaryProject?->target_end_date)->format('M d, Y') ?? 'Pending';
         $phaseTimeline = $primaryProject ? $primaryProject->phases()->orderBy('phase_order')->orderBy('planned_start_date')->get() : collect();
         $completedPhaseCount = $phaseTimeline->where('status', 'completed')->count();
         $currentActivePhase = $phaseTimeline->firstWhere('status', 'in_progress')?->phase_name ?? $primaryPhase?->phase_name ?? 'Pending';

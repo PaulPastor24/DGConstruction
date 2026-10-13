@@ -29,7 +29,7 @@ class AttendanceScheduleRule extends Model
             'admin', 'administrator', 'engineer' => [
                 'role' => $normalizedRole,
                 'start_time' => '07:00:00',
-                'end_time' => '15:00:00',
+                'end_time' => '17:00:00',
                 'break_start_time' => '12:00:00',
                 'break_end_time' => '13:00:00',
             ],

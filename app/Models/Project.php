@@ -189,6 +189,13 @@ class Project extends Model
         return self::normalizeStatus($this->getRawOriginal('status') ?? $this->status);
     }
 
+    public function isLate(): bool
+    {
+        return $this->workflowStatus() !== self::STATUS_COMPLETED
+            && $this->target_end_date
+            && $this->target_end_date->lt(now()->startOfDay());
+    }
+
     public function syncStatusFromPhases(): void
     {
         if ($this->workflowStatus() === self::STATUS_ARCHIVED) {
@@ -437,6 +444,10 @@ class Project extends Model
             return (int) $this->attributes['phase_count'];
         }
 
+        if (!Schema::hasTable('construction_phases')) {
+            return 0;
+        }
+
         return $this->phases()->count();
     }
 
@@ -444,6 +455,10 @@ class Project extends Model
     {
         if (array_key_exists('milestone_count', $this->attributes)) {
             return (int) $this->attributes['milestone_count'];
+        }
+
+        if (!Schema::hasTable('timeline_milestones') || !Schema::hasTable('construction_phases')) {
+            return 0;
         }
 
         return $this->milestones()->count();
@@ -455,6 +470,10 @@ class Project extends Model
             return (int) $this->attributes['report_count'];
         }
 
+        if (!Schema::hasTable('accomplishment_reports') || !Schema::hasTable('construction_phases')) {
+            return 0;
+        }
+
         return $this->reports()->count();
     }
 
@@ -464,6 +483,10 @@ class Project extends Model
             return (int) $this->attributes['material_count'];
         }
 
+        if (!Schema::hasTable('project_materials')) {
+            return 0;
+        }
+
         return $this->projectMaterials()->count();
     }
 
@@ -471,6 +494,10 @@ class Project extends Model
     {
         if (array_key_exists('attendance_count', $this->attributes)) {
             return (int) $this->attributes['attendance_count'];
+        }
+
+        if (!Schema::hasTable('attendance_logs') || !Schema::hasTable('project_workers')) {
+            return 0;
         }
 
         return $this->attendanceLogs()->count();

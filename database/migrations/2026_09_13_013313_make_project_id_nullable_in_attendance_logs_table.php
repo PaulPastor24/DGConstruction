@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('attendance_logs') || ! Schema::hasColumn('attendance_logs', 'project_id')) {
+            return;
+        }
+
         Schema::table('attendance_logs', function (Blueprint $table) {
             $table->dropForeign(['project_id']);
             $table->unsignedInteger('project_id')->nullable()->change();

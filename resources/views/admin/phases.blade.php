@@ -1312,13 +1312,15 @@
                         <tbody id="phaseTableBody" style="font-size: 13px;">
                             @forelse($phases as $phase)
                                 @php
-                                    $statusClass = match($phase->status) {
+                                    $isLate = $phase->isLate();
+                                    $displayStatus = ($phase->status === 'delayed' || $isLate) ? 'delayed' : $phase->status;
+                                    $statusClass = match($displayStatus) {
                                         'completed' => 'status-completed',
                                         'in_progress' => 'status-inprogress',
                                         'delayed' => 'status-delayed',
                                         default => 'status-pending',
                                     };
-                                    $statusLabel = match($phase->status) {
+                                    $statusLabel = $isLate ? 'Late' : match($phase->status) {
                                         'completed' => 'Completed',
                                         'in_progress' => 'In Progress',
                                         'delayed' => 'Delayed',
@@ -1345,6 +1347,8 @@
                                         'project_id' => $phase->project_id,
                                         'phase_name' => $phase->phase_name,
                                         'status' => $phase->status,
+                                        'display_status' => $displayStatus,
+                                        'is_late' => $isLate,
                                         'status_label' => $statusLabel,
                                         'status_class' => $statusClass,
                                         'phase_order' => $phase->phase_order,
@@ -1375,7 +1379,7 @@
                                         'project_name' => optional($phase->project)->project_name ?? optional($selectedProject)->project_name ?? 'N/A',
                                     ];
                                 @endphp
-                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $phase->status }}" data-phase-end-date="{{ optional($phase->planned_end_date)->toDateString() }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
+                                <tr data-phase-row="true" data-phase-id="{{ $phase->phase_id }}" data-phase-name="{{ strtolower($phase->phase_name) }}" data-phase-status="{{ $displayStatus }}" data-phase-workflow-status="{{ $phase->status }}" data-phase-end-date="{{ optional($phase->planned_end_date)->toDateString() }}" data-phase-order="{{ (int) $phase->phase_order }}" data-phase-title="{{ strtolower($phase->phase_name . ' ' . ($phase->project->project_name ?? '')) }}">
                                     <td class="ps-4 text-center">
                                         <div class="order-badge bg-forest-light text-forest-green mx-auto">{{ $phase->phase_order }}</div>
                                     </td>
@@ -2515,7 +2519,31 @@
         adminProgressOverrideInput?.addEventListener('change', updateOverrideVisibility);
         updateOverrideVisibility();
 
-        function mapStatusClassAndLabel(status) {
+        function isPhaseLate(phase) {
+            if (phase.status === 'completed') {
+                return false;
+            }
+            if (phase.is_late === true) {
+                return true;
+            }
+
+            const today = new Date();
+            const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            return Boolean(phase.planned_end_date_raw && phase.planned_end_date_raw < todayDate);
+        }
+
+        function getDisplayStatus(phase) {
+            return phase.status !== 'completed'
+                && (phase.status === 'delayed' || isPhaseLate(phase))
+                ? 'delayed'
+                : phase.status;
+        }
+
+        function mapStatusClassAndLabel(status, isLate = false) {
+            if (isLate) {
+                return { class: 'status-delayed', label: 'Late' };
+            }
+
             switch (status) {
                 case 'completed': return { class: 'status-completed', label: 'Completed' };
                 case 'in_progress': return { class: 'status-inprogress', label: 'In progress' };
@@ -2572,10 +2600,13 @@
                 const row = document.querySelector(`tr[data-phase-id="${phase.phase_id}"]`);
                 if (!row) return;
 
-                const previousStatus = row.dataset.phaseStatus || '';
+                const previousStatus = row.dataset.phaseWorkflowStatus || row.dataset.phaseStatus || '';
                 const previousEndDate = row.dataset.phaseEndDate || '';
                 row.dataset.phaseName = (phase.phase_name || '').toLowerCase();
-                row.dataset.phaseStatus = phase.status || '';
+                const isLate = isPhaseLate(phase);
+                const displayStatus = getDisplayStatus(phase);
+                row.dataset.phaseStatus = displayStatus || '';
+                row.dataset.phaseWorkflowStatus = phase.status || '';
                 row.dataset.phaseEndDate = phase.planned_end_date_raw || '';
                 row.dataset.phaseOrder = String(phase.phase_order || 0);
                 row.dataset.phaseTitle = ((phase.phase_name || '') + ' ' + (phase.project_name || '')).toLowerCase();
@@ -2610,7 +2641,7 @@
                 if (statusCell) {
                     const badge = statusCell.querySelector('.badge');
                     if (badge) {
-                        const map = mapStatusClassAndLabel(phase.status);
+                        const map = mapStatusClassAndLabel(displayStatus, isLate);
                         badge.className = `${map.class} px-2 py-1 rounded-pill fw-medium`;
                         badge.textContent = map.label;
                     }
@@ -2633,6 +2664,8 @@
                         override_applied_at: phase.override_applied_at || null,
                         override_applied_by_name: phase.override_applied_by_name || null,
                         status: phase.status,
+                        display_status: displayStatus,
+                        is_late: isLate,
                     });
                     editBtn.dataset.phaseEdit = payload;
                 }
