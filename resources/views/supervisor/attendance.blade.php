@@ -3553,7 +3553,9 @@
                     throw new Error(options.message || 'Unable to start biometric enrollment.');
                 }
 
-                const credential = await SimpleWebAuthnBrowser.startRegistration(options);
+                const credential = await SimpleWebAuthnBrowser.startRegistration({
+                    optionsJSON: options
+                });
                 const response = await fetch(`${supervisorRoutes.workerProfileBase}/${encodeURIComponent(editingWorker.worker_id)}/biometric`, {
                     method: 'POST',
                     headers: {
@@ -3808,7 +3810,9 @@
                     throw new Error(options.message || 'Failed to get login options.');
                 }
 
-                const credential = await SimpleWebAuthnBrowser.startAuthentication(options);
+                const credential = await SimpleWebAuthnBrowser.startAuthentication({
+                    optionsJSON: options
+                });
 
                 const submitResponse = await fetch(supervisorRoutes.passkeyLogin, {
                     method: 'POST',
@@ -3927,7 +3931,9 @@
                     throw new Error(options.message || 'Failed to get registration options.');
                 }
 
-                capturedPasskeyCredential = await SimpleWebAuthnBrowser.startRegistration(options);
+                capturedPasskeyCredential = await SimpleWebAuthnBrowser.startRegistration({
+                    optionsJSON: options
+                });
 
                 regStatusLabel.innerText = 'Biometric token captured successfully!';
                 regStatusLabel.className = 'd-block text-success small mt-1';
