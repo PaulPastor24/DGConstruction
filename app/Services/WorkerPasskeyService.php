@@ -196,9 +196,16 @@ class WorkerPasskeyService
             );
         }
 
+        // Current versions of the WebAuthn serializer can return a CredentialRecord
+        // even when PublicKeyCredentialSource::class is requested. This is the
+        // expected server-side public-key record, NOT an unverified browser response.
+        if ($source instanceof \Webauthn\CredentialRecord) {
+            $source = CredentialRecordConverter::toPublicKeyCredentialSource($source);
+        }
+
         if (! $source instanceof PublicKeyCredentialSource) {
             throw new RuntimeException(
-                'Stored worker passkey record uses an unsupported format. Re-enroll this worker before scanning.',
+                'Stored worker passkey record is not a verified public-key credential. Re-enrollment is required.',
             );
         }
 
