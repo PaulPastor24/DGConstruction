@@ -9,7 +9,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/admin-attendance.css',
                 'resources/css/supervisor.css',
-                'resources/js/admin-timeline.js'
+                'resources/js/admin-timeline.js',
+                'resources/js/face-attendance.jsx'
             ],
             refresh: true,
         }),

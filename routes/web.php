@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\BiometricController;
+use App\Http\Controllers\FaceAttendanceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\PhaseController;
@@ -285,6 +286,20 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
 
     Route::get('/supervisor/workers/list', [BiometricController::class, 'listWorkers'])
         ->name('supervisor.workers.list');
+
+    Route::get('/supervisor/face-attendance', [FaceAttendanceController::class, 'index'])
+        ->name('supervisor.face-attendance.index');
+    Route::post('/supervisor/face-attendance/start', [FaceAttendanceController::class, 'start'])
+        ->middleware('throttle:8,1')
+        ->name('supervisor.face-attendance.start');
+    Route::post('/supervisor/face-attendance/finish', [FaceAttendanceController::class, 'finish'])
+        ->middleware('throttle:12,1')
+        ->name('supervisor.face-attendance.finish');
+    Route::post('/supervisor/face-attendance/cancel', [FaceAttendanceController::class, 'cancel'])
+        ->name('supervisor.face-attendance.cancel');
+    Route::delete('/supervisor/face-attendance/enrollments/{workerId}', [FaceAttendanceController::class, 'removeEnrollment'])
+        ->whereNumber('workerId')
+        ->name('supervisor.face-attendance.remove');
 
     Route::get('/supervisor/attendance/today', [SupervisorController::class, 'getTodayAttendance'])
         ->name('supervisor.attendance.today');

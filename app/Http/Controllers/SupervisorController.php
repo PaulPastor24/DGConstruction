@@ -458,6 +458,7 @@ class SupervisorController extends Controller
             'break_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'manual' => ['nullable', 'boolean'],
+            'verification_method' => ['nullable', Rule::in(['passkey', 'face'])],
             'remarks' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -474,6 +475,7 @@ class SupervisorController extends Controller
 
         $action = $validated['action'] ?? 'time_in';
         $manualMode = $request->boolean('manual');
+        $verificationMethod = $manualMode ? 'manual' : ($validated['verification_method'] ?? 'passkey');
         $date = $validated['log_date'];
         $now = now('Asia/Manila');
         $requestedTimeIn = $this->normalizeAttendanceTimeValue($request->input('time_in'));
@@ -501,7 +503,10 @@ class SupervisorController extends Controller
             }
 
             // pull() consumes the authorization; it cannot be replayed for other workers.
-            $proof = $request->session()->pull('worker_attendance_passkey_proof');
+            $proofKey = $verificationMethod === 'face'
+                ? 'worker_attendance_face_proof'
+                : 'worker_attendance_passkey_proof';
+            $proof = $request->session()->pull($proofKey);
             $proofTime = is_array($proof) ? (int) ($proof['verified_at'] ?? 0) : 0;
             if (! is_array($proof)
                 || (int) ($proof['worker_id'] ?? 0) !== (int) $worker->worker_id
@@ -510,7 +515,7 @@ class SupervisorController extends Controller
                 || $proofTime > $now->timestamp + 5
                 || ($now->timestamp - $proofTime) > 120) {
                 return response()->json([
-                    'message' => 'No recent verified passkey for this worker account. Scan again, or use Manual Log.',
+                    'message' => 'No recent verified '.($verificationMethod === 'face' ? 'facial identity' : 'passkey').' for this worker account. Scan again, or use Manual Log.',
                 ], 403);
             }
         }
@@ -567,14 +572,16 @@ class SupervisorController extends Controller
                 'remarks' => trim(
                     ($manualMode
                         ? 'Manual Time In by supervisor. Reason: '.$manualReason.'.'
-                        : 'Worker ACCOUNT passkey verified; supervisor confirmation required. Device authentication is not worker face/fingerprint matching.')
+                        : ($verificationMethod === 'face'
+                            ? 'AWS face liveness and enrolled worker identity matched; supervisor confirmed person.'
+                            : 'Worker ACCOUNT passkey verified; supervisor confirmation required. Device authentication is not worker face/fingerprint matching.'))
                     .' '.($status === 'late'
                         ? 'Late time-in by '.$this->lateMinutes($timeInValue, $scheduleStart).' minute(s).'
                         : 'Present. Time-in was on or before the scheduled start.')
                 ),
                 // A platform passkey proves access to an account credential,
                 // not a worker face/fingerprint match on a shared phone.
-                'biometric_matched' => 0,
+                'biometric_matched' => $verificationMethod === 'face' ? 1 : 0,
                 'created_at' => $now,
             ];
 

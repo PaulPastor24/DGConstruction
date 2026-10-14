@@ -1799,6 +1799,13 @@
                                 data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
                             <i class="bi bi-person-plus-fill"></i> Register Worker
                         </button>
+
+                        @if(config('face_attendance.enabled') && request()->isSecure())
+                            <a href="{{ route('supervisor.face-attendance.index') }}"
+                               class="btn attendance-quick-btn attendance-btn-register">
+                                <i class="bi bi-camera-video-fill"></i> Facial Attendance
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>

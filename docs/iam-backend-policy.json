@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "FaceSessions",
+      "Effect": "Allow",
+      "Action": ["rekognition:CreateFaceLivenessSession", "rekognition:GetFaceLivenessSessionResults"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "WorkersFaceCollection",
+      "Effect": "Allow",
+      "Action": ["rekognition:SearchFacesByImage", "rekognition:IndexFaces", "rekognition:DeleteFaces"],
+      "Resource": "arn:aws:rekognition:REGION:ACCOUNT_ID:collection/COLLECTION_ID"
+    },
+    {
+      "Sid": "AssumeStreamingOnlyRole",
+      "Effect": "Allow",
+      "Action": ["sts:AssumeRole"],
+      "Resource": "arn:aws:iam::ACCOUNT_ID:role/DGFaceLivenessStreamingRole"
+    }
+  ]
+}
