@@ -1,106 +1,116 @@
-name: Deploy to Hostinger
+
+name: Deploy Laravel to Hostinger
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: false
+
 jobs:
-  web-deploy:
-    name: Build and Deploy
+  deploy:
+    name: Build and Deploy Laravel
     runs-on: ubuntu-latest
+
     steps:
-      - name: Get latest code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
+          cache: npm
 
-      - name: Install dependencies and build assets
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build production frontend
+        run: npm run build
+
+      - name: Verify production build
         run: |
-          npm ci
-          npm run build
+          test -s public/build/manifest.json
+          test -d public/build/assets
 
-      # The Laravel application lives one level above public_html on Hostinger.
-      # Keep public/ out of this sync so it is not recreated as a nested folder.
-      - name: Sync Laravel application to domain root
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload compiled assets to staging
+        uses: appleboy/scp-action@v1
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
           port: 65002
-          protocol: sftp
-          local-dir: ./
-          # Use the absolute Hostinger path so SFTP cannot resolve this inside
-          # public_html or another server-side working directory.
-          server-dir: /home/u381418166/domains/system.dgconphil.com/
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.github/**
-            **/node_modules/**
-            **/public/**
-            **/storage/**
-            **/storage
-            storage/**
-            storage
-            **/public_html/storage/**
-            **/public_html/storage
-            **/tests/**
+          source: "public/build"
+          target: "/home/u381418166/domains/system.dgconphil.com/.builds/gha-${{ github.run_id }}"
+          command_timeout: 10m
 
-      # Upload the contents of public/ into public_html/, not public_html/public/.
-      - name: Sync public files to Hostinger document root
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: 65002
-          protocol: sftp
-          local-dir: public/
-          # Only the contents of public/ belong in the web document root.
-          server-dir: /home/u381418166/domains/system.dgconphil.com/public_html/
-          dangerous-clean-slate: false
-          exclude: |
-            **/storage
-            **/storage/**
-
-      - name: Refresh Laravel runtime on Hostinger
+      - name: Deploy application via SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
           port: 65002
-          script_stop: true
+          command_timeout: 20m
           script: |
-            cd /home/u381418166/domains/system.dgconphil.com
-            mkdir -p storage/app/public
-            if [ -L public_html/storage ]; then
-              target="$(readlink public_html/storage)"
-              if [ "$target" != "../storage/app/public" ]; then
-                rm public_html/storage
-              fi
-            elif [ -e public_html/storage ]; then
-              if [ -d public_html/storage ]; then
-                echo "Migrating existing public_html/storage files into Laravel storage..."
-                cp -a public_html/storage/. storage/app/public/
-                rm -rf public_html/storage
-              else
-                echo "public_html/storage exists as an unsupported file; refusing to overwrite it"
-                exit 1
-              fi
-            fi
-            if [ ! -L public_html/storage ]; then
-              ln -s ../storage/app/public public_html/storage
-            fi
+            set -eu
+
+            ROOT="/home/u381418166/domains/system.dgconphil.com"
+            STAGE="$ROOT/.builds/gha-${{ github.run_id }}"
+
+            cd "$ROOT"
+
+            echo "Checking Laravel installation..."
+            test -f artisan
+            test -d public_html
+            test -f public_html/index.php
+            test -f "$STAGE/public/build/manifest.json"
+
+            echo "Checking Git branch and working tree..."
+            test "$(git branch --show-current)" = "main"
+            test -z "$(git status --porcelain --untracked-files=no)"
+
+            echo "Updating Laravel source code..."
+            git pull --ff-only origin main
+
+            echo "Synchronizing public files..."
+            rsync -av \
+              --exclude='/index.php' \
+              --exclude='/.htaccess' \
+              --exclude='/storage' \
+              --exclude='/build' \
+              public/ public_html/
+
+            echo "Publishing compiled assets..."
+            mkdir -p public_html/build
+
+            rsync -av \
+              --exclude='/manifest.json' \
+              "$STAGE/public/build/" \
+              public_html/build/
+
+            cp "$STAGE/public/build/manifest.json" \
+              public_html/build/manifest.json
+
+            echo "Checking uploaded file storage..."
             test -L public_html/storage
             test "$(readlink public_html/storage)" = "../storage/app/public"
-            echo "Verified public_html/storage -> $(readlink public_html/storage)"
-            echo "Runtime upload files currently present: $(find storage/app/public -type f ! -name .gitignore | wc -l)"
-            php artisan migrate --force
+
+            echo "Clearing Laravel caches..."
             php artisan optimize:clear
             php artisan config:cache
+
+            echo "Verifying frontend manifest..."
+            test -s public_html/build/manifest.json
+
+            echo "Removing temporary build files..."
+            rm -rf "$STAGE"
+
+            echo "Deployment completed successfully!"
