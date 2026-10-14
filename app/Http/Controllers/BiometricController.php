@@ -128,6 +128,9 @@ class BiometricController extends Controller
 
     public function loginOptions(Request $request, WorkerPasskeyService $workerPasskeys)
     {
+        // An earlier passkey selection must never authorize a later attendance request.
+        $request->session()->forget('worker_attendance_passkey_proof');
+
         $credentials = DB::table('workers')
             ->where('is_active', 1)
             ->whereNotNull('credential_id')
@@ -139,6 +142,8 @@ class BiometricController extends Controller
 
     public function login(Request $request, WorkerPasskeyService $workerPasskeys)
     {
+        $request->session()->forget('worker_attendance_passkey_proof');
+
         $validated = $request->validate([
             'id' => ['required', 'string'],
             'rawId' => ['required', 'string'],
@@ -196,6 +201,14 @@ class BiometricController extends Controller
             ]);
 
         $worker = DB::table('workers')->where('worker_id', $worker->worker_id)->first();
+
+        // This proves the registered ACCOUNT passkey was signed and validated.
+        // It does not establish whose face/fingerprint unlocked a shared phone.
+        $request->session()->put('worker_attendance_passkey_proof', [
+            'worker_id' => (int) $worker->worker_id,
+            'supervisor_id' => (int) auth()->id(),
+            'verified_at' => now()->timestamp,
+        ]);
 
         return response()->json([
             'success' => true,
