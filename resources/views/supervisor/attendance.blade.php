@@ -487,7 +487,15 @@
             margin: 0.5rem auto;
         }
 
+        /*
+         * Edit Worker uses a form between .modal-content and .modal-body.
+         * Bootstrap's modal-dialog-scrollable styling expects the body to be
+         * a direct flex child; without these rules the form can grow taller
+         * than the phone viewport and its controls become unreachable.
+         */
         #editWorkerModal .modal-content {
+            display: flex;
+            flex-direction: column;
             max-height: calc(100vh - 1rem);
             max-height: calc(100dvh - 1rem);
             overflow: hidden;
@@ -495,10 +503,26 @@
             border-radius: 16px;
         }
 
-        #editWorkerModal .modal-body {
+        #editWorkerModal .modal-header {
+            flex: 0 0 auto;
+        }
+
+        #editWorkerModal #editWorkerForm {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #editWorkerModal #editWorkerForm > .modal-body {
+            flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
             padding: 1.25rem;
         }
 
@@ -549,30 +573,28 @@
             flex: 1;
         }
 
-        #editWorkerModal .modal-footer {
+        #editWorkerModal #editWorkerForm > .modal-footer {
             flex: 0 0 auto;
             border-top: 1px solid #e5eee6;
             background: #f8fbf8;
         }
 
         @media (max-width: 575.98px) {
-            #editWorkerModal {
-                overflow-y: auto;
-            }
-
             #editWorkerModal .modal-dialog {
                 width: calc(100vw - 1rem);
                 max-width: none;
-                min-height: calc(100dvh - 1rem);
+                height: calc(100vh - 1rem);
+                height: calc(100dvh - 1rem);
+                min-height: 0;
                 margin: 0.5rem auto;
-                align-items: flex-start;
+                display: flex;
+                align-items: stretch;
             }
 
             #editWorkerModal .modal-content {
-                height: calc(100dvh - 1rem);
-                max-height: calc(100dvh - 1rem);
-                display: flex;
-                flex-direction: column;
+                height: 100%;
+                max-height: 100%;
+                min-height: 0;
             }
 
             #workerDetailsModal .modal-content {
@@ -618,23 +640,52 @@
                 border-radius: 12px;
             }
 
-            #editWorkerModal .modal-body {
+            #editWorkerModal #editWorkerForm > .modal-body {
                 flex: 1 1 auto;
                 max-height: none;
-                overflow-y: auto;
                 padding: 1rem;
             }
 
+            #editWorkerModal .modal-header {
+                padding: 0.85rem 1rem;
+            }
+
+            #editWorkerModal .workers-modal-heading {
+                min-width: 0;
+            }
+
+            #editWorkerModal .workers-modal-title {
+                font-size: 1rem;
+            }
+
+            #editWorkerModal .workers-modal-subtitle {
+                font-size: 0.75rem;
+            }
+
             #editWorkerModal .worker-edit-photo-row {
-                align-items: flex-start;
+                flex-direction: column;
+                align-items: stretch;
                 padding: 0.75rem;
                 gap: 0.75rem;
+            }
+
+            #editWorkerModal .worker-edit-photo-controls {
+                width: 100%;
             }
 
             #editWorkerModal .worker-edit-avatar-preview {
                 width: 68px;
                 height: 68px;
                 flex-basis: 68px;
+            }
+
+            #editWorkerModal #btnReenrollWorkerFingerprint {
+                width: 100%;
+                white-space: normal;
+            }
+
+            #editWorkerModal #editWorkerForm > .modal-footer {
+                padding: 0.7rem 1rem max(0.7rem, env(safe-area-inset-bottom));
             }
         }
 
@@ -1999,6 +2050,9 @@
             <form id="editWorkerForm" novalidate>
                 <input type="hidden" id="editWorkerId" name="worker_id">
                 <div class="modal-body">
+                    <button type="button" class="btn btn-outline-success btn-sm w-100 mb-3 d-sm-none" id="btnJumpWorkerPhoto">
+                        <i class="bi bi-image me-1" aria-hidden="true"></i> Go to profile photo &amp; biometric settings
+                    </button>
                     <div class="row g-3">
                         <div class="col-sm-6">
                             <label for="editWorkerFirstName" class="form-label small fw-semibold">First name</label>
@@ -2016,7 +2070,7 @@
                             <label for="editWorkerContact" class="form-label small fw-semibold">Contact number</label>
                             <input type="tel" id="editWorkerContact" name="contact_number" class="form-control" maxlength="20" autocomplete="tel" placeholder="Optional">
                         </div>
-                        <div class="col-12">
+                        <div class="col-12" id="editWorkerPhotoSection">
                             <label class="form-label small fw-semibold" for="editWorkerProfileImage">Profile photo</label>
                             <div class="worker-edit-photo-row">
                                 <div id="editWorkerAvatarPreview" class="worker-edit-avatar-preview" aria-live="polite">
@@ -2031,7 +2085,7 @@
                                 <button type="button" class="btn btn-outline-success btn-sm" id="btnReenrollWorkerFingerprint">
                                     <i class="bi bi-fingerprint me-1"></i> Re-enroll fingerprint / Face ID
                                 </button>
-                                <div class="form-text">Use this once if the worker was enrolled on another device or site address.</div>
+                                <div class="form-text">Re-enrolls a device passkey only. Face ID or fingerprint on one shared phone cannot identify different workers.</div>
                             </div>
                         </div>
                     </div>
@@ -3451,6 +3505,17 @@
             setTimeout(cleanupStaleModalBackdrop, 0);
         });
 
+        // Keep navigation within the scrollable form rather than scrolling
+        // the (Bootstrap-locked) page behind the modal on mobile Safari.
+        document.getElementById('btnJumpWorkerPhoto')?.addEventListener('click', function () {
+            const scroller = editWorkerModalElement?.querySelector('#editWorkerForm > .modal-body');
+            const section = document.getElementById('editWorkerPhotoSection');
+            if (!scroller || !section) return;
+
+            const offset = section.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+            scroller.scrollTo({ top: scroller.scrollTop + offset - 8, behavior: 'smooth' });
+        });
+
         editWorkerProfileImageInput?.addEventListener('change', function () {
             const file = editWorkerProfileImageInput.files?.[0];
 
@@ -3571,7 +3636,7 @@
                     throw new Error(result.message || 'Unable to update biometric enrollment.');
                 }
 
-                await showAttendanceAlert('success', 'Biometric updated', 'The worker can now use fingerprint or Face ID on this site.');
+                await showAttendanceAlert('success', 'Device passkey updated', 'This account passkey was updated. Shared-device Face ID/fingerprint does not identify different workers.');
             } catch (error) {
                 console.error(error);
                 await showAttendanceAlert('error', 'Biometric update failed', error.message || 'Unable to update biometric enrollment.');
@@ -4056,7 +4121,8 @@
                     }
                 }
 
-                await saveScannedWorkerAttendance(savedWorker);
+                // Enrollment does not prove attendance. A separate successful
+                // passkey authentication or an authorized manual log is required.
                 await loadWorkers(1);
 
                 const registerModalElement = document.getElementById('registerWorkerModal');
@@ -4083,7 +4149,7 @@
                 globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
                 globalScanStatus.innerHTML = `
                     <i class="bi bi-check-circle-fill"></i>
-                    New worker added and timed in:
+                    New worker enrolled:
                     <strong>${escapeHtml(savedWorker.first_name)} ${escapeHtml(savedWorker.last_name)}</strong>
                     ${profileImageUploadFailed ? '<br><span>Photo upload failed. Use Enrolled Workers to retry.</span>' : ''}
                 `;
@@ -4091,8 +4157,8 @@
                     profileImageUploadFailed ? 'warning' : 'success',
                     profileImageUploadFailed ? 'Worker saved, photo not uploaded' : 'Worker enrolled',
                     profileImageUploadFailed
-                        ? 'The worker and attendance were saved, but the profile photo could not be uploaded. Retry it from Enrolled Workers.'
-                        : `${savedWorker.first_name} ${savedWorker.last_name} was enrolled and timed in successfully.`
+                        ? 'The worker was enrolled, but the profile photo could not be uploaded. Retry it from Enrolled Workers.'
+                        : `${savedWorker.first_name} ${savedWorker.last_name} was enrolled successfully. Use the fingerprint button to record attendance.`
                 );
             } catch (error) {
                 console.error(error);
