@@ -2900,6 +2900,7 @@
                             <div class="status-guide-item"><span class="status-guide-swatch" style="background:#166534;"></span><span class="status-guide-label">Completed</span></div>
                             <div class="status-guide-item"><span class="status-guide-swatch" style="background:#1565C0;"></span><span class="status-guide-label">In Progress</span></div>
                             <div class="status-guide-item"><span class="status-guide-swatch" style="background:#B7791F;"></span><span class="status-guide-label">Upcoming</span></div>
+                            <div class="status-guide-item"><span class="status-guide-swatch" style="background:#B91C1C;"></span><span class="status-guide-label">Late</span></div>
                         </div>
                     </div>
                 </aside>

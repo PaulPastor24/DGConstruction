@@ -50,7 +50,7 @@ class BiometricController extends Controller
         return response()->json($workerPasskeys->createRegistrationOptions($firstName, $lastName));
     }
 
-    public function registerWorkerBiometric(Request $request)
+    public function registerWorkerBiometric(Request $request, WorkerPasskeyService $workerPasskeys)
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -59,12 +59,28 @@ class BiometricController extends Controller
             'credential' => ['required', 'array'],
         ]);
 
-        $credential = $validated['credential'];
-        $credentialId = $this->extractCredentialId($credential);
-
-        if (!$credentialId) {
+        // Never store the raw browser credential as proof of enrollment.
+        // Registration must be validated against the challenge and origin
+        // before saving the server-side credential public key.
+        try {
+            $credentialSource = $workerPasskeys->verifyRegistration($validated['credential']);
+            $credentialId = $workerPasskeys->credentialId($credentialSource);
+            $credentialJson = $workerPasskeys->serializeCredentialSource($credentialSource);
+        } catch (\Throwable $error) {
+            Log::warning('Worker biometric registration verification failed.', [
+                'error' => $error->getMessage(),
+                'exception' => get_class($error),
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
+            ]);
             return response()->json([
-                'message' => 'Credential ID was not received from the browser.',
+                'message' => 'Worker passkey enrollment could not be verified. Please start enrollment again.',
+            ], 422);
+        }
+
+        if (DB::table('workers')->where('credential_id', $credentialId)->exists()) {
+            return response()->json([
+                'message' => 'This passkey is already registered to a worker.',
             ], 422);
         }
 
@@ -76,27 +92,22 @@ class BiometricController extends Controller
                 'contact_number' => null,
                 'is_active' => 1,
                 'credential_id' => $credentialId,
-                'credential_json' => json_encode($credential),
+                'credential_json' => $credentialJson,
                 'created_at' => now(),
                 'updated_at' => now(),
             ], 'worker_id');
 
-            $worker = DB::table('workers')
-                ->where('worker_id', $workerId)
-                ->first();
-
+            $worker = DB::table('workers')->where('worker_id', $workerId)->first();
             return response()->json([
-                'message' => 'Worker successfully registered.',
+                'message' => 'Worker passkey successfully registered.',
                 'worker' => $this->normalizeWorkerResponse($worker),
             ]);
         } catch (\Throwable $error) {
             Log::error('Failed to register biometric worker', [
                 'error' => $error->getMessage(),
             ]);
-
             return response()->json([
                 'message' => 'Failed to save worker.',
-                'error' => $error->getMessage(),
             ], 500);
         }
     }
@@ -153,6 +164,9 @@ class BiometricController extends Controller
             Log::warning('Worker biometric assertion verification failed.', [
                 'worker_id' => $worker->worker_id,
                 'error' => $error->getMessage(),
+                'exception' => get_class($error),
+                'file' => $error->getFile(),
+                'line' => $error->getLine(),
             ]);
 
             $errorMessage = strtolower($error->getMessage());
@@ -161,11 +175,13 @@ class BiometricController extends Controller
                 || str_contains($errorMessage, 'origin')
                 || str_contains($errorMessage, 'credential source')
                 || str_contains($errorMessage, 'does not match')
-                || str_contains($errorMessage, 'needs to be enrolled');
+                || str_contains($errorMessage, 'needs to be enrolled')
+                || str_contains($errorMessage, 're-enroll')
+                || str_contains($errorMessage, 'passkey record');
 
             return response()->json([
                 'message' => $requiresReenrollment
-                    ? 'This biometric was enrolled on a different site address. Open Enrolled Workers, choose Edit, and initialize the fingerprint again.'
+                    ? 'This worker passkey is invalid, incompatible, or enrolled for another site. Ask the worker to re-enroll on their own trusted device.'
                     : 'Biometric verification failed. Please try scanning again.',
                 'requires_reenrollment' => $requiresReenrollment,
                 'error_code' => $requiresReenrollment ? 'reenrollment_required' : 'verification_failed',

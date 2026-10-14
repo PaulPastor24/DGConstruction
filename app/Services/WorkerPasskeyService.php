@@ -69,6 +69,10 @@ class WorkerPasskeyService
             PublicKeyCredential::class,
         );
 
+        if (! $credential instanceof PublicKeyCredential) {
+            throw new RuntimeException('Registration response could not be decoded as a WebAuthn credential.');
+        }
+
         if (! $credential->response instanceof AuthenticatorAttestationResponse) {
             throw new RuntimeException('The authenticator did not return a registration response.');
         }
@@ -129,6 +133,10 @@ class WorkerPasskeyService
             PublicKeyCredential::class,
         );
 
+        if (! $credential instanceof PublicKeyCredential) {
+            throw new RuntimeException('Authentication response could not be decoded as a WebAuthn credential.');
+        }
+
         if (! $credential->response instanceof AuthenticatorAssertionResponse) {
             throw new RuntimeException('The authenticator did not return an assertion response.');
         }
@@ -165,55 +173,43 @@ class WorkerPasskeyService
         return Serializer::make()->toJson($credentialSource);
     }
 
+    /**
+     * A successful WebAuthn assertion can only be checked against a previously
+     * verified credential source containing the authenticator's public key.
+     *
+     * Older installations stored the raw browser registration response in
+     * credential_json. That is not a verified server-side credential source,
+     * so never reinterpret it as one or treat a Face ID prompt as proof.
+     */
     private function credentialSourceForWorker(object $worker, Serializer $serializer): PublicKeyCredentialSource
     {
         try {
-            $source = $serializer->fromJson($worker->credential_json, PublicKeyCredentialSource::class);
-
-            if ($source instanceof PublicKeyCredentialSource) {
-                return $source;
-            }
-        } catch (\Throwable) {
-            // Existing workers store the original browser attestation response.
+            $source = $serializer->fromJson(
+                (string) $worker->credential_json,
+                PublicKeyCredentialSource::class,
+            );
+        } catch (\Throwable $error) {
+            throw new RuntimeException(
+                'Stored worker passkey record is invalid. Re-enroll this worker before scanning.',
+                0,
+                $error,
+            );
         }
 
-        $legacyCredential = $serializer->fromJson($worker->credential_json, PublicKeyCredential::class);
-
-        if (! $legacyCredential->response instanceof AuthenticatorAttestationResponse) {
-            throw new RuntimeException('This worker needs to be enrolled again before biometric sign-in.');
+        if (! $source instanceof PublicKeyCredentialSource) {
+            throw new RuntimeException(
+                'Stored worker passkey record uses an unsupported format. Re-enroll this worker before scanning.',
+            );
         }
 
-        $displayName = trim(($worker->first_name ?? '').' '.($worker->last_name ?? '')) ?: 'Worker';
-        $relyingParty = new PublicKeyCredentialRpEntity(name: '', id: $this->relyingPartyId());
-        $relyingParty->name = $this->relyingPartyName();
-        $legacyOptions = new PublicKeyCredentialCreationOptions(
-            rp: $relyingParty,
-            user: new PublicKeyCredentialUserEntity(
-                name: strtolower(str_replace(' ', '.', $displayName)).'@workers.local',
-                id: (string) $worker->worker_id,
-                displayName: $displayName,
-            ),
-            challenge: $legacyCredential->response->clientDataJSON->challenge,
-            pubKeyCredParams: [
-                PublicKeyCredentialParameters::createPk(-7),
-                PublicKeyCredentialParameters::createPk(-257),
-            ],
-            authenticatorSelection: new AuthenticatorSelectionCriteria(
-                authenticatorAttachment: AuthenticatorSelectionCriteria::AUTHENTICATOR_ATTACHMENT_PLATFORM,
-                userVerification: AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_PREFERRED,
-                residentKey: AuthenticatorSelectionCriteria::RESIDENT_KEY_REQUIREMENT_PREFERRED,
-            ),
-            attestation: PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE,
-        );
-        $credentialRecord = AuthenticatorAttestationResponseValidator::create(
-            (new ConfigureCeremonyStepManagerFactoryAction)->execute()->creationCeremony(),
-        )->check(
-            $legacyCredential->response,
-            $legacyOptions,
-            $this->clientHost(),
-        );
+        $expectedId = $this->base64UrlEncode($source->publicKeyCredentialId);
+        if (! hash_equals((string) $worker->credential_id, $expectedId)) {
+            throw new RuntimeException(
+                'Stored worker passkey does not match this worker. Re-enroll the correct worker.',
+            );
+        }
 
-        return CredentialRecordConverter::toPublicKeyCredentialSource($credentialRecord);
+        return $source;
     }
 
     private function relyingPartyId(): string

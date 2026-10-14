@@ -452,12 +452,13 @@ class SupervisorController extends Controller
         $validated = $request->validate([
             'worker_id' => ['required', 'integer'],
             'log_date' => ['required', 'date'],
-            'action' => ['nullable', 'string'],
+            'action' => ['required', Rule::in(['time_in', 'break_out', 'break_in', 'time_out'])],
             'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'break_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'break_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'manual' => ['nullable', 'boolean'],
+            'remarks' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $worker = DB::table('workers')
@@ -481,6 +482,39 @@ class SupervisorController extends Controller
         $requestedTimeOut = $this->normalizeAttendanceTimeValue($request->input('time_out'));
         $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
+        // The authenticated supervisor can log attendance manually with a reason.
+        // A non-manual Time In must consume a fresh passkey proof issued by
+        // BiometricController AFTER a successful WebAuthn signature verification.
+        // Device passkeys do NOT identify a worker's real face/fingerprint.
+        $manualReason = trim((string) ($validated['remarks'] ?? ''));
+        if ($manualMode && $action === 'time_in' && $manualReason === '') {
+            return response()->json([
+                'message' => 'Please provide a reason for manual Time In.',
+            ], 422);
+        }
+
+        if (! $manualMode && $action === 'time_in') {
+            if ($date !== $now->toDateString()) {
+                return response()->json([
+                    'message' => 'Passkey Time In can only be recorded for today. Use an authorized manual correction for earlier dates.',
+                ], 422);
+            }
+
+            // pull() consumes the authorization; it cannot be replayed for other workers.
+            $proof = $request->session()->pull('worker_attendance_passkey_proof');
+            $proofTime = is_array($proof) ? (int) ($proof['verified_at'] ?? 0) : 0;
+            if (! is_array($proof)
+                || (int) ($proof['worker_id'] ?? 0) !== (int) $worker->worker_id
+                || (int) ($proof['supervisor_id'] ?? 0) !== (int) Auth::id()
+                || $proofTime <= 0
+                || $proofTime > $now->timestamp + 5
+                || ($now->timestamp - $proofTime) > 120) {
+                return response()->json([
+                    'message' => 'No recent verified passkey for this worker account. Scan again, or use Manual Log.',
+                ], 403);
+            }
+        }
+
         $existingLog = DB::table('attendance_logs')
             ->when(
                 $hasWorkerId,
@@ -492,6 +526,18 @@ class SupervisorController extends Controller
             )
             ->whereDate('log_date', $date)
             ->first();
+
+        if (! $existingLog && $action !== 'time_in') {
+            return response()->json([
+                'message' => 'Record Time In before attempting break or Time Out.',
+            ], 422);
+        }
+
+        if ($existingLog && $action === 'time_in' && ! $manualMode) {
+            return response()->json([
+                'message' => 'This worker already has a Time In record for the selected day.',
+            ], 409);
+        }
 
         if (! $existingLog) {
             $timeInValue = $requestedTimeIn ?? $now->format('H:i:s');
@@ -518,10 +564,17 @@ class SupervisorController extends Controller
                 'break_in' => $manualMode && $requestedBreakIn ? $requestedBreakIn : null,
                 'time_out' => $manualMode && $requestedTimeOut ? $requestedTimeOut : null,
                 'status' => $status,
-                'remarks' => $status === 'late'
-                    ? 'Late time-in by '.$this->lateMinutes($timeInValue, $scheduleStart).' minute(s).'
-                    : 'Present. Time-in was on or before the scheduled start.',
-                'biometric_matched' => $manualMode ? 0 : 1,
+                'remarks' => trim(
+                    ($manualMode
+                        ? 'Manual Time In by supervisor. Reason: '.$manualReason.'.'
+                        : 'Worker ACCOUNT passkey verified; supervisor confirmation required. Device authentication is not worker face/fingerprint matching.')
+                    .' '.($status === 'late'
+                        ? 'Late time-in by '.$this->lateMinutes($timeInValue, $scheduleStart).' minute(s).'
+                        : 'Present. Time-in was on or before the scheduled start.')
+                ),
+                // A platform passkey proves access to an account credential,
+                // not a worker face/fingerprint match on a shared phone.
+                'biometric_matched' => 0,
                 'created_at' => $now,
             ];
 
@@ -555,7 +608,7 @@ class SupervisorController extends Controller
                 }
 
                 if (! empty($updates)) {
-                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Manual attendance values updated.');
+                    $updates['remarks'] = trim(($existingLog->remarks ?? '').' Manual attendance values updated by supervisor.' . ($manualReason !== '' ? ' Reason: '.$manualReason.'.' : ''));
                 }
             }
 
