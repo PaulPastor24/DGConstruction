@@ -5,6 +5,7 @@ AWS is no longer used by facial attendance. The phone extracts Human 3.3.6 FaceR
 ## Setup / deployment
 
 1. Run `npm ci` and `npm run build`.
+   The repository includes `public/build` and `public/models/human` for Hostinger Git deployment. Commit both folders with the source changes after each build, then push to GitHub and deploy that commit on Hostinger. A separate ZIP upload is not required when these files are deployed from Git.
 2. Deploy **both** `public/build` and the complete `public/models/human` folder alongside the PHP changes. This includes `public/models/human/wasm/` and its three `.wasm` files. The build script copies the models and pinned TensorFlow.js 4.22.0 WebAssembly binaries locally; no external model CDN or API key is required at runtime. Uploading only `public/build` is insufficient for the WebAssembly update. Keep the included `.htaccess` in the wasm directory so Apache serves the correct MIME type.
 3. Run these additive migrations (or your normal migration deployment):
    ```sh
