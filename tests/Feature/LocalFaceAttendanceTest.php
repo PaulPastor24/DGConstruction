@@ -82,7 +82,7 @@ class LocalFaceAttendanceTest extends TestCase
             $t->boolean('is_active')->default(true);
             $t->date('assigned_date')->nullable();
         });
-        foreach (['2026_10_14_000001_create_worker_face_enrollments', '2026_10_14_000002_create_worker_face_attempts', '2026_10_16_000001_add_local_face_templates'] as $migration) {
+        foreach (['2026_10_14_000001_create_worker_face_enrollments', '2026_10_14_000002_create_worker_face_attempts', '2026_10_16_000001_add_local_face_templates', '2026_10_16_000002_allow_contract_based_face_enrollment'] as $migration) {
             (require database_path('migrations/'.$migration.'.php'))->up();
         }
         $supervisor = User::create(['name' => 'Supervisor', 'email' => 'camera@example.com', 'password' => bcrypt('password'), 'role' => 'supervisor', 'is_active' => true]);
@@ -104,7 +104,7 @@ class LocalFaceAttendanceTest extends TestCase
     {
         return $this->postJson(route('supervisor.face-attendance.start'), [
             'purpose' => $purpose, 'worker_id' => $worker,
-            ...($purpose === 'enroll' ? ['supervisor_confirmed_identity' => true, 'privacy_notice_acknowledged' => true] : []),
+            ...($purpose === 'enroll' ? ['supervisor_confirmed_identity' => true] : []),
         ])->assertOk()->json();
     }
 
@@ -120,16 +120,17 @@ class LocalFaceAttendanceTest extends TestCase
         $this->finishScan($this->startScan('enroll'), $this->samples())->assertOk();
     }
 
-    public function test_enrollment_requires_both_confirmations_but_attendance_scan_does_not(): void
+    public function test_enrollment_requires_identity_only_and_attendance_scan_needs_no_enrollment_confirmation(): void
     {
         foreach ([[], ['supervisor_confirmed_identity' => false, 'privacy_notice_acknowledged' => false]] as $confirmations) {
             $this->postJson(route('supervisor.face-attendance.start'), [
                 'purpose' => 'enroll', 'worker_id' => 1, ...$confirmations,
             ])->assertUnprocessable()->assertJsonValidationErrors([
-                'supervisor_confirmed_identity', 'privacy_notice_acknowledged',
+                'supervisor_confirmed_identity',
             ]);
         }
         $this->enroll();
+        $this->assertNull(DB::table('worker_face_enrollments')->value('notice_acknowledged_at'));
         $this->postJson(route('supervisor.face-attendance.start'), ['purpose' => 'attendance'])
             ->assertOk()->assertJsonStructure(['session_id', 'model_version']);
     }

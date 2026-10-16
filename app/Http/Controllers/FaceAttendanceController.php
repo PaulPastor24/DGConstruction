@@ -81,7 +81,6 @@ class FaceAttendanceController extends Controller
             'purpose' => ['required', Rule::in(['enroll', 'attendance'])],
             'worker_id' => ['required_if:purpose,enroll', 'nullable', 'integer'],
             'supervisor_confirmed_identity' => ['exclude_unless:purpose,enroll', 'required', 'accepted'],
-            'privacy_notice_acknowledged' => ['exclude_unless:purpose,enroll', 'required', 'accepted'],
         ]);
         if ($data['purpose'] === 'enroll') {
             $this->assignedWorker((int) $data['worker_id']);
@@ -143,7 +142,11 @@ class FaceAttendanceController extends Controller
             $matcher->validateSamples($data['samples']);
             // Enrollment checks all local templates for duplicates. Templates never leave the server.
             $rows = DB::table('worker_face_enrollments')->whereNotNull('face_descriptors')
-                ->where('model_version', config('face_attendance.model_version'))->get();
+                ->where('model_version', config('face_attendance.model_version'))
+                ->when($attempt->purpose === 'attendance', fn ($q) => $q->whereIn('worker_id',
+                    DB::table('workers')->whereIn('worker_id', $this->workerIds())
+                        ->where('is_active', 1)->select('worker_id')
+                ))->get();
             $scores = [];
             foreach ($rows as $row) {
                 $samples = json_decode(Crypt::decryptString($row->face_descriptors), true, 512, JSON_THROW_ON_ERROR);
@@ -165,7 +168,9 @@ class FaceAttendanceController extends Controller
                         'aws_face_id' => 'local:'.Str::uuid(),
                         'face_descriptors' => Crypt::encryptString(json_encode($data['samples'], JSON_THROW_ON_ERROR)),
                         'model_version' => config('face_attendance.model_version'),
-                        'enrolled_by' => Auth::id(), 'enrolled_at' => now(), 'notice_acknowledged_at' => now(),
+                        'enrolled_by' => Auth::id(), 'enrolled_at' => now(),
+                        // Privacy is handled in the hiring contract; no in-app acknowledgement occurred.
+                        'notice_acknowledged_at' => $old->notice_acknowledged_at ?? null,
                         'privacy_notice_version' => config('face_attendance.privacy_notice_version'),
                         'created_at' => $old->created_at ?? now(), 'updated_at' => now(),
                     ]);

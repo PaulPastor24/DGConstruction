@@ -31,7 +31,6 @@ function App() {
   const [workerId, setWorkerId] = useState(initialWorkerId);
   const launched = useRef(false);
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
-  const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [session, setSession] = useState(null);
   const [matched, setMatched] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -75,10 +74,9 @@ function App() {
       const payload = { purpose };
       if (purpose === 'enroll') {
         if (!workerId) throw new Error('Select the worker being enrolled.');
-        if (!identityConfirmed || !privacyAcknowledged) throw new Error('Confirm in-person identity and privacy notice before enrollment.');
+        if (!identityConfirmed) throw new Error('Confirm the worker identity in person before enrollment.');
         payload.worker_id = Number(workerId);
         payload.supervisor_confirmed_identity = true;
-        payload.privacy_notice_acknowledged = true;
       }
       const result = await send(urls.start, payload);
       setSession(result);
@@ -134,12 +132,11 @@ function App() {
         {purpose === 'enroll' && (
           <div>
             <label htmlFor="face-worker">Worker to enroll</label>
-            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => { setWorkerId(e.target.value); setIdentityConfirmed(false); setPrivacyAcknowledged(false); }}>
+            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => { setWorkerId(e.target.value); setIdentityConfirmed(false); }}>
               <option value="">Select worker</option>
               {workers.map(w => <option key={w.worker_id} value={w.worker_id}>{w.name}{enrolled.includes(Number(w.worker_id)) ? ' (re-enroll)' : ''}</option>)}
             </select>
             <label style={{display:'block',marginTop:12}}><input type="checkbox" checked={identityConfirmed} onChange={e=>setIdentityConfirmed(e.target.checked)}/> I verified this worker's identity in person.</label>
-            <label style={{display:'block',marginTop:8}}><input type="checkbox" checked={privacyAcknowledged} onChange={e=>setPrivacyAcknowledged(e.target.checked)}/> The worker received the applicable biometric privacy notice and an authorized alternative.</label>
             {enrolled.includes(Number(workerId)) && <div className="face-actions"><button type="button" className="face-button face-button-danger" disabled={busy || !!session} onClick={removeEnrollment}>Remove this worker's enrolled face</button></div>}
           </div>
         )}

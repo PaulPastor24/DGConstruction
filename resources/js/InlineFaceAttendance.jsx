@@ -19,7 +19,6 @@ export function mountInlineAttendance(mount) {
     const [session, setSession] = useState(null);
     const [matched, setMatched] = useState(null);
     const [confirmed, setConfirmed] = useState(false);
-    const [notice, setNotice] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -42,7 +41,7 @@ export function mountInlineAttendance(mount) {
       try {
         const result = await send(urls.start, {
           purpose: next.purpose,
-          ...(next.purpose === 'enroll' ? { worker_id: next.workerId, supervisor_confirmed_identity: true, privacy_notice_acknowledged: true } : {}),
+          ...(next.purpose === 'enroll' ? { worker_id: next.workerId, supervisor_confirmed_identity: true } : {}),
         });
         if (generation.current !== token) { await send(urls.cancel, { session_id: result.session_id }); return; }
         currentSession.current = result;
@@ -63,7 +62,7 @@ export function mountInlineAttendance(mount) {
       const open = async event => {
         if (working.current || currentSession.current) return;
         const next = event.detail;
-        setOperation(next); setError(''); setMessage(''); setMatched(null); setConfirmed(false); setNotice(false);
+        setOperation(next); setError(''); setMessage(''); setMatched(null); setConfirmed(false);
         mount.scrollIntoView({ behavior: 'smooth', block: 'center' });
         if (next.purpose === 'attendance') {
           await startScan(next);
@@ -121,8 +120,7 @@ export function mountInlineAttendance(mount) {
       {operation?.purpose === 'enroll' && !session && !matched && <div className="text-start mt-3">
         <h6>Enroll face: {operation.name || 'worker'}</h6>
         <label className="d-block mb-2"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> I verified this worker's identity in person.</label>
-        <label className="d-block mb-2"><input type="checkbox" checked={notice} onChange={e => setNotice(e.target.checked)} /> The worker received the biometric privacy notice and an authorized alternative.</label>
-        <button className="btn btn-success" disabled={busy || !confirmed || !notice || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
+        <button className="btn btn-success" disabled={busy || !confirmed || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
       </div>}
       {session && <FaceCamera key={session.session_id} disabled={busy} onComplete={complete} onError={reason => {
         currentSession.current = null; setSession(null); setError(reason);
