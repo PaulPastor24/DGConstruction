@@ -266,11 +266,15 @@ class LocalFaceAttendanceTest extends TestCase
     public function test_main_attendance_screen_uses_face_camera_instead_of_device_passkeys(): void
     {
         $this->get(route('supervisor.attendance'))->assertOk()
-            ->assertSee('Facial Recognition')->assertSee('id="workerFaceCameraModal"', false)
+            ->assertSee('Facial Recognition')->assertSee('id="face-attendance-inline"', false)
+            ->assertDontSee('workerFaceCameraModal')->assertDontSee('<iframe', false)
             ->assertSee('bi-person-bounding-box')->assertSee('regProjectId')
             ->assertDontSee('SimpleWebAuthnBrowser')->assertDontSee('passkeys/login')
             ->assertDontSee('bi-fingerprint')->assertDontSee('Facial Attendance');
         $this->get(route('supervisor.face-attendance.index', ['embedded' => 1]))->assertOk()
             ->assertSee('<title>Worker face recognition</title>', false);
+        $this->getJson(route('supervisor.face-attendance.index'))->assertOk()
+            ->assertJsonPath('faceWorkerChoices.0.worker_id', 1)
+            ->assertJsonMissingPath('faceWorkerChoices.0.face_descriptors');
     }
 }

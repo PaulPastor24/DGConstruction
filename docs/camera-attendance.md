@@ -17,7 +17,7 @@ AWS is no longer used by facial attendance. The phone extracts Human 3.3.6 FaceR
    ```
 4. Set `FACE_ATTENDANCE_ENABLED=true`. Remove previous AWS-specific face settings. Replace any old AWS similarity threshold (98) with `FACE_SIMILARITY_THRESHOLD=65` and `FACE_AMBIGUITY_MARGIN=8`.
 5. Keep the existing `APP_KEY` stable and backed up: changing it makes encrypted enrollments unreadable. Do not generate a new key during deployment.
-6. Open Supervisor > Attendance and tap the main face icon under **Ready to Identify**. The camera opens in a dialog. Grant camera permission, scan and confirm Time In; the attendance table refreshes after saving.
+6. Open Supervisor > Attendance and tap the main face icon under **Ready to Identify**. The camera opens directly inside the attendance panel, without a modal, iframe, or operation menu. Grant camera permission, capture the worker, and confirm Time In; the attendance table refreshes after saving. Close camera or finish saving to return to the face button for the next worker.
 7. For an existing worker with no camera enrollment, use **Enrolled Workers > Edit > Enroll / update face**. Enroll on that same worker record once; switching phones or signing in again does not require another worker record or another face enrollment. Previous passkeys/AWS templates cannot be converted to local camera templates.
 8. For a genuinely new worker, use **Register Worker**, select the supervisor's assigned project, save their details, then complete camera enrollment. No device passkey is required. No new migrations are needed for this main-screen camera update if the three face migrations above already ran.
 

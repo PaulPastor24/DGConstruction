@@ -5,7 +5,7 @@ async function getEngine() {
   if (!engine) engine = (async () => {
     const { Human } = await import('@vladmandic/human');
     const human = new Human({
-      backend: 'webgl', modelBasePath: document.getElementById('face-attendance-root').dataset.models, cacheSensitivity: 0,
+      backend: 'webgl', modelBasePath: (document.getElementById('face-attendance-root') || document.getElementById('face-attendance-inline')).dataset.models, cacheSensitivity: 0,
       filter: { enabled: true, equalization: true },
       face: {
         enabled: true,
@@ -95,9 +95,9 @@ export default function FaceCamera({ onComplete, onError, disabled }) {
   return <div>
     <video ref={video} autoPlay muted playsInline style={{ width: '100%', maxHeight: 420, background: '#17251c', borderRadius: 12 }} />
     <p role="status">{progress}</p>
-    <div className="face-actions">
-      <button type="button" className="face-button" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>
-      <button type="button" className="face-button face-button-secondary" disabled={!ready || disabled} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>Switch camera</button>
+    <div className="face-actions d-flex flex-wrap gap-2">
+      <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>
+      <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={!ready || disabled} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>Switch camera</button>
     </div>
   </div>;
 }

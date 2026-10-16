@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import FaceCamera from './FaceCamera';
+import { mountInlineAttendance } from './InlineFaceAttendance';
 
 const mount = document.getElementById('face-attendance-root');
 const workers = JSON.parse(document.getElementById('face-workers-json')?.textContent || '[]');
@@ -184,3 +185,5 @@ function App() {
 }
 
 if (mount) createRoot(mount).render(<App />);
+const inlineMount = document.getElementById('face-attendance-inline');
+if (inlineMount) mountInlineAttendance(inlineMount);

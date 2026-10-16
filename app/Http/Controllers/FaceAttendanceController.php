@@ -52,7 +52,7 @@ class FaceAttendanceController extends Controller
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->enabled();
         $workers = DB::table('workers')->whereIn('worker_id', $this->workerIds())
@@ -60,12 +60,18 @@ class FaceAttendanceController extends Controller
         $enrolled = DB::table('worker_face_enrollments')->whereNotNull('face_descriptors')
             ->where('model_version', config('face_attendance.model_version'))->pluck('worker_id');
 
-        return view('supervisor.face-attendance', [
+        $data = [
             'faceWorkerChoices' => $workers->map(fn ($w) => [
                 'worker_id' => $w->worker_id, 'name' => trim($w->first_name.' '.$w->last_name),
                 'enrolled' => $enrolled->contains($w->worker_id),
             ])->values()->all(),
-        ]);
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data)->header('Cache-Control', 'no-store, private');
+        }
+
+        return view('supervisor.face-attendance', $data);
     }
 
     public function start(Request $request)

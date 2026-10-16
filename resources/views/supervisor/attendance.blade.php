@@ -1826,6 +1826,14 @@
                         <span class="text-muted small">Tap the face button to identify a worker using the phone camera.</span>
                     </div>
 
+                    <div id="face-attendance-inline"
+                         data-csrf="{{ csrf_token() }}"
+                         data-models="{{ asset('models/human') }}/"
+                         data-workers="{{ route('supervisor.face-attendance.index') }}"
+                         data-start="{{ route('supervisor.face-attendance.start') }}"
+                         data-finish="{{ route('supervisor.face-attendance.finish') }}"
+                         data-cancel="{{ route('supervisor.face-attendance.cancel') }}"
+                         data-save="{{ route('supervisor.attendance.logWorker') }}"></div>
                     <div id="globalScanStatus" class="alert alert-light border text-muted small py-2 mb-0">
                         <i class="bi bi-info-circle-fill text-primary"></i> Tap the face button to start facial recognition.
                     </div>
@@ -2232,15 +2240,10 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="workerFaceCameraModal" tabindex="-1" aria-labelledby="workerFaceCameraTitle" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title" id="workerFaceCameraTitle">Worker facial recognition</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close camera"></button></div>
-        <div class="modal-body p-0"><iframe id="workerFaceCameraFrame" title="Worker camera recognition" allow="camera" src="about:blank" style="width:100%;height:75dvh;min-height:440px;border:0"></iframe></div>
-    </div></div>
-</div>
 @endsection
 
 @push('scripts')
+@vite('resources/js/face-attendance.jsx')
 
 
 <script>
@@ -2342,34 +2345,15 @@
             });
         });
 
-        const cameraModalElement = document.getElementById('workerFaceCameraModal');
-        const cameraFrame = document.getElementById('workerFaceCameraFrame');
-        document.body.appendChild(cameraModalElement);
         function openWorkerCamera(purpose = 'attendance', workerId = null) {
             if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
                 showAttendanceAlert('warning', 'Camera unavailable', 'Use HTTPS and allow camera access in Safari on iPhone or Chrome on Android.');
                 return;
             }
-            const cameraUrl = new URL(supervisorRoutes.faceCamera, window.location.href);
-            cameraUrl.searchParams.set('embedded', '1');
-            cameraUrl.searchParams.set('purpose', purpose);
-            if (workerId) cameraUrl.searchParams.set('worker_id', workerId);
-            cameraFrame.src = cameraUrl.href;
-            bootstrap.Modal.getOrCreateInstance(cameraModalElement).show();
+            window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose, workerId } }));
         }
-        cameraModalElement.addEventListener('hidden.bs.modal', () => {
-            cameraFrame.src = 'about:blank';
-            fetch(supervisorRoutes.faceCancel, {
-                method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                body: '{}',
-            }).catch(() => {});
-            loadTodayAttendance({ silent: true });
-        });
-        window.addEventListener('message', event => {
-            if (event.origin !== window.location.origin || event.source !== cameraFrame.contentWindow) return;
-            if (event.data?.type === 'worker-attendance-saved') loadTodayAttendance({ silent: true });
-            if (event.data?.type === 'worker-face-enrolled') loadWorkers(currentPage);
-        });
+        window.addEventListener('worker-attendance-saved', () => loadTodayAttendance({ silent: true }));
+        window.addEventListener('worker-face-enrolled', () => loadWorkers(currentPage));
 
         function escapeHtml(value) {
             return String(value ?? '')
