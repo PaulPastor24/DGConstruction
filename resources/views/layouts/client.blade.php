@@ -1435,5 +1435,6 @@ document.addEventListener('DOMContentLoaded', function () {
         </script>
     @endif
 
+@include('partials.user-presence')
 </body>
 </html>

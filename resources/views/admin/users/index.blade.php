@@ -579,7 +579,7 @@
                         <i class="bi bi-check-circle"></i>
                     </div>
                     <div>
-                        <div class="text-muted small fw-semibold">Active Users</div>
+                        <div class="text-muted small fw-semibold">Enabled Accounts</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $active_users_count ?? 0 }}</div>
                         <div class="text-muted" style="font-size: 11px;">Currently enabled</div>
                     </div>
@@ -593,7 +593,7 @@
                         <i class="bi bi-person-dash"></i>
                     </div>
                     <div>
-                        <div class="text-muted small fw-semibold">Inactive Users</div>
+                        <div class="text-muted small fw-semibold">Disabled Accounts</div>
                         <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $inactive_users_count ?? 0 }}</div>
                         <div class="text-muted" style="font-size: 11px;">Login disabled</div>
                     </div>
@@ -674,8 +674,8 @@
                     <div class="col-md-2">
                         <select name="status" id="statusFilter" class="form-select text-muted">
                             <option value="">All Statuses</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Enabled</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Disabled</option>
                         </select>
                     </div>
 
@@ -716,9 +716,7 @@
                             </td>
                             <td data-label="User Account">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="avatar-circle-ui d-flex align-items-center justify-content-center fw-bold text-white uppercase shadow-sm">
-                                        {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
-                                    </div>
+                                    @include('admin.users.partials.avatar', ['user' => $user])
                                     <div>
                                         <div class="fw-bold text-dark lh-base">{{ $user->first_name }} {{ $user->last_name }}</div>
                                         <div class="text-muted small d-flex align-items-center gap-1">
@@ -752,15 +750,7 @@
                                 </span>
                             </td>
                             <td data-label="System Access">
-                                @if($user->is_active == 1)
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1">
-                                        <span class="pulse-indicator bg-success"></span> Active
-                                    </span>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1">
-                                        <span class="pulse-indicator bg-warning"></span> Inactive
-                                    </span>
-                                @endif
+                                @include('admin.users.partials.presence', ['user' => $user])
                             </td>
                             <td data-label="Actions" class="text-end pe-4">
                                 <div class="d-inline-flex gap-1">
@@ -820,26 +810,14 @@
 
                 <article class="ug-user-card">
                     <div class="ug-user-card-head">
-                        <div class="avatar-circle-ui ug-user-avatar d-flex align-items-center justify-content-center fw-bold text-white uppercase">
-                            {{ $mobileInitials }}
-                        </div>
+                        @include('admin.users.partials.avatar', ['user' => $user, 'mobile' => true])
 
                         <div class="ug-user-main">
                             <h3>{{ $user->first_name }} {{ $user->last_name }}</h3>
                             <p><i class="bi bi-envelope-open"></i> {{ $user->email }}</p>
                         </div>
 
-                        @if($user->is_active == 1)
-                            <span class="ug-status-pill active">
-                                <span class="pulse-indicator bg-success"></span>
-                                Active
-                            </span>
-                        @else
-                            <span class="ug-status-pill inactive">
-                                <span class="pulse-indicator bg-warning"></span>
-                                Inactive
-                            </span>
-                        @endif
+                        @include('admin.users.partials.presence', ['user' => $user])
                     </div>
 
                     <div class="ug-user-detail-grid">
@@ -860,7 +838,7 @@
 
                         <div class="ug-user-detail">
                             <span>System Access</span>
-                            <strong>{{ $user->is_active == 1 ? 'Enabled' : 'Disabled' }}</strong>
+                            <strong data-user-status-text="{{ $user->user_id }}">{{ !$user->is_active ? 'Disabled' : (in_array($user->user_id, $onlineUserIds) ? 'Online' : 'Offline') }}</strong>
                         </div>
                     </div>
 
@@ -1099,6 +1077,47 @@
 @endsection
 
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let loadingActivity = false;
+    const refreshActivity = async () => {
+        if (document.visibilityState !== 'visible' || loadingActivity) return;
+        const ids = [...new Set([...document.querySelectorAll('[data-user-presence]')].map(el => el.dataset.userPresence))];
+        if (!ids.length) return;
+        loadingActivity = true;
+        try {
+            const url = new URL(@json(route('admin.users.activity')), window.location.href);
+            ids.forEach(id => url.searchParams.append('ids[]', id));
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin', cache: 'no-store' });
+            if (!response.ok) return;
+            const result = await response.json();
+            result.users.forEach(user => {
+                const color = user.status === 'Online' ? 'success' : user.status === 'Disabled' ? 'warning' : 'secondary';
+                document.querySelectorAll('[data-user-presence="' + user.id + '"]').forEach(el => {
+                    el.className = 'badge bg-' + color + '-subtle text-' + color + ' border border-' + color + '-subtle rounded-pill px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1';
+                    el.querySelector('[data-presence-dot]').className = 'pulse-indicator bg-' + color;
+                    el.querySelector('[data-presence-label]').textContent = user.status;
+                });
+                document.querySelectorAll('[data-user-status-text="' + user.id + '"]').forEach(el => el.textContent = user.status);
+                document.querySelectorAll('[data-user-avatar="' + user.id + '"]').forEach(el => {
+                    let photo = el.querySelector('img');
+                    if (!user.photo_url) { photo?.remove(); return; }
+                    if (!photo) {
+                        photo = document.createElement('img');
+                        photo.alt = 'User profile photo';
+                        photo.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+                        photo.onerror = () => photo.hidden = true;
+                        el.appendChild(photo);
+                    }
+                    if (photo.getAttribute('src') !== user.photo_url) { photo.hidden = false; photo.src = user.photo_url; }
+                });
+            });
+        } catch (_) {} finally { loadingActivity = false; }
+    };
+    window.setInterval(refreshActivity, 30000);
+    document.addEventListener('visibilitychange', refreshActivity);
+});
+</script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const filterForm = document.getElementById('filterForm');

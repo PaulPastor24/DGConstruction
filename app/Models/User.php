@@ -45,6 +45,20 @@ class User extends Authenticatable implements HasPasskeys
         ];
     }
 
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        $path = trim((string) $this->profile_photo);
+        if ($path === '') {
+            return null;
+        }
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+        $path = preg_replace('#^(?:storage/|public/)+#', '', ltrim($path, '/'));
+
+        return asset('storage/'.$path);
+    }
+
     /**
      * Get the route key for the model.
      */

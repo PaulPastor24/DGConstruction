@@ -222,5 +222,6 @@
         @endif
     </script>
     @stack('scripts')
+@include('partials.user-presence')
 </body>
 </html>

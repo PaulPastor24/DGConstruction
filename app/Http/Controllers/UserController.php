@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Client;
+use App\Services\UserPresence;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Database\QueryException;
@@ -52,6 +53,7 @@ class UserController extends Controller
 
         // Fetch paginated records ordered by recent
         $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $onlineUserIds = app(UserPresence::class)->onlineIds($users->pluck('user_id')->all());
 
         // One aggregate query replaces six independent count queries.
         $userStats = DB::table('users')
@@ -72,6 +74,7 @@ class UserController extends Controller
 
         return view('admin.users.index', compact(
             'users',
+            'onlineUserIds',
             'total_users',
             'active_users_count',
             'inactive_users_count',
@@ -87,6 +90,19 @@ class UserController extends Controller
     public function create()
     {
         return view('admin.users.create');
+    }
+
+    public function activity(Request $request)
+    {
+        $data = $request->validate(['ids' => ['required', 'array', 'max:100'], 'ids.*' => ['integer']]);
+        $users = User::whereIn('user_id', $data['ids'])->get();
+        $online = app(UserPresence::class)->onlineIds($users->pluck('user_id')->all());
+
+        return response()->json(['users' => $users->map(fn ($user) => [
+            'id' => $user->user_id,
+            'status' => !$user->is_active ? 'Disabled' : (in_array($user->user_id, $online) ? 'Online' : 'Offline'),
+            'photo_url' => $user->profile_photo_url,
+        ])])->header('Cache-Control', 'no-store, private');
     }
 
     /**

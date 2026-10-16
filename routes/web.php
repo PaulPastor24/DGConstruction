@@ -216,6 +216,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     });
 
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/activity', [UserController::class, 'activity'])->name('activity');
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
@@ -356,6 +357,9 @@ Route::middleware(['auth', 'role:client'])->group(function () {
     Route::get('/client/notifications/{id}/mark-read-redirect', [ClientController::class, 'markNotificationReadAndRedirect'])->name('client.notifications.markReadRedirect');
     Route::post('/client/notifications/mark-all-read', [ClientController::class, 'markAllNotificationsRead'])->name('client.notifications.markAllRead');
 });
+
+Route::post('/presence/heartbeat', fn () => response()->json(['ok' => true]))
+    ->middleware(['auth', 'throttle:10,1,presence'])->name('presence.heartbeat');
 
 require __DIR__.'/auth.php';
 
