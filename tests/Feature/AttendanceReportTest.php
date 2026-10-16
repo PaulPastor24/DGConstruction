@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\DailyAttendanceReport;
 use App\Models\Attendance;
 use App\Models\Project;
 use App\Models\ProjectWorker;
@@ -17,6 +18,13 @@ class AttendanceReportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config([
+            'attendance_reports.mailer' => 'mailjet',
+            'attendance_reports.from.address' => 'reports@dgconphil.test',
+            'attendance_reports.from.name' => 'D&G Reports',
+            'mail.mailers.mailjet.username' => 'test-mailjet-api-key',
+            'mail.mailers.mailjet.password' => 'test-mailjet-secret',
+        ]);
 
         Schema::create('users', function ($table) {
             $table->id('user_id');
@@ -180,9 +188,13 @@ class AttendanceReportTest extends TestCase
         $response->assertSessionHas('success');
         $response->assertRedirect(route('admin.attendance.preview-report', ['date' => '2026-09-12']));
 
-        Mail::assertSent(\App\Mail\DailyAttendanceReport::class, function ($mail) {
-            return $mail->date->format('Y-m-d') === '2026-09-12';
+        Mail::assertSent(DailyAttendanceReport::class, function ($mail) {
+            return $mail->date->format('Y-m-d') === '2026-09-12'
+                && $mail->hasTo('admin@example.com')
+                && $mail->mailer === 'mailjet'
+                && $mail->envelope()->from->address === 'reports@dgconphil.test';
         });
+        Mail::assertSentCount(1);
     }
 
     public function test_send_report_handles_missing_email(): void
@@ -215,8 +227,9 @@ class AttendanceReportTest extends TestCase
 
         Mail::fake();
 
-        Mail::shouldReceive('to')
+        Mail::shouldReceive('mailer')
             ->once()
+            ->with('mailjet')
             ->andThrow(new \RuntimeException('Mail configuration error'));
 
         $response = $this->actingAs($admin)->post(route('admin.attendance.send-report'), [
@@ -225,5 +238,57 @@ class AttendanceReportTest extends TestCase
 
         $response->assertSessionHas('error');
         $response->assertRedirect(route('admin.attendance.preview-report', ['date' => '2026-09-12']));
+    }
+
+    public function test_send_report_uses_latest_account_email_and_ignores_submitted_recipient(): void
+    {
+        Mail::fake();
+        $admin = User::create([
+            'name' => 'Admin', 'email' => 'old@example.com', 'password' => bcrypt('password'),
+            'role' => 'engineer', 'is_active' => true,
+        ]);
+        $this->actingAs($admin);
+        DB::table('users')->where('user_id', $admin->user_id)->update(['email' => 'updated@example.com']);
+        $this->post(route('admin.attendance.send-report'), [
+            'date' => '2026-09-12', 'email' => 'another@example.com', 'recipient' => 'another@example.com',
+        ])->assertSessionHas('success');
+        Mail::assertSent(DailyAttendanceReport::class, fn ($mail) => $mail->hasTo('updated@example.com') && ! $mail->hasTo('another@example.com') && ! $mail->hasTo('old@example.com')
+        );
+        Mail::assertSentCount(1);
+    }
+
+    public function test_missing_mailjet_credentials_reports_configuration_error_instead_of_success(): void
+    {
+        Mail::fake();
+        config(['mail.mailers.mailjet.password' => null]);
+        $admin = User::create([
+            'name' => 'Admin', 'email' => 'admin@example.com', 'password' => bcrypt('password'),
+            'role' => 'engineer', 'is_active' => true,
+        ]);
+        $this->actingAs($admin)->post(route('admin.attendance.send-report'), ['date' => '2026-09-12'])
+            ->assertSessionHas('error', 'Mailjet is not configured. Set MAILJET_API_KEY and MAILJET_SECRET_KEY on the server before sending reports.');
+        Mail::assertNothingSent();
+    }
+
+    public function test_mailjet_transport_uses_api_credentials_and_requires_tls(): void
+    {
+        $transport = Mail::mailer('mailjet')->getSymfonyTransport();
+        $this->assertSame('in-v3.mailjet.com', $transport->getStream()->getHost());
+        $this->assertSame(587, $transport->getStream()->getPort());
+        $this->assertSame('test-mailjet-api-key', $transport->getUsername());
+        $this->assertTrue($transport->isTlsRequired());
+    }
+
+    public function test_scheduled_attendance_reports_use_mailjet_and_each_active_admin_email(): void
+    {
+        Mail::fake();
+        foreach ([['first@example.com', 'engineer', true], ['second@example.com', 'admin', true], ['disabled@example.com', 'engineer', false], ['supervisor@example.com', 'supervisor', true]] as [$email, $role, $active]) {
+            User::create(['name' => 'User', 'email' => $email, 'password' => bcrypt('password'), 'role' => $role, 'is_active' => $active]);
+        }
+        $this->artisan('attendance:daily-report', ['date' => '2026-09-12'])->assertSuccessful();
+        Mail::assertSentCount(2);
+        foreach (['first@example.com', 'second@example.com'] as $email) {
+            Mail::assertSent(DailyAttendanceReport::class, fn ($mail) => $mail->hasTo($email) && $mail->mailer === 'mailjet');
+        }
     }
 }

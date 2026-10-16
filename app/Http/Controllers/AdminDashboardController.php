@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\DailyAttendanceReport;
 use App\Models\AdminNotification;
 use App\Models\Attendance;
 use App\Models\AttendanceScheduleRule;
@@ -27,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -1573,7 +1571,7 @@ class AdminDashboardController extends Controller
             ->orderBy('time_in')
             ->get();
 
-        $user = Auth::user();
+        $user = Auth::user()?->fresh();
 
         if (! $user || ! $user->email) {
             return redirect()
@@ -1596,7 +1594,7 @@ class AdminDashboardController extends Controller
                 'date' => $date->toDateString(),
             ]);
 
-            Mail::to($user->email)->send(new DailyAttendanceReport($date, $records));
+            app(\App\Services\AttendanceReportMailer::class)->send($user->email, $date, $records);
 
             return redirect()
                 ->route('admin.attendance.preview-report', ['date' => $date->toDateString()])
@@ -1612,9 +1610,9 @@ class AdminDashboardController extends Controller
             $message = 'Failed to send attendance report. Mail configuration error. Please contact support.';
 
             if (str_contains($e->getMessage(), '535-5.7.8 Username and Password not accepted')) {
-                $message = 'The mail provider rejected the login. Double-check MAIL_USERNAME and MAIL_PASSWORD in your .env file.';
+                $message = 'Mailjet rejected the SMTP login. Ask the administrator to check MAILJET_API_KEY and MAILJET_SECRET_KEY.';
             } elseif (str_contains($e->getMessage(), 'Connection could not be established')) {
-                $message = 'Could not connect to the mail server. Check MAIL_HOST and MAIL_PORT in your .env file.';
+                $message = 'Could not connect to the attendance mail server. Ask the administrator to check MAILJET_HOST and MAILJET_PORT.';
             } elseif (str_contains($e->getMessage(), 'Authentication failed')) {
                 $message = 'SMTP authentication failed. Verify your mail provider credentials.';
             }
@@ -1627,38 +1625,7 @@ class AdminDashboardController extends Controller
 
     protected function validateMailConfiguration(): ?string
     {
-        if (app()->environment('testing')) {
-            return null;
-        }
-
-        $mailer = config('mail.default');
-        $host = config('mail.mailers.'.$mailer.'.host');
-        $port = config('mail.mailers.'.$mailer.'.port');
-        $username = config('mail.mailers.'.$mailer.'.username');
-        $password = config('mail.mailers.'.$mailer.'.password');
-        $encryption = config('mail.mailers.'.$mailer.'.encryption');
-
-        if ($mailer === 'log') {
-            return null;
-        }
-
-        if (! $host || ! $port) {
-            return 'Mail is not configured. Please set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, and MAIL_PASSWORD in your .env file.';
-        }
-
-        if ($host === 'smtp.gmail.com' && $port == 587 && empty($username)) {
-            return 'Gmail SMTP is selected but MAIL_USERNAME is empty. Set it to the full Gmail address.';
-        }
-
-        if ($host === 'smtp.gmail.com' && empty($password)) {
-            return 'Gmail SMTP is selected but MAIL_PASSWORD is empty. Use a Gmail App Password here, not your regular password.';
-        }
-
-        if (str_contains($password ?? '', 'your_') || str_contains($password ?? '', 'changeme') || preg_match('/^(password|example|test|dummy|foo|bar|123|qwerty)$/i', (string) $password)) {
-            return 'MAIL_PASSWORD still contains a placeholder value. Replace it with the actual SMTP key or password from your mail provider.';
-        }
-
-        return null;
+        return app(\App\Services\AttendanceReportMailer::class)->configurationError();
     }
 
     private function attendanceTimes(Request $request): array

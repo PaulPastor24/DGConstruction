@@ -2,20 +2,26 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\DailyAttendanceReport;
 use App\Models\Attendance;
 use App\Models\User;
+use App\Services\AttendanceReportMailer;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
 
 class SendDailyAttendanceReport extends Command
 {
     protected $signature = 'attendance:daily-report {date? : Date to report, defaults to yesterday}';
+
     protected $description = 'Email the daily attendance report to administrators.';
 
     public function handle(): int
     {
+        $delivery = app(AttendanceReportMailer::class);
+        if ($error = $delivery->configurationError()) {
+            $this->error($error);
+
+            return self::FAILURE;
+        }
         $date = Carbon::parse($this->argument('date') ?: 'yesterday')->startOfDay();
         $records = Attendance::with(['worker', 'deployment.project'])
             ->whereDate('log_date', $date->toDateString())
@@ -29,7 +35,7 @@ class SendDailyAttendanceReport extends Command
             ->get();
 
         foreach ($admins as $admin) {
-            Mail::to($admin->email)->send(new DailyAttendanceReport($date, $records));
+            $delivery->send($admin->email, $date, $records);
         }
 
         $this->info("Sent {$admins->count()} attendance report email(s) for {$date->toDateString()}.");

@@ -37,6 +37,19 @@ return [
 
     'mailers' => [
 
+        'mailjet' => [
+            'transport' => 'smtp',
+            'scheme' => env('MAILJET_SCHEME', 'smtp'),
+            'host' => env('MAILJET_HOST', 'in-v3.mailjet.com'),
+            'port' => (int) env('MAILJET_PORT', 587),
+            'username' => env('MAILJET_API_KEY'),
+            'password' => env('MAILJET_SECRET_KEY'),
+            'auto_tls' => true,
+            'require_tls' => true,
+            'timeout' => 30,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),

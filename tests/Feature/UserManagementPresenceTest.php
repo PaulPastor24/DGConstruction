@@ -71,6 +71,7 @@ class UserManagementPresenceTest extends TestCase
         $presence = app(UserPresence::class);
         $presence->touch($user->user_id, 'another-phone');
         $this->actingAs($user)->postJson(route('presence.heartbeat'))->assertOk();
+        $this->withCookie(config('session.cookie'), session()->getId());
         $this->post(route('logout'))->assertRedirect('/');
         $this->assertContains($user->user_id, $presence->onlineIds([$user->user_id]));
         $this->travel(6)->minutes();
