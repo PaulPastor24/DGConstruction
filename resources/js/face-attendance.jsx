@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import FaceCamera from './FaceCamera';
 
 const mount = document.getElementById('face-attendance-root');
 const workers = JSON.parse(document.getElementById('face-workers-json')?.textContent || '[]');
 const urls = mount ? mount.dataset : {};
+const launch = new URLSearchParams(window.location.search);
+const initialPurpose = launch.get('purpose') === 'enroll' ? 'enroll' : 'attendance';
+const initialWorkerId = workers.some(w => String(w.worker_id) === launch.get('worker_id')) ? launch.get('worker_id') : '';
+function notifyParent(type) {
+  if (launch.get('embedded') === '1' && window.parent !== window) {
+    window.parent.postMessage({ type }, window.location.origin);
+  }
+}
 
 async function send(url, body, method = 'POST') {
   const response = await fetch(url, {
@@ -18,8 +26,9 @@ async function send(url, body, method = 'POST') {
 }
 
 function App() {
-  const [purpose, setPurpose] = useState('attendance');
-  const [workerId, setWorkerId] = useState('');
+  const [purpose, setPurpose] = useState(initialPurpose);
+  const [workerId, setWorkerId] = useState(initialWorkerId);
+  const launched = useRef(false);
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
   const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [session, setSession] = useState(null);
@@ -31,6 +40,13 @@ function App() {
   const [enrolled, setEnrolled] = useState(workers.filter(w => w.enrolled).map(w => Number(w.worker_id)));
   const cameraCapable = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   const secure = window.isSecureContext;
+
+  useEffect(() => {
+    if (launch.get('embedded') === '1' && initialPurpose === 'attendance' && secure && cameraCapable && !launched.current) {
+      launched.current = true;
+      start();
+    }
+  }, []);
 
   const reset = () => { setSession(null); setMatched(null); setMessage(''); setError(''); };
   const cancel = async () => {
@@ -78,6 +94,7 @@ function App() {
       if (result.purpose === 'enroll') {
         setEnrolled(old => [...new Set([...old, Number(result.worker.worker_id)])]);
         setMessage(`${result.worker.first_name} ${result.worker.last_name} was enrolled. No attendance recorded.`);
+        notifyParent('worker-face-enrolled');
       } else {
         setMatched({ ...result, preview });
         setMessage('Face matched. Supervisor must confirm the person before recording Time In.');
@@ -98,6 +115,7 @@ function App() {
       setFinished(old => [{ id: w.worker_id, name: `${w.first_name} ${w.last_name}` }, ...old]);
       setMatched(null);
       setMessage(`${w.first_name} ${w.last_name}: Time In recorded. Ready for the next worker.`);
+      notifyParent('worker-attendance-saved');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -110,7 +128,8 @@ function App() {
           <button type="button" className="face-button" disabled={!!session || busy} onClick={() => { reset(); setPurpose('attendance'); }}>Scan attendance</button>
           <button type="button" className="face-button face-button-secondary" disabled={!!session || busy} onClick={() => { reset(); setPurpose('enroll'); }}>Enroll worker face</button>
         </div>
-        <p className="face-muted">Current mode: <strong>{purpose === 'attendance' ? 'Identify worker and record Time In' : 'Enroll a new worker face'}</strong></p>
+        <p className="face-muted">Current mode: <strong>{purpose === 'attendance' ? 'Identify worker and record Time In' : 'Enroll a face on an existing worker record'}</strong></p>
+        <p className="face-muted">Enroll each worker's face once. Saved enrollments remain available when you sign in on another phone.</p>
         {purpose === 'enroll' && (
           <div>
             <label htmlFor="face-worker">Worker to enroll</label>

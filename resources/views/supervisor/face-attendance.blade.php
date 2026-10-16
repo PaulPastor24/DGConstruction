@@ -1,4 +1,4 @@
-@extends('layouts.supervisor')
+@extends(request()->boolean('embedded') ? 'layouts.face-camera' : 'layouts.supervisor')
 
 @section('title', 'Camera Facial Attendance')
 @section('page_title', 'Facial Group Attendance')
@@ -30,7 +30,10 @@
     <h2>Shared phone camera attendance</h2>
     <p class="face-muted">Scan workers one at a time using an iPhone or Android camera. The supervisor must confirm the person before saving Time In.</p>
     <p class="face-muted">Use HTTPS, good lighting, and camera permission. Face matching assists supervisor verification; it does not provide certified liveness detection.</p>
-    <a href="{{ route('supervisor.attendance') }}">Return to existing attendance / Touch ID / Manual Log</a>
+    <p class="face-muted">Face enrollment is saved to the worker's database record and works across phones. Existing workers only need their face enrolled once.</p>
+    @unless(request()->boolean('embedded'))
+    <a href="{{ route('supervisor.attendance') }}">Return to attendance</a>
+    @endunless
   </div>
   <div id="face-attendance-root"
        data-csrf="{{ csrf_token() }}"

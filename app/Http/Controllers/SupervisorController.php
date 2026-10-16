@@ -1261,7 +1261,10 @@ class SupervisorController extends Controller
 
         $activeDeployments = $activeProject ? $activeProject->projectWorkers()->with('worker')->get() : collect();
 
-        return view('supervisor.attendance', compact('workers', 'activeProject', 'activeDeployments'));
+        $cameraProjects = $assignedProjects->filter(fn ($project) => $project->supervisors()
+            ->where('supervisor_id', $user->user_id)->where('project_supervisors.is_active', 1)->exists());
+
+        return view('supervisor.attendance', compact('workers', 'activeProject', 'activeDeployments', 'cameraProjects'));
     }
 
     public function profile()
@@ -2126,6 +2129,58 @@ class SupervisorController extends Controller
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ]);
+    }
+
+    public function registerCameraWorker(Request $request)
+    {
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'trade' => ['nullable', 'string', 'max:100'],
+            'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+().\-\s]+$/'],
+            'schedule_start' => ['required', 'date_format:H:i'],
+            'schedule_end' => ['required', 'date_format:H:i', 'after:schedule_start'],
+            'break_minutes' => ['required', 'integer', 'min:0', 'max:480'],
+            'project_id' => ['required', 'integer'],
+        ]);
+        $project = Project::query()->where('project_id', $data['project_id'])
+            ->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
+                ->where('project_supervisors.is_active', 1))->first();
+        abort_unless($project, 403, 'Choose a project actively assigned to your supervisor account.');
+
+        $workerId = DB::transaction(function () use ($data) {
+            $id = DB::table('workers')->insertGetId([
+                'first_name' => trim($data['first_name']), 'last_name' => trim($data['last_name']),
+                'trade' => $data['trade'] ?? 'General', 'contact_number' => $data['contact_number'] ?? null,
+                'schedule_start' => $data['schedule_start'].':00', 'schedule_end' => $data['schedule_end'].':00',
+                'break_minutes' => $data['break_minutes'], 'is_active' => 1,
+                'created_at' => now(), 'updated_at' => now(),
+            ], 'worker_id');
+            $deployment = [
+                'project_id' => $data['project_id'], 'worker_id' => $id,
+                'is_active' => 1, 'created_at' => now(),
+            ];
+            // Both deployment schemas exist in installations of this project.
+            foreach (['deployed_date', 'start_date'] as $column) {
+                if (Schema::hasColumn('project_workers', $column)) {
+                    $deployment[$column] = now('Asia/Manila')->toDateString();
+                }
+            }
+            DB::table('project_workers')->insert($deployment);
+
+            return $id;
+        });
+        $worker = DB::table('workers')->where('worker_id', $workerId)->first();
+
+        return response()->json([
+            'success' => true, 'message' => 'Worker saved. Enroll their face once for camera attendance.',
+            'worker' => [
+                'worker_id' => $worker->worker_id, 'first_name' => $worker->first_name,
+                'last_name' => $worker->last_name, 'trade' => $worker->trade,
+                'contact_number' => $worker->contact_number, 'profile_image_url' => null,
+                'created_at' => $worker->created_at,
+            ],
         ]);
     }
 

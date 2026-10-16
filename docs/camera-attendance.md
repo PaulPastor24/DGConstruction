@@ -12,10 +12,14 @@ AWS is no longer used by facial attendance. The phone extracts Human 3.3.6 FaceR
    php artisan migrate --path=database/migrations/2026_10_14_000002_create_worker_face_attempts.php
    php artisan migrate --path=database/migrations/2026_10_16_000001_add_local_face_templates.php
    php artisan config:clear
+   php artisan route:clear
+   php artisan view:clear
    ```
 4. Set `FACE_ATTENDANCE_ENABLED=true`. Remove previous AWS-specific face settings. Replace any old AWS similarity threshold (98) with `FACE_SIMILARITY_THRESHOLD=65` and `FACE_AMBIGUITY_MARGIN=8`.
 5. Keep the existing `APP_KEY` stable and backed up: changing it makes encrypted enrollments unreadable. Do not generate a new key during deployment.
-6. Open Supervisor > Attendance > Facial Attendance over HTTPS. Grant camera permission, enroll each assigned worker, then scan and confirm Time In. Existing AWS templates cannot be converted; workers must enroll again.
+6. Open Supervisor > Attendance and tap the main face icon under **Ready to Identify**. The camera opens in a dialog. Grant camera permission, scan and confirm Time In; the attendance table refreshes after saving.
+7. For an existing worker with no camera enrollment, use **Enrolled Workers > Edit > Enroll / update face**. Enroll on that same worker record once; switching phones or signing in again does not require another worker record or another face enrollment. Previous passkeys/AWS templates cannot be converted to local camera templates.
+8. For a genuinely new worker, use **Register Worker**, select the supervisor's assigned project, save their details, then complete camera enrollment. No device passkey is required. No new migrations are needed for this main-screen camera update if the three face migrations above already ran.
 
 The local migration adds columns and preserves historical AWS records. Deleting/replacing a local enrollment does not delete old AWS cloud data. If cloud enrollments were previously created, remove those separately when AWS account access is restored.
 

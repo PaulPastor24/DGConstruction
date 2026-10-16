@@ -1053,7 +1053,7 @@
             background-color: #f1f8f2;
         }
 
-        .fingerprint-trigger-btn {
+        .face-trigger-btn {
             width: 112px !important;
             height: 112px !important;
             min-width: 112px !important;
@@ -1069,12 +1069,12 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .fingerprint-trigger-btn i {
+        .face-trigger-btn i {
             font-size: 3.2rem !important;
             line-height: 1 !important;
         }
 
-        .fingerprint-trigger-btn:active {
+        .face-trigger-btn:active {
             transform: scale(0.95);
         }
 
@@ -1239,7 +1239,7 @@
                 border-radius: 18px !important;
             }
 
-            .fingerprint-trigger-btn {
+            .face-trigger-btn {
                 width: 96px !important;
                 height: 96px !important;
                 min-width: 96px !important;
@@ -1247,7 +1247,7 @@
                 font-size: 2.8rem !important;
             }
 
-            .fingerprint-trigger-btn i {
+            .face-trigger-btn i {
                 font-size: 2.8rem !important;
             }
 
@@ -1569,7 +1569,7 @@
             box-shadow: inset 0 0 0 1px rgba(22, 101, 52, 0.02) !important;
         }
 
-        .fingerprint-trigger-btn {
+        .face-trigger-btn {
             background: linear-gradient(135deg, #4b6b46 0%, #315c35 100%) !important;
             border-color: transparent !important;
         }
@@ -1699,7 +1699,7 @@
                 border-radius: 18px !important;
             }
 
-            .fingerprint-trigger-btn {
+            .face-trigger-btn {
                 width: 94px !important;
                 height: 94px !important;
                 min-width: 94px !important;
@@ -1772,7 +1772,7 @@
                         Daily Workforce Attendance
                     </h4>
                     <p class="attendance-control-subtitle">
-                        Scan a worker’s fingerprint to identify them automatically. Use manual attendance only when the biometric reader is unavailable.
+                        Scan each worker with the phone camera. Face enrollments are saved to the database and available when you sign in on another phone.
                     </p>
                 </div>
 
@@ -1799,13 +1799,6 @@
                                 data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
                             <i class="bi bi-person-plus-fill"></i> Register Worker
                         </button>
-
-                        @if(config('face_attendance.enabled'))
-                            <a href="{{ route('supervisor.face-attendance.index') }}"
-                               class="btn attendance-quick-btn attendance-btn-register">
-                                <i class="bi bi-camera-video-fill"></i> Facial Attendance
-                            </a>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -1819,22 +1812,22 @@
                 <div class="card-body text-center d-flex flex-column justify-content-center">
                     <div class="attendance-section-heading justify-content-center">
                         <h5>
-                            <span class="attendance-section-icon"><i class="bi bi-fingerprint"></i></span>
-                            Biometric Identification
+                            <span class="attendance-section-icon"><i class="bi bi-person-bounding-box"></i></span>
+                            Facial Recognition
                         </h5>
                     </div>
 
                     <div class="scan-pulse-container p-5 mb-3">
-                        <button type="button" id="btnGlobalScan" class="btn btn-primary fingerprint-trigger-btn mb-3">
-                            <i class="bi bi-fingerprint"></i>
+                        <button type="button" id="btnGlobalScan" aria-label="Identify worker with camera" class="btn btn-primary face-trigger-btn mb-3">
+                            <i class="bi bi-person-bounding-box"></i>
                         </button>
 
                         <p class="fw-semibold text-dark mb-1">Ready to Identify</p>
-                        <span class="text-muted small">Tap the fingerprint button to scan using Face ID, Touch ID, or fingerprint reader.</span>
+                        <span class="text-muted small">Tap the face button to identify a worker using the phone camera.</span>
                     </div>
 
                     <div id="globalScanStatus" class="alert alert-light border text-muted small py-2 mb-0">
-                        <i class="bi bi-info-circle-fill text-primary"></i> Tap the fingerprint button to start biometric verification.
+                        <i class="bi bi-info-circle-fill text-primary"></i> Tap the face button to start facial recognition.
                     </div>
                 </div>
             </div>
@@ -1904,7 +1897,7 @@
                     <span class="enrollment-modal-icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
                     <div>
                         <h5 class="enrollment-modal-title" id="registerWorkerModalLabel">Fast Worker Enrollment</h5>
-                        <p class="enrollment-modal-subtitle">Add worker details, schedule, photo, and biometric profile.</p>
+                        <p class="enrollment-modal-subtitle">Add a worker once, then enroll their face for attendance on any phone.</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1915,6 +1908,16 @@
                     <section class="mb-4" aria-labelledby="enrollmentDetailsHeading">
                         <h6 class="enrollment-section-heading" id="enrollmentDetailsHeading">Worker Details</h6>
                         <div class="row g-3">
+                            <div class="col-12">
+                                <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
+                                <select id="regProjectId" class="form-select" required>
+                                    @forelse(($cameraProjects ?? collect()) as $project)
+                                    <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
+                                    @empty
+                                    <option value="">No active project assigned</option>
+                                    @endforelse
+                                </select>
+                            </div>
                             <div class="col-sm-6">
                                 <label for="regFirstName" class="form-label small fw-semibold">First name <span class="text-danger">*</span></label>
                                 <input type="text" id="regFirstName" class="form-control" maxlength="100" autocomplete="given-name" required placeholder="e.g. Juan">
@@ -1962,23 +1965,13 @@
                         <div class="form-text">Optional. JPG, PNG, or WebP, up to 2 MB.</div>
                     </section>
 
-                    <section class="enrollment-biometric-panel" aria-labelledby="enrollmentBiometricHeading">
-                        <span class="enrollment-biometric-icon" aria-hidden="true"><i class="bi bi-fingerprint"></i></span>
-                        <div class="enrollment-biometric-copy">
-                            <h6 class="enrollment-biometric-title" id="enrollmentBiometricHeading">Biometric authentication <span class="text-danger">*</span></h6>
-                            <p class="enrollment-biometric-help">Capture a fingerprint or device passkey to complete enrollment.</p>
-                            <span class="d-block text-muted small mt-2" id="registerFingerprintLabel">Biometrics not captured yet.</span>
-                        </div>
-                        <button type="button" class="btn btn-attendance-primary btn-sm fw-semibold text-nowrap" id="btnRegisterWorkerFingerprint">
-                            <i class="bi bi-shield-plus me-1"></i> Initialize fingerprint
-                        </button>
-                    </section>
+                    <div class="alert alert-light border small">Save the worker record first, then enroll their face using the camera. For an existing worker, use Enrolled Workers &gt; Edit &gt; Enroll / update face. Do not create another worker record when changing phones.</div>
                 </form>
             </div>
 
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light fw-medium btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-attendance-primary fw-semibold btn-sm" id="btnSaveWorkerRecord" disabled>
+                <button type="button" class="btn btn-attendance-primary fw-semibold btn-sm" id="btnSaveWorkerRecord">
                     Save Worker Record
                 </button>
             </div>
@@ -2058,7 +2051,7 @@
                 <input type="hidden" id="editWorkerId" name="worker_id">
                 <div class="modal-body">
                     <button type="button" class="btn btn-outline-success btn-sm w-100 mb-3 d-sm-none" id="btnJumpWorkerPhoto">
-                        <i class="bi bi-image me-1" aria-hidden="true"></i> Go to profile photo &amp; biometric settings
+                        <i class="bi bi-image me-1" aria-hidden="true"></i> Go to profile photo &amp; face enrollment
                     </button>
                     <div class="row g-3">
                         <div class="col-sm-6">
@@ -2090,9 +2083,9 @@
                             </div>
                             <div class="col-12">
                                 <button type="button" class="btn btn-outline-success btn-sm" id="btnReenrollWorkerFingerprint">
-                                    <i class="bi bi-fingerprint me-1"></i> Re-enroll fingerprint / Face ID
+                                    <i class="bi bi-person-bounding-box me-1"></i> Enroll / update face
                                 </button>
-                                <div class="form-text">Re-enrolls a device passkey only. Face ID or fingerprint on one shared phone cannot identify different workers.</div>
+                                <div class="form-text">Face enrollment belongs to this existing worker record and can be used from any phone.</div>
                             </div>
                         </div>
                     </div>
@@ -2182,7 +2175,7 @@
                         <i class="bi bi-pencil-square text-dark"></i> Manual Attendance Log
                     </h5>
                     <p class="text-muted small mb-0">
-                        Use this only when the biometric reader is unavailable or not working.
+                        Use this when camera recognition is unavailable or needs supervisor review.
                     </p>
                 </div>
 
@@ -2223,7 +2216,7 @@
                 <div class="mb-0">
                     <label class="form-label small fw-semibold text-muted">Reason / Remarks</label>
                     <textarea id="manualReasonInput" class="form-control" rows="3"
-                              placeholder="Example: Biometric reader not working / fingerprint scan failed."></textarea>
+                              placeholder="Example: Camera unavailable / face could not be recognized."></textarea>
                 </div>
             </div>
 
@@ -2239,10 +2232,16 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="workerFaceCameraModal" tabindex="-1" aria-labelledby="workerFaceCameraTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="workerFaceCameraTitle">Worker facial recognition</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close camera"></button></div>
+        <div class="modal-body p-0"><iframe id="workerFaceCameraFrame" title="Worker camera recognition" allow="camera" src="about:blank" style="width:100%;height:75dvh;min-height:440px;border:0"></iframe></div>
+    </div></div>
+</div>
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/@simplewebauthn/browser@13.3.0/dist/bundle/index.umd.min.js"></script>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -2251,11 +2250,10 @@
             attendanceToday: @json(route('supervisor.attendance.today')),
             attendanceLogWorker: @json(route('supervisor.attendance.logWorker')),
             workersList: @json(route('supervisor.workers.list')),
-            workerRegister: @json(route('supervisor.workers.register_biometric')),
-            workerProfileBase: @json(url('/supervisor/workers')),
-            passkeyLoginOptions: @json(route('passkeys.login.options')),
-            passkeyLogin: @json(route('passkeys.login')),
-            passkeyRegisterOptions: @json(route('passkeys.register.options'))
+            workerRegister: @json(route('supervisor.workers.register_camera')),
+            faceCamera: @json(route('supervisor.face-attendance.index')),
+            faceCancel: @json(route('supervisor.face-attendance.cancel')),
+            workerProfileBase: @json(url('/supervisor/workers'))
         };
 
         const btnGlobalScan = document.getElementById('btnGlobalScan');
@@ -2296,10 +2294,7 @@
         const manualReasonInput = document.getElementById('manualReasonInput');
         const manualAttendanceStatus = document.getElementById('manualAttendanceStatus');
         const btnSaveManualAttendance = document.getElementById('btnSaveManualAttendance');
-
-        const btnRegisterFingerprint = document.getElementById('btnRegisterWorkerFingerprint');
         const btnSaveWorker = document.getElementById('btnSaveWorkerRecord');
-        const regStatusLabel = document.getElementById('registerFingerprintLabel');
 
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
@@ -2307,8 +2302,6 @@
         const regProfileImageInput = document.getElementById('regProfileImage');
         const regProfileImagePreview = document.getElementById('regProfileImagePreview');
         const regContactNumberInput = document.getElementById('regContactNumber');
-
-        let capturedPasskeyCredential = null;
         let currentPage = 1;
         let scannedWorkerIds = new Set();
         let manualWorkersCache = [];
@@ -2349,40 +2342,34 @@
             });
         });
 
-        // ========================================================================
-        // WEBAUTHN BROWSER SUPPORT CHECK
-        // ========================================================================
-        const isWebAuthnSupported = () => {
-            return (
-                typeof window !== 'undefined' &&
-                window.isSecureContext === true &&
-                typeof window.PublicKeyCredential !== 'undefined' &&
-                typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
-            );
-        };
-
-        const webAuthnAvailable = isWebAuthnSupported();
-
-        // Initialize biometric button state based on WebAuthn support
-        if (btnGlobalScan) {
-            if (!webAuthnAvailable) {
-                btnGlobalScan.disabled = true;
-                btnGlobalScan.style.opacity = '0.5';
-                btnGlobalScan.style.cursor = 'not-allowed';
-                
-                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
-                globalScanStatus.innerHTML = `
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    WebAuthn is not supported in this browser. Please use the 
-                    <strong>Manual Log</strong> option or try a different browser (Chrome, Firefox, Safari).
-                `;
+        const cameraModalElement = document.getElementById('workerFaceCameraModal');
+        const cameraFrame = document.getElementById('workerFaceCameraFrame');
+        document.body.appendChild(cameraModalElement);
+        function openWorkerCamera(purpose = 'attendance', workerId = null) {
+            if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+                showAttendanceAlert('warning', 'Camera unavailable', 'Use HTTPS and allow camera access in Safari on iPhone or Chrome on Android.');
+                return;
             }
+            const cameraUrl = new URL(supervisorRoutes.faceCamera, window.location.href);
+            cameraUrl.searchParams.set('embedded', '1');
+            cameraUrl.searchParams.set('purpose', purpose);
+            if (workerId) cameraUrl.searchParams.set('worker_id', workerId);
+            cameraFrame.src = cameraUrl.href;
+            bootstrap.Modal.getOrCreateInstance(cameraModalElement).show();
         }
-
-        if (btnRegisterFingerprint && !webAuthnAvailable) {
-            btnRegisterFingerprint.disabled = true;
-            btnRegisterFingerprint.style.opacity = '0.5';
-        }
+        cameraModalElement.addEventListener('hidden.bs.modal', () => {
+            cameraFrame.src = 'about:blank';
+            fetch(supervisorRoutes.faceCancel, {
+                method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: '{}',
+            }).catch(() => {});
+            loadTodayAttendance({ silent: true });
+        });
+        window.addEventListener('message', event => {
+            if (event.origin !== window.location.origin || event.source !== cameraFrame.contentWindow) return;
+            if (event.data?.type === 'worker-attendance-saved') loadTodayAttendance({ silent: true });
+            if (event.data?.type === 'worker-face-enrolled') loadWorkers(currentPage);
+        });
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -3113,7 +3100,7 @@
             const workerId = manualWorkerSelect.value;
             const action = manualActionSelect.value || 'time_in';
             const reason = manualReasonInput?.value.trim()
-                || 'Manual attendance log because biometric reader is unavailable.';
+                || 'Manual attendance log because camera recognition is unavailable.';
 
             if (!workerId) {
                 manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
@@ -3597,60 +3584,12 @@
             }
         });
 
-        btnReenrollWorkerFingerprint?.addEventListener('click', async function () {
-            if (!editingWorker || !webAuthnAvailable || !window.SimpleWebAuthnBrowser?.startRegistration) {
-                await showAttendanceAlert('warning', 'Biometrics unavailable', 'Use the deployed HTTPS site and a browser with fingerprint, Face ID, or passkey support.');
-                return;
-            }
-
-            btnReenrollWorkerFingerprint.disabled = true;
-            btnReenrollWorkerFingerprint.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Capturing...';
-
-            try {
-                const optionsResponse = await fetch(supervisorRoutes.passkeyRegisterOptions, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({
-                        first_name: editingWorker.first_name,
-                        last_name: editingWorker.last_name
-                    })
-                });
-                const options = await optionsResponse.json().catch(() => ({}));
-
-                if (!optionsResponse.ok) {
-                    throw new Error(options.message || 'Unable to start biometric enrollment.');
-                }
-
-                const credential = await SimpleWebAuthnBrowser.startRegistration({
-                    optionsJSON: options
-                });
-                const response = await fetch(`${supervisorRoutes.workerProfileBase}/${encodeURIComponent(editingWorker.worker_id)}/biometric`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ credential })
-                });
-                const result = await response.json().catch(() => ({}));
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Unable to update biometric enrollment.');
-                }
-
-                await showAttendanceAlert('success', 'Device passkey updated', 'This account passkey was updated. Shared-device Face ID/fingerprint does not identify different workers.');
-            } catch (error) {
-                console.error(error);
-                await showAttendanceAlert('error', 'Biometric update failed', error.message || 'Unable to update biometric enrollment.');
-            } finally {
-                btnReenrollWorkerFingerprint.disabled = false;
-                btnReenrollWorkerFingerprint.innerHTML = '<i class="bi bi-fingerprint me-1"></i> Re-enroll fingerprint / Face ID';
-            }
+        btnReenrollWorkerFingerprint?.addEventListener('click', function () {
+            if (!editingWorker) return;
+            const workerId = editingWorker.worker_id;
+            returnToRosterAfterEdit = false;
+            editWorkerModalElement.addEventListener('hidden.bs.modal', () => openWorkerCamera('enroll', workerId), { once: true });
+            bootstrap.Modal.getInstance(editWorkerModalElement)?.hide();
         });
 
         async function deleteWorker(worker, button) {
@@ -3833,210 +3772,7 @@
             loadTodayAttendance();
         });
 
-        btnGlobalScan?.addEventListener('click', async function () {
-            // Check biometric support before proceeding
-            if (!webAuthnAvailable) {
-                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
-                globalScanStatus.innerHTML = `
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    Biometric authentication is not supported in this browser. Please use the 
-                    <strong>Manual Log</strong> option or try a different browser (Chrome, Firefox, Safari).
-                `;
-                return;
-            }
-
-            if (!window.SimpleWebAuthnBrowser?.startAuthentication) {
-                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
-                globalScanStatus.innerHTML = `
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    The biometric component could not be loaded. Refresh the page and try again.
-                `;
-                return;
-            }
-
-            if (btnGlobalScan.disabled) {
-                return;
-            }
-
-            btnGlobalScan.disabled = true;
-
-            globalScanStatus.className = 'alert alert-warning border text-dark small py-2 mb-0';
-            globalScanStatus.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Opening biometric scanner...
-            `;
-
-            try {
-                const response = await fetch(supervisorRoutes.passkeyLoginOptions, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                const options = await response.json().catch(() => ({}));
-
-                if (!response.ok) {
-                    throw new Error(options.message || 'Failed to get login options.');
-                }
-
-                const credential = await SimpleWebAuthnBrowser.startAuthentication({
-                    optionsJSON: options
-                });
-
-                const submitResponse = await fetch(supervisorRoutes.passkeyLogin, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify(credential)
-                });
-
-                const result = await submitResponse.json().catch(() => ({}));
-
-                if (submitResponse.ok && result.worker) {
-                    const worker = normalizeWorker(result.worker);
-
-                    globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
-                    globalScanStatus.innerHTML = `
-                        <i class="bi bi-check-circle-fill"></i>
-                        Verified:
-                        <strong>${escapeHtml(worker.first_name)} ${escapeHtml(worker.last_name)}</strong>
-                    `;
-
-                    await saveScannedWorkerAttendance(worker);
-                    await showAttendanceSuccessToast(
-                        'Time In recorded',
-                        `${worker.first_name} ${worker.last_name} has been timed in successfully.`
-                    );
-                } else {
-                    const error = new Error(result.message || 'Authentication failed: Worker not recognized.');
-                    error.requiresReenrollment = result.requires_reenrollment === true;
-                    throw error;
-                }
-            } catch (err) {
-                console.error(err);
-
-                let errorMessage = err.message || 'Unknown error occurred';
-
-                if (err.requiresReenrollment) {
-                    errorMessage = 'This fingerprint is linked to an older site address or saved credential. Open Enrolled Workers, choose Edit, and initialize the fingerprint again on this site.';
-                }
-                
-                // Provide user-friendly error messages
-                if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
-                    errorMessage = 'Biometric verification was cancelled or not supported. Please try the Manual Log option.';
-                } else if (errorMessage.includes('NotSupportedError')) {
-                    errorMessage = 'Biometric authentication is not supported on this device. Please use Manual Log instead.';
-                } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-                    errorMessage = 'Biometric verification timed out. Please try again.';
-                }
-
-                globalScanStatus.className = 'alert alert-danger border text-danger small py-2 mb-0';
-                globalScanStatus.innerHTML = `
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    ${escapeHtml(errorMessage)}
-                `;
-            } finally {
-                btnGlobalScan.disabled = false;
-            }
-        });
-
-        btnRegisterFingerprint?.addEventListener('click', async function () {
-            // Check WebAuthn support before proceeding
-            if (!webAuthnAvailable) {
-                regStatusLabel.innerText = 'Biometric authentication is not supported in this browser. Please use Chrome, Firefox, or Safari.';
-                regStatusLabel.className = 'd-block text-danger small mt-1';
-                return;
-            }
-
-            if (!window.SimpleWebAuthnBrowser?.startRegistration) {
-                regStatusLabel.innerText = 'The biometric component could not be loaded. Refresh the page and try again.';
-                regStatusLabel.className = 'd-block text-danger small mt-1';
-                return;
-            }
-
-            const firstName = document.getElementById('regFirstName').value.trim();
-            const lastName = document.getElementById('regLastName').value.trim();
-            const contactNumber = regContactNumberInput.value.trim();
-
-            if (!firstName || !lastName) {
-                showAttendanceAlert('warning', 'Worker name required', 'Please enter the worker first name and last name before capturing biometrics.');
-                return;
-            }
-
-            if (!isValidContactNumber(contactNumber)) {
-                showAttendanceAlert('warning', 'Invalid contact number', 'Use up to 20 digits or common phone-number characters such as +, spaces, parentheses, periods, or hyphens.');
-                return;
-            }
-
-            btnRegisterFingerprint.disabled = true;
-            btnRegisterFingerprint.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                Capturing...
-            `;
-
-            regStatusLabel.innerText = 'Starting biometric registration...';
-            regStatusLabel.className = 'd-block text-muted small mt-1';
-
-            try {
-                const response = await fetch(supervisorRoutes.passkeyRegisterOptions, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({
-                        first_name: firstName,
-                        last_name: lastName
-                    })
-                });
-
-                const options = await response.json().catch(() => ({}));
-
-                if (!response.ok) {
-                    throw new Error(options.message || 'Failed to get registration options.');
-                }
-
-                capturedPasskeyCredential = await SimpleWebAuthnBrowser.startRegistration({
-                    optionsJSON: options
-                });
-
-                regStatusLabel.innerText = 'Biometric token captured successfully!';
-                regStatusLabel.className = 'd-block text-success small mt-1';
-
-                btnSaveWorker.disabled = false;
-            } catch (err) {
-                console.error(err);
-
-                capturedPasskeyCredential = null;
-
-                let errorMessage = err.message || 'Registration failed. Please try again.';
-                
-                // Provide user-friendly error messages
-                if (errorMessage.includes('NotAllowedError') || errorMessage.includes('NotSupported')) {
-                    errorMessage = 'Biometric capture cancelled or not supported. Please try with a different browser.';
-                } else if (errorMessage.includes('NotSupportedError')) {
-                    errorMessage = 'Biometric authentication is not supported on this device.';
-                }
-
-                regStatusLabel.innerText = errorMessage;
-                regStatusLabel.className = 'd-block text-danger small mt-1';
-
-                btnSaveWorker.disabled = true;
-            } finally {
-                btnRegisterFingerprint.disabled = false;
-                btnRegisterFingerprint.innerHTML = `
-                    <i class="bi bi-shield-plus"></i>
-                    Initialize fingerprint
-                `;
-            }
-        });
+        btnGlobalScan?.addEventListener('click', () => openWorkerCamera());
 
         btnSaveWorker?.addEventListener('click', async function () {
             const firstName = document.getElementById('regFirstName').value.trim();
@@ -4050,11 +3786,6 @@
 
             if (!firstName || !lastName) {
                 showAttendanceAlert('warning', 'Worker name required', 'Please enter the worker first name and last name.');
-                return;
-            }
-
-            if (!capturedPasskeyCredential) {
-                showAttendanceAlert('warning', 'Fingerprint required', 'Please capture the worker fingerprint/passkey first.');
                 return;
             }
 
@@ -4095,7 +3826,7 @@
                         schedule_start: scheduleStart,
                         schedule_end: scheduleEnd,
                         break_minutes: Number(breakMinutes),
-                        credential: capturedPasskeyCredential
+                        project_id: Number(document.getElementById('regProjectId').value)
                     })
                 });
 
@@ -4128,8 +3859,7 @@
                     }
                 }
 
-                // Enrollment does not prove attendance. A separate successful
-                // passkey authentication or an authorized manual log is required.
+                // Worker creation does not record attendance. Face enrollment follows on this same record.
                 await loadWorkers(1);
 
                 const registerModalElement = document.getElementById('registerWorkerModal');
@@ -4138,19 +3868,14 @@
                     const registerModal = bootstrap.Modal.getInstance(registerModalElement)
                         || bootstrap.Modal.getOrCreateInstance(registerModalElement);
 
+                    registerModalElement.addEventListener('hidden.bs.modal', () => openWorkerCamera('enroll', savedWorker.worker_id), { once: true });
                     registerModal.hide();
                 }
 
                 document.getElementById('fastWorkerForm')?.reset();
                 regProfileImagePreview.hidden = true;
                 regProfileImagePreview.removeAttribute('src');
-
-                capturedPasskeyCredential = null;
-
-                regStatusLabel.innerText = 'Biometrics not captured yet.';
-                regStatusLabel.className = 'd-block text-muted small mt-1';
-
-                btnSaveWorker.disabled = true;
+                btnSaveWorker.disabled = false;
                 btnSaveWorker.innerHTML = 'Save Worker Record';
 
                 globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
@@ -4165,7 +3890,7 @@
                     profileImageUploadFailed ? 'Worker saved, photo not uploaded' : 'Worker enrolled',
                     profileImageUploadFailed
                         ? 'The worker was enrolled, but the profile photo could not be uploaded. Retry it from Enrolled Workers.'
-                        : `${savedWorker.first_name} ${savedWorker.last_name} was enrolled successfully. Use the fingerprint button to record attendance.`
+                        : `${savedWorker.first_name} ${savedWorker.last_name} was saved successfully. Enroll their face once to enable attendance from any phone.`
                 );
             } catch (error) {
                 console.error(error);

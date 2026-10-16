@@ -81,7 +81,7 @@ class FaceAttendanceController extends Controller
             $this->assignedWorker((int) $data['worker_id']);
         } elseif (! DB::table('worker_face_enrollments')->whereIn('worker_id', $this->workerIds())
             ->whereNotNull('face_descriptors')->where('model_version', config('face_attendance.model_version'))->exists()) {
-            return response()->json(['message' => 'Enroll an assigned worker with this camera first. AWS enrollments must be enrolled again.'], 409);
+            return response()->json(['message' => 'No saved face enrollment was found for your assigned workers. Choose Enroll worker face and select an existing worker. Enroll once; the saved face works on other phones.'], 409);
         }
         $request->session()->forget('worker_attendance_face_proof');
         // A new scan supersedes abandoned sessions (including a page refresh).

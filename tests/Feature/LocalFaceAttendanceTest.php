@@ -229,4 +229,48 @@ class LocalFaceAttendanceTest extends TestCase
             ->assertSee('models/human')
             ->assertSee('Worker 1');
     }
+
+    public function test_saved_faces_are_reusable_after_supervisor_signs_in_with_a_new_session(): void
+    {
+        $this->enroll();
+        $this->finishScan($this->startScan('enroll', 2), $this->samples(-1))->assertOk();
+        $supervisor = auth()->user();
+        auth()->logout();
+        $this->flushSession();
+        $this->actingAs($supervisor);
+        foreach ([1 => 1, 2 => -1] as $id => $value) {
+            $this->finishScan($this->startScan(), $this->samples($value))->assertOk()
+                ->assertJsonPath('worker.worker_id', $id);
+            $this->postJson(route('supervisor.attendance.logWorker'), [
+                'worker_id' => $id, 'log_date' => now('Asia/Manila')->toDateString(),
+                'action' => 'time_in', 'verification_method' => 'face', 'supervisor_confirmed_identity' => true,
+            ])->assertOk();
+        }
+        $this->assertDatabaseCount('workers', 2);
+        $this->assertDatabaseCount('worker_face_enrollments', 2);
+        $this->assertDatabaseCount('attendance_logs', 2);
+    }
+
+    public function test_new_worker_registration_needs_no_device_passkey_and_assigns_the_project(): void
+    {
+        $response = $this->postJson(route('supervisor.workers.register_camera'), [
+            'first_name' => 'New', 'last_name' => 'Worker', 'project_id' => 1,
+            'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+        ])->assertOk();
+        $id = $response->json('worker.worker_id');
+        $this->assertDatabaseHas('project_workers', ['worker_id' => $id, 'project_id' => 1, 'is_active' => 1]);
+        $this->finishScan($this->startScan('enroll', $id), $this->samples())->assertOk();
+        $this->assertDatabaseCount('workers', 3);
+    }
+
+    public function test_main_attendance_screen_uses_face_camera_instead_of_device_passkeys(): void
+    {
+        $this->get(route('supervisor.attendance'))->assertOk()
+            ->assertSee('Facial Recognition')->assertSee('id="workerFaceCameraModal"', false)
+            ->assertSee('bi-person-bounding-box')->assertSee('regProjectId')
+            ->assertDontSee('SimpleWebAuthnBrowser')->assertDontSee('passkeys/login')
+            ->assertDontSee('bi-fingerprint')->assertDontSee('Facial Attendance');
+        $this->get(route('supervisor.face-attendance.index', ['embedded' => 1]))->assertOk()
+            ->assertSee('<title>Worker face recognition</title>', false);
+    }
 }

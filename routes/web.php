@@ -250,6 +250,8 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/api/phases/export-pdf', [SupervisorController::class, 'exportPhasesPdf'])->name('supervisor.api.phases.exportPdf');
 
     Route::get('/supervisor/attendance', [SupervisorController::class, 'attendance'])->name('supervisor.attendance');
+    Route::post('/supervisor/workers/camera', [SupervisorController::class, 'registerCameraWorker'])
+        ->middleware('throttle:20,1,camera-workers')->name('supervisor.workers.register_camera');
     Route::post('/supervisor/attendance', [SupervisorController::class, 'saveAttendance'])->name('supervisor.attendance.save');
 
     Route::get('/supervisor/materials', [SupervisorController::class, 'materials'])->name('supervisor.materials');
