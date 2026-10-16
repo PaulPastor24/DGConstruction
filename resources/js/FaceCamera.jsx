@@ -12,8 +12,11 @@ async function withTimeout(task, milliseconds, message) {
 async function getEngine() {
   if (!engine) engine = (async () => {
     const { Human } = await import('@vladmandic/human');
+    const modelBasePath = (document.getElementById('face-attendance-root') || document.getElementById('face-attendance-inline')).dataset.models;
     const human = new Human({
-      backend: 'webgl', warmup: 'none', modelBasePath: (document.getElementById('face-attendance-root') || document.getElementById('face-attendance-inline')).dataset.models, cacheSensitivity: 0,
+      // Avoid slow graphics drivers and shader compilation on mobile devices.
+      backend: 'wasm', wasmPath: new URL('wasm/', new URL(modelBasePath, window.location.href)).href,
+      warmup: 'none', modelBasePath, cacheSensitivity: 0,
       filter: { enabled: true, equalization: true },
       face: {
         enabled: true,
@@ -25,7 +28,12 @@ async function getEngine() {
       body: { enabled: false }, hand: { enabled: false },
       object: { enabled: false }, gesture: { enabled: false },
     });
+    // Hostinger does not need cross-origin isolation headers or worker threads.
+    human.tf.setThreadsCount(1);
     await human.load();
+    if (human.tf.getBackend() !== 'wasm') {
+      throw new Error('The local face processing engine could not start. Upload the complete public/models/human/wasm folder.');
+    }
     if (!['blazeface', 'facemesh', 'faceres'].every(name => human.models.loaded().includes(name))) {
       throw new Error('Required face model files are missing.');
     }
@@ -81,7 +89,7 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
         } finally { preview.removeEventListener('loadeddata', onFrame); }
       }
       if (disposed) return;
-      if (!disposed) setProgress('Loading face recognition models. The first visit downloads about 9 MB; keep this page open.');
+      if (!disposed) setProgress('Loading face recognition. The first visit downloads about 10 MB; keep this page open.');
       await withTimeout(getEngine(), 60000, 'Face models took too long to load. Check your connection and that public/models/human was uploaded.');
       if (!disposed) { setReady(true); setProgress('Place one worker in view. Remove sunglasses and face coverings when safe.'); }
     })().catch(e => {

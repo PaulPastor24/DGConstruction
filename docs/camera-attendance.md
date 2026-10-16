@@ -5,7 +5,7 @@ AWS is no longer used by facial attendance. The phone extracts Human 3.3.6 FaceR
 ## Setup / deployment
 
 1. Run `npm ci` and `npm run build`.
-2. Deploy **both** `public/build` and `public/models/human` alongside the PHP changes. The build script copies the three required model pairs from the pinned npm package; no external model CDN or API key is required at runtime.
+2. Deploy **both** `public/build` and the complete `public/models/human` folder alongside the PHP changes. This includes `public/models/human/wasm/` and its three `.wasm` files. The build script copies the models and pinned TensorFlow.js 4.22.0 WebAssembly binaries locally; no external model CDN or API key is required at runtime. Uploading only `public/build` is insufficient for the WebAssembly update. Keep the included `.htaccess` in the wasm directory so Apache serves the correct MIME type.
 3. Run these additive migrations (or your normal migration deployment):
    ```sh
    php artisan migrate --path=database/migrations/2026_10_14_000001_create_worker_face_enrollments.php
@@ -43,6 +43,10 @@ FaceRes normalization reference: https://github.com/vladmandic/human/blob/main/s
 Review upstream model terms before any commercial rollout beyond the capstone.
 
 ## Verification
+
+The scanner uses single-threaded WebAssembly instead of WebGL inference. The face model and saved template format are unchanged. No new database migration or face re-enrollment is required for this runtime update. Single-threaded inference does not require cross-origin isolation headers; see https://github.com/tensorflow/tfjs/tree/master/tfjs-backend-wasm.
+
+A local headless Chrome check on 2026-10-16, using a public test image and simulated camera stream with WebGL disabled, ran the built registration UI and automatically collected three finite 1024-value samples in approximately 5.5 seconds with no browser errors. This checks browser inference and capture flow, not accuracy or speed on every phone. One-frame timings on the same fixture were about 17.6 seconds with software WebGL and 0.7 seconds with WebAssembly.
 
 `php vendor/phpunit/phpunit/phpunit --do-not-cache-result --filter 'LocalFaceAttendanceTest|AttendanceReportTest'`
 

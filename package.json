@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@simplewebauthn/browser": "^13.3.0",
+        "@tensorflow/tfjs-backend-wasm": "4.22.0",
         "@vladmandic/human": "3.3.6",
         "dhtmlx-gantt": "^10.0.0",
         "react": "^18.3.1",
