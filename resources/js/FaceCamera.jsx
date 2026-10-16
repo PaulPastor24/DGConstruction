@@ -27,7 +27,7 @@ async function getEngine() {
   return engine;
 }
 
-export default function FaceCamera({ onComplete, onError, disabled }) {
+export default function FaceCamera({ onComplete, onError, disabled, autoCapture = false }) {
   const video = useRef(null);
   const stream = useRef(null);
   const active = useRef(true);
@@ -59,6 +59,12 @@ export default function FaceCamera({ onComplete, onError, disabled }) {
     });
     return () => { disposed = true; active.current = false; camera?.getTracks().forEach(t => t.stop()); };
   }, [facing]);
+
+  useEffect(() => {
+    if (!autoCapture || !ready || disabled) return;
+    const timer = window.setTimeout(() => capture(), 900);
+    return () => window.clearTimeout(timer);
+  }, [autoCapture, ready, disabled]);
 
   async function capture() {
     if (capturing.current || disabled) return;
@@ -96,7 +102,7 @@ export default function FaceCamera({ onComplete, onError, disabled }) {
     <video ref={video} autoPlay muted playsInline style={{ width: '100%', maxHeight: 420, background: '#17251c', borderRadius: 12 }} />
     <p role="status">{progress}</p>
     <div className="face-actions d-flex flex-wrap gap-2">
-      <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>
+      {!autoCapture && <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>}
       <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={!ready || disabled} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>Switch camera</button>
     </div>
   </div>;

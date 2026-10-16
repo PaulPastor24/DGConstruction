@@ -80,7 +80,6 @@ class FaceAttendanceController extends Controller
         $data = $request->validate([
             'purpose' => ['required', Rule::in(['enroll', 'attendance'])],
             'worker_id' => ['required_if:purpose,enroll', 'nullable', 'integer'],
-            'supervisor_confirmed_identity' => ['exclude_unless:purpose,enroll', 'required', 'accepted'],
         ]);
         if ($data['purpose'] === 'enroll') {
             $this->assignedWorker((int) $data['worker_id']);

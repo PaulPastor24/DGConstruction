@@ -18,7 +18,6 @@ export function mountInlineAttendance(mount) {
     const [operation, setOperation] = useState(null);
     const [session, setSession] = useState(null);
     const [matched, setMatched] = useState(null);
-    const [confirmed, setConfirmed] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -41,7 +40,7 @@ export function mountInlineAttendance(mount) {
       try {
         const result = await send(urls.start, {
           purpose: next.purpose,
-          ...(next.purpose === 'enroll' ? { worker_id: next.workerId, supervisor_confirmed_identity: true } : {}),
+          ...(next.purpose === 'enroll' ? { worker_id: next.workerId } : {}),
         });
         if (generation.current !== token) { await send(urls.cancel, { session_id: result.session_id }); return; }
         currentSession.current = result;
@@ -62,7 +61,7 @@ export function mountInlineAttendance(mount) {
       const open = async event => {
         if (working.current || currentSession.current) return;
         const next = event.detail;
-        setOperation(next); setError(''); setMessage(''); setMatched(null); setConfirmed(false);
+        setOperation(next); setError(''); setMessage(''); setMatched(null);
         mount.scrollIntoView({ behavior: 'smooth', block: 'center' });
         if (next.purpose === 'attendance') {
           await startScan(next);
@@ -71,12 +70,18 @@ export function mountInlineAttendance(mount) {
             const result = await send(urls.workers);
             const worker = result.faceWorkerChoices.find(w => Number(w.worker_id) === Number(next.workerId));
             if (!worker) throw new Error('Worker is not assigned to your active projects.');
-            setOperation({ ...next, name: worker.name });
+            const enrollment = { ...next, name: worker.name };
+            setOperation(enrollment);
+            await startScan(enrollment);
           } catch (e) { setError(e.message); }
         }
       };
       window.addEventListener('worker-camera-open', open);
-      return () => window.removeEventListener('worker-camera-open', open);
+      window.addEventListener('worker-camera-close', cancel);
+      return () => {
+        window.removeEventListener('worker-camera-open', open);
+        window.removeEventListener('worker-camera-close', cancel);
+      };
     }, []);
 
     async function complete(samples, preview) {
@@ -119,10 +124,9 @@ export function mountInlineAttendance(mount) {
       {busy && <p role="status" className="mt-3">Please wait...</p>}
       {operation?.purpose === 'enroll' && !session && !matched && <div className="text-start mt-3">
         <h6>Enroll face: {operation.name || 'worker'}</h6>
-        <label className="d-block mb-2"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> I verified this worker's identity in person.</label>
-        <button className="btn btn-success" disabled={busy || !confirmed || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
+        <button className="btn btn-success" disabled={busy || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
       </div>}
-      {session && <FaceCamera key={session.session_id} disabled={busy} onComplete={complete} onError={reason => {
+      {session && <FaceCamera key={session.session_id} autoCapture={operation?.purpose === 'enroll'} disabled={busy} onComplete={complete} onError={reason => {
         currentSession.current = null; setSession(null); setError(reason);
         send(urls.cancel, { session_id: session.session_id }).catch(() => {});
       }} />}

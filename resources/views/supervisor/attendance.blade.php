@@ -1905,7 +1905,7 @@
                     <span class="enrollment-modal-icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
                     <div>
                         <h5 class="enrollment-modal-title" id="registerWorkerModalLabel">Fast Worker Enrollment</h5>
-                        <p class="enrollment-modal-subtitle">Add a worker once, then enroll their face for attendance on any phone.</p>
+                        <p class="enrollment-modal-subtitle">Enter worker details and capture their face before saving.</p>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1973,13 +1973,13 @@
                         <div class="form-text">Optional. JPG, PNG, or WebP, up to 2 MB.</div>
                     </section>
 
-                    <div class="alert alert-light border small">Save the worker record first, then enroll their face using the camera. For an existing worker, use Enrolled Workers &gt; Edit &gt; Enroll / update face. Do not create another worker record when changing phones.</div>
+                    <div id="worker-registration-camera" data-model-version="{{ config('face_attendance.model_version') }}"></div>
                 </form>
             </div>
 
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light fw-medium btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-attendance-primary fw-semibold btn-sm" id="btnSaveWorkerRecord">
+                <button type="button" class="btn btn-attendance-primary fw-semibold btn-sm" id="btnSaveWorkerRecord" disabled>
                     Save Worker Record
                 </button>
             </div>
@@ -2298,6 +2298,19 @@
         const manualAttendanceStatus = document.getElementById('manualAttendanceStatus');
         const btnSaveManualAttendance = document.getElementById('btnSaveManualAttendance');
         const btnSaveWorker = document.getElementById('btnSaveWorkerRecord');
+        let capturedWorkerFace = null;
+        window.addEventListener('worker-registration-captured', event => {
+            capturedWorkerFace = event.detail;
+            btnSaveWorker.disabled = !capturedWorkerFace;
+        });
+        function resetRegistrationFace() {
+            capturedWorkerFace = null;
+            btnSaveWorker.disabled = true;
+            window.dispatchEvent(new Event('worker-registration-reset'));
+        }
+        document.getElementById('registerWorkerModal').addEventListener('hidden.bs.modal', resetRegistrationFace);
+        document.getElementById('registerWorkerModal').addEventListener('show.bs.modal', () => window.dispatchEvent(new Event('worker-camera-close')));
+        ['regFirstName', 'regLastName'].forEach(id => document.getElementById(id).addEventListener('input', resetRegistrationFace));
 
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
@@ -3759,6 +3772,10 @@
         btnGlobalScan?.addEventListener('click', () => openWorkerCamera());
 
         btnSaveWorker?.addEventListener('click', async function () {
+            if (!capturedWorkerFace) {
+                showAttendanceAlert('warning', 'Face capture required', 'Capture the worker face before saving.');
+                return;
+            }
             const firstName = document.getElementById('regFirstName').value.trim();
             const lastName = document.getElementById('regLastName').value.trim();
             const contactNumber = regContactNumberInput.value.trim();
@@ -3810,7 +3827,9 @@
                         schedule_start: scheduleStart,
                         schedule_end: scheduleEnd,
                         break_minutes: Number(breakMinutes),
-                        project_id: Number(document.getElementById('regProjectId').value)
+                        project_id: Number(document.getElementById('regProjectId').value),
+                        model_version: capturedWorkerFace.model_version,
+                        face_samples: capturedWorkerFace.samples
                     })
                 });
 
@@ -3843,7 +3862,7 @@
                     }
                 }
 
-                // Worker creation does not record attendance. Face enrollment follows on this same record.
+                // Worker details, project assignment, and face enrollment were saved together.
                 await loadWorkers(1);
 
                 const registerModalElement = document.getElementById('registerWorkerModal');
@@ -3852,14 +3871,13 @@
                     const registerModal = bootstrap.Modal.getInstance(registerModalElement)
                         || bootstrap.Modal.getOrCreateInstance(registerModalElement);
 
-                    registerModalElement.addEventListener('hidden.bs.modal', () => openWorkerCamera('enroll', savedWorker.worker_id), { once: true });
                     registerModal.hide();
                 }
 
                 document.getElementById('fastWorkerForm')?.reset();
                 regProfileImagePreview.hidden = true;
                 regProfileImagePreview.removeAttribute('src');
-                btnSaveWorker.disabled = false;
+                btnSaveWorker.disabled = !capturedWorkerFace;
                 btnSaveWorker.innerHTML = 'Save Worker Record';
 
                 globalScanStatus.className = 'alert alert-success border text-success small py-2 mb-0';
@@ -3874,14 +3892,14 @@
                     profileImageUploadFailed ? 'Worker saved, photo not uploaded' : 'Worker enrolled',
                     profileImageUploadFailed
                         ? 'The worker was enrolled, but the profile photo could not be uploaded. Retry it from Enrolled Workers.'
-                        : `${savedWorker.first_name} ${savedWorker.last_name} was saved successfully. Enroll their face once to enable attendance from any phone.`
+                        : `${savedWorker.first_name} ${savedWorker.last_name} and their face were enrolled successfully. Use the face button to record attendance.`
                 );
             } catch (error) {
                 console.error(error);
 
                 await showAttendanceAlert('error', 'Worker could not be saved', error.message || 'Failed to save worker.');
 
-                btnSaveWorker.disabled = false;
+                btnSaveWorker.disabled = !capturedWorkerFace;
                 btnSaveWorker.innerHTML = 'Save Worker Record';
             }
         });

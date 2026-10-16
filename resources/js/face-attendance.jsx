@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import FaceCamera from './FaceCamera';
 import { mountInlineAttendance } from './InlineFaceAttendance';
+import { mountWorkerRegistrationCamera } from './WorkerRegistrationCamera';
 
 const mount = document.getElementById('face-attendance-root');
 const workers = JSON.parse(document.getElementById('face-workers-json')?.textContent || '[]');
@@ -30,7 +31,6 @@ function App() {
   const [purpose, setPurpose] = useState(initialPurpose);
   const [workerId, setWorkerId] = useState(initialWorkerId);
   const launched = useRef(false);
-  const [identityConfirmed, setIdentityConfirmed] = useState(false);
   const [session, setSession] = useState(null);
   const [matched, setMatched] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -74,9 +74,7 @@ function App() {
       const payload = { purpose };
       if (purpose === 'enroll') {
         if (!workerId) throw new Error('Select the worker being enrolled.');
-        if (!identityConfirmed) throw new Error('Confirm the worker identity in person before enrollment.');
         payload.worker_id = Number(workerId);
-        payload.supervisor_confirmed_identity = true;
       }
       const result = await send(urls.start, payload);
       setSession(result);
@@ -132,11 +130,10 @@ function App() {
         {purpose === 'enroll' && (
           <div>
             <label htmlFor="face-worker">Worker to enroll</label>
-            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => { setWorkerId(e.target.value); setIdentityConfirmed(false); }}>
+            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => { setWorkerId(e.target.value); }}>
               <option value="">Select worker</option>
               {workers.map(w => <option key={w.worker_id} value={w.worker_id}>{w.name}{enrolled.includes(Number(w.worker_id)) ? ' (re-enroll)' : ''}</option>)}
             </select>
-            <label style={{display:'block',marginTop:12}}><input type="checkbox" checked={identityConfirmed} onChange={e=>setIdentityConfirmed(e.target.checked)}/> I verified this worker's identity in person.</label>
             {enrolled.includes(Number(workerId)) && <div className="face-actions"><button type="button" className="face-button face-button-danger" disabled={busy || !!session} onClick={removeEnrollment}>Remove this worker's enrolled face</button></div>}
           </div>
         )}
@@ -150,7 +147,7 @@ function App() {
         {session ? (
           <div>
             <div className="face-scan-host">
-              <FaceCamera key={session.session_id} disabled={busy} onComplete={onComplete}
+              <FaceCamera key={session.session_id} autoCapture={purpose === 'enroll'} disabled={busy} onComplete={onComplete}
                 onError={reason => { cancel().finally(() => setError(reason)); }} />
             </div>
             <div className="face-actions"><button type="button" className="face-button face-button-secondary" onClick={cancel}>Cancel scan</button></div>
@@ -184,3 +181,6 @@ function App() {
 if (mount) createRoot(mount).render(<App />);
 const inlineMount = document.getElementById('face-attendance-inline');
 if (inlineMount) mountInlineAttendance(inlineMount);
+
+const registrationMount = document.getElementById('worker-registration-camera');
+if (registrationMount) mountWorkerRegistrationCamera(registrationMount);

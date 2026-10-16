@@ -104,7 +104,6 @@ class LocalFaceAttendanceTest extends TestCase
     {
         return $this->postJson(route('supervisor.face-attendance.start'), [
             'purpose' => $purpose, 'worker_id' => $worker,
-            ...($purpose === 'enroll' ? ['supervisor_confirmed_identity' => true] : []),
         ])->assertOk()->json();
     }
 
@@ -120,15 +119,8 @@ class LocalFaceAttendanceTest extends TestCase
         $this->finishScan($this->startScan('enroll'), $this->samples())->assertOk();
     }
 
-    public function test_enrollment_requires_identity_only_and_attendance_scan_needs_no_enrollment_confirmation(): void
+    public function test_face_enrollment_and_scanning_do_not_require_checkbox_confirmations(): void
     {
-        foreach ([[], ['supervisor_confirmed_identity' => false, 'privacy_notice_acknowledged' => false]] as $confirmations) {
-            $this->postJson(route('supervisor.face-attendance.start'), [
-                'purpose' => 'enroll', 'worker_id' => 1, ...$confirmations,
-            ])->assertUnprocessable()->assertJsonValidationErrors([
-                'supervisor_confirmed_identity',
-            ]);
-        }
         $this->enroll();
         $this->assertNull(DB::table('worker_face_enrollments')->value('notice_acknowledged_at'));
         $this->postJson(route('supervisor.face-attendance.start'), ['purpose' => 'attendance'])
@@ -271,10 +263,12 @@ class LocalFaceAttendanceTest extends TestCase
         $response = $this->postJson(route('supervisor.workers.register_camera'), [
             'first_name' => 'New', 'last_name' => 'Worker', 'project_id' => 1,
             'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+            'model_version' => config('face_attendance.model_version'), 'face_samples' => $this->samples(),
         ])->assertOk();
         $id = $response->json('worker.worker_id');
         $this->assertDatabaseHas('project_workers', ['worker_id' => $id, 'project_id' => 1, 'is_active' => 1]);
-        $this->finishScan($this->startScan('enroll', $id), $this->samples())->assertOk();
+        $this->finishScan($this->startScan(), $this->samples())->assertOk()->assertJsonPath('worker.worker_id', $id);
+        $this->assertDatabaseHas('worker_face_enrollments', ['worker_id' => $id]);
         $this->assertDatabaseCount('workers', 3);
     }
 
@@ -291,5 +285,30 @@ class LocalFaceAttendanceTest extends TestCase
         $this->getJson(route('supervisor.face-attendance.index'))->assertOk()
             ->assertJsonPath('faceWorkerChoices.0.worker_id', 1)
             ->assertJsonMissingPath('faceWorkerChoices.0.face_descriptors');
+    }
+
+    public function test_registration_requires_face_capture_and_rejects_duplicate_faces_without_creating_workers(): void
+    {
+        $data = [
+            'first_name' => 'New', 'last_name' => 'Worker', 'project_id' => 1,
+            'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+        ];
+        $this->postJson(route('supervisor.workers.register_camera'), $data)->assertUnprocessable()
+            ->assertJsonValidationErrors(['face_samples', 'model_version']);
+        $this->enroll();
+        $this->postJson(route('supervisor.workers.register_camera'), $data + [
+            'model_version' => config('face_attendance.model_version'), 'face_samples' => $this->samples(),
+        ])->assertUnprocessable();
+        $this->assertDatabaseCount('workers', 2);
+        $this->assertDatabaseCount('worker_face_enrollments', 1);
+    }
+
+    public function test_updating_face_replaces_template_on_same_worker_record_without_checkbox(): void
+    {
+        $this->enroll();
+        $this->finishScan($this->startScan('enroll'), $this->samples(-1))->assertOk();
+        $this->finishScan($this->startScan(), $this->samples(-1))->assertOk()->assertJsonPath('worker.worker_id', 1);
+        $this->assertDatabaseCount('worker_face_enrollments', 1);
+        $this->assertDatabaseCount('workers', 2);
     }
 }

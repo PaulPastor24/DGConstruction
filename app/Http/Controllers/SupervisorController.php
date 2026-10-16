@@ -14,12 +14,15 @@ use App\Models\Report;
 use App\Models\SupervisorNotification;
 use App\Models\SystemLog;
 use App\Services\NotificationService;
+use App\Services\LocalFaceMatcher;
 use App\Services\WorkerPasskeyService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -2132,7 +2135,7 @@ class SupervisorController extends Controller
         ]);
     }
 
-    public function registerCameraWorker(Request $request)
+    public function registerCameraWorker(Request $request, LocalFaceMatcher $matcher)
     {
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -2143,11 +2146,31 @@ class SupervisorController extends Controller
             'schedule_end' => ['required', 'date_format:H:i', 'after:schedule_start'],
             'break_minutes' => ['required', 'integer', 'min:0', 'max:480'],
             'project_id' => ['required', 'integer'],
+            'model_version' => ['required', Rule::in([config('face_attendance.model_version')])],
+            'face_samples' => ['required', 'array', 'size:3'],
+            'face_samples.*' => ['required', 'array', 'size:1024'],
+            'face_samples.*.*' => ['required', 'numeric', 'between:-100,100'],
         ]);
+        abort_unless(config('face_attendance.enabled'), 503, 'Face attendance is not enabled.');
         $project = Project::query()->where('project_id', $data['project_id'])
             ->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
                 ->where('project_supervisors.is_active', 1))->first();
         abort_unless($project, 403, 'Choose a project actively assigned to your supervisor account.');
+
+        try {
+            $matcher->validateSamples($data['face_samples']);
+            $enrollments = DB::table('worker_face_enrollments')->whereNotNull('face_descriptors')
+                ->where('model_version', config('face_attendance.model_version'))->get();
+            foreach ($enrollments as $enrollment) {
+                $saved = json_decode(Crypt::decryptString($enrollment->face_descriptors), true, 512, JSON_THROW_ON_ERROR);
+                $matcher->validateSamples($saved);
+                if ($matcher->score($data['face_samples'], $saved) >= config('face_attendance.similarity_threshold')) {
+                    return response()->json(['message' => 'This face may already belong to an existing worker. Use Enrolled Workers to update that record.'], 422);
+                }
+            }
+        } catch (\RuntimeException $error) {
+            return response()->json(['message' => 'Face capture could not be verified. Capture the worker face again.'], 422);
+        }
 
         $workerId = DB::transaction(function () use ($data) {
             $id = DB::table('workers')->insertGetId([
@@ -2168,13 +2191,21 @@ class SupervisorController extends Controller
                 }
             }
             DB::table('project_workers')->insert($deployment);
+            DB::table('worker_face_enrollments')->insert([
+                'worker_id' => $id, 'aws_face_id' => 'local:'.Str::uuid(),
+                'face_descriptors' => Crypt::encryptString(json_encode($data['face_samples'], JSON_THROW_ON_ERROR)),
+                'model_version' => config('face_attendance.model_version'),
+                'enrolled_by' => Auth::id(), 'enrolled_at' => now(), 'notice_acknowledged_at' => null,
+                'privacy_notice_version' => config('face_attendance.privacy_notice_version'),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
 
             return $id;
         });
         $worker = DB::table('workers')->where('worker_id', $workerId)->first();
 
         return response()->json([
-            'success' => true, 'message' => 'Worker saved. Enroll their face once for camera attendance.',
+            'success' => true, 'message' => 'Worker and verified face samples saved. Ready for attendance.',
             'worker' => [
                 'worker_id' => $worker->worker_id, 'first_name' => $worker->first_name,
                 'last_name' => $worker->last_name, 'trade' => $worker->trade,
