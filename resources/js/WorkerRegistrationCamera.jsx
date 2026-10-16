@@ -8,6 +8,9 @@ export function mountWorkerRegistrationCamera(mount) {
     const [captured, setCaptured] = useState(false);
     const [error, setError] = useState('');
     useEffect(() => {
+      if (open) mount.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [open]);
+    useEffect(() => {
       const modal = document.getElementById('registerWorkerModal');
       const reset = () => {
         setOpen(false); setCaptured(false); setError('');
