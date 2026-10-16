@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { FaceLivenessDetectorCore } from '@aws-amplify/ui-react-liveness';
-import { ThemeProvider } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
+import FaceCamera from './FaceCamera';
 
 const mount = document.getElementById('face-attendance-root');
 const workers = JSON.parse(document.getElementById('face-workers-json')?.textContent || '[]');
@@ -44,12 +42,12 @@ function App() {
   async function removeEnrollment() {
     if (!workerId) { setError('Choose the worker first.'); return; }
     const person = workers.find(w => String(w.worker_id) === String(workerId));
-    if (!window.confirm(`Permanently delete the AWS face enrollment for ${person?.name || 'this worker'}? Existing attendance logs remain.`)) return;
+    if (!window.confirm(`Permanently delete the local face enrollment for ${person?.name || 'this worker'}? Existing attendance logs remain.`)) return;
     setBusy(true); setError(''); setMessage('');
     try {
       await send(`${urls.removePrefix}/${encodeURIComponent(workerId)}`, {confirm: true}, 'DELETE');
       setEnrolled(old => old.filter(i => i !== Number(workerId)));
-      setMessage('Face enrollment deleted from AWS. Existing attendance records are preserved.');
+      setMessage('Local face enrollment deleted. Existing attendance records are preserved.');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -71,17 +69,17 @@ function App() {
     finally { setBusy(false); }
   }
 
-  async function onComplete() {
+  async function onComplete(samples, preview) {
     if (!session) return;
     setBusy(true);
     try {
-      const result = await send(urls.finish, { session_id: session.session_id });
+      const result = await send(urls.finish, { session_id: session.session_id, model_version: session.model_version, samples });
       setSession(null);
       if (result.purpose === 'enroll') {
         setEnrolled(old => [...new Set([...old, Number(result.worker.worker_id)])]);
         setMessage(`${result.worker.first_name} ${result.worker.last_name} was enrolled. No attendance recorded.`);
       } else {
-        setMatched(result);
+        setMatched({ ...result, preview });
         setMessage('Face matched. Supervisor must confirm the person before recording Time In.');
       }
     } catch (e) { setError(e.message); setSession(null); }
@@ -94,8 +92,8 @@ function App() {
     const w = matched.worker;
     try {
       await send(urls.save, {
-        worker_id: Number(w.worker_id), log_date: urls.logDate,
-        action: 'time_in', verification_method: 'face',
+        worker_id: Number(w.worker_id), log_date: matched.log_date || urls.logDate,
+        action: 'time_in', verification_method: 'face', supervisor_confirmed_identity: true,
       });
       setFinished(old => [{ id: w.worker_id, name: `${w.first_name} ${w.last_name}` }, ...old]);
       setMatched(null);
@@ -116,7 +114,7 @@ function App() {
         {purpose === 'enroll' && (
           <div>
             <label htmlFor="face-worker">Worker to enroll</label>
-            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => setWorkerId(e.target.value)}>
+            <select id="face-worker" className="face-select" value={workerId} disabled={!!session || busy} onChange={e => { setWorkerId(e.target.value); setIdentityConfirmed(false); setPrivacyAcknowledged(false); }}>
               <option value="">Select worker</option>
               {workers.map(w => <option key={w.worker_id} value={w.worker_id}>{w.name}{enrolled.includes(Number(w.worker_id)) ? ' (re-enroll)' : ''}</option>)}
             </select>
@@ -127,36 +125,25 @@ function App() {
         )}
       </div>
       <div className="face-panel">
-        <h2>2. Camera / liveness challenge</h2>
+        <h2>2. Phone camera</h2>
         {!secure && <div className="face-error">Open the website through HTTPS; camera access requires a secure context.</div>}
-        {!cameraCapable && <div className="face-error">Camera access is unavailable in this browser. Use a supported Android Chrome device or Manual Log.</div>}
+        {!cameraCapable && <div className="face-error">Camera access is unavailable in this browser. Use Safari on iPhone, Chrome on Android, or Manual Log.</div>}
         {error && <p className="face-error" role="alert">{error}</p>}
         {message && <p className="face-success" role="status">{message}</p>}
         {session ? (
           <div>
             <div className="face-scan-host">
-              <ThemeProvider>
-                <FaceLivenessDetectorCore
-                  key={session.session_id}
-                  sessionId={session.session_id}
-                  region={session.region}
-                  config={{credentialProvider: async () => ({
-                    ...session.credentials,
-                    expiration: new Date(session.credentials.expiration),
-                  })}}
-                  onAnalysisComplete={onComplete}
-                  onUserCancel={cancel}
-                  onError={e => { const reason = e?.error?.message || 'Camera verification failed. Try again.'; cancel().finally(() => setError(reason)); }}
-                />
-              </ThemeProvider>
+              <FaceCamera key={session.session_id} disabled={busy} onComplete={onComplete}
+                onError={reason => { cancel().finally(() => setError(reason)); }} />
             </div>
             <div className="face-actions"><button type="button" className="face-button face-button-secondary" onClick={cancel}>Cancel scan</button></div>
           </div>
         ) : matched ? (
           <div>
             <div className="face-result">
+              {matched.preview && <img src={matched.preview} alt="Current camera capture" />}
               {matched.worker.profile_image_url && <img src={matched.worker.profile_image_url} alt="Enrolled worker profile" />}
-              <div><strong>{matched.worker.first_name} {matched.worker.last_name}</strong><p className="face-muted">{matched.worker.trade} · Match {Number(matched.match_score).toFixed(1)}% · Liveness {Number(matched.liveness_score).toFixed(1)}%</p></div>
+              <div><strong>{matched.worker.first_name} {matched.worker.last_name}</strong><p className="face-muted">{matched.worker.trade} | Similarity score {Number(matched.match_score).toFixed(0)}/100</p></div>
             </div>
             <p><strong>Supervisor:</strong> confirm the physical person matches this worker before recording.</p>
             <div className="face-actions">
@@ -165,12 +152,12 @@ function App() {
             </div>
           </div>
         ) : (
-          <button type="button" className="face-button" disabled={!secure || !cameraCapable || busy} onClick={start}>{busy ? 'Please wait…' : purpose === 'attendance' ? 'Start worker face scan' : 'Start worker enrollment'}</button>
+          <button type="button" className="face-button" disabled={!secure || !cameraCapable || busy} onClick={start}>{busy ? 'Please wait...' : purpose === 'attendance' ? 'Start worker face scan' : 'Start worker enrollment'}</button>
         )}
       </div>
       <div className="face-panel">
         <h2>Today's confirmed face attendance ({finished.length} in this browser session)</h2>
-        {finished.length ? <ul>{finished.map((w,i) => <li key={`${w.id}-${i}`}>{w.name} — Time In saved</li>)}</ul> : <p className="face-muted">After every successful Time In, start a new scan for the next worker.</p>}
+        {finished.length ? <ul>{finished.map((w,i) => <li key={`${w.id}-${i}`}>{w.name} - Time In saved</li>)}</ul> : <p className="face-muted">After every successful Time In, start a new scan for the next worker.</p>}
         <p className="face-muted">This list is only an on-screen confirmation, not the attendance report. The Laravel attendance database remains the source of truth.</p>
       </div>
     </div>

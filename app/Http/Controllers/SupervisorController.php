@@ -459,6 +459,7 @@ class SupervisorController extends Controller
             'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'manual' => ['nullable', 'boolean'],
             'verification_method' => ['nullable', Rule::in(['passkey', 'face'])],
+            'supervisor_confirmed_identity' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -476,6 +477,9 @@ class SupervisorController extends Controller
         $action = $validated['action'] ?? 'time_in';
         $manualMode = $request->boolean('manual');
         $verificationMethod = $manualMode ? 'manual' : ($validated['verification_method'] ?? 'passkey');
+        if ($verificationMethod === 'face' && (!$request->boolean('supervisor_confirmed_identity') || !config('face_attendance.enabled'))) {
+            return response()->json(['message' => 'Confirm the worker in person before saving camera attendance.'], 422);
+        }
         $date = $validated['log_date'];
         $now = now('Asia/Manila');
         $requestedTimeIn = $this->normalizeAttendanceTimeValue($request->input('time_in'));
@@ -485,8 +489,7 @@ class SupervisorController extends Controller
         $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
         // The authenticated supervisor can log attendance manually with a reason.
-        // A non-manual Time In must consume a fresh passkey proof issued by
-        // BiometricController AFTER a successful WebAuthn signature verification.
+        // A non-manual Time In consumes a fresh passkey or supervised camera proof.
         // Device passkeys do NOT identify a worker's real face/fingerprint.
         $manualReason = trim((string) ($validated['remarks'] ?? ''));
         if ($manualMode && $action === 'time_in' && $manualReason === '') {
@@ -496,9 +499,19 @@ class SupervisorController extends Controller
         }
 
         if (! $manualMode && $action === 'time_in') {
+            if ($verificationMethod === 'face') {
+                $assignedProjects = Project::query()->whereHas('supervisors', fn ($q) => $q
+                    ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1))
+                    ->pluck('project_id');
+                if (! DB::table('project_workers')->whereIn('project_id', $assignedProjects)
+                    ->where('worker_id', $worker->worker_id)->where('is_active', 1)->exists()) {
+                    $request->session()->forget('worker_attendance_face_proof');
+                    return response()->json(['message' => 'Worker is no longer assigned to your projects.'], 403);
+                }
+            }
             if ($date !== $now->toDateString()) {
                 return response()->json([
-                    'message' => 'Passkey Time In can only be recorded for today. Use an authorized manual correction for earlier dates.',
+                    'message' => 'Verified Time In can only be recorded for today. Use an authorized manual correction for earlier dates.',
                 ], 422);
             }
 
@@ -511,6 +524,7 @@ class SupervisorController extends Controller
             if (! is_array($proof)
                 || (int) ($proof['worker_id'] ?? 0) !== (int) $worker->worker_id
                 || (int) ($proof['supervisor_id'] ?? 0) !== (int) Auth::id()
+                || ($verificationMethod === 'face' && ($proof['provider'] ?? null) !== 'local_supervised')
                 || $proofTime <= 0
                 || $proofTime > $now->timestamp + 5
                 || ($now->timestamp - $proofTime) > 120) {
@@ -555,6 +569,7 @@ class SupervisorController extends Controller
                 $deployment = DB::table('project_workers')
                     ->where('worker_id', $validated['worker_id'])
                     ->where('is_active', 1)
+                    ->when($verificationMethod === 'face', fn ($q) => $q->whereIn('project_id', $assignedProjects))
                     ->first();
             }
 
@@ -573,7 +588,7 @@ class SupervisorController extends Controller
                     ($manualMode
                         ? 'Manual Time In by supervisor. Reason: '.$manualReason.'.'
                         : ($verificationMethod === 'face'
-                            ? 'AWS face liveness and enrolled worker identity matched; supervisor confirmed person.'
+                            ? 'Local camera face similarity matched; supervisor confirmed person. No certified liveness verification.'
                             : 'Worker ACCOUNT passkey verified; supervisor confirmation required. Device authentication is not worker face/fingerprint matching.'))
                     .' '.($status === 'late'
                         ? 'Late time-in by '.$this->lateMinutes($timeInValue, $scheduleStart).' minute(s).'
@@ -581,7 +596,7 @@ class SupervisorController extends Controller
                 ),
                 // A platform passkey proves access to an account credential,
                 // not a worker face/fingerprint match on a shared phone.
-                'biometric_matched' => $verificationMethod === 'face' ? 1 : 0,
+                'biometric_matched' => 0, // Camera-assisted supervisor verification is not independently trusted biometrics.
                 'created_at' => $now,
             ];
 

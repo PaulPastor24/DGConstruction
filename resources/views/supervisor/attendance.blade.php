@@ -1800,7 +1800,7 @@
                             <i class="bi bi-person-plus-fill"></i> Register Worker
                         </button>
 
-                        @if(config('face_attendance.enabled') && request()->isSecure())
+                        @if(config('face_attendance.enabled'))
                             <a href="{{ route('supervisor.face-attendance.index') }}"
                                class="btn attendance-quick-btn attendance-btn-register">
                                 <i class="bi bi-camera-video-fill"></i> Facial Attendance

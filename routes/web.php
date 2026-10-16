@@ -290,10 +290,10 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/face-attendance', [FaceAttendanceController::class, 'index'])
         ->name('supervisor.face-attendance.index');
     Route::post('/supervisor/face-attendance/start', [FaceAttendanceController::class, 'start'])
-        ->middleware('throttle:8,1')
+        ->middleware('throttle:30,1,face-start')
         ->name('supervisor.face-attendance.start');
     Route::post('/supervisor/face-attendance/finish', [FaceAttendanceController::class, 'finish'])
-        ->middleware('throttle:12,1')
+        ->middleware('throttle:30,1,face-finish')
         ->name('supervisor.face-attendance.finish');
     Route::post('/supervisor/face-attendance/cancel', [FaceAttendanceController::class, 'cancel'])
         ->name('supervisor.face-attendance.cancel');

@@ -1,6 +1,12 @@
 {
+  "node_modules/@vladmandic/human/dist/human.esm.js": {
+    "file": "assets/human.esm-BtVauB-X.js",
+    "name": "human.esm",
+    "src": "node_modules/@vladmandic/human/dist/human.esm.js",
+    "isDynamicEntry": true
+  },
   "resources/css/admin-attendance.css": {
-    "file": "assets/admin-attendance-H-GY5MId.css",
+    "file": "assets/admin-attendance-CceUvZpa.css",
     "src": "resources/css/admin-attendance.css",
     "isEntry": true,
     "name": "admin-attendance",
@@ -9,7 +15,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-MbJccm84.css",
+    "file": "assets/app-Q5h2mt4B.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -18,7 +24,7 @@
     ]
   },
   "resources/css/supervisor.css": {
-    "file": "assets/supervisor-6I3YPEPV.css",
+    "file": "assets/supervisor-BOzNTxhM.css",
     "src": "resources/css/supervisor.css",
     "isEntry": true,
     "name": "supervisor",
@@ -27,7 +33,7 @@
     ]
   },
   "resources/js/admin-timeline.js": {
-    "file": "assets/admin-timeline-BcJMEtHe.js",
+    "file": "assets/admin-timeline-pUtfEQ_A.js",
     "name": "admin-timeline",
     "src": "resources/js/admin-timeline.js",
     "isEntry": true,
@@ -40,5 +46,14 @@
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
+  },
+  "resources/js/face-attendance.jsx": {
+    "file": "assets/face-attendance-ZYt9C0Y6.js",
+    "name": "face-attendance",
+    "src": "resources/js/face-attendance.jsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "node_modules/@vladmandic/human/dist/human.esm.js"
+    ]
   }
 }

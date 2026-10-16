@@ -1,6 +1,6 @@
 @extends('layouts.supervisor')
 
-@section('title', 'Android Facial Attendance')
+@section('title', 'Camera Facial Attendance')
 @section('page_title', 'Facial Group Attendance')
 
 @push('styles')
@@ -27,19 +27,19 @@
 @section('content')
 <div class="face-attendance-page">
   <div class="face-panel">
-    <h2>Shared Android camera attendance</h2>
-    <p class="face-muted">Each worker completes a separate live camera check. An uncertain match never saves a biometric attendance. The supervisor must verify the worker's photo before confirming Time In.</p>
-    <p class="face-muted">Use a front-facing camera, HTTPS, good lighting, and a stable internet connection. Photosensitivity warning: the AWS liveness challenge may flash colors.</p>
-    <a href="{{ route('supervisor.attendance') }}">← Return to existing attendance / Touch ID / Manual Log</a>
+    <h2>Shared phone camera attendance</h2>
+    <p class="face-muted">Scan workers one at a time using an iPhone or Android camera. The supervisor must confirm the person before saving Time In.</p>
+    <p class="face-muted">Use HTTPS, good lighting, and camera permission. Face matching assists supervisor verification; it does not provide certified liveness detection.</p>
+    <a href="{{ route('supervisor.attendance') }}">Return to existing attendance / Touch ID / Manual Log</a>
   </div>
   <div id="face-attendance-root"
        data-csrf="{{ csrf_token() }}"
+       data-models="{{ asset('models/human') }}/"
        data-start="{{ route('supervisor.face-attendance.start') }}"
        data-finish="{{ route('supervisor.face-attendance.finish') }}"
        data-cancel="{{ route('supervisor.face-attendance.cancel') }}"
        data-save="{{ route('supervisor.attendance.logWorker') }}"
        data-log-date="{{ now('Asia/Manila')->toDateString() }}"
-       data-region="{{ $region }}"
        data-remove-prefix="{{ url('/supervisor/face-attendance/enrollments') }}"></div>
   <script type="application/json" id="face-workers-json">@json($faceWorkerChoices)</script>
 </div>

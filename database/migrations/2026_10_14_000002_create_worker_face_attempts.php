@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('status', 24)->default('pending');
             $table->decimal('liveness_score', 5, 2)->nullable();
             $table->decimal('match_score', 5, 2)->nullable();
-            $table->timestamp('expires_at');
+            $table->dateTime('expires_at');
             $table->timestamp('used_at')->nullable();
             $table->timestamps();
             $table->index(['supervisor_id', 'created_at']);

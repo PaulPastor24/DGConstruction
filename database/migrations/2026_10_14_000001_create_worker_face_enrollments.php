@@ -12,11 +12,11 @@ return new class extends Migration {
             $table->unsignedBigInteger('worker_id')->unique();
             $table->string('aws_face_id', 128)->unique();
             $table->unsignedBigInteger('enrolled_by');
-            $table->timestamp('enrolled_at');
-            $table->timestamp('notice_acknowledged_at');
+            $table->dateTime('enrolled_at');
+            $table->dateTime('notice_acknowledged_at');
             $table->string('privacy_notice_version', 40);
             $table->timestamps();
-            // No photos, raw face templates, or video stored in MySQL.
+            // Local encrypted descriptors are added by the camera migration.
         });
     }
 
