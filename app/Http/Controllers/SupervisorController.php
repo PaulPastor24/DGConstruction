@@ -17,6 +17,7 @@ use App\Services\NotificationService;
 use App\Services\LocalFaceMatcher;
 use App\Services\WorkerPasskeyService;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Mpdf\Mpdf;
@@ -2172,36 +2174,48 @@ class SupervisorController extends Controller
             return response()->json(['message' => 'Face capture could not be verified. Capture the worker face again.'], 422);
         }
 
-        $workerId = DB::transaction(function () use ($data) {
-            $id = DB::table('workers')->insertGetId([
-                'first_name' => trim($data['first_name']), 'last_name' => trim($data['last_name']),
-                'trade' => $data['trade'] ?? 'General', 'contact_number' => $data['contact_number'] ?? null,
-                'schedule_start' => $data['schedule_start'].':00', 'schedule_end' => $data['schedule_end'].':00',
-                'break_minutes' => $data['break_minutes'], 'is_active' => 1,
-                'created_at' => now(), 'updated_at' => now(),
-            ], 'worker_id');
-            $deployment = [
-                'project_id' => $data['project_id'], 'worker_id' => $id,
-                'is_active' => 1, 'created_at' => now(),
-            ];
-            // Both deployment schemas exist in installations of this project.
-            foreach (['deployed_date', 'start_date'] as $column) {
-                if (Schema::hasColumn('project_workers', $column)) {
-                    $deployment[$column] = now('Asia/Manila')->toDateString();
+        try {
+            $workerId = DB::transaction(function () use ($data) {
+                $id = DB::table('workers')->insertGetId([
+                    'first_name' => trim($data['first_name']), 'last_name' => trim($data['last_name']),
+                    'trade' => $data['trade'] ?? 'General', 'contact_number' => $data['contact_number'] ?? null,
+                    'schedule_start' => $data['schedule_start'].':00', 'schedule_end' => $data['schedule_end'].':00',
+                    'break_minutes' => $data['break_minutes'], 'is_active' => 1,
+                    'created_at' => now(), 'updated_at' => now(),
+                ], 'worker_id');
+                $deployment = [
+                    'project_id' => $data['project_id'], 'worker_id' => $id,
+                    'is_active' => 1, 'created_at' => now(),
+                ];
+                // Both deployment schemas exist in installations of this project.
+                foreach (['deployed_date', 'start_date'] as $column) {
+                    if (Schema::hasColumn('project_workers', $column)) {
+                        $deployment[$column] = now('Asia/Manila')->toDateString();
+                    }
                 }
-            }
-            DB::table('project_workers')->insert($deployment);
-            DB::table('worker_face_enrollments')->insert([
-                'worker_id' => $id, 'aws_face_id' => 'local:'.Str::uuid(),
-                'face_descriptors' => Crypt::encryptString(json_encode($data['face_samples'], JSON_THROW_ON_ERROR)),
-                'model_version' => config('face_attendance.model_version'),
-                'enrolled_by' => Auth::id(), 'enrolled_at' => now(), 'notice_acknowledged_at' => null,
-                'privacy_notice_version' => config('face_attendance.privacy_notice_version'),
-                'created_at' => now(), 'updated_at' => now(),
+                DB::table('project_workers')->insert($deployment);
+                DB::table('worker_face_enrollments')->insert([
+                    'worker_id' => $id, 'aws_face_id' => 'local:'.Str::uuid(),
+                    'face_descriptors' => Crypt::encryptString(json_encode($data['face_samples'], JSON_THROW_ON_ERROR)),
+                    'model_version' => config('face_attendance.model_version'),
+                    'enrolled_by' => Auth::id(), 'enrolled_at' => now(), 'notice_acknowledged_at' => null,
+                    'privacy_notice_version' => config('face_attendance.privacy_notice_version'),
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+
+                return $id;
+            });
+        } catch (QueryException $error) {
+            $databaseCode = (int) ($error->errorInfo[1] ?? 0);
+            // Do not log SQL bindings containing encrypted biometric templates.
+            Log::error('Camera worker registration could not be saved.', [
+                'database_code' => $databaseCode, 'sqlstate' => $error->errorInfo[0] ?? null,
             ]);
 
-            return $id;
-        });
+            return response()->json(['message' => $databaseCode === 1406
+                ? 'The server face-storage upgrade is missing. Ask the administrator to update the database, then retry saving.'
+                : 'Worker record could not be saved. Ask the administrator to check the server database logs.'], 503);
+        }
         $worker = DB::table('workers')->where('worker_id', $workerId)->first();
 
         return response()->json([

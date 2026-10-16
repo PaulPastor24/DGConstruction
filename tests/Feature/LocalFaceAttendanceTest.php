@@ -82,7 +82,7 @@ class LocalFaceAttendanceTest extends TestCase
             $t->boolean('is_active')->default(true);
             $t->date('assigned_date')->nullable();
         });
-        foreach (['2026_10_14_000001_create_worker_face_enrollments', '2026_10_14_000002_create_worker_face_attempts', '2026_10_16_000001_add_local_face_templates', '2026_10_16_000002_allow_contract_based_face_enrollment'] as $migration) {
+        foreach (['2026_10_14_000001_create_worker_face_enrollments', '2026_10_14_000002_create_worker_face_attempts', '2026_10_16_000001_add_local_face_templates', '2026_10_16_000002_allow_contract_based_face_enrollment', '2026_10_16_000003_expand_face_template_storage'] as $migration) {
             (require database_path('migrations/'.$migration.'.php'))->up();
         }
         $supervisor = User::create(['name' => 'Supervisor', 'email' => 'camera@example.com', 'password' => bcrypt('password'), 'role' => 'supervisor', 'is_active' => true]);
@@ -310,5 +310,20 @@ class LocalFaceAttendanceTest extends TestCase
         $this->finishScan($this->startScan(), $this->samples(-1))->assertOk()->assertJsonPath('worker.worker_id', 1);
         $this->assertDatabaseCount('worker_face_enrollments', 1);
         $this->assertDatabaseCount('workers', 2);
+    }
+
+    public function test_registration_preserves_encrypted_full_precision_samples_larger_than_mysql_text_limit(): void
+    {
+        $samples = array_fill(0, 3, array_fill(0, 1024, 0.12345678901234568));
+        $response = $this->postJson(route('supervisor.workers.register_camera'), [
+            'first_name' => 'Full', 'last_name' => 'Precision', 'project_id' => 1,
+            'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+            'model_version' => config('face_attendance.model_version'), 'face_samples' => $samples,
+        ])->assertOk();
+        $encrypted = DB::table('worker_face_enrollments')
+            ->where('worker_id', $response->json('worker.worker_id'))->value('face_descriptors');
+        $this->assertGreaterThan(65535, strlen($encrypted));
+        $this->assertEquals($samples, json_decode(Crypt::decryptString($encrypted), true));
+        $this->assertDatabaseCount('workers', 3);
     }
 }
