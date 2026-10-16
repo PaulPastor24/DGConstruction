@@ -104,7 +104,7 @@ class LocalFaceAttendanceTest extends TestCase
     {
         return $this->postJson(route('supervisor.face-attendance.start'), [
             'purpose' => $purpose, 'worker_id' => $worker,
-            'supervisor_confirmed_identity' => true, 'privacy_notice_acknowledged' => true,
+            ...($purpose === 'enroll' ? ['supervisor_confirmed_identity' => true, 'privacy_notice_acknowledged' => true] : []),
         ])->assertOk()->json();
     }
 
@@ -118,6 +118,20 @@ class LocalFaceAttendanceTest extends TestCase
     private function enroll(): void
     {
         $this->finishScan($this->startScan('enroll'), $this->samples())->assertOk();
+    }
+
+    public function test_enrollment_requires_both_confirmations_but_attendance_scan_does_not(): void
+    {
+        foreach ([[], ['supervisor_confirmed_identity' => false, 'privacy_notice_acknowledged' => false]] as $confirmations) {
+            $this->postJson(route('supervisor.face-attendance.start'), [
+                'purpose' => 'enroll', 'worker_id' => 1, ...$confirmations,
+            ])->assertUnprocessable()->assertJsonValidationErrors([
+                'supervisor_confirmed_identity', 'privacy_notice_acknowledged',
+            ]);
+        }
+        $this->enroll();
+        $this->postJson(route('supervisor.face-attendance.start'), ['purpose' => 'attendance'])
+            ->assertOk()->assertJsonStructure(['session_id', 'model_version']);
     }
 
     public function test_enrollment_is_encrypted_and_camera_match_can_save_attendance_once(): void
