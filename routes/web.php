@@ -232,9 +232,8 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::get('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/edit', [MilestoneController::class, 'edit'])->name('admin.milestones.edit');
     Route::put('/admin/projects/{project}/phases/{phase}/milestones/{milestone}', [MilestoneController::class, 'update'])->name('admin.milestones.update');
     Route::delete('/admin/projects/{project}/phases/{phase}/milestones/{milestone}', [MilestoneController::class, 'destroy'])->name('admin.milestones.destroy');
-    Route::post('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/complete', [MilestoneController::class, 'complete'])->name('admin.milestones.complete');
+    Route::match(['post', 'patch'], '/admin/projects/{project}/phases/{phase}/milestones/{milestone}/complete', [MilestoneController::class, 'complete'])->name('admin.milestones.complete');
     Route::post('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/delay', [MilestoneController::class, 'markDelayed'])->name('admin.milestones.delay');
-    Route::patch('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/complete', [MilestoneController::class, 'complete'])->name('admin.milestones.complete');
     Route::patch('/admin/projects/{project}/phases/{phase}/milestones/{milestone}/mark-delayed', [MilestoneController::class, 'markDelayed'])->name('admin.milestones.mark-delayed');
 });
 
@@ -282,13 +281,9 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     // ==================== BIOMETRIC WORKER API ROUTES ====================
     Route::post('/passkeys/register/options', [BiometricController::class, 'registerOptions'])->name('passkeys.register.options');
     Route::post('/passkeys/login/options', [BiometricController::class, 'loginOptions'])->name('passkeys.login.options');
-    Route::post('/passkeys/login', [BiometricController::class, 'login'])->name('passkeys.login');
+    Route::post('/passkeys/login', [BiometricController::class, 'login'])->name('workers.passkeys.login');
 
-    Route::post('/supervisor/workers/register-biometric', [BiometricController::class, 'registerWorkerBiometric'])
-        ->name('supervisor.workers.register_biometric');
 
-    Route::get('/supervisor/workers/list', [BiometricController::class, 'listWorkers'])
-        ->name('supervisor.workers.list');
 
     Route::get('/supervisor/face-attendance', [FaceAttendanceController::class, 'index'])
         ->name('supervisor.face-attendance.index');

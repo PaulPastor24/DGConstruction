@@ -49,6 +49,7 @@ class LoginRequest extends FormRequest
         $user = User::query()
             ->where('email', $this->input('email'))
             ->whereIn('role', $allowedRoles)
+            ->where('is_active', true)
             ->first();
 
         // 5. Verify password against your custom column

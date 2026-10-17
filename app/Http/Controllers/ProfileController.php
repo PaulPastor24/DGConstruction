@@ -26,7 +26,15 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $data = $request->validated();
+        $parts = preg_split('/\s+/', trim($data['name']), 2);
+        $data['first_name'] = $parts[0];
+        $data['last_name'] = $parts[1] ?? '';
+        // The revised production schema stores names in separate columns.
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('users', 'name')) {
+            unset($data['name']);
+        }
+        $request->user()->fill($data);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

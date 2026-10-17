@@ -13,10 +13,11 @@ use App\Http\Controllers\Auth\GoogleClientController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
+    // Accounts are provisioned by administrators through admin/users.
+    Route::redirect('register', '/login')
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', fn () => abort(403, 'Accounts must be created by an administrator.'));
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

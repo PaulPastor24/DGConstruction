@@ -16,17 +16,17 @@ class RoleMiddleware
      * @param  string  $role
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // If the user isn't logged in, or doesn't match the required role, boot them out
         $user = $request->user();
-        if (!$user) {
+        if (!$user || !$user->is_active) {
             return redirect('/login')->with('error', 'Unauthorized access.');
         }
 
         $allowedRoles = array_values(array_filter(array_map(
             fn ($value) => trim(strtolower($value)),
-            explode(',', $role)
+            $roles
         )));
 
         if (! in_array(strtolower((string) $user->role), $allowedRoles, true)) {

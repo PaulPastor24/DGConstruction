@@ -93,4 +93,27 @@ class UserManagementPresenceTest extends TestCase
         $user->profile_photo = '/storage/profile-photos/photo.jpg';
         $this->assertSame(asset('storage/profile-photos/photo.jpg'), $user->profile_photo_url);
     }
+
+    public function test_admin_role_aliases_can_access_user_management(): void
+    {
+        foreach (['admin', 'administrator', 'engineer'] as $role) {
+            $user = $this->user($role.'@example.com', $role);
+            $this->actingAs($user)->get(route('admin.users.index'))->assertOk();
+        }
+    }
+
+    public function test_disabled_accounts_cannot_access_management_with_an_existing_session(): void
+    {
+        $user = $this->user('disabled-admin@example.com', 'admin', false);
+        $this->actingAs($user)->get(route('admin.users.index'))->assertRedirect('/login');
+    }
+
+    public function test_disabled_accounts_cannot_log_in_with_a_valid_password(): void
+    {
+        $user = $this->user('disabled-login@example.com', 'supervisor', false);
+        $this->post('/login', [
+            'email' => $user->email, 'password' => 'password', 'portal' => 'staff',
+        ])->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
 }

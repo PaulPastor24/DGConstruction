@@ -26,25 +26,19 @@ return new class extends Migration
         if (Schema::hasColumn('attendance_logs', 'deployment_id')
             && Schema::hasColumn('attendance_logs', 'worker_id')
             && Schema::hasTable('project_workers')) {
-            DB::statement(
-                'UPDATE attendance_logs AS logs
-                 INNER JOIN project_workers AS deployments
-                    ON deployments.deployment_id = logs.deployment_id
-                 SET logs.worker_id = deployments.worker_id
-                 WHERE logs.worker_id IS NULL'
-            );
+            DB::table('attendance_logs')->whereNull('worker_id')->update([
+                'worker_id' => DB::table('project_workers')->select('worker_id')
+                    ->whereColumn('project_workers.deployment_id', 'attendance_logs.deployment_id')->limit(1),
+            ]);
         }
 
         if (Schema::hasColumn('attendance_logs', 'deployment_id')
             && Schema::hasColumn('attendance_logs', 'project_id')
             && Schema::hasTable('project_workers')) {
-            DB::statement(
-                'UPDATE attendance_logs AS logs
-                 INNER JOIN project_workers AS deployments
-                    ON deployments.deployment_id = logs.deployment_id
-                 SET logs.project_id = deployments.project_id
-                 WHERE logs.project_id IS NULL'
-            );
+            DB::table('attendance_logs')->whereNull('project_id')->update([
+                'project_id' => DB::table('project_workers')->select('project_id')
+                    ->whereColumn('project_workers.deployment_id', 'attendance_logs.deployment_id')->limit(1),
+            ]);
         }
     }
 
