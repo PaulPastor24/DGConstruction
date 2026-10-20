@@ -2054,15 +2054,22 @@
                                                         </label>
                                                     </div>
                                                     <div class="form-input-hint">Check this if you want to physically issue stock from the warehouse to this project. This will decrement the global stock.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="footer-action-row">
+                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                                <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
+                                            </button>
+                                            <button type="submit" class="btn-action-submit">
+                                                <i class="bi bi-check-circle" aria-hidden="true"></i> Save Allocation
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
                     <!-- Layout Footer Summary with Pagination Links -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">

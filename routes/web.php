@@ -160,6 +160,12 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
+    Route::post('/admin/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
+        ->name('admin.attendance.schedules.store');
+    Route::put('/admin/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])
+        ->name('admin.attendance.schedules.update');
+    Route::delete('/admin/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
+        ->name('admin.attendance.schedules.destroy');
     Route::get('/admin/attendance/preview-report', [AdminDashboardController::class, 'previewAttendanceReport'])->name('admin.attendance.preview-report');
     Route::post('/admin/attendance/send-report', [AdminDashboardController::class, 'sendAttendanceReport'])->name('admin.attendance.send-report');
     Route::post('/admin/attendance', [AdminDashboardController::class, 'storeAttendance'])->name('admin.attendance.store');
@@ -304,12 +310,6 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/attendance/log-worker', [SupervisorController::class, 'logWorkerAttendance'])
         ->name('supervisor.attendance.logWorker');
 
-    Route::post('/supervisor/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
-        ->name('admin.attendance.schedules.store');
-    Route::put('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])
-        ->name('admin.attendance.schedules.update');
-    Route::delete('/supervisor/attendance/schedules/{rule}', [AdminDashboardController::class, 'destroyAttendanceSchedule'])
-        ->name('admin.attendance.schedules.destroy');
     Route::post('/supervisor/workers/register-biometric', [SupervisorController::class, 'registerWorkerBiometric'])
         ->name('supervisor.workers.register_biometric');
 

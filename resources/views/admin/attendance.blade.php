@@ -471,11 +471,11 @@
                     <tbody>
                         @forelse($scheduleRules as $rule)
                             <tr>
-                                <form id="schedule-form-{{ $rule->id }}" method="POST" action="{{ route('admin.attendance.schedules.update', $rule->id) }}">
-                                    @csrf
-                                    @method('PUT')
-                                </form>
                                 <td>
+                                    <form id="schedule-form-{{ $rule->id }}" method="POST" action="{{ route('admin.attendance.schedules.update', $rule->id) }}">
+                                        @csrf
+                                        @method('PUT')
+                                    </form>
                                     <input form="schedule-form-{{ $rule->id }}" type="text" name="role" class="form-control form-control-sm" value="{{ $rule->role }}">
                                 </td>
                                 <td>
