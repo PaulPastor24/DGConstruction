@@ -68,7 +68,7 @@
                                 </div>
                                 <div>
                                     <div class="project-title-bold" style="font-size: 13px;">
-                                        {{ $project->active_supervisor->name ?? ($project->supervisors->first()->name ?? 'Juan Dela Cruz') }}
+                                        {{ $project->supervisors->filter(fn ($supervisor) => $supervisor->pivot->is_active)->pluck('name')->join(', ') ?: 'Not assigned' }}
                                     </div>
                                     <div class="project-subtext-muted" style="font-size: 11px;">Supervisor</div>
                                 </div>

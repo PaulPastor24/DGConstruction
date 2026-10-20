@@ -1064,12 +1064,12 @@
                 </a>
                 <span>
                     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
-                    Barrie, Ontario
+                    Bel Air, City of Santa Rosa, Laguna
                 </span>
             </div>
         </div>
 
-        <div class="footer-bottom">
+        <div class="footer-bottom"> 
             <span>&copy; 2026 D&G Construction Inc. All Rights Reserved.</span>
             <div class="footer-socials">
                 <a href="https://www.facebook.com/dgconphil" target="_blank" rel="noopener noreferrer" aria-label="Facebook">

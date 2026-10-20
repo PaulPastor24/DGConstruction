@@ -515,41 +515,17 @@ class ProjectController extends Controller
             // The workflow status is derived from phases elsewhere, so avoid overwriting
             // the user-submitted status during a manual project update.
 
-            // Update supervisor assignment
-            if ($request->has('supervisor_id')) {
-                // Deactivate all current supervisors
-                $currentSupervisors = $project->supervisors()->pluck('user_id')->toArray();
-                if (!empty($currentSupervisors)) {
-                    foreach ($currentSupervisors as $supervisorId) {
-                        $project->supervisors()->updateExistingPivot($supervisorId, [
-                            'is_active' => false,
-                        ]);
-                    }
-                }
-
-                // Assign new supervisor or reactivate existing
-                if ($request->supervisor_id) {
-                    // Check if supervisor already exists
-                    $existingSupervisor = $project->supervisors()
-                        ->where('user_id', $request->supervisor_id)
-                        ->first();
-
-                    if ($existingSupervisor) {
-                        // Update existing pivot
-                        $project->supervisors()->updateExistingPivot($request->supervisor_id, [
-                            'assigned_date' => now(),
-                            'is_active' => true,
-                        ]);
-                    } else {
-                        // Attach new supervisor
-                        $project->supervisors()->attach($request->supervisor_id, [
-                            'assigned_date' => now(),
-                            'is_active' => true,
-                        ]);
-                    }
-                }
+            // Preserve assignment history and support multiple active supervisors.
+            if ($request->has('supervisor_ids_present') || $request->has('supervisor_ids') || $request->has('supervisor_id')) {
+                $supervisorIds = $request->has('supervisor_ids_present') || $request->has('supervisor_ids')
+                    ? $request->input('supervisor_ids', [])
+                    : array_filter([$request->input('supervisor_id')]);
+                $project->supervisors()->newPivotStatement()
+                    ->where('project_id', $project->project_id)->update(['is_active' => false]);
+                $project->supervisors()->syncWithoutDetaching(collect($supervisorIds)->mapWithKeys(
+                    fn ($id) => [$id => ['assigned_date' => now(), 'is_active' => true]]
+                )->all());
             }
-
             DB::commit();
 
             session()->forget(['edit_project_id', 'show_edit_project_modal']);

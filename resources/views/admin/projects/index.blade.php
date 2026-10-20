@@ -1096,7 +1096,7 @@
 
 @section('content')
 <div class="mi-page inventory-green-theme main-dashboard-container">
-    
+
     <!-- Left Main Content Area Grid -->
     <div class="left-dashboard-content">
 
@@ -1803,17 +1803,17 @@
                             </div>
 
                             <div>
-                                <label for="edit_supervisor_id" class="form-label modal-custom-label">Assigned Supervisor <span class="text-danger">*</span></label>
+                                <label for="edit_supervisor_id" class="form-label modal-custom-label">Assigned Supervisors</label>
                                 <select class="form-select modal-custom-input w-100 @error('supervisor_id') is-invalid @enderror"
                                         id="edit_supervisor_id"
-                                        name="supervisor_id">
-                                    <option value="" disabled selected hidden>Select supervisor</option>
+                                        name="supervisor_ids[]" multiple size="4">
+
                                     @foreach($supervisors as $supervisor)
-                                        <option value="{{ $supervisor->user_id }}" {{ old('supervisor_id', '') == $supervisor->user_id ? 'selected' : '' }}>
+                                        <option value="{{ $supervisor->user_id }}" {{ in_array($supervisor->user_id, old('supervisor_ids', [])) ? 'selected' : '' }}>
                                             {{ $supervisor->name }}
                                         </option>
                                     @endforeach
-                                </select>
+                                </select><input type="hidden" name="supervisor_ids_present" value="1"><small class="text-muted">Select all supervisors who need access. Hold Ctrl or Command to select multiple supervisors.</small>
                                 @error('supervisor_id')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -3267,7 +3267,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startDateInput) startDateInput.value = project.start_date ? project.start_date.split('T')[0] : '';
         if (targetEndDateInput) targetEndDateInput.value = project.target_end_date ? project.target_end_date.split('T')[0] : '';
         if (actualEndDateInput) actualEndDateInput.value = project.actual_end_date ? project.actual_end_date.split('T')[0] : '';
-        if (supervisorSelect) supervisorSelect.value = supervisorId || '';
+        if (supervisorSelect) {
+            const activeIds = (project.supervisors || []).filter(s => Number(s.pivot?.is_active) === 1).map(s => String(s.user_id));
+            Array.from(supervisorSelect.options).forEach(option => { option.selected = activeIds.includes(option.value); });
+        }
         if (statusSelect) {
             statusSelect.disabled = false;
             Array.from(statusSelect.options).forEach(function(option) {

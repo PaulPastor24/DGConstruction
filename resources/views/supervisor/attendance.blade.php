@@ -2949,6 +2949,10 @@
         }
 
         async function updateAttendanceAction(workerId, action) {
+            if (['break_in', 'time_out'].includes(action)) {
+                window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose: 'attendance', workerId, action, logDate: selectedDateValue() } }));
+                return;
+            }
             const response = await fetch(supervisorRoutes.attendanceLogWorker, {
                 method: 'POST',
                 headers: {

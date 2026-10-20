@@ -494,16 +494,19 @@ class SupervisorController extends Controller
         $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
         // The authenticated supervisor can log attendance manually with a reason.
-        // A non-manual Time In consumes a fresh passkey or supervised camera proof.
+        // Time In consumes a fresh passkey or camera proof; Break In and Time Out require camera proof.
         // Device passkeys do NOT identify a worker's real face/fingerprint.
         $manualReason = trim((string) ($validated['remarks'] ?? ''));
-        if ($manualMode && $action === 'time_in' && $manualReason === '') {
+        if ($manualMode && in_array($action, ['time_in', 'break_in', 'time_out'], true) && $manualReason === '') {
             return response()->json([
-                'message' => 'Please provide a reason for manual Time In.',
+                'message' => 'Please provide a reason for manual attendance.',
             ], 422);
         }
 
-        if (! $manualMode && $action === 'time_in') {
+        if (! $manualMode && in_array($action, ['time_in', 'break_in', 'time_out'], true)) {
+            if ($action !== 'time_in' && $verificationMethod !== 'face') {
+                return response()->json(['message' => 'Fresh facial recognition is required for Break In and Time Out.'], 403);
+            }
             if ($verificationMethod === 'face') {
                 $assignedProjects = Project::query()->whereHas('supervisors', fn ($q) => $q
                     ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1))
@@ -516,7 +519,7 @@ class SupervisorController extends Controller
             }
             if ($date !== $now->toDateString()) {
                 return response()->json([
-                    'message' => 'Verified Time In can only be recorded for today. Use an authorized manual correction for earlier dates.',
+                    'message' => 'Verified attendance can only be recorded for today. Use an authorized manual correction for earlier dates.',
                 ], 422);
             }
 

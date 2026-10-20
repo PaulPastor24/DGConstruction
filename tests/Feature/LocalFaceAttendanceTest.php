@@ -119,12 +119,48 @@ class LocalFaceAttendanceTest extends TestCase
         $this->finishScan($this->startScan('enroll'), $this->samples())->assertOk();
     }
 
+    public function test_break_in_and_time_out_each_require_a_fresh_face_scan(): void
+    {
+        $this->travelTo(now('Asia/Manila')->setTime(13, 0));
+        $this->enroll();
+        DB::table('attendance_logs')->insert([
+            'worker_id' => 1, 'project_id' => 1, 'deployment_id' => 1,
+            'log_date' => now('Asia/Manila')->toDateString(),
+            'time_in' => '07:00:00', 'break_out' => '12:00:00',
+        ]);
+        foreach (['break_in', 'time_out'] as $action) {
+            $payload = ['worker_id' => 1, 'log_date' => now('Asia/Manila')->toDateString(),
+                'action' => $action, 'verification_method' => 'face', 'supervisor_confirmed_identity' => true];
+            $this->postJson(route('supervisor.attendance.logWorker'), array_merge($payload, ['verification_method' => 'passkey']))->assertForbidden();
+            $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
+            $this->finishScan($this->startScan(), $this->samples())->assertOk();
+            $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
+            $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
+            $this->travel(4)->hours();
+        }
+    }
+
     public function test_face_enrollment_and_scanning_do_not_require_checkbox_confirmations(): void
     {
         $this->enroll();
         $this->assertNull(DB::table('worker_face_enrollments')->value('notice_acknowledged_at'));
         $this->postJson(route('supervisor.face-attendance.start'), ['purpose' => 'attendance'])
             ->assertOk()->assertJsonStructure(['session_id', 'model_version']);
+    }
+
+    public function test_additional_active_supervisor_can_scan_existing_project_workers(): void
+    {
+        $this->enroll();
+        $originalSupervisor = auth()->user();
+        $additional = User::create(['name' => 'Additional Supervisor', 'email' => 'additional@example.com',
+            'password' => bcrypt('password'), 'role' => 'supervisor', 'is_active' => true]);
+        DB::table('project_supervisors')->insert([
+            'project_id' => 1, 'supervisor_id' => $additional->user_id, 'is_active' => true,
+        ]);
+        $this->actingAs($additional);
+        $this->finishScan($this->startScan(), $this->samples())->assertOk()->assertJsonPath('worker.worker_id', 1);
+        $this->actingAs($originalSupervisor);
+        $this->finishScan($this->startScan(), $this->samples())->assertOk()->assertJsonPath('worker.worker_id', 1);
     }
 
     public function test_enrollment_is_encrypted_and_camera_match_can_save_attendance_once(): void

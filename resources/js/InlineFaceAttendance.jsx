@@ -97,7 +97,13 @@ export function mountInlineAttendance(mount) {
           setOperation(null);
           setMessage(`${result.worker.first_name} ${result.worker.last_name}: face saved. Use the face button to record attendance.`);
           window.dispatchEvent(new Event('worker-face-enrolled'));
-        } else setMatched({ ...result, preview });
+        } else {
+          if (operation?.workerId && Number(operation.workerId) !== Number(result.worker.worker_id)) {
+            await send(urls.cancel, {});
+            throw new Error('Face does not match the selected worker. Scan the correct worker again.');
+          }
+          setMatched({ ...result, preview });
+        }
       } catch (e) {
         if (generation.current === token) { currentSession.current = null; setSession(null); setError(e.message); }
       } finally { working.current = false; if (generation.current === token) setBusy(false); }
@@ -108,10 +114,10 @@ export function mountInlineAttendance(mount) {
       working.current = true; setBusy(true); setError('');
       try {
         await send(urls.save, {
-          worker_id: matched.worker.worker_id, log_date: matched.log_date,
-          action: 'time_in', verification_method: 'face', supervisor_confirmed_identity: true,
+          worker_id: matched.worker.worker_id, log_date: operation?.logDate || matched.log_date,
+          action: operation?.action || 'time_in', verification_method: 'face', supervisor_confirmed_identity: true,
         });
-        setMessage(`${matched.worker.first_name} ${matched.worker.last_name}: Time In saved. Ready for the next worker.`);
+        setMessage(`${matched.worker.first_name} ${matched.worker.last_name}: ${operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'} saved. Ready for the next worker.`);
         setMatched(null); setOperation(null);
         window.dispatchEvent(new Event('worker-attendance-saved'));
       } catch (e) { setError(e.message); setMatched(null); }
@@ -137,7 +143,7 @@ export function mountInlineAttendance(mount) {
         </div>
         <strong>{matched.worker.first_name} {matched.worker.last_name}</strong>
         <p>Confirm the person in front of you matches this worker.</p>
-        <button className="btn btn-success" disabled={busy} onClick={save}>Confirm &amp; save Time In</button>
+        <button className="btn btn-success" disabled={busy} onClick={save}>Confirm &amp; save {operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'}</button>
       </div>}
       {operation?.purpose === 'attendance' && !session && !matched && !busy && <button className="btn btn-success mt-2" onClick={() => startScan(operation)}>Retry camera</button>}
       {operation && <button className="btn btn-light border mt-2 ms-2" disabled={busy} onClick={cancel}>{matched ? 'Reject match' : 'Close camera'}</button>}
