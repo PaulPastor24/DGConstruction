@@ -488,7 +488,7 @@ class AdminDashboardController extends Controller
         $usageCategory = trim((string) $request->input('usage_category', ''));
         $usageStatus = trim((string) $request->input('usage_status', ''));
         $activeView = $request->input('view', 'inventory');
-        $activeView = in_array($activeView, ['inventory', 'allocated', 'usage', 'expenses', 'requests', 'tools'], true) ? $activeView : 'inventory';
+        $activeView = in_array($activeView, ['inventory', 'allocated', 'usage', 'requests', 'tools'], true) ? $activeView : 'inventory';
         $searchForUsage = $search;
 
         $query = Material::query();
@@ -521,7 +521,7 @@ class AdminDashboardController extends Controller
         $materials = $query
             ->orderByDesc('updated_at')
             ->orderBy('name', 'asc')
-            ->paginate(10)
+            ->paginate(10, ['*'], 'material_page')
             ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status']));
 
         $usageQuery = MaterialUsage::query()->with(['project', 'phase', 'material', 'recorder']);
@@ -610,7 +610,7 @@ class AdminDashboardController extends Controller
             ->where('current_stock', '>', 0, 'and')
             ->orderBy('current_stock', 'asc')
             ->orderBy('name', 'asc')
-            ->paginate(10);
+            ->paginate(10, ['*'], 'low_stock_page');
 
         $recentlyUpdatedMaterials = Material::query()
             ->where('current_stock', '>', 0)
@@ -621,13 +621,13 @@ class AdminDashboardController extends Controller
         $allRecentlyUpdatedMaterials = Material::query()
             ->where('current_stock', '>', 0)
             ->orderByDesc('updated_at')
-            ->paginate(10);
+            ->paginate(10, ['*'], 'recent_materials_page');
 
         $usageLogs = $usageQuery
             ->orderByDesc('usage_date')
             ->orderByDesc('created_at')
-            ->paginate(10)
-            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status']));
+            ->paginate(10, ['*'], 'usage_page')
+            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status', 'view']));
 
         $categories = Material::query()->distinct()->pluck('category')->filter()->sort()->values();
 
@@ -720,7 +720,7 @@ class AdminDashboardController extends Controller
             }
 
             $materialRequests = $materialRequestsQuery
-                ->paginate(20)
+                ->paginate(10, ['*'], 'request_page')
                 ->appends($request->only(['search', 'request_status', 'view', 'category', 'stock_status']));
 
             $requestStats = [
@@ -764,7 +764,7 @@ class AdminDashboardController extends Controller
             $tools = $toolsQuery
                 ->orderByDesc('updated_at')
                 ->orderBy('name', 'asc')
-                ->paginate(10)
+                ->paginate(10, ['*'], 'tool_page')
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
             $toolMetrics = [
@@ -778,20 +778,21 @@ class AdminDashboardController extends Controller
                 ->with(['tool', 'worker', 'project'])
                 ->where('status', 'borrowed')
                 ->orderByDesc('borrowed_at')
-                ->get();
+                ->paginate(10, ['*'], 'active_loan_page')
+                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
             $toolLoanHistory = ToolLoan::query()
                 ->with(['tool', 'worker'])
                 ->where('status', '!=', 'borrowed')
                 ->orderByDesc('returned_at')
                 ->orderByDesc('updated_at')
-                ->paginate(10)
+                ->paginate(10, ['*'], 'loan_history_page')
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
             $allToolDeductions = ToolDeduction::query()
                 ->with(['tool', 'worker', 'approvedBy', 'loan'])
                 ->orderByDesc('created_at')
-                ->paginate(10)
+                ->paginate(10, ['*'], 'deduction_page')
                 ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
 
             $toolCategories = Tool::query()->distinct()->pluck('category')->filter()->sort()->values();
@@ -816,7 +817,7 @@ class AdminDashboardController extends Controller
             ];
         } else {
             $tools = collect();
-            $activeToolLoans = collect();
+            $activeToolLoans = new LengthAwarePaginator([], 0, 10);
             $toolLoanHistory = collect();
             $allToolDeductions = collect();
             $toolCategories = collect();
@@ -2225,7 +2226,7 @@ class AdminDashboardController extends Controller
             });
         }
 
-        $requests = $query->paginate(20)->appends($request->only(['status', 'search']));
+        $requests = $query->paginate(10)->appends($request->only(['status', 'search']));
 
         $stats = $predefinedMaterialCategories = [
             'pending' => MaterialRequest::where('status', 'pending')->count(),
@@ -2698,4 +2699,3 @@ class AdminDashboardController extends Controller
         }
     }
 }
-

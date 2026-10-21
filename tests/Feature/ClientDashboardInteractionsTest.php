@@ -100,6 +100,44 @@ class ClientDashboardInteractionsTest extends TestCase
         $response->assertSee('project-detail-trigger', false);
     }
 
+    public function test_client_projects_are_paginated_ten_per_page(): void
+    {
+        $user = User::factory()->create(['role' => 'client']);
+        $client = Client::factory()->create(['user_id' => $user->user_id]);
+
+        for ($index = 1; $index <= 11; $index++) {
+            Project::create([
+                'project_name' => 'Client Project ' . $index,
+                'project_location' => 'Lagos',
+                'client_id' => $client->client_id,
+                'engineer_id' => $user->user_id,
+                'start_date' => now()->subDays(5)->toDateString(),
+                'target_end_date' => now()->addDays(20)->toDateString(),
+                'status' => 'ongoing',
+                'description' => 'Client project ' . $index,
+            ]);
+        }
+
+        $this->actingAs($user);
+
+        $firstPage = $this->get('/client/myprojects');
+        $firstPage->assertStatus(200);
+        $firstPageProjects = $firstPage->viewData('projects');
+
+        $this->assertSame(10, $firstPageProjects->perPage());
+        $this->assertSame(2, $firstPageProjects->lastPage());
+        $this->assertCount(10, $firstPageProjects);
+        $firstPage->assertSee('page=2', false);
+
+        $secondPage = $this->get('/client/myprojects?page=2');
+        $secondPage->assertStatus(200);
+        $secondPageProjects = $secondPage->viewData('projects');
+
+        $this->assertSame(2, $secondPageProjects->currentPage());
+        $this->assertSame(11, $secondPageProjects->firstItem());
+        $this->assertCount(1, $secondPageProjects);
+    }
+
     public function test_client_report_page_filters_to_selected_project(): void
     {
         $user = User::factory()->create([

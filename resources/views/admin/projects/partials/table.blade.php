@@ -160,6 +160,7 @@
 
     <div class="table-pagination-footer-bar">
         <div class="text-muted small">Showing {{ $projects->firstItem() ?: 0 }} to {{ $projects->lastItem() ?: 0 }} of {{ $projects->total() }} projects</div>
+        @if($projects->hasPages())
         <div class="d-flex align-items-center gap-1 flex-wrap">
             @if($currentPage > 1)
                 <a href="{{ $projects->appends($queryParams)->url($currentPage - 1) }}" class="btn btn-sm btn-outline-secondary px-2">
@@ -189,5 +190,6 @@
                 </span>
             @endif
         </div>
+        @endif
     </div>
 </div>

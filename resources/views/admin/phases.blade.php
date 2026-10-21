@@ -1427,13 +1427,15 @@
                         <div id="phaseResultsCount" class="pagination-summary">
                             Showing {{ $phases->firstItem() ?? 0 }} to {{ $phases->lastItem() ?? 0 }} of {{ $phases->total() }} phase(s)
                         </div>
-                        <div class="pagination-bar">
-                            <a class="pagination-button {{ $phases->onFirstPage() ? 'disabled' : '' }}" href="{{ $phases->previousPageUrl() ?? '#' }}" aria-label="Previous page">‹</a>
-                            @for ($page = 1; $page <= $phases->lastPage(); $page++)
-                                <a class="pagination-button {{ $page == $phases->currentPage() ? 'active' : '' }}" href="{{ $phases->url($page) }}" aria-label="Page {{ $page }}">{{ $page }}</a>
-                            @endfor
-                            <a class="pagination-button {{ $phases->hasMorePages() ? '' : 'disabled' }}" href="{{ $phases->nextPageUrl() ?? '#' }}" aria-label="Next page">›</a>
-                        </div>
+                        @if($phases->hasPages())
+                            <div class="pagination-bar">
+                                <a class="pagination-button {{ $phases->onFirstPage() ? 'disabled' : '' }}" href="{{ $phases->previousPageUrl() ?? '#' }}" aria-label="Previous page">‹</a>
+                                @for ($page = 1; $page <= $phases->lastPage(); $page++)
+                                    <a class="pagination-button {{ $page == $phases->currentPage() ? 'active' : '' }}" href="{{ $phases->url($page) }}" aria-label="Page {{ $page }}">{{ $page }}</a>
+                                @endfor
+                                <a class="pagination-button {{ $phases->hasMorePages() ? '' : 'disabled' }}" href="{{ $phases->nextPageUrl() ?? '#' }}" aria-label="Next page">›</a>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

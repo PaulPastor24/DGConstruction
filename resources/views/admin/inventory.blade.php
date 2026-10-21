@@ -701,26 +701,6 @@
         background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
     }
 
-    .mi-expense-summary-card {
-        border: 1px solid rgba(22, 101, 52, 0.12);
-        border-radius: 16px;
-        background: #ffffff;
-        box-shadow: 0 10px 24px rgba(15, 32, 21, 0.05);
-    }
-
-    .mi-expense-summary-icon {
-        width: 42px;
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 14px;
-        background: rgba(22, 101, 52, 0.08);
-        color: #166534;
-        border: 1px solid rgba(22, 101, 52, 0.12);
-        flex-shrink: 0;
-    }
-
     .mi-search-input {
         padding-left: 2.15rem !important;
     }
@@ -868,8 +848,8 @@
 
 
 /* =======================================================================
-   MOBILE V2 INVENTORY / USAGE / EXPENSE CARD FIX
-   Makes materials, usage logs, and project-phase expenses readable on phones.
+   MOBILE V2 INVENTORY / USAGE CARD FIX
+   Makes materials and usage logs readable on phones.
    ======================================================================= */
 @media (max-width: 820px) {
     .inventory-green-theme input,
@@ -912,7 +892,6 @@
     .inventory-green-theme #inventoryMaterialsTableBody,
     .inventory-green-theme #allocatedMaterialsTableBody,
     .inventory-green-theme #usageLogsTableBody,
-    .inventory-green-theme #expensesTableBody,
     .inventory-green-theme #toolsTableBody {
         display: block !important;
         width: 100% !important;
@@ -921,7 +900,6 @@
     .inventory-green-theme #inventoryMaterialsTableBody tr,
     .inventory-green-theme #allocatedMaterialsTableBody tr,
     .inventory-green-theme #usageLogsTableBody tr,
-    .inventory-green-theme #expensesTableBody tr,
     .inventory-green-theme #toolsTableBody tr {
         display: block !important;
         width: 100% !important;
@@ -953,7 +931,6 @@
     .inventory-green-theme #inventoryMaterialsTableBody td,
     .inventory-green-theme #allocatedMaterialsTableBody td,
     .inventory-green-theme #usageLogsTableBody td,
-    .inventory-green-theme #expensesTableBody td,
     .inventory-green-theme #toolsTableBody td {
         display: grid !important;
         grid-template-columns: 112px minmax(0, 1fr) !important;
@@ -973,7 +950,6 @@
     .inventory-green-theme #inventoryMaterialsTableBody td::before,
     .inventory-green-theme #allocatedMaterialsTableBody td::before,
     .inventory-green-theme #usageLogsTableBody td::before,
-    .inventory-green-theme #expensesTableBody td::before,
     .inventory-green-theme #toolsTableBody td::before {
         display: block !important;
         color: #5f6f66 !important;
@@ -1012,15 +988,6 @@
     .inventory-green-theme #usageLogsTableBody td:nth-child(7)::before { content: 'Used By' !important; }
     .inventory-green-theme #usageLogsTableBody td:nth-child(8)::before { content: 'Details' !important; }
 
-    .inventory-green-theme #expensesTableBody td:nth-child(1)::before { content: 'Date' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(2)::before { content: 'Project' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(3)::before { content: 'Phase' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(4)::before { content: 'Material' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(5)::before { content: 'Qty Used' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(6)::before { content: 'Unit Cost' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(7)::before { content: 'Total Expense' !important; }
-    .inventory-green-theme #expensesTableBody td:nth-child(8)::before { content: 'Used By' !important; }
-
     .inventory-green-theme #toolsTableBody td:nth-child(1)::before { content: 'Code' !important; }
     .inventory-green-theme #toolsTableBody td:nth-child(2)::before { content: 'Name' !important; }
     .inventory-green-theme #toolsTableBody td:nth-child(3)::before { content: 'Category' !important; }
@@ -1034,7 +1001,6 @@
     .inventory-green-theme #inventoryMaterialsTableBody td > *,
     .inventory-green-theme #allocatedMaterialsTableBody td > *,
     .inventory-green-theme #usageLogsTableBody td > *,
-    .inventory-green-theme #expensesTableBody td > *,
     .inventory-green-theme #toolsTableBody td > * {
         min-width: 0 !important;
         max-width: 100% !important;
@@ -1478,8 +1444,7 @@
     }
 
     .inventory-green-theme #inventory-search-form,
-    .inventory-green-theme #usage-search-form,
-    .inventory-green-theme #expenses-filter-form {
+    .inventory-green-theme #usage-search-form {
         gap: 8px 0 !important;
         margin-bottom: 12px !important;
     }
@@ -1487,17 +1452,13 @@
     .inventory-green-theme #inventory-search-form .form-control,
     .inventory-green-theme #inventory-search-form .form-select,
     .inventory-green-theme #usage-search-form .form-control,
-    .inventory-green-theme #usage-search-form .form-select,
-    .inventory-green-theme #expenses-filter-form .form-control,
-    .inventory-green-theme #expenses-filter-form .form-select,
-    .inventory-green-theme #expenseClearFilterBtn {
+    .inventory-green-theme #usage-search-form .form-select {
         min-height: 42px !important;
         border-radius: 11px !important;
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody tr,
-    .inventory-green-theme #usageLogsTableBody tr,
-    .inventory-green-theme #expensesTableBody tr {
+    .inventory-green-theme #usageLogsTableBody tr {
         border-radius: 18px !important;
         padding: 15px !important;
         margin-bottom: 12px !important;
@@ -1532,17 +1493,6 @@
         align-items: center !important;
         justify-content: center !important;
         border-radius: 11px !important;
-    }
-
-    .inventory-green-theme .mi-expense-summary-card {
-        padding: 12px !important;
-        border-radius: 16px !important;
-    }
-
-    .inventory-green-theme .mi-expense-summary-icon {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 12px !important;
     }
 
     .inventory-green-theme .mi-side-widget {
@@ -1588,8 +1538,7 @@
     }
 
     .inventory-green-theme #inventoryMaterialsTableBody td,
-    .inventory-green-theme #usageLogsTableBody td,
-    .inventory-green-theme #expensesTableBody td {
+    .inventory-green-theme #usageLogsTableBody td {
         grid-template-columns: 102px minmax(0, 1fr) !important;
         gap: 10px !important;
     }
@@ -1599,6 +1548,110 @@
         position: fixed !important;
     }
 
+    #allocateMaterialModal .modal-content {
+        max-height: calc(100vh - 2rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    #allocateMaterialModal form {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    #allocateMaterialModal .modal-body-custom {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 1.5rem;
+    }
+
+    #allocateMaterialModal .footer-action-row {
+        flex: 0 0 auto;
+        margin-top: 0;
+        background: #ffffff;
+    }
+
+    @media (max-width: 991.98px) {
+        .inventory-green-theme .table-responsive.request-table-responsive {
+            overflow-x: visible !important;
+            padding: 0 12px 12px !important;
+        }
+
+        .inventory-green-theme .request-table thead {
+            display: none !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody tr {
+            display: grid !important;
+            grid-template-columns: minmax(100px, 0.4fr) minmax(0, 1fr);
+            gap: 0 12px;
+            width: 100% !important;
+            margin: 0 0 12px !important;
+            padding: 12px 16px !important;
+            border: 1px solid #e6eee8 !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody td {
+            display: grid !important;
+            grid-template-columns: minmax(100px, 0.4fr) minmax(0, 1fr);
+            grid-column: 1 / -1;
+            align-items: start;
+            gap: 12px;
+            min-width: 0;
+            padding: 8px 0 !important;
+            border: 0 !important;
+            border-bottom: 1px solid #edf3ee !important;
+            background: transparent !important;
+            text-align: left !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody td::before {
+            content: attr(data-label);
+            color: #5f6f66;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            line-height: 1.4;
+            text-transform: uppercase;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody td:last-child {
+            border-bottom: 0 !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody td:last-child > * {
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody .request-empty-state {
+            display: block !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody .request-empty-state td {
+            display: block !important;
+            text-align: center !important;
+        }
+
+        .inventory-green-theme #materialRequestsTableBody .request-empty-state td::before {
+            content: none;
+        }
+    }
+
 </style>
 @endpush
 
@@ -1606,7 +1659,7 @@
 <div class="mi-page inventory-green-theme">
     @php
         $activeInventoryView = request('view', $activeView ?? 'inventory');
-        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'allocated', 'usage', 'expenses', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
+        $activeInventoryView = in_array($activeInventoryView, ['inventory', 'allocated', 'usage', 'requests', 'tools']) ? $activeInventoryView : 'inventory';
 
         $usageLogItems = collect();
         if (isset($usageLogs)) {
@@ -1638,38 +1691,6 @@
         $selectedInventoryProjectId = request('project_id', '');
         $selectedInventoryPhaseId = request('phase_id', '');
 
-        $expenseTotalAmount = $usageLogItems->sum(function ($log) {
-            $material = $log->material ?? null;
-            $quantity = (float) ($log->quantity_used ?? 0);
-            $unitCost = (float) (
-                $log->unit_cost
-                ?? $log->cost_per_unit
-                ?? optional($material)->unit_cost
-                ?? optional($material)->cost
-                ?? optional($material)->price
-                ?? 0
-            );
-            $totalCost = (float) (
-                $log->total_cost
-                ?? $log->amount
-                ?? $log->expense_amount
-                ?? 0
-            );
-
-            return $totalCost > 0 ? $totalCost : ($quantity * $unitCost);
-        });
-
-        $expenseTotalQuantity = $usageLogItems->sum(fn ($log) => (float) ($log->quantity_used ?? 0));
-        $expenseProjectCount = $usageLogItems
-            ->map(fn ($log) => optional($log->project)->project_id ?? optional($log->project)->id ?? optional($log->project)->project_name)
-            ->filter()
-            ->unique()
-            ->count();
-        $expensePhaseCount = $usageLogItems
-            ->map(fn ($log) => optional($log->phase)->phase_id ?? optional($log->phase)->id ?? optional($log->phase)->phase_name)
-            ->filter()
-            ->unique()
-            ->count();
     @endphp
     
     <!-- Top 4 Summary Cards Grid Row -->
@@ -1853,11 +1874,6 @@
                                 <i class="bi bi-wrench me-1"></i><span class="tab-full">Tools & Equipments</span><span class="tab-short">Tools</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="inventory-view-toggle nav-link {{ $activeInventoryView === 'expenses' ? 'active fw-bold border-0 text-primary border-bottom border-primary border-2' : 'fw-semibold border-0 text-muted' }} px-3 pb-2" href="#" data-target="expenses-view">
-                                <i class="bi bi-cash-stack me-1"></i><span class="tab-full">Project / Phase Expenses</span><span class="tab-short">Expenses</span>
-                            </a>
-                        </li>
                     </ul>
                 </div>
                 
@@ -1978,8 +1994,8 @@
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
-                                <div class="modal-body-custom">
-                                    <form id="allocateMaterialForm" method="POST" action="{{ route('admin.inventory.allocate') }}">
+                                <form id="allocateMaterialForm" method="POST" action="{{ route('admin.inventory.allocate') }}">
+                                    <div class="modal-body-custom">
                                         @csrf
                                         <div class="row g-3 mb-3">
                                             <div class="col-md-6">
@@ -2057,16 +2073,16 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="footer-action-row">
-                                            <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
-                                                <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
-                                            </button>
-                                            <button type="submit" class="btn-action-submit">
-                                                <i class="bi bi-check-circle" aria-hidden="true"></i> Save Allocation
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    </div>
+                                    <div class="footer-action-row border-top">
+                                        <button type="button" class="btn-action-cancel" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
+                                        </button>
+                                        <button type="submit" class="btn-action-submit">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i> Save Allocation
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -2172,8 +2188,8 @@
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                    <div class="table-responsive request-table-responsive">
+                        <table class="table table-hover align-middle mb-0 request-table" style="font-size: 13px;">
                             <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
                                 <tr>
                                     <th class="border-0">Request ID</th>
@@ -2186,7 +2202,7 @@
                                     <th class="border-0 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="materialRequestsTableBody">
                                 @forelse($materialRequests as $request)
                                     @php
                                         $requestBadgeClass = match($request->status) {
@@ -2197,17 +2213,17 @@
                                         };
                                     @endphp
                                     <tr>
-                                        <td class="fw-semibold text-dark">#{{ $request->request_id }}</td>
-                                        <td>
+                                        <td data-label="Request ID" class="fw-semibold text-dark">#{{ $request->request_id }}</td>
+                                        <td data-label="Material">
                                             <div class="fw-semibold text-dark">{{ $request->material->name ?? 'Unknown' }}</div>
                                             <div class="text-muted small">{{ $request->unit ?? 'unit' }}</div>
                                         </td>
-                                        <td class="text-muted">{{ $request->project->project_name ?? 'N/A' }}</td>
-                                        <td class="text-muted">{{ $request->requester->name ?? 'Unknown' }}</td>
-                                        <td class="fw-bold text-dark">{{ number_format($request->requested_quantity, 2) }}</td>
-                                        <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $requestBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ ucfirst($request->status) }}</span></td>
-                                        <td class="text-muted">{{ $request->created_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
-                                        <td>
+                                        <td data-label="Project" class="text-muted">{{ $request->project->project_name ?? 'N/A' }}</td>
+                                        <td data-label="Requested By" class="text-muted">{{ $request->requester->name ?? 'Unknown' }}</td>
+                                        <td data-label="Quantity" class="fw-bold text-dark">{{ number_format($request->requested_quantity, 2) }}</td>
+                                        <td data-label="Status"><span class="badge rounded-pill px-2.5 py-1.5 {{ $requestBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ ucfirst($request->status) }}</span></td>
+                                        <td data-label="Requested At" class="text-muted">{{ $request->created_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                                        <td data-label="Actions">
                                             @if($request->status === 'pending')
                                                 <div class="d-flex justify-content-center gap-1">
                                                     <button type="button" class="btn-request-approve" data-bs-toggle="modal" data-bs-target="#approveModal{{ $request->request_id }}">
@@ -2324,7 +2340,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <tr>
+                                    <tr class="request-empty-state">
                                         <td colspan="8" class="text-center text-muted py-4">
                                             <i class="bi bi-inbox fs-3 text-secondary d-block mb-2"></i>
                                             No material requests found.
@@ -2337,7 +2353,7 @@
 
                     @if($materialRequests instanceof \Illuminate\Pagination\LengthAwarePaginator && $materialRequests->hasPages())
                         <div class="card-footer bg-white border-0 py-3">
-                            <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                 <span class="text-muted small">Showing {{ $materialRequests->firstItem() ?? 0 }} to {{ $materialRequests->lastItem() ?? 0 }} of {{ $materialRequests->total() }} requests</span>
                                 <div>{{ $materialRequests->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
                             </div>
@@ -2420,22 +2436,6 @@
                                             $usageProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
                                             $usagePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
                                             $usageMaterial = $log->material ?? null;
-                                            $usageQuantity = (float) ($log->quantity_used ?? 0);
-                                            $usageUnitCost = (float) (
-                                                $log->unit_cost
-                                                ?? $log->cost_per_unit
-                                                ?? optional($usageMaterial)->unit_cost
-                                                ?? optional($usageMaterial)->cost
-                                                ?? optional($usageMaterial)->price
-                                                ?? 0
-                                            );
-                                            $usageTotalCost = (float) (
-                                                $log->total_cost
-                                                ?? $log->amount
-                                                ?? $log->expense_amount
-                                                ?? 0
-                                            );
-                                            $usageExpenseAmount = $usageTotalCost > 0 ? $usageTotalCost : ($usageQuantity * $usageUnitCost);
                                             $usageSearchText = strtolower(trim(
                                                 (optional($log->project)->project_name ?? '') . ' ' .
                                                 (optional($log->phase)->phase_name ?? '') . ' ' .
@@ -2448,8 +2448,7 @@
                                             data-project-id="{{ $usageProjectId }}"
                                             data-phase-id="{{ $usagePhaseId }}"
                                             data-usage-category="{{ optional($usageMaterial)->category ?? 'General' }}"
-                                            data-usage-search="{{ $usageSearchText }}"
-                                            data-expense-amount="{{ $usageExpenseAmount }}">
+                                            data-usage-search="{{ $usageSearchText }}">
                                             <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
                                             <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
                                             <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
@@ -2482,7 +2481,12 @@
                                 </tbody>
                             </table>
                         </div>
-
+                        @if($usageLogs instanceof \Illuminate\Pagination\LengthAwarePaginator && $usageLogs->hasPages())
+                            <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                <span class="text-muted small">Showing {{ $usageLogs->firstItem() ?? 0 }} to {{ $usageLogs->lastItem() ?? 0 }} of {{ $usageLogs->total() }} usage records</span>
+                                <div>{{ $usageLogs->links('pagination::bootstrap-5') }}</div>
+                            </div>
+                        @endif
 
                     </div>
 
@@ -2640,9 +2644,15 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($tools instanceof \Illuminate\Pagination\LengthAwarePaginator && $tools->hasPages())
+                            <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                <span class="text-muted small">Showing {{ $tools->firstItem() ?? 0 }} to {{ $tools->lastItem() ?? 0 }} of {{ $tools->total() }} tools</span>
+                                <div>{{ $tools->links('pagination::bootstrap-5') }}</div>
+                            </div>
+                        @endif
 
                         <!-- Active Tool Loans -->
-                        @if($activeToolLoans->count() > 0)
+                        @if($activeToolLoans->total() > 0)
                         <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
                             <div class="card-header bg-white border-0 py-3">
                                 <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
@@ -2677,6 +2687,12 @@
                                     </tbody>
                                 </table>
                             </div>
+                            @if($activeToolLoans->hasPages())
+                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                    <span class="text-muted small">Showing {{ $activeToolLoans->firstItem() ?? 0 }} to {{ $activeToolLoans->lastItem() ?? 0 }} of {{ $activeToolLoans->total() }} active loans</span>
+                                    <div>{{ $activeToolLoans->links('pagination::bootstrap-5') }}</div>
+                                </div>
+                            @endif
                         </div>
                         @endif
 
@@ -2717,175 +2733,15 @@
                                     </tbody>
                                 </table>
                             </div>
+                            @if($allToolDeductions instanceof \Illuminate\Pagination\LengthAwarePaginator && $allToolDeductions->hasPages())
+                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                    <span class="text-muted small">Showing {{ $allToolDeductions->firstItem() ?? 0 }} to {{ $allToolDeductions->lastItem() ?? 0 }} of {{ $allToolDeductions->total() }} deduction records</span>
+                                    <div>{{ $allToolDeductions->links('pagination::bootstrap-5') }}</div>
+                                </div>
+                            @endif
                         </div>
             </div>
 
-                    <div id="expenses-view" class="inventory-view-panel {{ $activeInventoryView !== 'expenses' ? 'd-none' : '' }}">
-                        <div class="mi-filter-card p-3 mb-3">
-                            <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center" id="expenses-filter-form">
-                                <input type="hidden" name="view" value="expenses">
-                                <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
-                                    <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search project, phase, material, or supervisor...">
-                                    <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
-                                </div>
-                                <div class="col-md-3">
-                                    <select name="project_id" id="expenseProjectFilter" class="form-select form-select-sm text-muted">
-                                        <option value="">All Projects</option>
-                                        @foreach($inventoryProjectOptions as $projectOption)
-                                            @php
-                                                $projectOptionId = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id') ?? '';
-                                                $projectOptionName = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed Project';
-                                            @endphp
-                                            <option value="{{ $projectOptionId }}" {{ (string) $selectedInventoryProjectId === (string) $projectOptionId ? 'selected' : '' }}>
-                                                {{ $projectOptionName }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <select name="phase_id" id="expensePhaseFilter" class="form-select form-select-sm text-muted">
-                                        <option value="">All Phases</option>
-                                        @foreach($inventoryPhaseOptions as $phaseOption)
-                                            @php
-                                                $phaseOptionId = data_get($phaseOption, 'phase_id') ?? data_get($phaseOption, 'id') ?? '';
-                                                $phaseProjectId = data_get($phaseOption, 'project_id') ?? '';
-                                                $phaseOptionName = data_get($phaseOption, 'phase_name') ?? data_get($phaseOption, 'name') ?? 'Unnamed Phase';
-                                            @endphp
-                                            <option value="{{ $phaseOptionId }}" data-project-id="{{ $phaseProjectId }}" {{ (string) $selectedInventoryPhaseId === (string) $phaseOptionId ? 'selected' : '' }}>
-                                                {{ $phaseOptionName }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="expenseClearFilterBtn">
-                                        Clear
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-3 col-6">
-                                <div class="mi-expense-summary-card p-3 h-100">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="mi-expense-summary-icon"><i class="bi bi-cash-stack"></i></div>
-                                        <div>
-                                            <div class="text-muted small fw-semibold">Total Expense</div>
-                                            <div class="fw-bold text-dark" id="expenseTotalAmount">₱{{ number_format($expenseTotalAmount, 2) }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="mi-expense-summary-card p-3 h-100">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="mi-expense-summary-icon"><i class="bi bi-boxes"></i></div>
-                                        <div>
-                                            <div class="text-muted small fw-semibold">Materials Used</div>
-                                            <div class="fw-bold text-dark" id="expenseTotalQuantity">{{ number_format($expenseTotalQuantity, 0) }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="mi-expense-summary-card p-3 h-100">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="mi-expense-summary-icon"><i class="bi bi-building"></i></div>
-                                        <div>
-                                            <div class="text-muted small fw-semibold">Projects</div>
-                                            <div class="fw-bold text-dark" id="expenseProjectCount">{{ $expenseProjectCount }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6">
-                                <div class="mi-expense-summary-card p-3 h-100">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="mi-expense-summary-icon"><i class="bi bi-bar-chart-steps"></i></div>
-                                        <div>
-                                            <div class="text-muted small fw-semibold">Phases</div>
-                                            <div class="fw-bold text-dark" id="expensePhaseCount">{{ $expensePhaseCount }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0" style="font-size: 13px;">
-                                <thead class="table-light text-muted fw-bold" style="font-size: 11px;">
-                                    <tr>
-                                        <th class="border-0">Date</th>
-                                        <th class="border-0">Project</th>
-                                        <th class="border-0">Phase</th>
-                                        <th class="border-0">Material</th>
-                                        <th class="border-0">Qty Used</th>
-                                        <th class="border-0">Unit Cost</th>
-                                        <th class="border-0">Total Expense</th>
-                                        <th class="border-0">Used By</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expensesTableBody">
-                                    @forelse($usageLogItems as $log)
-                                        @php
-                                            $expenseProjectId = optional($log->project)->project_id ?? optional($log->project)->id ?? '';
-                                            $expensePhaseId = optional($log->phase)->phase_id ?? optional($log->phase)->id ?? '';
-                                            $expenseMaterial = $log->material ?? null;
-                                            $expenseQuantity = (float) ($log->quantity_used ?? 0);
-                                            $expenseUnitCost = (float) (
-                                                $log->unit_cost
-                                                ?? $log->cost_per_unit
-                                                ?? optional($expenseMaterial)->unit_cost
-                                                ?? optional($expenseMaterial)->cost
-                                                ?? optional($expenseMaterial)->price
-                                                ?? 0
-                                            );
-                                            $expenseDirectCost = (float) (
-                                                $log->total_cost
-                                                ?? $log->amount
-                                                ?? $log->expense_amount
-                                                ?? 0
-                                            );
-                                            $expenseAmount = $expenseDirectCost > 0 ? $expenseDirectCost : ($expenseQuantity * $expenseUnitCost);
-                                            $expenseSearchText = strtolower(trim(
-                                                (optional($log->project)->project_name ?? '') . ' ' .
-                                                (optional($log->phase)->phase_name ?? '') . ' ' .
-                                                (optional($expenseMaterial)->name ?? '') . ' ' .
-                                                (optional($log->recorder)->name ?? '') . ' ' .
-                                                ($log->remarks ?? '')
-                                            ));
-                                        @endphp
-                                        <tr data-expense-row="true"
-                                            data-project-id="{{ $expenseProjectId }}"
-                                            data-phase-id="{{ $expensePhaseId }}"
-                                            data-expense-search="{{ $expenseSearchText }}"
-                                            data-expense-amount="{{ $expenseAmount }}"
-                                            data-expense-quantity="{{ $expenseQuantity }}">
-                                            <td class="text-muted">{{ optional($log->usage_date)->format('M d, Y') ?? '-' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($log->project)->project_name ?? 'N/A' }}</td>
-                                            <td class="text-muted">{{ optional($log->phase)->phase_name ?? 'N/A' }}</td>
-                                            <td class="fw-semibold text-dark">{{ optional($expenseMaterial)->name ?? 'N/A' }}</td>
-                                            <td class="fw-bold text-dark">{{ number_format($expenseQuantity, 0) }} {{ optional($expenseMaterial)->unit ?? 'Piece' }}</td>
-                                            <td class="text-muted">₱{{ number_format($expenseUnitCost, 2) }}</td>
-                                            <td class="fw-bold text-success">₱{{ number_format($expenseAmount, 2) }}</td>
-                                            <td>{{ optional($log->recorder)->name ?? 'Unknown' }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr id="expenseEmptyStateRow"><td colspan="8" class="text-center text-muted py-4">No material expense records available.</td></tr>
-                                    @endforelse
-                                    @if($usageLogItems->count() > 0)
-                                        <tr id="expenseEmptyStateRow" class="mi-empty-row"><td colspan="8" class="text-center text-muted py-4">No matching expense records found.</td></tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="alert alert-light border mt-3 mb-0 small text-muted">
-                            <i class="bi bi-info-circle text-success me-1"></i>
-                            Expense values use <strong>total_cost</strong>, <strong>amount</strong>, or <strong>expense_amount</strong> when available. If not available, the page estimates expense using quantity used × material unit cost.
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -4037,7 +3893,7 @@
                 link.classList.toggle('border-2', isActive);
             });
 
-            document.querySelectorAll('#inventory-view-input, #allocated-view-input, #usage-view-input, #requests-view-input, #tools-view-input, #expenses-view input[name="view"]').forEach(function (input) {
+            document.querySelectorAll('#inventory-view-input, #allocated-view-input, #usage-view-input, #requests-view-input, #tools-view-input').forEach(function (input) {
                 input.value = getPanelViewValue(targetId);
             });
         }
@@ -4050,14 +3906,6 @@
         });
 
         let smoothSearchTimer = null;
-
-        function formatCurrency(value) {
-            const number = Number(value || 0);
-            return '₱' + number.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
 
         function setPanelLoading(panel, isLoading) {
             if (panel) {
@@ -4072,10 +3920,6 @@
 
             if (panelId === 'usage-view') {
                 return 'usage';
-            }
-
-            if (panelId === 'expenses-view') {
-                return 'expenses';
             }
 
             if (panelId === 'requests-view') {
@@ -4145,15 +3989,10 @@
 
                 bindSmoothInventoryForms();
                 bindInventoryPagination();
-                bindExpenseFilters();
                 bindUsageClientFilters();
 
                 if (panelId === 'usage-view') {
                     applyUsageClientFilters();
-                }
-
-                if (panelId === 'expenses-view') {
-                    applyExpenseFilters();
                 }
 
                 if (panelId === 'tools-view') {
@@ -4272,7 +4111,6 @@
 
                             bindSmoothInventoryForms();
                             bindInventoryPagination();
-                            bindExpenseFilters();
                             bindUsageClientFilters();
                             applyUsageClientFilters();
                         })
@@ -4349,107 +4187,6 @@
             filterPhaseOptions(projectSelect, phaseSelect);
         }
 
-        function updateExpenseSummary() {
-            const visibleRows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'))
-                .filter(function (row) {
-                    return row.style.display !== 'none';
-                });
-
-            const amount = visibleRows.reduce(function (total, row) {
-                return total + Number(row.dataset.expenseAmount || 0);
-            }, 0);
-
-            const quantity = visibleRows.reduce(function (total, row) {
-                return total + Number(row.dataset.expenseQuantity || 0);
-            }, 0);
-
-            const projects = new Set();
-            const phases = new Set();
-
-            visibleRows.forEach(function (row) {
-                if (row.dataset.projectId) {
-                    projects.add(row.dataset.projectId);
-                }
-                if (row.dataset.phaseId) {
-                    phases.add(row.dataset.phaseId);
-                }
-            });
-
-            const totalAmountEl = document.getElementById('expenseTotalAmount');
-            const totalQuantityEl = document.getElementById('expenseTotalQuantity');
-            const projectCountEl = document.getElementById('expenseProjectCount');
-            const phaseCountEl = document.getElementById('expensePhaseCount');
-
-            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(amount);
-            if (totalQuantityEl) totalQuantityEl.textContent = Math.round(quantity).toLocaleString();
-            if (projectCountEl) projectCountEl.textContent = projects.size;
-            if (phaseCountEl) phaseCountEl.textContent = phases.size;
-        }
-
-        function applyExpenseFilters() {
-            const form = document.getElementById('expenses-filter-form');
-            const searchInput = form?.querySelector('input[name="search"]');
-            const projectSelect = document.getElementById('expenseProjectFilter');
-            const phaseSelect = document.getElementById('expensePhaseFilter');
-            const searchTerm = (searchInput?.value || '').trim().toLowerCase();
-            const projectId = projectSelect?.value || '';
-            const phaseId = phaseSelect?.value || '';
-            const rows = Array.from(document.querySelectorAll('#expensesTableBody tr[data-expense-row="true"]'));
-            const emptyRow = document.getElementById('expenseEmptyStateRow');
-            let visibleCount = 0;
-
-            filterPhaseOptions(projectSelect, phaseSelect);
-
-            rows.forEach(function (row) {
-                const matchesSearch = !searchTerm || (row.dataset.expenseSearch || '').includes(searchTerm);
-                const matchesProject = !projectId || row.dataset.projectId === projectId;
-                const matchesPhase = !phaseId || row.dataset.phaseId === phaseId;
-                const isVisible = matchesSearch && matchesProject && matchesPhase;
-
-                row.style.display = isVisible ? '' : 'none';
-
-                if (isVisible) {
-                    visibleCount += 1;
-                }
-            });
-
-            if (emptyRow) {
-                emptyRow.classList.toggle('is-visible', visibleCount === 0);
-                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
-            }
-
-            updateExpenseSummary();
-        }
-
-        function bindExpenseFilters() {
-            const form = document.getElementById('expenses-filter-form');
-            const clearBtn = document.getElementById('expenseClearFilterBtn');
-
-            if (form && form.dataset.expenseBound !== '1') {
-                form.dataset.expenseBound = '1';
-
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault();
-                    applyExpenseFilters();
-                });
-
-                form.querySelectorAll('input, select').forEach(function (control) {
-                    control.addEventListener('input', applyExpenseFilters);
-                    control.addEventListener('change', applyExpenseFilters);
-                });
-            }
-
-            if (clearBtn && clearBtn.dataset.expenseClearBound !== '1') {
-                clearBtn.dataset.expenseClearBound = '1';
-                clearBtn.addEventListener('click', function () {
-                    form?.reset();
-                    applyExpenseFilters();
-                });
-            }
-
-            applyExpenseFilters();
-        }
-
         const activePanel = document.querySelector('.inventory-view-panel:not(.d-none)');
         if (activePanel) {
             setActiveView(activePanel.id);
@@ -4509,9 +4246,7 @@
         bindSmoothInventoryForms();
         bindInventoryPagination();
         bindUsageClientFilters();
-        bindExpenseFilters();
         applyUsageClientFilters();
-        applyExpenseFilters();
 
         // REAL-TIME MODAL MATHEMATICAL COMPUTATION & VALUE TRACKING LOGIC
         const receiveStockModal = document.getElementById('receiveStockModalGeneral');

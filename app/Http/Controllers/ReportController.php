@@ -41,7 +41,7 @@ class ReportController extends Controller
             });
         }
 
-        $reports = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->only(['status', 'project_id', 'search']));
+        $reports = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->only(['status', 'project_id', 'search']));
 
         $hasApprovalStatus = Schema::hasColumn('accomplishment_reports', 'approval_status');
 
