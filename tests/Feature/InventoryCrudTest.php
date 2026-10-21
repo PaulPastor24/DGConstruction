@@ -100,6 +100,26 @@ class InventoryCrudTest extends TestCase
         $this->assertSame('Portland Cement', $data['materials']->first()->name);
     }
 
+    public function test_inventory_materials_are_limited_to_ten_per_page(): void
+    {
+        for ($index = 1; $index <= 11; $index++) {
+            Material::create([
+                'name' => 'Material ' . $index,
+                'category' => 'General',
+                'unit' => 'Piece',
+                'current_stock' => 20,
+                'minimum_stock_level' => 5,
+            ]);
+        }
+
+        $response = (new AdminDashboardController())->inventory(Request::create('/admin/inventory', 'GET'));
+        $materials = $response->getData()['materials'];
+
+        $this->assertSame(10, $materials->perPage());
+        $this->assertSame(2, $materials->lastPage());
+        $this->assertCount(10, $materials);
+    }
+
     public function test_inventory_search_filters_material_usage_logs(): void
     {
         $controller = new AdminDashboardController();

@@ -2773,12 +2773,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (paginationEl) {
             paginationEl.innerHTML = '';
-            if (visibleRows.length === 0) {
-                const item = document.createElement('li');
-                item.className = 'page-item disabled';
-                item.innerHTML = '<span class="page-link" style="color:#198754;">1</span>';
-                paginationEl.appendChild(item);
-            } else {
+            if (visibleRows.length > pageSize) {
                 const prevItem = document.createElement('li');
                 prevItem.className = 'page-item' + (safePage === 1 ? ' disabled' : '');
                 prevItem.innerHTML = '<a class="page-link" href="#" tabindex="-1" style="color:#198754;" aria-label="Previous page" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + (safePage - 1) + ');"><i class="bi bi-chevron-left"></i></a>';

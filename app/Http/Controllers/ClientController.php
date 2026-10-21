@@ -735,7 +735,7 @@ class ClientController extends Controller
         }
 
         $activeTrackCount = (clone $query)->where('status', 'ongoing')->count();
-        $projects = $query->paginate(6)->onEachSide(1)->appends($request->only(['search', 'status', 'phase', 'completion']));
+        $projects = $query->paginate(10)->onEachSide(1)->appends($request->only(['search', 'status', 'phase', 'completion']));
 
         $projectSummaries = $projects->getCollection()->map(function ($project) {
             $phases = $project->phases;

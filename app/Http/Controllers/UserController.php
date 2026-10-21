@@ -48,11 +48,7 @@ class UserController extends Controller
             $query->where('is_active', $status);
         }
 
-        // 4. Per Page Configuration
-        $perPage = min(100, max(10, (int) $request->input('per_page', 25)));
-
-        // Fetch paginated records ordered by recent
-        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $users = $query->orderBy('created_at', 'desc')->paginate(10);
         $onlineUserIds = app(UserPresence::class)->onlineIds($users->pluck('user_id')->all());
 
         // One aggregate query replaces six independent count queries.

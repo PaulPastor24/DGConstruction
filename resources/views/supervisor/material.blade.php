@@ -753,10 +753,6 @@
                     <div class="flex items-center gap-1">
                         @if($inventory->hasPages())
                             {{ $inventory->links('pagination::bootstrap-5') }}
-                        @else
-                            <nav aria-label="Material pagination" class="pagination">
-                                <span class="page-item active"><span class="page-link">1</span></span>
-                            </nav>
                         @endif
                     </div>
                 </div>

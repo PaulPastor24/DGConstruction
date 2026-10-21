@@ -187,7 +187,7 @@ class ProjectController extends Controller
                 break;
         }
 
-        $projects = $query->paginate(15)->appends($request->only(['search', 'status', 'client', 'supervisor', 'sort_by']));
+        $projects = $query->paginate(10)->appends($request->only(['search', 'status', 'client', 'supervisor', 'sort_by']));
 
         $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
 

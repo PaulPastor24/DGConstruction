@@ -2448,15 +2448,11 @@
                 </div>
                 <div id="reportsPagination" class="pagination-bar">
                     @if($reports->lastPage() > 1)
-                        @if($reports->currentPage() > 1)
-                            <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() - 1 }}" aria-label="Previous page">‹</button>
-                        @endif
+                        <button type="button" class="pagination-button" data-page="{{ max(1, $reports->currentPage() - 1) }}" {{ $reports->onFirstPage() ? 'disabled' : '' }} aria-label="Previous page">‹</button>
                         @foreach(range(1, $reports->lastPage()) as $page)
                             <button type="button" class="pagination-button {{ $page == $reports->currentPage() ? 'active' : '' }}" data-page="{{ $page }}" aria-label="Page {{ $page }}">{{ $page }}</button>
                         @endforeach
-                        @if($reports->hasMorePages())
-                            <button type="button" class="pagination-button" data-page="{{ $reports->currentPage() + 1 }}" aria-label="Next page">›</button>
-                        @endif
+                        <button type="button" class="pagination-button" data-page="{{ min($reports->lastPage(), $reports->currentPage() + 1) }}" {{ $reports->hasMorePages() ? '' : 'disabled' }} aria-label="Next page">›</button>
                     @endif
                 </div>
             </div>
@@ -4029,4 +4025,3 @@
     </script>
 </div>
 @endsection
-

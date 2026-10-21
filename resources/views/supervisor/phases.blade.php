@@ -247,29 +247,31 @@
         {{-- Pagination --}}
         <div class="table-footer-pagination">
             <span class="pagination-summary-text">
-                Showing {{ $projectPhases->firstItem() ?? 1 }} to {{ $projectPhases->lastItem() ?? $projectPhases->count() }} of {{ $projectPhases->total() }} phases
+                Showing {{ $projectPhases->firstItem() ?? 0 }} to {{ $projectPhases->lastItem() ?? 0 }} of {{ $projectPhases->total() }} phases
             </span>
-            <div class="pagination-controls">
-                @if($projectPhases->onFirstPage())
-                    <button class="pag-btn" disabled><i class="bi bi-chevron-left"></i></button>
-                @else
-                    <a href="{{ $projectPhases->previousPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
-                @endif
-                
-                @for($i = 1; $i <= $projectPhases->lastPage(); $i++)
-                    @if($i == $projectPhases->currentPage())
-                        <button class="pag-btn pag-btn-active">{{ $i }}</button>
+            @if($projectPhases->hasPages())
+                <div class="pagination-controls">
+                    @if($projectPhases->onFirstPage())
+                        <button class="pag-btn" disabled><i class="bi bi-chevron-left"></i></button>
                     @else
-                        <a href="{{ $projectPhases->url($i) }}" class="pag-btn">{{ $i }}</a>
+                        <a href="{{ $projectPhases->previousPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
                     @endif
-                @endfor
-                
-                @if($projectPhases->hasMorePages())
-                    <a href="{{ $projectPhases->nextPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-right"></i></a>
-                @else
-                    <button class="pag-btn" disabled><i class="bi bi-chevron-right"></i></button>
-                @endif
-            </div>
+
+                    @for($i = 1; $i <= $projectPhases->lastPage(); $i++)
+                        @if($i == $projectPhases->currentPage())
+                            <button class="pag-btn pag-btn-active">{{ $i }}</button>
+                        @else
+                            <a href="{{ $projectPhases->url($i) }}" class="pag-btn">{{ $i }}</a>
+                        @endif
+                    @endfor
+
+                    @if($projectPhases->hasMorePages())
+                        <a href="{{ $projectPhases->nextPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-right"></i></a>
+                    @else
+                        <button class="pag-btn" disabled><i class="bi bi-chevron-right"></i></button>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 </div>

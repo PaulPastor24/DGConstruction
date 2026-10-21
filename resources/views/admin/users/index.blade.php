@@ -679,15 +679,6 @@
                         </select>
                     </div>
 
-                    <div class="col-md-2">
-                        <select name="per_page" id="perPageFilter" class="form-select text-muted">
-                            <option value="10" {{ request('per_page') == '10' ? 'selected' : '' }}>10 rows</option>
-                            <option value="25" {{ request('per_page', '25') == '25' ? 'selected' : '' }}>25 rows</option>
-                            <option value="50" {{ request('per_page') == '50' ? 'selected' : '' }}>50 rows</option>
-                            <option value="100" {{ request('per_page') == '100' ? 'selected' : '' }}>100 rows</option>
-                        </select>
-                    </div>
-
                     <div class="col-md-auto ms-auto ps-3">
                     </div>
                 </div>
