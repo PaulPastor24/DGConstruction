@@ -24,6 +24,9 @@ class FaceAttendanceController extends Controller
 
     private function workerIds()
     {
+        if (in_array(strtolower(Auth::user()->role), ['engineer', 'admin', 'administrator'], true)) {
+            return DB::table('workers')->where('is_active', 1)->pluck('worker_id');
+        }
         $projects = Project::query()->whereHas('supervisors', fn ($q) => $q
             ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1))
             ->pluck('project_id');
@@ -71,7 +74,7 @@ class FaceAttendanceController extends Controller
             return response()->json($data)->header('Cache-Control', 'no-store, private');
         }
 
-        return view('supervisor.face-attendance', $data);
+        return view('supervisor.face-attendance', $data + ['faceRoutePrefix' => $request->routeIs('admin.*') ? 'admin' : 'supervisor']);
     }
 
     public function start(Request $request)
@@ -81,6 +84,7 @@ class FaceAttendanceController extends Controller
             'purpose' => ['required', Rule::in(['enroll', 'attendance'])],
             'worker_id' => ['required_if:purpose,enroll', 'nullable', 'integer'],
         ]);
+        abort_if($request->routeIs('admin.*') && $data['purpose'] !== 'enroll', 403, 'Use Admin Attendance Entry to record attendance.');
         if ($data['purpose'] === 'enroll') {
             $this->assignedWorker((int) $data['worker_id']);
         } elseif (! DB::table('worker_face_enrollments')->whereIn('worker_id', $this->workerIds())

@@ -1381,7 +1381,7 @@
                 padding: 0.4rem 0.7rem;
             }
         }
-    
+
         /* ======================================================================
            SUPERVISOR ATTENDANCE MOBILE POLISH
            Better action placement, tighter cards, and cleaner scan/log panels.
@@ -1758,32 +1758,57 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/supervisor-attendance-workspace.css') }}?v={{ filemtime(public_path('css/supervisor-attendance-workspace.css')) }}">
 @endpush
 
 @section('content')
-<div class="container-fluid p-0 attendance-page">
+<div class="container-fluid p-0 attendance-page attendance-workspace">
     <!-- Top Action Header -->
     <div class="card attendance-control-card border-0 mb-4">
         <div class="card-body">
             <div class="attendance-control-layout">
+                <div class="attendance-header-overview">
                 <div class="attendance-control-copy">
+                    <span class="attendance-eyebrow">FIELD OPERATIONS / ATTENDANCE</span>
                     <h4 class="attendance-control-title">
                         <span class="attendance-control-title-icon"><i class="bi bi-calendar2-check-fill"></i></span>
                         Daily Workforce Attendance
                     </h4>
                     <p class="attendance-control-subtitle">
-                        Scan each worker with the phone camera. Face enrollments are saved to the database and available when you sign in on another phone.
+                        Manage daily site attendance, from the first check-in to the last time out.
                     </p>
                 </div>
 
-                <div class="attendance-action-panel">
-                    <div class="attendance-date-field">
-                        <label class="attendance-date-label" for="attendanceDateInput">
-                            <i class="bi bi-calendar-event"></i> Attendance Date
-                        </label>
-                        <input id="attendanceDateInput" type="date" name="attendance_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                    <div class="attendance-summary" aria-label="Attendance summary for the selected project and date" aria-live="polite">
+                        @foreach(['assigned' => 'Assigned', 'checked_in' => 'Checked In', 'late' => 'Late', 'not_checked_in' => 'Not Checked In'] as $key => $label)
+                            <div class="attendance-summary-item attendance-summary-{{ $key }}">
+                                <strong data-attendance-summary="{{ $key }}">&mdash;</strong>
+                                <span>{{ $label }}</span>
+                            </div>
+                        @endforeach
                     </div>
+                </div>
+                <div class="attendance-action-panel">
+                    <div class="attendance-context-fields">
+                        <div class="attendance-date-field">
+                            <label class="attendance-date-label" for="attendanceProjectInput"><i class="bi bi-building"></i> Attendance Project</label>
+                            <select id="attendanceProjectInput" class="form-select form-select-sm" @disabled($cameraProjects->isEmpty())>
+                                @forelse($cameraProjects as $project)
+                                    <option value="{{ $project->project_id }}" @selected($activeProject?->project_id === $project->project_id)>{{ $project->project_name }}</option>
+                                @empty
+                                    <option value="">No active project assigned</option>
+                                @endforelse
+                            </select>
+                            <p class="small text-muted mb-0 mt-2">All attendance is recorded under the selected project.</p>
+                        </div>
+                        <div class="attendance-date-field">
+                            <label class="attendance-date-label" for="attendanceDateInput">
+                                <i class="bi bi-calendar-event"></i> Attendance Date
+                            </label>
+                            <input id="attendanceDateInput" type="date" name="attendance_date" class="form-control form-control-sm" value="{{ request('date', now('Asia/Manila')->toDateString()) }}">
+                        </div>
 
+                        </div>
                     <div class="attendance-action-grid">
                         <button type="button" class="btn attendance-quick-btn attendance-btn-workers"
                                 data-bs-toggle="modal" data-bs-target="#viewWorkersModal">
@@ -1817,13 +1842,16 @@
                         </h5>
                     </div>
 
+                    <p class="attendance-panel-description">A quick face scan. A confirmed check-in.</p>
                     <div class="scan-pulse-container p-5 mb-3">
+                        <span class="attendance-camera-label"><span></span> CAMERA CHECK-IN</span>
+                        <div class="attendance-scan-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
                         <button type="button" id="btnGlobalScan" aria-label="Identify worker with camera" class="btn btn-primary face-trigger-btn mb-3">
                             <i class="bi bi-person-bounding-box"></i>
                         </button>
 
-                        <p class="fw-semibold text-dark mb-1">Ready to Identify</p>
-                        <span class="text-muted small">Tap the face button to identify a worker using the phone camera.</span>
+                        <p class="fw-semibold text-dark mb-1">Ready when you are</p>
+                        <span class="text-muted small">Tap the camera button, position the worker in view, then confirm their identity.</span>
                     </div>
 
                     <div id="face-attendance-inline"
@@ -1835,7 +1863,7 @@
                          data-cancel="{{ route('supervisor.face-attendance.cancel') }}"
                          data-save="{{ route('supervisor.attendance.logWorker') }}"></div>
                     <div id="globalScanStatus" class="alert alert-light border text-muted small py-2 mb-0">
-                        <i class="bi bi-info-circle-fill text-primary"></i> Tap the face button to start facial recognition.
+                        <i class="bi bi-info-circle-fill text-primary"></i> Use good lighting and keep one person in view.
                     </div>
                 </div>
             </div>
@@ -1849,10 +1877,10 @@
                 <div class="card attendance-log-card border-0 h-100">
                     <div class="card-body">
                         <div class="attendance-section-heading">
-                            <h5>
-                                <span class="attendance-section-icon"><i class="bi bi-list-check"></i></span>
-                                Scanned Personnel Log
-                            </h5>
+                            <div class="attendance-log-heading">
+                                <h5><span class="attendance-section-icon"><i class="bi bi-list-check"></i></span> Scanned Personnel Log</h5>
+                                <p class="attendance-log-project"><i class="bi bi-building" aria-hidden="true"></i> Project: {{ $activeProject?->project_name ?? 'No active project' }}</p>
+                            </div>
                             <span class="badge attendance-log-count" id="scannedCount">
                                 <i class="bi bi-activity"></i> 0 Active Logs
                             </span>
@@ -1877,7 +1905,7 @@
                                     <tr id="emptyRowPlaceholder">
                                         <td colspan="8" class="text-center py-5 text-muted fst-italic">
                                             <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
-                                            No personnel checked in yet during this session.
+                                            <strong class="attendance-empty-title">Your site attendance starts here</strong><span class="attendance-empty-description">Scan a worker or add a manual log. Records for the selected project will appear here.</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1920,7 +1948,7 @@
                                 <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
                                 <select id="regProjectId" class="form-select" required>
                                     @forelse(($cameraProjects ?? collect()) as $project)
-                                    <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
+                                    <option value="{{ $project->project_id }}" @selected($activeProject?->project_id === $project->project_id)>{{ $project->project_name }}</option>
                                     @empty
                                     <option value="">No active project assigned</option>
                                     @endforelse
@@ -2314,6 +2342,14 @@
 
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
+        const attendanceProjectInput = document.getElementById('attendanceProjectInput');
+        const selectedProjectValue = () => attendanceProjectInput?.value || '';
+        attendanceProjectInput?.addEventListener('change', () => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('project_id', selectedProjectValue());
+            url.searchParams.set('date', selectedDateValue());
+            window.location.assign(url);
+        });
         const attendanceDateInput = document.querySelector('input[name="attendance_date"]');
         const regProfileImageInput = document.getElementById('regProfileImage');
         const regProfileImagePreview = document.getElementById('regProfileImagePreview');
@@ -2363,7 +2399,7 @@
                 showAttendanceAlert('warning', 'Camera unavailable', 'Use HTTPS and allow camera access in Safari on iPhone or Chrome on Android.');
                 return;
             }
-            window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose, workerId } }));
+            window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose, workerId, projectId: selectedProjectValue(), projectName: attendanceProjectInput?.selectedOptions[0]?.textContent, logDate: selectedDateValue() } }));
         }
         window.addEventListener('worker-attendance-saved', () => loadTodayAttendance({ silent: true }));
         window.addEventListener('worker-face-enrolled', () => loadWorkers(currentPage));
@@ -2573,7 +2609,7 @@
                 <tr id="emptyRowPlaceholder">
                     <td colspan="8" class="text-center py-5 text-muted fst-italic">
                         <i class="bi bi-person-bounding-box d-block fs-2 mb-2 text-secondary"></i>
-                        No personnel checked in yet during this session.
+                        <strong class="attendance-empty-title">Your site attendance starts here</strong><span class="attendance-empty-description">Scan a worker or add a manual log. Records for the selected project will appear here.</span>
                     </td>
                 </tr>
             `;
@@ -2860,7 +2896,7 @@
             isAttendanceFetching = true;
 
             try {
-                const response = await fetch(`${supervisorRoutes.attendanceToday}?date=${encodeURIComponent(selectedDateValue())}`, {
+                const response = await fetch(`${supervisorRoutes.attendanceToday}?date=${encodeURIComponent(selectedDateValue())}&project_id=${encodeURIComponent(selectedProjectValue())}`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
@@ -2874,6 +2910,9 @@
                     throw new Error(result.message || 'Failed to load attendance.');
                 }
 
+                document.querySelectorAll('[data-attendance-summary]').forEach(element => {
+                    element.textContent = result.summary?.[element.dataset.attendanceSummary] ?? '\u2014';
+                });
                 const records = extractAttendanceRecords(result);
                 const hasExistingRows = attendanceLogTableBody.querySelectorAll('tr[data-worker-id]').length > 0;
 
@@ -2935,6 +2974,7 @@
                 body: JSON.stringify({
                     worker_id: worker.worker_id,
                     log_date: selectedDateValue(),
+                    project_id: Number(selectedProjectValue()),
                     action: 'time_in'
                 })
             });
@@ -2946,11 +2986,12 @@
             }
 
             upsertAttendanceRecord(result.attendance, true);
+                    loadTodayAttendance({ silent: true });
         }
 
         async function updateAttendanceAction(workerId, action) {
             if (['break_in', 'time_out'].includes(action)) {
-                window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose: 'attendance', workerId, action, logDate: selectedDateValue() } }));
+                window.dispatchEvent(new CustomEvent('worker-camera-open', { detail: { purpose: 'attendance', workerId, action, logDate: selectedDateValue(), projectId: selectedProjectValue(), projectName: attendanceProjectInput?.selectedOptions[0]?.textContent } }));
                 return;
             }
             const response = await fetch(supervisorRoutes.attendanceLogWorker, {
@@ -2963,6 +3004,7 @@
                 body: JSON.stringify({
                     worker_id: workerId,
                     log_date: selectedDateValue(),
+                    project_id: Number(selectedProjectValue()),
                     action: action
                 })
             });
@@ -2975,6 +3017,7 @@
             }
 
             upsertAttendanceRecord(result.attendance, true);
+                    loadTodayAttendance({ silent: true });
 
             const actionLabel = {
                 time_in: 'Time In',
@@ -3137,6 +3180,7 @@
                     body: JSON.stringify({
                         worker_id: workerId,
                         log_date: selectedDateValue(),
+                    project_id: Number(selectedProjectValue()),
                         action: action,
                         manual: true,
                         biometric_matched: false,
@@ -3156,6 +3200,7 @@
 
                 if (result.attendance) {
                     upsertAttendanceRecord(result.attendance, true);
+                    loadTodayAttendance({ silent: true });
                 } else {
                     await loadTodayAttendance();
                 }
@@ -3767,6 +3812,7 @@
         });
 
         attendanceDateInput?.addEventListener('change', function () {
+            document.querySelectorAll('[data-attendance-summary]').forEach(element => { element.textContent = '\u2014'; });
             isFirstAttendanceLoad = true;
             scannedWorkerIds.clear();
             renderEmptyAttendanceRow();

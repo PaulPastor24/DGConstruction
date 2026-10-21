@@ -12,7 +12,7 @@ async function withTimeout(task, milliseconds, message) {
 async function getEngine() {
   if (!engine) engine = (async () => {
     const { Human } = await import('@vladmandic/human');
-    const modelBasePath = (document.getElementById('face-attendance-root') || document.getElementById('face-attendance-inline')).dataset.models;
+    const modelBasePath = (document.getElementById('face-attendance-root') || document.getElementById('face-attendance-inline') || document.getElementById('worker-registration-camera')).dataset.models;
     const human = new Human({
       // Avoid slow graphics drivers and shader compilation on mobile devices.
       backend: 'wasm', wasmPath: new URL('wasm/', new URL(modelBasePath, window.location.href)).href,

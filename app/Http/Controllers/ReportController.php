@@ -1060,10 +1060,7 @@ class ReportController extends Controller
     {
         $report = Report::findOrFail($reportId);
 
-        // Only can delete if pending and user is the submitter or admin
-        if ($report->approval_status !== 'pending' && auth('web')->user()->role !== 'engineer') {
-            abort(403, 'Cannot delete approved or rejected reports');
-        }
+        abort_unless(in_array(strtolower(auth('web')->user()->role), ['engineer', 'admin', 'administrator'], true), 403, 'Only administrators can delete reports.');
 
         try {
             DB::beginTransaction();

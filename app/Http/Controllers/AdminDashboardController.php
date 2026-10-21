@@ -1755,7 +1755,7 @@ class AdminDashboardController extends Controller
             return back()->with('error', 'Attendance schedule table is not available yet.');
         }
 
-        AttendanceScheduleRule::updateOrCreate(
+        $rule = AttendanceScheduleRule::updateOrCreate(
             ['role' => strtolower($validated['role'])],
             [
                 'start_time' => $validated['start_time'].':00',
@@ -1765,6 +1765,8 @@ class AdminDashboardController extends Controller
                 'is_active' => true,
             ]
         );
+
+        NotificationService::notifyAttendanceSchedule($rule);
 
         return back()->with('success', 'Attendance schedule saved successfully.');
     }
@@ -1786,6 +1788,8 @@ class AdminDashboardController extends Controller
             'break_start_time' => ! empty($validated['break_start_time']) ? $validated['break_start_time'].':00' : null,
             'break_end_time' => ! empty($validated['break_end_time']) ? $validated['break_end_time'].':00' : null,
         ]);
+
+        NotificationService::notifyAttendanceSchedule($rule);
 
         return back()->with('success', 'Attendance schedule updated successfully.');
     }

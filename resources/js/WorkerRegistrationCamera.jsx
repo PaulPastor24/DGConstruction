@@ -17,9 +17,12 @@ export function mountWorkerRegistrationCamera(mount) {
         if (modal?.classList.contains('show')) start();
       };
       window.addEventListener('worker-registration-reset', reset);
+      const close = () => { setOpen(false); setCaptured(false); setError(''); };
+      modal?.addEventListener('hidden.bs.modal', close);
       modal?.addEventListener('shown.bs.modal', start);
       return () => {
         window.removeEventListener('worker-registration-reset', reset);
+        modal?.removeEventListener('hidden.bs.modal', close);
         modal?.removeEventListener('shown.bs.modal', start);
       };
     }, []);

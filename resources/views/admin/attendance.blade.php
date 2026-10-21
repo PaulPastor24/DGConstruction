@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="{{ asset('css/admin-attendance.css') }}?v={{ time() }}">
 
     <style>
+        .attendance-page .attendance-actions-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .attendance-page .attendance-actions-row > .btn { width: 100%; min-width: 0; white-space: normal; height: auto; min-height: 46px; }
+        @media (max-width: 768px) { .attendance-page .attendance-actions-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
         /* Mobile alignment polish for Attendance Records empty state and toolbar */
         @media (max-width: 768px) {
             .attendance-page {
@@ -321,15 +325,16 @@
         </form>
 
         <div class="attendance-actions-row mt-3">
-            <div class="attendance-actions-left">
+
                 <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
                     <i class="bi bi-eye"></i>
                     Preview Attendance Report
                 </button>
-            </div>
             <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
                 <i class="bi bi-plus-circle"></i> Admin Attendance Entry
             </button>
+            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#registerWorkerModal"><i class="bi bi-person-plus"></i> Register Worker</button>
+            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminEnrolledWorkersModal"><i class="bi bi-people"></i> Enrolled Workers</button>
         </div>
     </section>
 
@@ -1106,6 +1111,7 @@
 </div>
 
 @include('admin.partials.worker-photo-lightbox')
+@include('admin.partials.worker-enrollment')
 @endsection
 
 @push('scripts')
@@ -1307,7 +1313,7 @@
         function attendancePageIsBusy() {
             return Boolean(
                 document.activeElement?.matches('input, select, textarea') ||
-                document.querySelector('.attendance-table details[open], #adminAttendanceEntryModal details[open]')
+                document.querySelector('.modal.show, .attendance-table details[open], #adminAttendanceEntryModal details[open]')
             );
         }
 

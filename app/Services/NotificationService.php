@@ -18,6 +18,38 @@ class NotificationService
      */
     private const ADMIN_ROLES = ['engineer', 'admin', 'administrator'];
 
+    public static function notifyAttendanceSchedule(\App\Models\AttendanceScheduleRule $rule): void
+    {
+        if (! Schema::hasTable('users')) return;
+        $role = strtolower($rule->role);
+        $payload = [
+            'type' => 'system',
+            'title' => 'New attendance schedule rule set',
+            'message' => ucfirst($role).' schedule: '.substr($rule->start_time, 0, 5).' to '.substr($rule->end_time, 0, 5)
+                .($rule->break_start_time && $rule->break_end_time ? '; break '.substr($rule->break_start_time, 0, 5).' to '.substr($rule->break_end_time, 0, 5) : '').'.',
+            'related_id' => $rule->id,
+            'related_type' => 'attendance_schedule_rule',
+            'data' => ['role' => $role, 'start_time' => $rule->start_time, 'end_time' => $rule->end_time,
+                'break_start_time' => $rule->break_start_time, 'break_end_time' => $rule->break_end_time],
+        ];
+        $roles = in_array($role, self::ADMIN_ROLES, true) ? self::ADMIN_ROLES : [$role];
+        $recipients = User::query()->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(role)'), $roles);
+        if ($role === 'worker' || $role === 'staff') {
+            // Workers have no login; notify supervisors responsible for their active deployments.
+            if (! Schema::hasTable('project_workers') || ! Schema::hasTable('project_supervisors')) return;
+            $recipients = User::query()->where('role', 'supervisor')->whereIn('user_id',
+                \Illuminate\Support\Facades\DB::table('project_supervisors')->where('is_active', 1)
+                    ->whereIn('project_id', \Illuminate\Support\Facades\DB::table('project_workers')->where('is_active', 1)->select('project_id'))
+                    ->select('supervisor_id'));
+        }
+        if (Schema::hasColumn('users', 'is_active')) $recipients->where('is_active', 1);
+        foreach ($recipients->get() as $user) {
+            if (in_array(strtolower($user->role), self::ADMIN_ROLES, true)) self::notifyAdmin($user->user_id, $payload);
+            elseif (strtolower($user->role) === 'supervisor') self::notifySupervisor($user->user_id, $payload);
+            elseif (strtolower($user->role) === 'client' && $user->client) self::notifyClient($user->client->client_id, $payload);
+        }
+    }
+
     public static function notifySupervisor(int $supervisorId, array $data): ?SupervisorNotification
     {
         try {

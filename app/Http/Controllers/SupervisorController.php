@@ -402,8 +402,23 @@ class SupervisorController extends Controller
         ]);
     }
 
+    private function attendanceProject(Request $request): Project
+    {
+        $projects = Project::query()->notArchived()->whereHas('supervisors', fn ($query) => $query
+            ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1));
+        if ($request->filled('project_id')) {
+            return $projects->where('project_id', $request->integer('project_id'))->first()
+                ?? abort(403, 'Select an active project assigned to your supervisor account.');
+        }
+        $choices = $projects->get();
+        abort_if($choices->isEmpty(), 403, 'No active attendance project is assigned to your supervisor account.');
+        abort_unless($choices->count() === 1, 422, 'Select an attendance project first.');
+        return $choices->first();
+    }
+
     public function getTodayAttendance(Request $request)
     {
+        $project = $this->attendanceProject($request);
         $date = $request->query('date', now()->toDateString());
         $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
@@ -421,6 +436,7 @@ class SupervisorController extends Controller
                     ->join('project_workers', 'attendance_logs.deployment_id', '=', 'project_workers.deployment_id')
                     ->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
             )
+            ->whereIn('attendance_logs.deployment_id', DB::table('project_workers')->where('project_id', $project->project_id)->select('deployment_id'))
             ->whereDate('attendance_logs.log_date', $date)
             ->where('workers.is_active', 1)
             ->select(
@@ -447,8 +463,20 @@ class SupervisorController extends Controller
                 return $this->formatAttendanceRecord($record);
             });
 
+        $assignedIds = DB::table('project_workers')->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
+            ->where('project_workers.project_id', $project->project_id)->where('project_workers.is_active', 1)
+            ->where('workers.is_active', 1)->distinct()->pluck('workers.worker_id');
+        $checkedIn = $attendance->filter(fn ($record) => ! empty($record['time_in']))->unique('worker_id');
+        $checkedInAssigned = $checkedIn->whereIn('worker_id', $assignedIds)->count();
+
         return response()->json([
             'data' => $attendance,
+            'summary' => [
+                'assigned' => $assignedIds->count(),
+                'checked_in' => $checkedIn->count(),
+                'late' => $checkedIn->filter(fn ($record) => in_array(strtolower($record['status'] ?? ''), ['late', 'half_day', 'half day'], true))->count(),
+                'not_checked_in' => max(0, $assignedIds->count() - $checkedInAssigned),
+            ],
         ]);
     }
 
@@ -456,6 +484,7 @@ class SupervisorController extends Controller
     {
         $validated = $request->validate([
             'worker_id' => ['required', 'integer'],
+            'project_id' => ['nullable', 'integer'],
             'log_date' => ['required', 'date'],
             'action' => ['required', Rule::in(['time_in', 'break_out', 'break_in', 'time_out'])],
             'time_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
@@ -467,6 +496,11 @@ class SupervisorController extends Controller
             'supervisor_confirmed_identity' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        $project = $this->attendanceProject($request);
+        $deployment = DB::table('project_workers')->where('project_id', $project->project_id)
+            ->where('worker_id', $validated['worker_id'])->where('is_active', 1)->first();
+        abort_unless($deployment, 403, 'This worker is not actively deployed to the selected project.');
 
         $worker = DB::table('workers')
             ->where('worker_id', $validated['worker_id'])
@@ -551,6 +585,7 @@ class SupervisorController extends Controller
                         ->where('worker_id', $validated['worker_id'])
                         ->pluck('deployment_id'))
             )
+            ->where('deployment_id', $deployment->deployment_id)
             ->whereDate('log_date', $date)
             ->first();
 
@@ -570,16 +605,6 @@ class SupervisorController extends Controller
             $timeInValue = $requestedTimeIn ?? $now->format('H:i:s');
             $scheduleStart = data_get($worker, 'schedule_start') ?: '07:00:00';
             $status = $this->computeTimeInStatus($timeInValue, $scheduleStart);
-
-            $deployment = null;
-
-            if (Schema::hasTable('project_workers') && Schema::hasColumn('project_workers', 'project_id')) {
-                $deployment = DB::table('project_workers')
-                    ->where('worker_id', $validated['worker_id'])
-                    ->where('is_active', 1)
-                    ->when($verificationMethod === 'face', fn ($q) => $q->whereIn('project_id', $assignedProjects))
-                    ->first();
-            }
 
             $attendanceData = [
                 'project_id' => $deployment->project_id ?? null,
@@ -745,6 +770,7 @@ class SupervisorController extends Controller
                     ->join('workers', 'project_workers.worker_id', '=', 'workers.worker_id')
                     ->where('project_workers.worker_id', $validated['worker_id'])
             )
+            ->whereIn('attendance_logs.deployment_id', DB::table('project_workers')->where('project_id', $project->project_id)->select('deployment_id'))
             ->whereDate('attendance_logs.log_date', $date)
             ->select(
                 'attendance_logs.log_id',
@@ -1256,7 +1282,7 @@ class SupervisorController extends Controller
         }
     }
 
-    public function attendance()
+    public function attendance(Request $request)
     {
         $user = Auth::user();
         $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
@@ -1265,7 +1291,14 @@ class SupervisorController extends Controller
 
         $deployments = $assignedProjects->flatMap(fn ($project) => $project->projectWorkers)->unique('deployment_id')->values();
         $workers = $deployments->map(fn ($d) => $d->worker)->unique('worker_id')->values();
-        $activeProject = $assignedProjects->first();
+        $assignedProjects = $assignedProjects->filter(fn ($project) => $project->supervisors()
+            ->where('supervisor_id', $user->user_id)->where('project_supervisors.is_active', 1)->exists());
+        $requestedProjectId = $request->query('project_id', session('supervisor_attendance_project_id'));
+        if ($request->filled('project_id')) {
+            abort_unless($assignedProjects->contains('project_id', (int) $requestedProjectId), 403);
+        }
+        $activeProject = $assignedProjects->firstWhere('project_id', (int) $requestedProjectId) ?? $assignedProjects->first();
+        if ($activeProject) session(['supervisor_attendance_project_id' => $activeProject->project_id]);
 
         $activeDeployments = $activeProject ? $activeProject->projectWorkers()->with('worker')->get() : collect();
 
@@ -2157,9 +2190,12 @@ class SupervisorController extends Controller
             'face_samples.*.*' => ['required', 'numeric', 'between:-100,100'],
         ]);
         abort_unless(config('face_attendance.enabled'), 503, 'Face attendance is not enabled.');
-        $project = Project::query()->where('project_id', $data['project_id'])
-            ->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
-                ->where('project_supervisors.is_active', 1))->first();
+        $projectQuery = Project::query()->notArchived()->where('project_id', $data['project_id']);
+        if (! in_array(strtolower(Auth::user()->role), ['engineer', 'admin', 'administrator'], true)) {
+            $projectQuery->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
+                ->where('project_supervisors.is_active', 1));
+        }
+        $project = $projectQuery->first();
         abort_unless($project, 403, 'Choose a project actively assigned to your supervisor account.');
 
         try {

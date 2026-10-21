@@ -159,6 +159,14 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::post('/admin/reports/{id}/revise', [ReportController::class, 'revise'])->name('admin.reports.revise');
     Route::post('/admin/reports/{id}/prepare', [ReportController::class, 'prepareReport'])->name('admin.reports.prepare');
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateReport'])->name('admin.reports.update');
+    Route::delete('/admin/reports/{id}', [ReportController::class, 'destroy'])->name('admin.reports.destroy');
+    Route::post('/admin/workers/camera', [SupervisorController::class, 'registerCameraWorker'])
+        ->middleware('throttle:20,1,camera-workers')->name('admin.workers.register_camera');
+    Route::get('/admin/face-attendance', [FaceAttendanceController::class, 'index'])->name('admin.face-attendance.index');
+    Route::post('/admin/face-attendance/start', [FaceAttendanceController::class, 'start'])->middleware('throttle:30,1,face-start')->name('admin.face-attendance.start');
+    Route::post('/admin/face-attendance/finish', [FaceAttendanceController::class, 'finish'])->middleware('throttle:30,1,face-finish')->name('admin.face-attendance.finish');
+    Route::post('/admin/face-attendance/cancel', [FaceAttendanceController::class, 'cancel'])->name('admin.face-attendance.cancel');
+    Route::delete('/admin/face-attendance/enrollments/{workerId}', [FaceAttendanceController::class, 'removeEnrollment'])->whereNumber('workerId')->name('admin.face-attendance.remove');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
     Route::post('/admin/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
         ->name('admin.attendance.schedules.store');

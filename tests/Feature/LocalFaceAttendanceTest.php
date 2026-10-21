@@ -362,4 +362,96 @@ class LocalFaceAttendanceTest extends TestCase
         $this->assertEquals($samples, json_decode(Crypt::decryptString($encrypted), true));
         $this->assertDatabaseCount('workers', 3);
     }
+
+    public function test_admin_can_register_and_enroll_workers_outside_supervisor_assignments(): void
+    {
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin-camera@example.com', 'password' => bcrypt('password'), 'role' => 'admin', 'is_active' => true]);
+        $this->actingAs($admin);
+        $this->get(route('admin.attendance'))->assertOk()
+            ->assertSee('Register Worker')->assertSee('Enrolled Workers')
+            ->assertSee('adminEnrolledWorkersModal');
+        $this->getJson(route('admin.face-attendance.index'))->assertOk()->assertJsonCount(2, 'faceWorkerChoices');
+        $this->get(route('admin.face-attendance.index', ['embedded' => 1]))->assertOk()->assertSee('data-enrollment-only="1"', false);
+        $scan = $this->postJson(route('admin.face-attendance.start'), ['purpose' => 'enroll', 'worker_id' => 1])->assertOk()->json();
+        $this->postJson(route('admin.face-attendance.finish'), ['session_id' => $scan['session_id'], 'model_version' => config('face_attendance.model_version'), 'samples' => $this->samples()])->assertOk();
+        $this->assertDatabaseHas('worker_face_enrollments', ['worker_id' => 1, 'enrolled_by' => $admin->user_id]);
+        $this->postJson(route('admin.workers.register_camera'), [
+            'first_name' => 'Admin', 'last_name' => 'Registered', 'project_id' => 1,
+            'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+            'model_version' => config('face_attendance.model_version'), 'face_samples' => $this->samples(-1),
+        ])->assertOk();
+        $this->assertDatabaseCount('workers', 3);
+        $this->assertDatabaseCount('worker_face_enrollments', 2);
+    }
+
+    public function test_supervisors_cannot_use_admin_registration_routes(): void
+    {
+        $this->getJson(route('admin.face-attendance.index'))->assertRedirect('/login');
+        $this->postJson(route('admin.workers.register_camera'), [])->assertRedirect('/login');
+    }
+
+    private function addSecondAttendanceProject(): void
+    {
+        DB::table('projects')->insert(['project_id' => 2, 'project_name' => 'Second Site', 'status' => 'ongoing']);
+        DB::table('project_supervisors')->insert(['project_id' => 2, 'supervisor_id' => auth()->id(), 'is_active' => true]);
+        DB::table('project_workers')->insert(['project_id' => 2, 'worker_id' => 1, 'deployed_date' => '2026-10-21', 'is_active' => true]);
+    }
+
+    public function test_selected_project_is_saved_and_both_supervisor_and_admin_filters_find_it(): void
+    {
+        $this->addSecondAttendanceProject();
+        $this->get(route('supervisor.attendance', ['project_id' => 2]))->assertOk()
+            ->assertSee('attendanceProjectInput')->assertSee('Project: Second Site');
+        $this->enroll();
+        $this->finishScan($this->startScan(), $this->samples())->assertOk();
+        $this->postJson(route('supervisor.attendance.logWorker'), [
+            'project_id' => 2, 'worker_id' => 1, 'log_date' => now('Asia/Manila')->toDateString(),
+            'action' => 'time_in', 'verification_method' => 'face', 'supervisor_confirmed_identity' => true,
+        ])->assertOk();
+        $deploymentId = DB::table('project_workers')->where('project_id', 2)->value('deployment_id');
+        $this->assertDatabaseHas('attendance_logs', ['worker_id' => 1, 'project_id' => 2, 'deployment_id' => $deploymentId]);
+        $this->getJson(route('supervisor.attendance.today', ['project_id' => 1, 'date' => now('Asia/Manila')->toDateString()]))->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson(route('supervisor.attendance.today', ['project_id' => 2, 'date' => now('Asia/Manila')->toDateString()]))->assertOk()->assertJsonCount(1, 'data');
+        $admin = User::create(['name' => 'Filter Admin', 'email' => 'filter-admin@example.com', 'password' => bcrypt('password'), 'role' => 'admin', 'is_active' => true]);
+        $this->actingAs($admin);
+        $this->get(route('admin.attendance', ['project_id' => 2, 'date' => now('Asia/Manila')->toDateString()]))->assertOk()
+            ->assertViewHas('logs', fn ($logs) => $logs->count() === 1);
+        $this->get(route('admin.attendance', ['project_id' => 1, 'date' => now('Asia/Manila')->toDateString()]))->assertOk()
+            ->assertViewHas('logs', fn ($logs) => $logs->count() === 0);
+    }
+
+    public function test_manual_actions_stay_in_the_selected_project_and_require_deployment(): void
+    {
+        $this->addSecondAttendanceProject();
+        $payload = ['worker_id' => 1, 'project_id' => 2, 'log_date' => now('Asia/Manila')->toDateString(),
+            'action' => 'time_in', 'manual' => true, 'remarks' => 'Camera unavailable', 'time_in' => '07:00'];
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
+        $payload['project_id'] = 1;
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
+        $this->assertDatabaseCount('attendance_logs', 2);
+        $payload['project_id'] = 2; $payload['time_in'] = '08:00';
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
+        $this->assertDatabaseHas('attendance_logs', ['project_id' => 1, 'time_in' => '07:00:00']);
+        $this->assertDatabaseHas('attendance_logs', ['project_id' => 2, 'time_in' => '08:00:00']);
+        $payload['worker_id'] = 2;
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
+        $payload['project_id'] = 999;
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
+        unset($payload['project_id']);
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertUnprocessable();
+    }
+
+    public function test_attendance_summary_counts_assigned_checked_in_and_late_for_selected_date(): void
+    {
+        DB::table('attendance_logs')->insert([
+            'worker_id' => 1, 'project_id' => 1, 'deployment_id' => 1,
+            'log_date' => '2026-10-21', 'time_in' => '09:00:00', 'status' => 'late',
+        ]);
+        $this->getJson(route('supervisor.attendance.today', ['project_id' => 1, 'date' => '2026-10-21']))
+            ->assertOk()->assertJsonPath('summary.assigned', 2)->assertJsonPath('summary.checked_in', 1)
+            ->assertJsonPath('summary.late', 1)->assertJsonPath('summary.not_checked_in', 1);
+        $this->getJson(route('supervisor.attendance.today', ['project_id' => 1, 'date' => '2026-10-22']))
+            ->assertOk()->assertJsonPath('summary.assigned', 2)->assertJsonPath('summary.checked_in', 0)
+            ->assertJsonPath('summary.late', 0)->assertJsonPath('summary.not_checked_in', 2);
+    }
 }

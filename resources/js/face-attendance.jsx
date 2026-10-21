@@ -8,7 +8,8 @@ const mount = document.getElementById('face-attendance-root');
 const workers = JSON.parse(document.getElementById('face-workers-json')?.textContent || '[]');
 const urls = mount ? mount.dataset : {};
 const launch = new URLSearchParams(window.location.search);
-const initialPurpose = launch.get('purpose') === 'enroll' ? 'enroll' : 'attendance';
+const enrollmentOnly = urls.enrollmentOnly === '1';
+const initialPurpose = enrollmentOnly || launch.get('purpose') === 'enroll' ? 'enroll' : 'attendance';
 const initialWorkerId = workers.some(w => String(w.worker_id) === launch.get('worker_id')) ? launch.get('worker_id') : '';
 function notifyParent(type) {
   if (launch.get('embedded') === '1' && window.parent !== window) {
@@ -64,6 +65,7 @@ function App() {
       await send(`${urls.removePrefix}/${encodeURIComponent(workerId)}`, {confirm: true}, 'DELETE');
       setEnrolled(old => old.filter(i => i !== Number(workerId)));
       setMessage('Local face enrollment deleted. Existing attendance records are preserved.');
+      notifyParent('worker-face-enrolled');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -122,7 +124,7 @@ function App() {
       <div className="face-panel">
         <h2>1. Choose operation</h2>
         <div className="face-actions">
-          <button type="button" className="face-button" disabled={!!session || busy} onClick={() => { reset(); setPurpose('attendance'); }}>Scan attendance</button>
+          {!enrollmentOnly && <button type="button" className="face-button" disabled={!!session || busy} onClick={() => { reset(); setPurpose('attendance'); }}>Scan attendance</button>}
           <button type="button" className="face-button face-button-secondary" disabled={!!session || busy} onClick={() => { reset(); setPurpose('enroll'); }}>Enroll worker face</button>
         </div>
         <p className="face-muted">Current mode: <strong>{purpose === 'attendance' ? 'Identify worker and record Time In' : 'Enroll a face on an existing worker record'}</strong></p>
@@ -169,11 +171,11 @@ function App() {
           <button type="button" className="face-button" disabled={!secure || !cameraCapable || busy} onClick={start}>{busy ? 'Please wait...' : purpose === 'attendance' ? 'Start worker face scan' : 'Start worker enrollment'}</button>
         )}
       </div>
-      <div className="face-panel">
+      {!enrollmentOnly && <div className="face-panel">
         <h2>Today's confirmed face attendance ({finished.length} in this browser session)</h2>
         {finished.length ? <ul>{finished.map((w,i) => <li key={`${w.id}-${i}`}>{w.name} - Time In saved</li>)}</ul> : <p className="face-muted">After every successful Time In, start a new scan for the next worker.</p>}
         <p className="face-muted">This list is only an on-screen confirmation, not the attendance report. The Laravel attendance database remains the source of truth.</p>
-      </div>
+      </div>}
     </div>
   );
 }

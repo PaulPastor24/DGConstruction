@@ -2421,6 +2421,7 @@
                                 </td>
                                 <td data-label="Actions">
                                     <div class="action-icons-group">
+                                        <form method="POST" action="{{ route('admin.reports.destroy', $report->report_id) }}" class="d-inline" onsubmit="return confirm('Delete this report permanently?');">@csrf @method('DELETE')<button type="submit" class="btn-icon-action text-danger" title="Delete report" aria-label="Delete report"><i class="bi bi-trash"></i></button></form>
                                         <button type="button" class="btn-icon-action js-view-report" data-report-id="{{ $report->report_id }}" title="View Details"><i class="bi bi-eye"></i></button>
                                         <a href="{{ route('admin.reports.downloadPdf', $report->report_id) }}" class="btn-icon-action" title="Export PDF"><i class="bi bi-download"></i></a>
                                     </div>
@@ -3122,6 +3123,7 @@
                         <td data-label="Status"><span class="status-pill ${report.status_class}">${report.status_label}</span></td>
                         <td data-label="Actions">
                             <div class="action-icons-group">
+                                <form method="POST" action="/admin/reports/${report.id}" class="d-inline" onsubmit="return confirm('Delete this report permanently?');"><input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE"><button type="submit" class="btn-icon-action text-danger" title="Delete report" aria-label="Delete report"><i class="bi bi-trash"></i></button></form>
                                 <button type="button" class="btn-icon-action js-view-report" data-report-id="${report.id}" title="View Details"><i class="bi bi-eye"></i></button>
                                 <a href="/admin/reports/${report.id}/download-pdf" class="btn-icon-action" title="Export PDF" target="_blank"><i class="bi bi-download"></i></a>
                             </div>

@@ -114,7 +114,7 @@ export function mountInlineAttendance(mount) {
       working.current = true; setBusy(true); setError('');
       try {
         await send(urls.save, {
-          worker_id: matched.worker.worker_id, log_date: operation?.logDate || matched.log_date,
+          project_id: operation?.projectId, worker_id: matched.worker.worker_id, log_date: operation?.logDate || matched.log_date,
           action: operation?.action || 'time_in', verification_method: 'face', supervisor_confirmed_identity: true,
         });
         setMessage(`${matched.worker.first_name} ${matched.worker.last_name}: ${operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'} saved. Ready for the next worker.`);
@@ -142,6 +142,7 @@ export function mountInlineAttendance(mount) {
           {matched.worker.profile_image_url && <img src={matched.worker.profile_image_url} alt="Worker profile" width="100" style={{ objectFit: 'cover', borderRadius: 8 }} />}
         </div>
         <strong>{matched.worker.first_name} {matched.worker.last_name}</strong>
+        <p>Project: <strong>{operation?.projectName}</strong></p>
         <p>Confirm the person in front of you matches this worker.</p>
         <button className="btn btn-success" disabled={busy} onClick={save}>Confirm &amp; save {operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'}</button>
       </div>}

@@ -1,4 +1,4 @@
-@extends(request()->boolean('embedded') ? 'layouts.face-camera' : 'layouts.supervisor')
+@extends(request()->boolean('embedded') ? 'layouts.face-camera' : (($faceRoutePrefix ?? 'supervisor') === 'admin' ? 'layouts.admin' : 'layouts.supervisor'))
 
 @section('title', 'Camera Facial Attendance')
 @section('page_title', 'Facial Group Attendance')
@@ -27,23 +27,26 @@
 @section('content')
 <div class="face-attendance-page">
   <div class="face-panel">
-    <h2>Shared phone camera attendance</h2>
+    <h2>{{ ($faceRoutePrefix ?? 'supervisor') === 'admin' ? 'Worker face enrollment' : 'Shared phone camera attendance' }}</h2>
+    @if(($faceRoutePrefix ?? 'supervisor') !== 'admin')
     <p class="face-muted">Scan workers one at a time using an iPhone or Android camera. The supervisor must confirm the person before saving Time In.</p>
     <p class="face-muted">Use HTTPS, good lighting, and camera permission. Face matching assists supervisor verification; it does not provide certified liveness detection.</p>
+    @endif
     <p class="face-muted">Face enrollment is saved to the worker's database record and works across phones. Existing workers only need their face enrolled once.</p>
     @unless(request()->boolean('embedded'))
-    <a href="{{ route('supervisor.attendance') }}">Return to attendance</a>
+    <a href="{{ route(($faceRoutePrefix ?? 'supervisor').'.attendance') }}">Return to attendance</a>
     @endunless
   </div>
   <div id="face-attendance-root"
+       data-enrollment-only="{{ ($faceRoutePrefix ?? 'supervisor') === 'admin' ? '1' : '0' }}"
        data-csrf="{{ csrf_token() }}"
        data-models="{{ asset('models/human') }}/"
-       data-start="{{ route('supervisor.face-attendance.start') }}"
-       data-finish="{{ route('supervisor.face-attendance.finish') }}"
-       data-cancel="{{ route('supervisor.face-attendance.cancel') }}"
-       data-save="{{ route('supervisor.attendance.logWorker') }}"
+       data-start="{{ route(($faceRoutePrefix ?? 'supervisor').'.face-attendance.start') }}"
+       data-finish="{{ route(($faceRoutePrefix ?? 'supervisor').'.face-attendance.finish') }}"
+       data-cancel="{{ route(($faceRoutePrefix ?? 'supervisor').'.face-attendance.cancel') }}"
+       data-save="{{ ($faceRoutePrefix ?? 'supervisor') === 'admin' ? '' : route('supervisor.attendance.logWorker') }}"
        data-log-date="{{ now('Asia/Manila')->toDateString() }}"
-       data-remove-prefix="{{ url('/supervisor/face-attendance/enrollments') }}"></div>
+       data-remove-prefix="{{ url('/'.($faceRoutePrefix ?? 'supervisor').'/face-attendance/enrollments') }}"></div>
   <script type="application/json" id="face-workers-json">@json($faceWorkerChoices)</script>
 </div>
 @vite('resources/js/face-attendance.jsx')
