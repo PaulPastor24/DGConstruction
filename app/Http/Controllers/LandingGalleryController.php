@@ -80,6 +80,18 @@ class LandingGalleryController extends Controller
             ->all();
     }
 
+    public function updateFeedback(Request $request)
+    {
+        $validated = $request->validate([
+            'feedback' => ['required', 'array', 'size:4'],
+            'feedback.*.quote' => ['required', 'string', 'max:2000'],
+            'feedback.*.author' => ['required', 'string', 'max:255'],
+            'feedback.*.role' => ['required', 'string', 'max:255'],
+        ]);
+        LandingPageSetting::query()->firstOrCreate([])->update(['customer_feedback' => array_values($validated['feedback'])]);
+        return back()->with('success', 'Customer feedback updated.');
+    }
+
     public function updateHero(Request $request)
     {
         abort_unless(Schema::hasTable('landing_page_settings'), 404);
@@ -106,6 +118,10 @@ class LandingGalleryController extends Controller
         $rules = [
             'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'image_label' => ['nullable', 'string', 'max:255'],
+            'project_gallery_labels' => ['nullable', 'string', 'max:5000'],
+            'existing_image_labels' => ['nullable', 'array'],
+            'existing_image_labels.*' => ['nullable', 'string', 'max:255'],
             'project_gallery_images' => ['nullable', 'array', 'max:12'],
             'project_gallery_images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
@@ -167,6 +183,7 @@ class LandingGalleryController extends Controller
         $galleryData = [
             'project_id' => $validated['project_id'] ?? null,
             'image_path' => $request->file('image')->store('landing-gallery', 'public'),
+            'image_label' => $validated['image_label'] ?? null,
             'sort_order' => ((int) LandingGalleryImage::max('sort_order')) + 1,
             'is_active' => true,
         ];
@@ -217,6 +234,10 @@ class LandingGalleryController extends Controller
         $rules = [
             'project_id' => ['nullable', 'integer', 'exists:projects,project_id'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'image_label' => ['nullable', 'string', 'max:255'],
+            'project_gallery_labels' => ['nullable', 'string', 'max:5000'],
+            'existing_image_labels' => ['nullable', 'array'],
+            'existing_image_labels.*' => ['nullable', 'string', 'max:255'],
             'project_gallery_images' => ['nullable', 'array', 'max:12'],
             'project_gallery_images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
@@ -265,7 +286,7 @@ class LandingGalleryController extends Controller
         }
 
         $oldImagePath = $galleryImage->image_path;
-        $galleryData = ['project_id' => $validated['project_id'] ?? null];
+        $galleryData = ['project_id' => $validated['project_id'] ?? null, 'image_label' => $validated['image_label'] ?? null];
 
         if ($request->hasFile('image')) {
             $galleryData['image_path'] = $request->file('image')->store('landing-gallery', 'public');
@@ -299,14 +320,19 @@ class LandingGalleryController extends Controller
 
     protected function storeProjectGalleryImages(Request $request, LandingGalleryImage $galleryImage): void
     {
-        if (! Schema::hasTable('landing_gallery_project_images') || ! $request->hasFile('project_gallery_images')) {
+        if (! Schema::hasTable('landing_gallery_project_images')) {
             return;
         }
 
+        foreach ($request->input('existing_image_labels', []) as $id => $label) {
+            $galleryImage->projectGalleryImages()->whereKey($id)->update(['label' => $label]);
+        }
+        $labels = preg_split('/\r\n|\r|\n/', (string) $request->input('project_gallery_labels', ''));
         $nextSortOrder = (int) $galleryImage->projectGalleryImages()->max('sort_order') + 1;
-        foreach ($request->file('project_gallery_images', []) as $image) {
+        foreach ($request->file('project_gallery_images', []) as $index => $image) {
             LandingGalleryProjectImage::create([
                 'landing_gallery_image_id' => $galleryImage->id,
+                'label' => mb_substr(trim($labels[$index] ?? ''), 0, 255),
                 'image_path' => $image->store('landing-gallery/projects', 'public'),
                 'sort_order' => $nextSortOrder++,
             ]);

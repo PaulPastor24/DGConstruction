@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LandingGalleryProjectImage extends Model
 {
     protected $fillable = [
+        'label',
         'landing_gallery_image_id',
         'image_path',
         'sort_order',

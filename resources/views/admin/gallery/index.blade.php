@@ -37,25 +37,35 @@
         <div class="landing-preview-panel__header">
             <div>
                 <h3 id="landingPreviewTitle">Landing page preview</h3>
-                <p>Click the hero image or a featured project image in the preview to edit that specific item. Adding a project creates a new item and does not replace existing projects.</p>
+                <p>Click an image or customer feedback to edit it. Navigation and other page actions are disabled in this preview.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap justify-content-end">
                 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editHeroModal">
                     <i class="bi bi-image me-1"></i>Replace Hero Image
                 </button>
+<button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editFeedbackModal">Edit customer feedback</button>
                 <a href="{{ url('/') }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">
                     <i class="bi bi-box-arrow-up-right me-1"></i>Open public page
                 </a>
             </div>
         </div>
         <div class="landing-preview-frame">
-            <iframe id="landingPagePreview" src="{{ url('/') }}?admin_gallery_preview=1" title="Live landing page preview"></iframe>
+            <iframe sandbox="allow-scripts allow-same-origin" id="landingPagePreview" src="{{ url('/') }}?admin_gallery_preview=1" title="Live landing page preview"></iframe>
             <div class="landing-preview-loading" id="landingPreviewLoading">
                 <span class="spinner-border spinner-border-sm me-2"></span>Loading landing page preview...
             </div>
         </div>
     </section>
 
+
+@php($feedback = $landingPageSetting?->customer_feedback ?? config('landing.feedback'))
+<div class="modal fade" id="editFeedbackModal" tabindex="-1" aria-labelledby="feedbackTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+<form method="POST" action="{{ route('admin.landing-gallery.feedback.update') }}">@csrf @method('PUT')
+<div class="modal-header"><h5 id="feedbackTitle">Edit customer feedback</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+<div class="modal-body">@foreach($feedback as $index => $item)<fieldset class="mb-4"><legend class="h6">Customer {{ $index + 1 }}</legend>
+@foreach(['quote' => 'Feedback', 'author' => 'Customer name', 'role' => 'Customer description'] as $field => $label)
+<label class="form-label" for="feedback-{{ $index }}-{{ $field }}">{{ $label }}</label><textarea id="feedback-{{ $index }}-{{ $field }}" class="form-control mb-2" name="feedback[{{ $index }}][{{ $field }}]" maxlength="{{ $field === 'quote' ? 2000 : 255 }}" required>{{ old("feedback.$index.$field", $item[$field]) }}</textarea>
+@endforeach</fieldset>@endforeach</div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success">Save feedback</button></div></form></div></div></div>
     <div class="modal fade" id="editHeroModal" tabindex="-1" aria-labelledby="editHeroModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -146,8 +156,6 @@
                     </div>
                     <div class="project-info-preview__grid">
                         <div><span>Location</span><strong data-project-info="location">-</strong></div>
-                        <div><span>Bedrooms</span><strong data-project-info="bedrooms">-</strong></div>
-                        <div><span>Bathrooms</span><strong data-project-info="bathrooms">-</strong></div>
                         <div><span>Lot area</span><strong data-project-info="lot_area">-</strong></div>
                     </div>
                     <p data-project-info="description" class="mb-2">Select a project to view its description.</p>
@@ -158,9 +166,10 @@
                     <a href="{{ url('/admin/projects') }}" target="_blank" rel="noopener" class="small">Edit this project’s information in Project Management</a>
                 </div>
 
+                <div class="field-group mt-3"><label for="image_label">Image label (optional)</label><input id="image_label" name="image_label" class="form-control" maxlength="255" placeholder="e.g. Bathroom" value="{{ old('image_label') }}"></div>
                 <div class="field-group mt-3">
                     <label for="project_gallery_images">Project gallery images (optional)</label>
-                    <input id="project_gallery_images" name="project_gallery_images[]" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp" multiple>
+                    <input id="project_gallery_images" name="project_gallery_images[]" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp" multiple><div class="form-text">Enter one label per uploaded image, in file order.</div><textarea name="project_gallery_labels" class="form-control mt-2" rows="3" placeholder="Bathroom&#10;Kitchen"></textarea>
                     <div class="form-text">These images appear in the expanded Project Gallery. You can add up to 12 images.</div>
                 </div>
 
@@ -184,14 +193,6 @@
                         <input id="external_project_url" name="external_project_url" type="url" class="form-control" maxlength="2000" placeholder="https://example.com/project">
                     </div>
                     <div class="form-grid mt-3">
-                        <div class="field-group">
-                            <label for="external_bedrooms">Bedrooms</label>
-                            <input id="external_bedrooms" name="external_bedrooms" type="number" class="form-control" min="0" max="99" placeholder="e.g. 4">
-                        </div>
-                        <div class="field-group">
-                            <label for="external_bathrooms">Bathrooms</label>
-                            <input id="external_bathrooms" name="external_bathrooms" type="number" class="form-control" min="0" max="99" placeholder="e.g. 3">
-                        </div>
                         <div class="field-group">
                             <label for="external_lot_area">Lot area (sqm)</label>
                             <input id="external_lot_area" name="external_lot_area" type="number" class="form-control" min="0" step="0.01" placeholder="e.g. 250">
@@ -315,7 +316,8 @@
                                                 <input id="edit_image_{{ $galleryImage->id }}" name="image" type="file" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp">
                                             </div>
                                         </div>
-                                        <div class="form-check form-switch mt-3">
+<div class="field-group mt-3"><label>Image label (optional)</label><input name="image_label" class="form-control" maxlength="255" placeholder="e.g. Bathroom" value="{{ $galleryImage->image_label }}"></div>
+<div class="form-check form-switch mt-3">
                                             <input class="form-check-input edit-external-toggle" type="checkbox" value="1" id="edit_is_external_{{ $galleryImage->id }}" name="is_external" data-fields-target="edit-external-{{ $galleryImage->id }}" @checked($galleryImage->is_external)>
                                             <label class="form-check-label" for="edit_is_external_{{ $galleryImage->id }}">This is an external / past featured project</label>
                                         </div>
@@ -354,7 +356,7 @@
                                             @if($galleryImage->projectGalleryImages->count())
                                                 <div class="project-gallery-admin-grid mt-2">
                                                     @foreach($galleryImage->projectGalleryImages as $projectImage)
-                                                        <img src="{{ asset('storage/' . ltrim($projectImage->image_path, '/')) }}" alt="Project gallery image">
+                                                        <div><img src="{{ asset('storage/' . ltrim($projectImage->image_path, '/')) }}" alt="{{ $projectImage->label ?: 'Project gallery image' }}"><input aria-label="Image label" name="existing_image_labels[{{ $projectImage->id }}]" class="form-control" maxlength="255" value="{{ $projectImage->label }}" placeholder="e.g. Bathroom"></div>
                                                     @endforeach
                                                 </div>
                                             @endif
@@ -1303,8 +1305,6 @@
                 if (target) target.textContent = value || fallback;
             };
             setText('location', option.dataset.projectLocation);
-            setText('bedrooms', option.dataset.projectBedrooms);
-            setText('bathrooms', option.dataset.projectBathrooms);
             setText('lot_area', option.dataset.projectLotArea ? `${option.dataset.projectLotArea} sqm` : '');
             setText('description', option.dataset.projectDescription, 'No description provided.');
 
@@ -1336,30 +1336,19 @@
 
             try {
                 const previewDocument = landingPagePreview.contentDocument;
-                const previewLoginPath = new URL(@json(route('login')), previewDocument.baseURI).pathname;
-
-                previewDocument.querySelectorAll('a[href]').forEach((link) => {
-                    let linkPath;
-
-                    try {
-                        linkPath = new URL(link.href, previewDocument.baseURI).pathname;
-                    } catch {
-                        return;
-                    }
-
-                    if (linkPath !== previewLoginPath) {
-                        return;
-                    }
-
-                    link.setAttribute('aria-disabled', 'true');
-                    link.setAttribute('tabindex', '-1');
-                    link.title = 'Login is disabled in the admin preview.';
-                    link.style.cursor = 'not-allowed';
-                    link.addEventListener('click', function (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    });
-                });
+                previewDocument.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    const target = event.target.closest('[data-landing-hero-image], [data-gallery-image-id], [data-feedback-index]');
+                    let modalId;
+                    if (target?.matches('[data-landing-hero-image]')) modalId = 'editHeroModal';
+                    else if (target?.matches('[data-gallery-image-id]')) modalId = 'editGalleryModal' + target.dataset.galleryImageId;
+                    else if (target?.matches('[data-feedback-index]')) modalId = 'editFeedbackModal';
+                    const modal = modalId && document.getElementById(modalId);
+                    if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
+                }, true);
+                previewDocument.addEventListener('submit', event => { event.preventDefault(); event.stopImmediatePropagation(); }, true);
+                previewDocument.addEventListener('auxclick', event => { event.preventDefault(); event.stopImmediatePropagation(); }, true);
 
                 previewDocument.querySelectorAll('[data-landing-hero-image]').forEach((image) => {
                     image.style.cursor = 'pointer';

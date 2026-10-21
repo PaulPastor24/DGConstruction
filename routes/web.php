@@ -203,6 +203,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::prefix('admin/landing-gallery')->name('admin.landing-gallery.')->group(function () {
         Route::get('/', [LandingGalleryController::class, 'index'])->name('index');
         Route::post('/', [LandingGalleryController::class, 'store'])->name('store');
+        Route::put('/feedback', [LandingGalleryController::class, 'updateFeedback'])->name('feedback.update');
         Route::put('/hero', [LandingGalleryController::class, 'updateHero'])->name('hero.update');
         Route::put('/{galleryImage}', [LandingGalleryController::class, 'update'])->name('update');
         Route::patch('/{galleryImage}/toggle', [LandingGalleryController::class, 'toggle'])->name('toggle');

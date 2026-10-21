@@ -50,6 +50,7 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState('Requesting camera access. Allow camera permission if prompted.');
   const [facing, setFacing] = useState('user');
+  const [previewFacing, setPreviewFacing] = useState('user');
   useEffect(() => {
     active.current = true;
     let disposed = false;
@@ -73,6 +74,9 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
       } finally { cameraPending = false; }
       if (disposed) { camera.getTracks().forEach(t => t.stop()); return; }
       stream.current = camera;
+      // Use the camera actually selected by the browser, which may differ
+      // from the requested facing mode on devices with only one camera.
+      setPreviewFacing(camera.getVideoTracks()[0]?.getSettings().facingMode || facing);
       setProgress('Starting camera preview...');
       video.current.srcObject = camera;
       await withTimeout(video.current.play(), 15000,
@@ -160,7 +164,7 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
   }
 
   return <div>
-    <video ref={video} autoPlay muted playsInline style={{ width: '100%', maxHeight: 420, background: '#17251c', borderRadius: 12 }} />
+    <video ref={video} autoPlay muted playsInline style={{ width: '100%', maxHeight: 420, background: '#17251c', borderRadius: 12, transform: previewFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
     <p role="status">{progress}</p>
     <div className="face-actions d-flex flex-wrap gap-2">
       {!autoCapture && <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>}

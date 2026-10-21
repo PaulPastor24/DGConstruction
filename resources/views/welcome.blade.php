@@ -918,17 +918,18 @@
                                 $projectLocation = 'Past Featured Project';
                             }
                             $projectGalleryImages = ($galleryImage->projectGalleryImages ?? collect())
-                                ->map(fn ($projectImage) => asset('storage/' . ltrim($projectImage->image_path, '/')))
+                                ->map(fn ($projectImage) => ['src' => asset('storage/' . ltrim($projectImage->image_path, '/')), 'label' => $projectImage->label])
                                 ->values();
                         @endphp
                         <article class="project-card">
-                            <button type="button" class="project-card-trigger js-open-gallery-project" @if($galleryImageId) data-gallery-image-id="{{ $galleryImageId }}" @endif data-project-url="{{ $projectUrl }}" data-project-external="{{ $isExternal ? 'true' : 'false' }}" data-project-name="{{ $projectName }}" data-project-location="{{ $projectLocation }}" data-project-description="{{ $galleryImage->external_project_description ?? ($project->description ?? '') }}" data-project-bedrooms="{{ $galleryImage->external_bedrooms ?? '' }}" data-project-bathrooms="{{ $galleryImage->external_bathrooms ?? '' }}" data-project-lot-area="{{ $galleryImage->external_lot_area ?? '' }}" data-project-highlights='@json($galleryImage->external_highlights ?? [])' data-project-features='@json($galleryImage->external_features ?? [])' data-project-gallery-images='@json($projectGalleryImages)' aria-label="View details for {{ $projectName }}">
+                            <button type="button" class="project-card-trigger js-open-gallery-project" @if($galleryImageId) data-gallery-image-id="{{ $galleryImageId }}" @endif data-project-url="{{ $projectUrl }}" data-project-external="{{ $isExternal ? 'true' : 'false' }}" data-project-name="{{ $projectName }}" data-project-location="{{ $projectLocation }}" data-project-description="{{ $galleryImage->external_project_description ?? ($project->description ?? '') }}" data-project-lot-area="{{ $galleryImage->external_lot_area ?? '' }}" data-project-highlights='@json($galleryImage->external_highlights ?? [])' data-project-features='@json($galleryImage->external_features ?? [])' data-project-gallery-images='@json($projectGalleryImages)' aria-label="View details for {{ $projectName }}">
                                 <div class="project-img-container">
                                     <img src="{{ $imageSrc }}" alt="{{ $projectName }}">
                                 </div>
                                 <div class="project-body">
                                     <h3>{{ $projectName }}</h3>
                                     <p>{{ $projectLocation }}</p>
+                                    @if($galleryImage->image_label ?? null)<p>{{ $galleryImage->image_label }}</p>@endif
                                 </div>
                                 <span class="project-arrow-btn" aria-hidden="true">→</span>
                             </button>
@@ -940,65 +941,66 @@
             </div>
         </section>
 
+        @php($feedback = $landingPageSetting?->customer_feedback ?? config('landing.feedback'))
         <!-- TESTIMONIAL SLIDER -->
         <section class="testimonial-strip" aria-label="Client testimonials">
             <div class="testimonial-slides" aria-live="polite">
-                <article class="testimonial-slide is-active">
+                <article data-feedback-index="0" class="testimonial-slide is-active">
                     <div class="testimonial-content">
                         <span class="quote-icon" aria-hidden="true">“</span>
-                        <p class="quote-text">D&G Construction Inc. exceeded our expectations. Their team was professional, reliable, and the quality of work is outstanding.</p>
+                        <p class="quote-text">{{ $feedback[0]['quote'] }}</p>
                         <div class="testimonial-author">
                             <div class="author-avatar" aria-hidden="true">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                             <div class="author-meta">
-                                <strong>Mark & Sarah T.</strong>
-                                <span>Happy Homeowners</span>
+                                <strong>{{ $feedback[0]['author'] }}</strong>
+                                <span>{{ $feedback[0]['role'] }}</span>
                             </div>
                         </div>
                     </div>
                 </article>
-                <article class="testimonial-slide">
+                <article data-feedback-index="1" class="testimonial-slide">
                     <div class="testimonial-content">
                         <span class="quote-icon" aria-hidden="true">“</span>
-                        <p class="quote-text">From the first consultation to the final walkthrough, D&G kept us informed and delivered exactly what they promised.</p>
+                        <p class="quote-text">{{ $feedback[1]['quote'] }}</p>
                         <div class="testimonial-author">
                             <div class="author-avatar" aria-hidden="true">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                             <div class="author-meta">
-                                <strong>James R.</strong>
-                                <span>Renovation Client</span>
+                                <strong>{{ $feedback[1]['author'] }}</strong>
+                                <span>{{ $feedback[1]['role'] }}</span>
                             </div>
                         </div>
                     </div>
                 </article>
-                <article class="testimonial-slide">
+                <article data-feedback-index="2" class="testimonial-slide">
                     <div class="testimonial-content">
                         <span class="quote-icon" aria-hidden="true">“</span>
-                        <p class="quote-text">Our new space feels thoughtfully designed and beautifully built. The crew was respectful, organized, and easy to work with.</p>
+                        <p class="quote-text">{{ $feedback[2]['quote'] }}</p>
                         <div class="testimonial-author">
                             <div class="author-avatar" aria-hidden="true">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                             <div class="author-meta">
-                                <strong>Priya & Daniel K.</strong>
-                                <span>Custom Home Clients</span>
+                                <strong>{{ $feedback[2]['author'] }}</strong>
+                                <span>{{ $feedback[2]['role'] }}</span>
                             </div>
                         </div>
                     </div>
                 </article>
-                <article class="testimonial-slide">
+                <article data-feedback-index="3" class="testimonial-slide">
                     <div class="testimonial-content">
                         <span class="quote-icon" aria-hidden="true">“</span>
-                        <p class="quote-text">D&G brought practical ideas, honest guidance, and excellent craftsmanship to our project. We would gladly recommend their team.</p>
+                        <p class="quote-text">{{ $feedback[3]['quote'] }}</p>
                         <div class="testimonial-author">
                             <div class="author-avatar" aria-hidden="true">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </div>
                             <div class="author-meta">
-                                <strong>Michael B.</strong>
-                                <span>Commercial Client</span>
+                                <strong>{{ $feedback[3]['author'] }}</strong>
+                                <span>{{ $feedback[3]['role'] }}</span>
                             </div>
                         </div>
                     </div>
@@ -1417,8 +1419,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `<div class="project-detail-section project-detail-highlights"><h3>${title}</h3><ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`
                     : '';
                 const externalMeta = [
-                    button.dataset.projectBedrooms ? `${escapeHtml(button.dataset.projectBedrooms)} Beds` : '',
-                    button.dataset.projectBathrooms ? `${escapeHtml(button.dataset.projectBathrooms)} Baths` : '',
                     button.dataset.projectLotArea ? `${escapeHtml(button.dataset.projectLotArea)} sqm` : ''
                 ].filter(Boolean);
 
@@ -1443,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${detailItems('Project Highlights', parseItems('projectHighlights'))}
                     ${detailItems('Features', parseItems('projectFeatures'))}
-                    ${projectGalleryImages.length ? `<div class="project-detail-section"><h3>Project Gallery</h3><div class="project-detail-gallery-grid">${projectGalleryImages.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(projectName)}" loading="lazy">`).join('')}</div></div>` : ''}
+                    ${projectGalleryImages.length ? `<div class="project-detail-section"><h3>Project Gallery</h3><div class="project-detail-gallery-grid">${projectGalleryImages.map(image => `<figure><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.label || projectName)}" loading="lazy">${image.label ? `<figcaption>${escapeHtml(image.label)}</figcaption>` : ''}</figure>`).join('')}</div></div>` : ''}
                 `;
                 return;
             }
@@ -1458,18 +1458,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 title.textContent = project.name;
 
                 const metaIcons = [];
-                if (project.bedrooms) {
-                    metaIcons.push(`<div class="project-detail-meta-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-                        <span>${escapeHtml(project.bedrooms)} Beds</span>
-                    </div>`);
-                }
-                if (project.bathrooms) {
-                    metaIcons.push(`<div class="project-detail-meta-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16a1 1 0 0 1 1 1v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a1 1 0 0 1 1-1z"/><path d="M6 12V5a2 2 0 0 1 2-2h1.5a1 1 0 0 1 1 .8l1.2 4.2H16a2 2 0 0 1 2 2v1"/><path d="M8 21h8"/></svg>
-                        <span>${escapeHtml(project.bathrooms)} Baths</span>
-                    </div>`);
-                }
                 if (project.lot_area) {
                     metaIcons.push(`<div class="project-detail-meta-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
@@ -1491,11 +1479,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`
                     : '';
 
+                const itemImages = JSON.parse(button.dataset.projectGalleryImages || '[]');
+                if (itemImages.length) project.gallery_images = itemImages;
                 const galleryHtml = (project.gallery_images && project.gallery_images.length)
                     ? `<div class="project-detail-section">
                         <h3>Project Gallery</h3>
                         <div class="project-detail-gallery-grid">
-                            ${project.gallery_images.map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(project.name)}" loading="lazy">`).join('')}
+                            ${project.gallery_images.map(image => `<figure><img src="${escapeHtml(image.src || image)}" alt="${escapeHtml(image.label || project.name)}" loading="lazy">${image.label ? `<figcaption>${escapeHtml(image.label)}</figcaption>` : ''}</figure>`).join('')}
                         </div>
                     </div>`
                     : '';
