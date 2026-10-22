@@ -898,7 +898,10 @@
                             $project = $galleryImage->project ?? null;
                             $isExternal = $galleryImage->is_external ?? false;
                             $galleryImageId = $galleryImage->id ?? null;
-                            $imageSrc = $galleryImage->image_path ? asset('storage/' . ltrim($galleryImage->image_path, '/')) : ($project->image_url ?? '');
+                            $imageUrl = static fn ($path) => Str::startsWith($path, ['https://', 'http://', '//'])
+                                ? $path
+                                : asset('storage/' . ltrim($path, '/'));
+                            $imageSrc = $galleryImage->image_path ? $imageUrl($galleryImage->image_path) : ($project->image_url ?? '');
 
                             if ($isExternal) {
                                 $projectUrl = $galleryImage->external_project_url ?: 'javascript:void(0);';
@@ -918,7 +921,7 @@
                                 $projectLocation = 'Past Featured Project';
                             }
                             $projectGalleryImages = ($galleryImage->projectGalleryImages ?? collect())
-                                ->map(fn ($projectImage) => ['src' => asset('storage/' . ltrim($projectImage->image_path, '/')), 'label' => $projectImage->label])
+                                ->map(fn ($projectImage) => ['src' => $imageUrl($projectImage->image_path), 'label' => $projectImage->label])
                                 ->values();
                         @endphp
                         <article class="project-card">
