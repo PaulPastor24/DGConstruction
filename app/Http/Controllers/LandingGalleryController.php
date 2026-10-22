@@ -183,10 +183,13 @@ class LandingGalleryController extends Controller
         $galleryData = [
             'project_id' => $validated['project_id'] ?? null,
             'image_path' => $request->file('image')->store('landing-gallery', 'public'),
-            'image_label' => $validated['image_label'] ?? null,
             'sort_order' => ((int) LandingGalleryImage::max('sort_order')) + 1,
             'is_active' => true,
         ];
+
+        if ($this->landingGalleryHasColumn('image_label')) {
+            $galleryData['image_label'] = $validated['image_label'] ?? null;
+        }
 
         if ($this->landingGalleryHasColumn('is_external')) {
             $galleryData['is_external'] = $isExternal;
@@ -286,7 +289,10 @@ class LandingGalleryController extends Controller
         }
 
         $oldImagePath = $galleryImage->image_path;
-        $galleryData = ['project_id' => $validated['project_id'] ?? null, 'image_label' => $validated['image_label'] ?? null];
+        $galleryData = ['project_id' => $validated['project_id'] ?? null];
+        if ($this->landingGalleryHasColumn('image_label')) {
+            $galleryData['image_label'] = $validated['image_label'] ?? null;
+        }
 
         if ($request->hasFile('image')) {
             $galleryData['image_path'] = $request->file('image')->store('landing-gallery', 'public');
@@ -324,18 +330,24 @@ class LandingGalleryController extends Controller
             return;
         }
 
-        foreach ($request->input('existing_image_labels', []) as $id => $label) {
-            $galleryImage->projectGalleryImages()->whereKey($id)->update(['label' => $label]);
+        $hasLabels = Schema::hasColumn('landing_gallery_project_images', 'label');
+        if ($hasLabels) {
+            foreach ($request->input('existing_image_labels', []) ?? [] as $id => $label) {
+                $galleryImage->projectGalleryImages()->whereKey($id)->update(['label' => $label]);
+            }
         }
         $labels = preg_split('/\r\n|\r|\n/', (string) $request->input('project_gallery_labels', ''));
         $nextSortOrder = (int) $galleryImage->projectGalleryImages()->max('sort_order') + 1;
         foreach ($request->file('project_gallery_images', []) as $index => $image) {
-            LandingGalleryProjectImage::create([
+            $imageData = [
                 'landing_gallery_image_id' => $galleryImage->id,
-                'label' => mb_substr(trim($labels[$index] ?? ''), 0, 255),
                 'image_path' => $image->store('landing-gallery/projects', 'public'),
                 'sort_order' => $nextSortOrder++,
-            ]);
+            ];
+            if ($hasLabels) {
+                $imageData['label'] = mb_substr(trim($labels[$index] ?? ''), 0, 255);
+            }
+            LandingGalleryProjectImage::create($imageData);
         }
     }
 
