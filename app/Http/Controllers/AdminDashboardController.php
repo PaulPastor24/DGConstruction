@@ -109,10 +109,17 @@ class AdminDashboardController extends Controller
         ];
 
         if ($hasProjects) {
-            $projectsQuery = Project::with(['client.user', 'phases'])
+            $phaseRelations = Schema::hasTable('timeline_milestones')
+                ? ['phases.milestones']
+                : ['phases'];
+
+            $projectsQuery = Project::with(array_merge(['client.user'], $phaseRelations))
                 ->whereIn(
                     'status',
-                    ['planning', 'ongoing']
+                    array_merge(
+                        Project::statusVariants(Project::STATUS_PLANNING),
+                        Project::statusVariants(Project::STATUS_ONGOING)
+                    )
                 )
                 ->orderByDesc('created_at')
                 ->take(5);
@@ -145,9 +152,9 @@ class AdminDashboardController extends Controller
                         ?? $project->location
                         ?? 'No location',
 
-                    'status_label' => ucfirst(
-                        $project->status ?? 'planning'
-                    ),
+                    'status_label' => $project->hasDelayedWork()
+                        ? 'Delayed'
+                        : Project::statusLabel($project->status),
 
                     'current_phase' => $currentPhase->phase_name
                         ?? 'Phase 1: Mobilization',
@@ -162,7 +169,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-            $allActiveProjects = Project::with('phases')
+            $allActiveProjects = Project::with($phaseRelations)
                 ->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))
                 ->get();
 
@@ -179,11 +186,9 @@ class AdminDashboardController extends Controller
 
                 $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
 
-                $delayedProjects = $allActiveProjects->filter(function ($project) {
-                    return $project->phases->contains(function ($phase) {
-                        return strtolower((string) ($phase->status ?? '')) === 'delayed';
-                    });
-                });
+                $delayedProjects = $allActiveProjects->filter(
+                    fn ($project) => $project->hasDelayedWork()
+                );
 
                 $overallProgress['ongoing'] = $overallProgress['total'] - $delayedProjects->count();
                 $overallProgress['delayed'] = $delayedProjects->count();
@@ -725,6 +730,7 @@ class AdminDashboardController extends Controller
 
         $toolLoans = collect();
         $toolDeductions = collect();
+        $toolHistory = new LengthAwarePaginator([], 0, 10);
         $toolMetrics = [
             'total_tools' => 0,
             'available' => 0,
@@ -736,7 +742,15 @@ class AdminDashboardController extends Controller
         $toolStatus = $request->input('tool_status', '');
 
         if (Schema::hasTable('tools')) {
-            $toolsQuery = Tool::query()->with(['currentBorrower']);
+            $toolsQuery = Tool::query()->with([
+                'currentBorrower',
+                'activeLoan.worker',
+                'activeLoan.project',
+                'activeLoan.deduction',
+                'loans.worker',
+                'loans.project',
+                'loans.deduction',
+            ]);
 
             if ($toolsSearch !== '') {
                 $toolsQuery->where(function ($q) use ($toolsSearch) {
@@ -767,26 +781,15 @@ class AdminDashboardController extends Controller
                 'lost' => Tool::where('status', 'lost')->count('*'),
             ];
 
-            $activeToolLoans = ToolLoan::query()
-                ->with(['tool', 'worker', 'project'])
-                ->where('status', 'borrowed')
-                ->orderByDesc('borrowed_at')
-                ->paginate(10, ['*'], 'active_loan_page')
-                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
-
-            $toolLoanHistory = ToolLoan::query()
-                ->with(['tool', 'worker'])
-                ->where('status', '!=', 'borrowed')
-                ->orderByDesc('returned_at')
-                ->orderByDesc('updated_at')
-                ->paginate(10, ['*'], 'loan_history_page')
-                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
-
-            $allToolDeductions = ToolDeduction::query()
-                ->with(['tool', 'worker', 'approvedBy', 'loan'])
-                ->orderByDesc('created_at')
-                ->paginate(10, ['*'], 'deduction_page')
-                ->appends($request->only(['search', 'tool_category', 'tool_status', 'view']));
+            if (Schema::hasTable('tool_loans')) {
+                $toolHistory = ToolLoan::query()
+                    ->with(['tool', 'worker', 'project', 'deduction'])
+                    ->orderByDesc('borrowed_at')
+                    ->orderByDesc('id')
+                    ->paginate(10, ['*'], 'tool_history_page')
+                    ->appends($request->except('tool_history_page'))
+                    ->fragment('toolHistoryModal');
+            }
 
             $toolCategories = Tool::query()->distinct()->pluck('category')->filter()->sort()->values();
 
@@ -810,14 +813,11 @@ class AdminDashboardController extends Controller
             ];
         } else {
             $tools = collect();
-            $activeToolLoans = new LengthAwarePaginator([], 0, 10);
-            $toolLoanHistory = collect();
-            $allToolDeductions = collect();
             $toolCategories = collect();
             $predefinedToolCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'activeToolLoans', 'toolLoanHistory', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'toolHistory', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**

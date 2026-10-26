@@ -193,6 +193,16 @@
         max-width: 200px;
     }
 
+    .inventory-action-stack .tool-icon-action {
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .inventory-mobile-table-label {
         display: none;
     }
@@ -569,6 +579,407 @@
     .modal-receive-stock .btn-action-submit:hover {
         background-color: #14532d;
         border-color: #14532d;
+    }
+
+    #toolDetailsModal .modal-dialog {
+        max-width: 760px;
+    }
+
+    #toolDetailsModal .modal-body-custom {
+        padding-bottom: 1.5rem;
+    }
+
+    #toolDetailsModal .tool-details-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.25rem 0.65rem;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+    #toolDetailsModal .tool-details-status.is-in-use {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    #toolDetailsModal .tool-details-status.is-lost {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    #toolDetailsModal .tool-details-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0 0 0.85rem;
+        color: #166534;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    #toolDetailsModal .tool-details-section-title i {
+        display: inline-flex;
+        width: 30px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #f0f7f4;
+        color: #166534;
+    }
+
+    #toolDetailsModal .tool-details-card {
+        height: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid #e8eeeb;
+        border-radius: 10px;
+        background: #fbfdfc;
+    }
+
+    #toolDetailsModal .tool-details-label {
+        margin-bottom: 0.3rem;
+        color: #64748b;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+    }
+
+    #toolDetailsModal .tool-details-value {
+        color: #1e293b;
+        font-size: 0.9rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    #toolDetailsModal .tool-details-notes {
+        color: #475569;
+        font-size: 0.84rem;
+        font-weight: 400;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    #toolDetailsModal .tool-details-loss {
+        padding: 1rem;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        background: #fffafa;
+    }
+
+    #toolDetailsModal .tool-details-loss .tool-details-section-title {
+        color: #b91c1c;
+    }
+
+    #toolDetailsModal .tool-details-loss .tool-details-section-title i {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    #toolDetailsModal .tool-details-loss .tool-details-card {
+        border-color: #fee2e2;
+        background: #ffffff;
+    }
+
+    #toolDetailsModal .tool-details-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 0;
+        padding: 1rem 1.5rem 1.25rem;
+        border-top: 1px solid #edf2f0;
+    }
+
+    #toolDetailsModal .tool-details-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.65rem;
+    }
+
+    #toolDetailsModal #toolDetailsReturn {
+        background-color: #e8f1eb;
+        border-color: #d2e1d6;
+        color: #365d43;
+    }
+
+    #toolDetailsModal #toolDetailsReturn:hover,
+    #toolDetailsModal #toolDetailsReturn:focus {
+        background-color: #dce9df;
+        border-color: #c3d6c8;
+        color: #2f523a;
+    }
+
+    #toolDetailsModal #toolDetailsMarkLost {
+        background-color: #f5ecea;
+        border-color: #e8d8d5;
+        color: #8a554e;
+    }
+
+    #toolDetailsModal #toolDetailsMarkLost:hover,
+    #toolDetailsModal #toolDetailsMarkLost:focus {
+        background-color: #efe2df;
+        border-color: #dfcbc7;
+        color: #784740;
+    }
+
+    .tool-history-trigger {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 0.5rem 0.7rem;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tool-history-trigger:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #334155;
+    }
+
+    #toolHistoryModal .modal-dialog {
+        max-width: 1000px;
+    }
+
+    #toolHistoryModal .modal-body-custom {
+        padding-bottom: 1.5rem;
+    }
+
+    #toolHistoryModal .tool-history-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem 1.5rem 1.25rem;
+        border-top: 1px solid #edf2f0;
+    }
+
+    #toolHistoryModal .tool-history-table {
+        width: 100%;
+        min-width: 760px;
+        table-layout: fixed;
+        font-size: 0.78rem;
+        line-height: 1.4;
+    }
+
+    #toolHistoryModal .tool-history-table th,
+    #toolHistoryModal .tool-history-table td {
+        padding: 0.75rem 0.65rem;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+    }
+
+    #toolHistoryModal .tool-history-table thead th {
+        color: #64748b;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        vertical-align: middle;
+        background-color: #f8fafc;
+    }
+
+    #toolHistoryModal .tool-history-table tbody tr:nth-child(even) {
+        background-color: #fbfdfc;
+    }
+
+    #toolHistoryModal .tool-history-status {
+        display: inline-flex;
+        justify-content: center;
+        min-width: 68px;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    #toolHistoryModal .tool-history-date {
+        color: #475569;
+        font-size: 0.74rem;
+        line-height: 1.55;
+        white-space: nowrap;
+    }
+
+    #toolHistoryModal .tool-history-date-label {
+        color: #94a3b8;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    #toolHistoryModal .tool-history-view-button {
+        display: inline-flex;
+        width: 34px;
+        height: 34px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dce8e0;
+        border-radius: 8px;
+        background: #f7fbf8;
+        color: #356747;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    #toolHistoryModal .tool-history-view-button:hover {
+        border-color: #c7dbce;
+        background: #edf5ef;
+        color: #285638;
+    }
+
+    #toolHistoryDetailsModal .history-detail-loss {
+        padding: 1rem;
+        border: 1px solid #f1dedb;
+        border-radius: 12px;
+        background: #fdf9f8;
+    }
+
+    #toolHistoryDetailsModal .history-detail-loss .tool-details-section-title {
+        color: #8a554e;
+    }
+
+    #toolHistoryDetailsModal .history-detail-loss .tool-details-section-title i {
+        background: #f5ecea;
+        color: #8a554e;
+    }
+
+    #toolHistoryDetailsModal .history-detail-status.is-borrowed {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    #toolHistoryDetailsModal .history-detail-status.is-returned {
+        background: #e8f1eb;
+        color: #365d43;
+    }
+
+    #toolHistoryDetailsModal .history-detail-status.is-lost {
+        background: #f5ecea;
+        color: #8a554e;
+    }
+
+    #toolHistoryDetailsModal .modal-dialog {
+        max-width: 720px;
+    }
+
+    #toolHistoryDetailsModal .modal-body-custom {
+        padding-bottom: 1.5rem;
+    }
+
+    #toolHistoryDetailsModal .history-detail-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem 1.5rem 1.25rem;
+        border-top: 1px solid #edf2f0;
+    }
+
+    #toolHistoryDetailsModal .tool-details-card {
+        height: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid #e8eeeb;
+        border-radius: 10px;
+        background: #fbfdfc;
+    }
+
+    #toolHistoryDetailsModal .tool-details-label {
+        margin-bottom: 0.3rem;
+        color: #64748b;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+    }
+
+    #toolHistoryDetailsModal .tool-details-value {
+        color: #1e293b;
+        font-size: 0.88rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    #toolHistoryDetailsModal .tool-details-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0 0 0.85rem;
+        color: #166534;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    #toolHistoryDetailsModal .tool-details-section-title i {
+        display: inline-flex;
+        width: 30px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #f0f7f4;
+        color: #166534;
+    }
+
+    #toolHistoryDetailsModal .tool-details-notes {
+        color: #475569;
+        font-weight: 400;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    #toolHistoryDetailsModal .history-detail-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.25rem 0.65rem;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.035em;
+    }
+
+    @media (max-width: 575.98px) {
+        #toolHistoryModal .tool-history-footer {
+            padding: 1rem;
+        }
+
+        #toolHistoryDetailsModal .history-detail-footer {
+            padding: 1rem;
+        }
+
+        #toolDetailsModal .tool-details-footer {
+            align-items: stretch;
+            flex-direction: column-reverse;
+            padding: 1rem;
+        }
+
+        #toolDetailsModal .tool-details-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        #toolDetailsModal .tool-details-footer .btn-action-cancel {
+            justify-content: center;
+        }
+
+        #toolDetailsModal .tool-details-actions .btn-action-submit {
+            justify-content: center;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
     }
 
     #addMaterialModal .modal-dialog {
@@ -2536,15 +2947,17 @@
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6 col-6">
-                                <div class="card mi-metric-card border-0 shadow-sm rounded-4 h-100">
-                                    <div class="card-body d-flex align-items-center gap-3">
-                                        <div class="inventory-card-icon out-of-stock">
-                                            <i class="bi bi-x-circle"></i>
-                                        </div>
-                                        <div class="mi-metric-copy">
-                                            <div class="text-muted small fw-semibold">Lost</div>
-                                            <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['lost'] }}</div>
-                                            <div class="text-muted mi-metric-caption">Lost / Unrecovered</div>
+                                <div class="d-flex align-items-stretch gap-2 h-100">
+                                    <div class="card mi-metric-card border-0 shadow-sm rounded-4 flex-grow-1">
+                                        <div class="card-body d-flex align-items-center gap-3">
+                                            <div class="inventory-card-icon out-of-stock">
+                                                <i class="bi bi-x-circle"></i>
+                                            </div>
+                                            <div class="mi-metric-copy">
+                                                <div class="text-muted small fw-semibold">Lost</div>
+                                                <div class="fs-2 fw-bold text-dark lh-1 my-1">{{ $toolMetrics['lost'] }}</div>
+                                                <div class="text-muted mi-metric-caption">Lost / Unrecovered</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2558,7 +2971,7 @@
                                 <input type="text" name="search" value="{{ $toolsSearch ?? $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search tools by name, code, or category...">
                                 <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-lg-2 col-md-3">
                                 <select name="tool_category" class="form-select form-select-sm text-muted">
                                     <option value="">All Categories</option>
                                     @foreach($toolCategories as $cat)
@@ -2566,7 +2979,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-lg-2 col-md-3">
                                 <select name="tool_status" class="form-select form-select-sm text-muted">
                                     <option value="">All Status</option>
                                     <option value="available" {{ ($toolStatus ?? '') === 'available' ? 'selected' : '' }}>Available</option>
@@ -2575,9 +2988,13 @@
                                     <option value="retired" {{ ($toolStatus ?? '') === 'retired' ? 'selected' : '' }}>Retired</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-12 col-12 inventory-action-stack">
+                            <div class="col-lg-4 col-md-12 col-12 inventory-action-stack justify-content-end gap-2">
                                 <button type="button" id="addToolBtn" class="btn btn-outline-success btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addToolModal">
                                     <i class="bi bi-plus-lg me-1"></i> Add Tool
+                                </button>
+                                <button type="button" class="tool-history-trigger" data-bs-toggle="modal" data-bs-target="#toolHistoryModal" aria-label="View tool loan and loss history" title="View tool history">
+                                    <i class="bi bi-clock-history"></i>
+                                    <span>History</span>
                                 </button>
                             </div>
                         </form>
@@ -2603,11 +3020,15 @@
                                         @php
                                             $toolBadgeClass = $tool->status_badge_class;
                                             $toolStatusLabel = $tool->status_label;
-                                            $borrowerName = $tool->currentBorrower ? $tool->currentBorrower->full_name : '-';
                                             $canIssue = in_array($tool->status, ['available']);
                                             $canReturn = $tool->status === 'in_use';
-                                            $canMarkLost = $tool->status === 'in_use';
-                                            $hasActiveLoan = $tool->activeLoan()->exists();
+                                            $activeLoan = $tool->activeLoan->sortByDesc('borrowed_at')->first();
+                                            $lostLoan = $tool->loans->where('status', 'lost')->sortByDesc('borrowed_at')->first();
+                                            $detailLoan = $canReturn ? $activeLoan : ($tool->status === 'lost' ? $lostLoan : null);
+                                            $borrowerName = $tool->currentBorrower?->full_name
+                                                ?? $detailLoan?->worker?->full_name
+                                                ?? '-';
+                                            $deduction = $detailLoan?->deduction;
                                         @endphp
                                         <tr data-tool-row="true"
                                             data-tool-search="{{ strtolower(trim(($tool->name ?? '') . ' ' . ($tool->tool_code ?? '') . ' ' . ($tool->category ?? '') . ' ' . $toolStatusLabel)) }}"
@@ -2626,14 +3047,35 @@
                                                     @if($canIssue)
                                                         <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-success bg-white btn-issue-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Issue tool" data-bs-toggle="modal" data-bs-target="#issueToolModal"><i class="bi bi-arrow-up-right-square"></i> Issue</button>
                                                     @endif
-                                                    @if($canReturn)
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-primary bg-white btn-return-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Return tool"><i class="bi bi-arrow-down-left-square"></i> Return</button>
-                                                        <button type="button" class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white btn-mark-lost-tool" data-tool-id="{{ $tool->id }}" data-tool-name="{{ $tool->name }}" data-tool-code="{{ $tool->tool_code }}" title="Mark as lost"><i class="bi bi-exclamation-triangle"></i> Mark Lost</button>
+                                                    @if($canReturn || $tool->status === 'lost')
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-light border text-primary bg-white btn-view-tool tool-icon-action"
+                                                            title="View tool details"
+                                                            aria-label="View {{ $tool->name }} details"
+                                                            data-tool-id="{{ $tool->id }}"
+                                                            data-tool-name="{{ $tool->name }}"
+                                                            data-tool-code="{{ $tool->tool_code }}"
+                                                            data-tool-status="{{ $toolStatusLabel }}"
+                                                            data-tool-borrower="{{ $borrowerName }}"
+                                                            data-tool-project="{{ $detailLoan?->project?->project_name ?? '-' }}"
+                                                            data-tool-expected-return="{{ $detailLoan?->expected_return_date?->format('M d, Y') ?? '-' }}"
+                                                            data-tool-condition-issue="{{ ucfirst($detailLoan?->condition_at_issue ?? '-') }}"
+                                                            data-tool-borrowed-at="{{ $detailLoan?->borrowed_at?->format('M d, Y h:i A') ?? '-' }}"
+                                                            data-tool-loan-notes="{{ $detailLoan?->notes ?? '' }}"
+                                                            data-tool-returned-at="{{ $detailLoan?->returned_at?->format('M d, Y h:i A') ?? '-' }}"
+                                                            data-tool-condition-return="{{ ucfirst($detailLoan?->condition_at_return ?? '-') }}"
+                                                            data-tool-lost-at="{{ $detailLoan?->status === 'lost' ? $detailLoan->updated_at?->format('M d, Y h:i A') : '-' }}"
+                                                            data-tool-deduction-amount="{{ $deduction ? number_format((float) $deduction->amount, 2) : '-' }}"
+                                                            data-tool-deduction-reason="{{ $deduction ? ucfirst(str_replace('_', ' ', $deduction->reason)) : '-' }}"
+                                                            data-tool-deduction-status="{{ $deduction?->status_label ?? '-' }}"
+                                                            data-tool-deduction-remarks="{{ $deduction?->remarks ?? '' }}">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
                                                     @endif
                                                     <form method="POST" action="{{ route('admin.inventory.tools.destroy', $tool->id) }}" class="inventory-delete-form d-inline m-0">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white" type="submit" title="Delete tool"><i class="bi bi-trash"></i></button>
+                                                        <button class="btn btn-sm btn-light p-1 px-2 border text-danger bg-white tool-icon-action" type="submit" title="Delete tool"><i class="bi bi-trash"></i></button>
                                                     </form>
                                                 </div>
                                             </td>
@@ -2651,95 +3093,6 @@
                             </div>
                         @endif
 
-                        <!-- Active Tool Loans -->
-                        @if($activeToolLoans->total() > 0)
-                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
-                                        <tr>
-                                            <th class="border-0">Tool</th>
-                                            <th class="border-0">Code</th>
-                                            <th class="border-0">Worker</th>
-                                            <th class="border-0">Project</th>
-                                            <th class="border-0">Expected Return</th>
-                                            <th class="border-0">Condition at Issue</th>
-                                            <th class="border-0">Borrowed At</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($activeToolLoans as $loan)
-                                            <tr>
-                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
-                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @if($activeToolLoans->hasPages())
-                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                                    <span class="text-muted small">Showing {{ $activeToolLoans->firstItem() ?? 0 }} to {{ $activeToolLoans->lastItem() ?? 0 }} of {{ $activeToolLoans->total() }} active loans</span>
-                                    <div>{{ $activeToolLoans->links('pagination::bootstrap-5') }}</div>
-                                </div>
-                            @endif
-                        </div>
-                        @endif
-
-                        <!-- Tool Deduction Ledger -->
-                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i>Deduction Ledger</h6>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
-                                        <tr>
-                                            <th class="border-0">Tool</th>
-                                            <th class="border-0">Worker</th>
-                                            <th class="border-0">Reason</th>
-                                            <th class="border-0">Amount</th>
-                                            <th class="border-0">Status</th>
-                                            <th class="border-0">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($allToolDeductions as $deduction)
-                                            @php
-                                                $deductionBadgeClass = $deduction->status_badge_class;
-                                                $deductionStatusLabel = $deduction->status_label;
-                                            @endphp
-                                            <tr>
-                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
-                                                <td class="fw-bold text-dark">₱{{ number_format($deduction->amount, 2) }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
-                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @if($allToolDeductions instanceof \Illuminate\Pagination\LengthAwarePaginator && $allToolDeductions->hasPages())
-                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                                    <span class="text-muted small">Showing {{ $allToolDeductions->firstItem() ?? 0 }} to {{ $allToolDeductions->lastItem() ?? 0 }} of {{ $allToolDeductions->total() }} deduction records</span>
-                                    <div>{{ $allToolDeductions->links('pagination::bootstrap-5') }}</div>
-                                </div>
-                            @endif
-                        </div>
             </div>
 
                 </div>
@@ -3850,6 +4203,208 @@
     </div>
 </div>
 
+<div class="modal fade modal-receive-stock" id="toolDetailsModal" tabindex="-1" aria-labelledby="toolDetailsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0" id="toolDetailsTitle">Tool Details</h4>
+                        <p class="modal-subtitle mb-0"><span id="toolDetailsCode">-</span> <span class="tool-details-status ms-1" id="toolDetailsStatus">-</span></p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <h6 class="tool-details-section-title"><i class="bi bi-person-badge"></i>Loan details</h6>
+                <div class="row g-3">
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Current borrower</div><div class="tool-details-value" id="toolDetailsBorrower">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Project</div><div class="tool-details-value" id="toolDetailsProject">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Expected return</div><div class="tool-details-value" id="toolDetailsExpectedReturn">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Condition at issue</div><div class="tool-details-value" id="toolDetailsIssueCondition">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Borrowed at</div><div class="tool-details-value" id="toolDetailsBorrowedAt">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Loan notes</div><div class="tool-details-value tool-details-notes" id="toolDetailsNotes">No notes recorded.</div></div></div>
+                </div>
+                <div class="tool-details-loss mt-4" id="toolDetailsLostSection" hidden>
+                    <h6 class="tool-details-section-title"><i class="bi bi-exclamation-triangle"></i>Loss record</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Marked lost</div><div class="tool-details-value" id="toolDetailsLostAt">-</div></div></div>
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Condition at return</div><div class="tool-details-value" id="toolDetailsReturnCondition">-</div></div></div>
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Deduction</div><div class="tool-details-value" id="toolDetailsDeductionAmount">-</div></div></div>
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Reason / status</div><div class="tool-details-value"><span id="toolDetailsDeductionReason">-</span> / <span id="toolDetailsDeductionStatus">-</span></div></div></div>
+                        <div class="col-12"><div class="tool-details-card"><div class="tool-details-label">Deduction remarks</div><div class="tool-details-value tool-details-notes" id="toolDetailsDeductionRemarks">No remarks recorded.</div></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-details-footer">
+                <button type="button" class="btn-action-cancel" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i>Close</button>
+                <div id="toolDetailsActions" class="tool-details-actions d-none">
+                    <button type="button" class="btn-action-submit btn-return-tool" id="toolDetailsReturn" data-tool-id="" data-tool-name="" data-tool-code=""><i class="bi bi-arrow-return-left"></i>Return</button>
+                    <button type="button" class="btn-action-submit btn-mark-lost-tool" id="toolDetailsMarkLost" data-tool-id="" data-tool-name="" data-tool-code=""><i class="bi bi-exclamation-triangle"></i>Mark as Lost</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-receive-stock" id="toolHistoryModal" tabindex="-1" aria-labelledby="toolHistoryTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0" id="toolHistoryTitle">Tool History</h4>
+                        <p class="modal-subtitle mb-0">Loan, return, and lost-tool records.</p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body modal-body-custom">
+                <div class="table-responsive border rounded-3">
+                    <table class="table table-hover align-middle mb-0 tool-history-table">
+                        <colgroup>
+                            <col style="width: 20%;">
+                            <col style="width: 19%;">
+                            <col style="width: 20%;">
+                            <col style="width: 13%;">
+                            <col style="width: 17%;">
+                            <col style="width: 11%;">
+                        </colgroup>
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Tool</th>
+                                <th class="border-0">Worker</th>
+                                <th class="border-0">Project</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0">Date</th>
+                                <th class="border-0 text-center">Other Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($toolHistory as $loan)
+                                @php
+                                    $historyDeduction = $loan->deduction;
+                                    $historyStatusClass = $loan->status === 'lost'
+                                        ? 'bg-danger-subtle text-danger'
+                                        : ($loan->status === 'borrowed' ? 'bg-warning-subtle text-dark' : 'bg-success-subtle text-success');
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Tool removed' }}</div>
+                                        <div class="small text-muted">{{ $loan->tool->tool_code ?? '-' }}</div>
+                                    </td>
+                                    <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
+                                    <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
+                                    <td><span class="badge rounded-pill tool-history-status {{ $historyStatusClass }}">{{ $loan->status_label }}</span></td>
+                                    <td class="tool-history-date">
+                                        <span class="tool-history-date-label">Borrowed</span><br>
+                                        {{ $loan->borrowed_at?->format('M d, Y') ?? '-' }}
+                                        @if($loan->returned_at || $loan->status === 'lost')
+                                            <br><span class="tool-history-date-label">{{ $loan->status === 'lost' ? 'Lost' : 'Returned' }}</span><br>
+                                            {{ ($loan->returned_at ?? $loan->updated_at)?->format('M d, Y') ?? '-' }}
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button"
+                                            class="tool-history-view-button btn-view-tool-history"
+                                            title="View loan and loss details"
+                                            aria-label="View history details for {{ $loan->tool->name ?? 'tool' }}"
+                                            data-history-tool="{{ $loan->tool->name ?? 'Tool removed' }}"
+                                            data-history-code="{{ $loan->tool->tool_code ?? '-' }}"
+                                            data-history-worker="{{ $loan->worker->full_name ?? 'Unknown' }}"
+                                            data-history-project="{{ $loan->project->project_name ?? '-' }}"
+                                            data-history-status="{{ $loan->status_label }}"
+                                            data-history-status-key="{{ $loan->status }}"
+                                            data-history-borrowed="{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}"
+                                            data-history-closed="{{ ($loan->returned_at ?? ($loan->status === 'lost' ? $loan->updated_at : null))?->format('M d, Y h:i A') ?? '-' }}"
+                                            data-history-expected-return="{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}"
+                                            data-history-condition-issue="{{ ucfirst($loan->condition_at_issue ?? '-') }}"
+                                            data-history-condition-return="{{ ucfirst($loan->condition_at_return ?? '-') }}"
+                                            data-history-notes="{{ $loan->notes ?? '' }}"
+                                            data-history-loss-reason="{{ $historyDeduction ? ucfirst(str_replace('_', ' ', $historyDeduction->reason)) : '-' }}"
+                                            data-history-deduction-amount="{{ $historyDeduction ? number_format((float) $historyDeduction->amount, 2) : '-' }}"
+                                            data-history-deduction-status="{{ $historyDeduction?->status_label ?? '-' }}"
+                                            data-history-deduction-remarks="{{ $historyDeduction?->remarks ?? '' }}">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="text-center text-muted py-4">No tool loan history recorded yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if($toolHistory->hasPages())
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mt-3">
+                        <span class="text-muted small">Showing {{ $toolHistory->firstItem() ?? 0 }} to {{ $toolHistory->lastItem() ?? 0 }} of {{ $toolHistory->total() }} records</span>
+                        <div class="inventory-modal-pagination">{{ $toolHistory->links('pagination::bootstrap-5') }}</div>
+                    </div>
+                @endif
+            </div>
+            <div class="tool-history-footer">
+                <button type="button" class="btn-action-cancel ms-auto" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-receive-stock" id="toolHistoryDetailsModal" tabindex="-1" aria-labelledby="toolHistoryDetailsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-icon-container">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title-text mb-0" id="toolHistoryDetailsTitle">Loan Details</h4>
+                        <p class="modal-subtitle mb-0"><span id="historyDetailCode">-</span> <span class="history-detail-status ms-1" id="historyDetailStatus">-</span></p>
+                    </div>
+                </div>
+                <button type="button" class="close-btn-x" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <h6 class="tool-details-section-title"><i class="bi bi-person-badge"></i>Loan information</h6>
+                <div class="row g-3">
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Worker</div><div class="tool-details-value" id="historyDetailWorker">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Project</div><div class="tool-details-value" id="historyDetailProject">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Borrowed</div><div class="tool-details-value" id="historyDetailBorrowed">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Returned / closed</div><div class="tool-details-value" id="historyDetailClosed">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Expected return</div><div class="tool-details-value" id="historyDetailExpectedReturn">-</div></div></div>
+                    <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Condition at issue</div><div class="tool-details-value" id="historyDetailConditionIssue">-</div></div></div>
+                    <div class="col-sm-6" id="historyDetailReturnConditionCard"><div class="tool-details-card"><div class="tool-details-label">Condition at return</div><div class="tool-details-value" id="historyDetailConditionReturn">-</div></div></div>
+                    <div class="col-12"><div class="tool-details-card"><div class="tool-details-label">Loan notes</div><div class="tool-details-value tool-details-notes" id="historyDetailNotes">No notes recorded.</div></div></div>
+                </div>
+                <div class="history-detail-loss mt-4" id="historyDetailLossSection" hidden>
+                    <h6 class="tool-details-section-title"><i class="bi bi-exclamation-triangle"></i>Loss and deduction</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Loss reason</div><div class="tool-details-value" id="historyDetailLossReason">-</div></div></div>
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Deduction amount</div><div class="tool-details-value" id="historyDetailDeductionAmount">-</div></div></div>
+                        <div class="col-sm-6"><div class="tool-details-card"><div class="tool-details-label">Deduction status</div><div class="tool-details-value" id="historyDetailDeductionStatus">-</div></div></div>
+                        <div class="col-12"><div class="tool-details-card"><div class="tool-details-label">Deduction remarks</div><div class="tool-details-value tool-details-notes" id="historyDetailDeductionRemarks">No remarks recorded.</div></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="history-detail-footer">
+                <button type="button" class="btn-action-cancel ms-auto" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i>Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
     window.openInventoryModal = function (modalId) {
@@ -4540,7 +5095,102 @@
 
         bindInventoryModalTriggers();
 
+        function configureToolAction(action, toolId, toolName, toolCode) {
+            const formId = action === 'return' ? 'returnToolForm' : 'markLostToolForm';
+            const modalId = action === 'return' ? 'returnToolModal' : 'markLostModal';
+            const prefix = action === 'return' ? 'return' : 'lost';
+            const form = document.getElementById(formId);
+            if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/' + (action === 'return' ? 'return' : 'lost'));
+
+            const nameEl = document.getElementById(prefix + 'ToolName');
+            const codeEl = document.getElementById(prefix + 'ToolCode');
+            if (nameEl) nameEl.textContent = toolName || '-';
+            if (codeEl) codeEl.textContent = toolCode || '-';
+
+            const modalEl = document.getElementById(modalId);
+            if (modalEl) openModalSafely(modalEl);
+        }
+
         function bindToolModalHandlers() {
+            document.querySelectorAll('.btn-view-tool-history').forEach(function (btn) {
+                if (btn.dataset.historyHandlerBound === '1') return;
+                btn.dataset.historyHandlerBound = '1';
+                btn.addEventListener('click', function () {
+                    const value = key => btn.getAttribute('data-history-' + key) || '-';
+                    const statusKey = value('status-key').toLowerCase();
+                    const isLost = statusKey === 'lost';
+                    const isReturned = statusKey === 'returned';
+                    const detailModal = document.getElementById('toolHistoryDetailsModal');
+                    const statusBadge = document.getElementById('historyDetailStatus');
+
+                    document.getElementById('toolHistoryDetailsTitle').textContent = value('tool');
+                    document.getElementById('historyDetailCode').textContent = value('code');
+                    statusBadge.textContent = value('status');
+                    statusBadge.classList.toggle('is-borrowed', statusKey === 'borrowed');
+                    statusBadge.classList.toggle('is-returned', isReturned);
+                    statusBadge.classList.toggle('is-lost', isLost);
+                    document.getElementById('historyDetailWorker').textContent = value('worker');
+                    document.getElementById('historyDetailProject').textContent = value('project');
+                    document.getElementById('historyDetailBorrowed').textContent = value('borrowed');
+                    document.getElementById('historyDetailClosed').textContent = value('closed');
+                    document.getElementById('historyDetailExpectedReturn').textContent = value('expected-return');
+                    document.getElementById('historyDetailConditionIssue').textContent = value('condition-issue');
+                    document.getElementById('historyDetailConditionReturn').textContent = value('condition-return');
+                    document.getElementById('historyDetailReturnConditionCard').classList.toggle('d-none', value('condition-return') === '-');
+                    document.getElementById('historyDetailNotes').textContent = btn.getAttribute('data-history-notes') || 'No notes recorded.';
+
+                    document.getElementById('historyDetailLossReason').textContent = value('loss-reason');
+                    document.getElementById('historyDetailDeductionAmount').textContent = value('deduction-amount') === '-' ? '-' : '₱' + value('deduction-amount');
+                    document.getElementById('historyDetailDeductionStatus').textContent = value('deduction-status');
+                    document.getElementById('historyDetailDeductionRemarks').textContent = btn.getAttribute('data-history-deduction-remarks') || 'No remarks recorded.';
+                    document.getElementById('historyDetailLossSection').hidden = !isLost;
+
+                    if (detailModal) openModalSafely(detailModal);
+                });
+            });
+
+            document.querySelectorAll('.btn-view-tool').forEach(function (btn) {
+                if (btn.dataset.toolHandlerBound === '1') return;
+                btn.dataset.toolHandlerBound = '1';
+                btn.addEventListener('click', function () {
+                    const value = key => btn.getAttribute('data-tool-' + key) || '-';
+                    const detailsModal = document.getElementById('toolDetailsModal');
+                    const status = value('status');
+                    const isLost = status.toLowerCase() === 'lost';
+                    const isInUse = status.toLowerCase() === 'in use';
+
+                    document.getElementById('toolDetailsTitle').textContent = value('name');
+                    document.getElementById('toolDetailsCode').textContent = value('code');
+                    const statusBadge = document.getElementById('toolDetailsStatus');
+                    statusBadge.textContent = status;
+                    statusBadge.classList.toggle('is-in-use', isInUse);
+                    statusBadge.classList.toggle('is-lost', isLost);
+                    document.getElementById('toolDetailsBorrower').textContent = value('borrower');
+                    document.getElementById('toolDetailsProject').textContent = value('project');
+                    document.getElementById('toolDetailsExpectedReturn').textContent = value('expected-return');
+                    document.getElementById('toolDetailsIssueCondition').textContent = value('condition-issue');
+                    document.getElementById('toolDetailsBorrowedAt').textContent = value('borrowed-at');
+                    document.getElementById('toolDetailsNotes').textContent = btn.getAttribute('data-tool-loan-notes') || 'No notes recorded.';
+                    document.getElementById('toolDetailsLostAt').textContent = value('lost-at');
+                    document.getElementById('toolDetailsReturnCondition').textContent = value('condition-return');
+                    document.getElementById('toolDetailsDeductionAmount').textContent = value('deduction-amount') === '-' ? '-' : '₱' + value('deduction-amount');
+                    document.getElementById('toolDetailsDeductionReason').textContent = value('deduction-reason');
+                    document.getElementById('toolDetailsDeductionStatus').textContent = value('deduction-status');
+                    document.getElementById('toolDetailsDeductionRemarks').textContent = btn.getAttribute('data-tool-deduction-remarks') || 'No remarks recorded.';
+                    document.getElementById('toolDetailsLostSection').hidden = !isLost;
+                    document.getElementById('toolDetailsActions').classList.toggle('d-none', !isInUse);
+
+                    ['toolDetailsReturn', 'toolDetailsMarkLost'].forEach(function (id) {
+                        const actionButton = document.getElementById(id);
+                        actionButton.dataset.toolId = value('id');
+                        actionButton.dataset.toolName = value('name');
+                        actionButton.dataset.toolCode = value('code');
+                    });
+
+                    if (detailsModal) openModalSafely(detailsModal);
+                });
+            });
+
             document.querySelectorAll('.btn-issue-tool').forEach(function (btn) {
                 if (btn.dataset.toolHandlerBound === '1') {
                     return;
@@ -4580,14 +5230,15 @@
                     const toolId = btn.getAttribute('data-tool-id');
                     const toolName = btn.getAttribute('data-tool-name');
                     const toolCode = btn.getAttribute('data-tool-code');
-                    const form = document.getElementById('returnToolForm');
-                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/return');
-                    const nameEl = document.getElementById('returnToolName');
-                    const codeEl = document.getElementById('returnToolCode');
-                    if (nameEl) nameEl.textContent = toolName || '-';
-                    if (codeEl) codeEl.textContent = toolCode || '-';
-                    const modalEl = document.getElementById('returnToolModal');
-                    if (modalEl) openModalSafely(modalEl);
+                    const detailsModal = document.getElementById('toolDetailsModal');
+                    if (detailsModal?.classList.contains('show')) {
+                        detailsModal.addEventListener('hidden.bs.modal', function () {
+                            configureToolAction('return', toolId, toolName, toolCode);
+                        }, { once: true });
+                        bootstrap.Modal.getInstance(detailsModal)?.hide();
+                    } else {
+                        configureToolAction('return', toolId, toolName, toolCode);
+                    }
                 });
             });
 
@@ -4605,19 +5256,25 @@
                     const toolId = btn.getAttribute('data-tool-id');
                     const toolName = btn.getAttribute('data-tool-name');
                     const toolCode = btn.getAttribute('data-tool-code');
-                    const form = document.getElementById('markLostToolForm');
-                    if (form) form.setAttribute('action', '/admin/inventory/tools/' + toolId + '/lost');
-                    const nameEl = document.getElementById('lostToolName');
-                    const codeEl = document.getElementById('lostToolCode');
-                    if (nameEl) nameEl.textContent = toolName || '-';
-                    if (codeEl) codeEl.textContent = toolCode || '-';
-                    const modalEl = document.getElementById('markLostModal');
-                    if (modalEl) openModalSafely(modalEl);
+                    const detailsModal = document.getElementById('toolDetailsModal');
+                    if (detailsModal?.classList.contains('show')) {
+                        detailsModal.addEventListener('hidden.bs.modal', function () {
+                            configureToolAction('lost', toolId, toolName, toolCode);
+                        }, { once: true });
+                        bootstrap.Modal.getInstance(detailsModal)?.hide();
+                    } else {
+                        configureToolAction('lost', toolId, toolName, toolCode);
+                    }
                 });
             });
         }
 
         bindToolModalHandlers();
+
+        if (window.location.hash === '#toolHistoryModal') {
+            const historyModal = document.getElementById('toolHistoryModal');
+            if (historyModal) openModalSafely(historyModal);
+        }
 
         const addToolBtn = document.getElementById('addToolBtn');
         const addToolModalEl = document.getElementById('addToolModal');
@@ -4666,7 +5323,6 @@
             document.querySelectorAll('.modal .pagination a').forEach(function (link) {
                 link.onclick = null;
                 link.addEventListener('click', function (event) {
-                    event.preventDefault();
                     const modal = link.closest('.modal');
                     const href = link.getAttribute('href');
 
@@ -4674,6 +5330,11 @@
                         return;
                     }
 
+                    if (modal.id === 'toolHistoryModal') {
+                        return;
+                    }
+
+                    event.preventDefault();
                     const modalBody = modal.querySelector('.modal-body');
                     const paginationContainer = modal.querySelector('.inventory-modal-pagination');
 
@@ -4714,6 +5375,7 @@
 
                             window.history.pushState({}, '', href);
                             attachModalPaginationHandlers();
+                            bindToolModalHandlers();
                             modalBody.classList.remove('opacity-50');
                         })
                         .catch(function () {

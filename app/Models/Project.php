@@ -196,6 +196,19 @@ class Project extends Model
             && $this->target_end_date->lt(now()->startOfDay());
     }
 
+    public function hasDelayedWork(): bool
+    {
+        return $this->isLate() || $this->phases->contains(function (ConstructionPhase $phase) {
+            if (strtolower((string) $phase->status) === ConstructionPhase::STATUS_DELAYED || $phase->isLate()) {
+                return true;
+            }
+
+            return $phase->milestones->contains(function (Milestone $milestone) {
+                return !$milestone->is_completed && ($milestone->is_delayed || $milestone->isLate());
+            });
+        });
+    }
+
     public function syncStatusFromPhases(): void
     {
         if ($this->workflowStatus() === self::STATUS_ARCHIVED) {

@@ -51,6 +51,10 @@
         #registerWorkerModal.attendance-dedicated-panel .form-select { min-height: 42px; border-radius: 9px; border-color: #dbe6de; }
         #registerWorkerModal.attendance-dedicated-panel #worker-registration-camera { grid-column: 1 / -1; }
         #registerWorkerModal.attendance-dedicated-panel #worker-registration-camera:empty { display: none; }
+        #registerWorkerModal #worker-registration-camera { width: 100%; max-width: 780px; margin-inline: auto; }
+        #registerWorkerModal #worker-registration-camera .face-camera { width: 100%; }
+        #registerWorkerModal #worker-registration-camera .face-actions { justify-content: center; margin-top: 12px; }
+        #registerWorkerModal #worker-registration-camera .face-actions .face-button { min-height: 42px; }
         #registerWorkerModal.attendance-dedicated-panel .modal-footer { padding: 0 24px 20px !important; }
         #registerWorkerModal.attendance-dedicated-panel #btnSaveWorkerRecord { padding: 11px 24px; border-radius: 10px; background: #183e2a; border-color: #183e2a; }
         #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-form { display: grid !important; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr) !important; gap: 16px; align-items: start; }
