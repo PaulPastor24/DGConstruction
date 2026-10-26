@@ -1118,11 +1118,11 @@
                 </div>
             </div>
             <div class="metric-card-box hold">
-                <div class="metric-icon-wrapper"><i class="bi bi-pause-circle"></i></div>
+                <div class="metric-icon-wrapper"><i class="bi bi-exclamation-triangle"></i></div>
                 <div class="metric-info-text">
-                    <div class="stat-lbl">On Hold</div>
-                    <div class="stat-num">{{ $stats['on_hold'] ?? 1 }}</div>
-                    <div class="stat-sub">Paused Projects</div>
+                    <div class="stat-lbl">Delayed</div>
+                    <div class="stat-num">{{ $stats['delayed'] ?? 0 }}</div>
+                    <div class="stat-sub">Projects with Delayed Phases</div>
                 </div>
             </div>
             <div class="metric-card-box completed">
@@ -1149,7 +1149,7 @@
                     <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>In Progress</option>
                     <option value="on_hold" {{ request('status') == 'on_hold' ? 'selected' : '' }}>On Hold</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="archived" {{ request('status') == 'archived' ? 'selected' : '' }}>Archived</option>
+                    <option value="delay" {{ in_array(request('status'), ['delay', 'delayed'], true) ? 'selected' : '' }}>Delay</option>
                 </select>
 
                 <select name="client" class="form-select filter-dropdown-select form-select-sm">

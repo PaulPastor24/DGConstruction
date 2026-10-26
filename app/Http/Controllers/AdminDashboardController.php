@@ -103,7 +103,7 @@ class AdminDashboardController extends Controller
 
         $overallProgress = $predefinedMaterialCategories = [
             'percentage' => 0,
-            'on_track' => 0,
+            'ongoing' => 0,
             'delayed' => 0,
             'total' => 0,
         ];
@@ -163,7 +163,7 @@ class AdminDashboardController extends Controller
             });
 
             $allActiveProjects = Project::with('phases')
-                ->whereIn('status', ['planning', 'ongoing'])
+                ->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))
                 ->get();
 
             $overallProgress['total'] = $allActiveProjects->count();
@@ -180,19 +180,12 @@ class AdminDashboardController extends Controller
                 $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
 
                 $delayedProjects = $allActiveProjects->filter(function ($project) {
-                    $status = strtolower((string) ($project->status ?? 'planning'));
-                    $phases = $project->phases;
-                    $averageProgress = $phases->isNotEmpty() ? $phases->avg('progress_percentage') : 0;
-                    $hasDelayedPhase = $phases->contains(function ($phase) {
-                        return in_array(strtolower((string) ($phase->status ?? '')), ['delayed', 'on_hold'], true);
+                    return $project->phases->contains(function ($phase) {
+                        return strtolower((string) ($phase->status ?? '')) === 'delayed';
                     });
-
-                    return in_array($status, ['delayed', 'on_hold', 'behind_schedule', 'at_risk'], true)
-                        || $hasDelayedPhase
-                        || ($phases->isNotEmpty() && $averageProgress < 50);
                 });
 
-                $overallProgress['on_track'] = $overallProgress['total'] - $delayedProjects->count();
+                $overallProgress['ongoing'] = $overallProgress['total'] - $delayedProjects->count();
                 $overallProgress['delayed'] = $delayedProjects->count();
             }
         }

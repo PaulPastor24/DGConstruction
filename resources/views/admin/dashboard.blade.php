@@ -251,8 +251,8 @@
                     </div>
                     <div class="donut-legend">
                         <div class="legend-item">
-                            <div class="legend-title"><div class="legend-dot green"></div> On Track</div>
-                            <div class="legend-sub">{{ $overallProgress['on_track'] }} Projects</div>
+                            <div class="legend-title"><div class="legend-dot green"></div> Ongoing</div>
+                            <div class="legend-sub">{{ $overallProgress['ongoing'] }} Projects</div>
                         </div>
                         <div class="legend-item" style="margin-bottom: 0;">
                             <div class="legend-title"><div class="legend-dot orange"></div> Delayed</div>
