@@ -94,7 +94,20 @@ class SupervisorMaterialUsageTest extends TestCase
         });
     }
 
-    public function test_supervisor_can_record_usage_when_material_has_no_planned_quantity(): void
+    public static function allocationCases(): array
+    {
+        return [
+            'allocated with empty warehouse' => [120, 0, 20, true, true],
+            'allocated with warehouse stock' => [120, 10, 20, true, true],
+            'exact allocation' => [20, 10, 20, true, true],
+            'over allocation' => [10, 100, 20, false, true],
+            'zero allocation' => [0, 100, 5, false, true],
+            'missing allocation' => [0, 100, 5, false, false],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('allocationCases')]
+    public function test_usage_is_limited_to_project_stock_without_deducting_warehouse(float $allocation, float $warehouse, float $quantity, bool $allowed, bool $hasAllocation): void
     {
         $user = User::create([
             'name' => 'Supervisor One',
@@ -126,30 +139,45 @@ class SupervisorMaterialUsageTest extends TestCase
         $material = Material::create([
             'name' => 'Cement',
             'unit' => 'bags',
-            'current_stock' => 100,
+            'current_stock' => $warehouse,
         ]);
+
+        if ($hasAllocation) {
+            DB::table('project_materials')->insert([
+                'project_id' => $project->project_id, 'material_id' => $material->id,
+                'planned_quantity' => $allocation, 'used_quantity' => 0, 'unit' => 'bags',
+            ]);
+        }
 
         $response = $this->actingAs($user)->post(route('supervisor.materials.log'), [
             'form_type' => 'usage',
             'project_id' => $project->project_id,
             'phase_id' => $phase->phase_id,
             'material_id' => $material->id,
-            'quantity_used' => 5,
+            'quantity_used' => $quantity,
             'usage_date' => '2026-07-05',
             'remarks' => 'Used on site',
         ]);
 
+        $this->assertEquals($warehouse, $material->fresh()->current_stock);
+        if (! $allowed) {
+            $response->assertSessionHasErrors('quantity_used');
+            $this->assertDatabaseCount('material_usages', 0);
+            $this->assertEquals(0, DB::table('project_materials')->sum('used_quantity'));
+            return;
+        }
+        $response->assertSessionHasNoErrors();
         $response->assertRedirectContains(route('supervisor.materials', ['project_id' => $project->project_id]));
         $this->assertDatabaseHas('material_usages', [
             'project_id' => $project->project_id,
             'phase_id' => $phase->phase_id,
             'material_id' => $material->id,
-            'quantity_used' => '5.0',
+            'quantity_used' => $quantity,
         ]);
         $this->assertDatabaseHas('project_materials', [
             'project_id' => $project->project_id,
             'material_id' => $material->id,
-            'used_quantity' => '5.0',
+            'used_quantity' => $quantity,
         ]);
     }
 
@@ -197,7 +225,13 @@ class SupervisorMaterialUsageTest extends TestCase
         $response->assertSee('1');
     }
 
-    public function test_supervisor_material_remaining_uses_available_stock_when_no_planned_allocation_exists(): void
+    public static function balanceCases(): array
+    {
+        return ['no allocation' => [0, 0, 0], '120 allocated 20 used' => [120, 20, 100], 'exhausted' => [20, 20, 0]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('balanceCases')]
+    public function test_project_balance_does_not_fall_back_to_warehouse_stock(float $allocation, float $used, float $remaining): void
     {
         $user = User::create([
             'name' => 'Supervisor Three',
@@ -233,8 +267,8 @@ class SupervisorMaterialUsageTest extends TestCase
         DB::table('project_materials')->insert([
             'project_id' => $project->project_id,
             'material_id' => $material->id,
-            'planned_quantity' => 0,
-            'used_quantity' => 0,
+            'planned_quantity' => $allocation,
+            'used_quantity' => $used,
             'unit' => 'bags',
             'created_at' => now(),
             'updated_at' => now(),
@@ -243,8 +277,8 @@ class SupervisorMaterialUsageTest extends TestCase
         $response = $this->actingAs($user)->get(route('supervisor.materials', ['project_id' => $project->project_id]));
 
         $response->assertOk();
-        $response->assertSee('Planned Allocation');
-        $response->assertSee('20.00');
+        $response->assertSee('Allocation');
+        $response->assertViewHas('inventory', fn ($inventory) => (float) $inventory->first()->remaining === $remaining && (float) $inventory->first()->planned === $allocation);
     }
 
     public function test_supervisor_delivery_logging_is_rejected_when_not_supported(): void

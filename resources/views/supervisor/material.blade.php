@@ -526,7 +526,7 @@
         <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Total Materials</dt>
-                <dd class="text-3xl font-extrabold tracking-tight text-gray-900 font-heading">{{ $metrics['total_materials'] ?? '32' }}</dd>
+                <dd class="text-3xl font-semibold tracking-normal text-gray-900 font-sans tabular-nums">{{ $metrics['total_materials'] ?? '32' }}</dd>
                 <span class="text-xs text-gray-400 block">Registered items</span>
             </div>
             <div class="material-stat-icon p-4 bg-green-50 rounded-xl text-brand-dark">
@@ -537,7 +537,7 @@
         <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Materials Used</dt>
-                <dd class="text-3xl font-extrabold tracking-tight text-gray-900 font-heading">{{ $metrics['materials_used'] ?? '0' }}</dd>
+                <dd class="text-3xl font-semibold tracking-normal text-gray-900 font-sans tabular-nums">{{ $metrics['materials_used'] ?? '0' }}</dd>
                 <span class="text-xs text-gray-400 block">Active project allocation</span>
             </div>
             <div class="material-stat-icon p-4 bg-emerald-50 rounded-xl text-brand-accent">
@@ -548,7 +548,7 @@
         <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Low Stock</dt>
-                <dd class="text-3xl font-extrabold tracking-tight text-orange-600 font-heading">{{ $metrics['low_stock_alerts'] ?? '3' }}</dd>
+                <dd class="text-3xl font-semibold tracking-normal text-orange-600 font-sans tabular-nums">{{ $metrics['low_stock_alerts'] ?? '3' }}</dd>
                 <span class="text-xs text-gray-400 block">Requires attention</span>
             </div>
             <div class="material-stat-icon p-4 bg-orange-50 rounded-xl text-orange-600">
@@ -559,7 +559,7 @@
         <div class="material-stat-card bg-white rounded-card p-4 sm:p-6 shadow-saas border border-gray-100 flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div class="space-y-1">
                 <dt class="text-xs font-bold uppercase tracking-wider text-gray-400">Critical Materials</dt>
-                <dd class="text-3xl font-extrabold tracking-tight text-red-600 font-heading">{{ $metrics['critical_materials'] ?? '0' }}</dd>
+                <dd class="text-3xl font-semibold tracking-normal text-red-600 font-sans tabular-nums">{{ $metrics['critical_materials'] ?? '0' }}</dd>
                 <span class="text-xs text-gray-400 block">Urgent reorder required</span>
             </div>
             <div class="material-stat-icon p-4 bg-red-50 rounded-xl text-red-600">
@@ -632,7 +632,7 @@
                             <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-400">
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Material</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Unit</th>
-                                <th class="py-4 px-5 bg-gray-50 text-left align-middle">Planned Allocation</th>
+                                <th class="py-4 px-5 bg-gray-50 text-left align-middle">Allocation</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Used</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Remaining</th>
                                 <th class="py-4 px-5 bg-gray-50 text-left align-middle">Status</th>
@@ -653,14 +653,14 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-4 px-5 align-middle text-sm text-gray-500 font-mono font-medium">{{ $item->unit }}</td>
+                                        <td class="py-4 px-5 align-middle text-sm text-gray-500 font-sans tabular-nums font-medium">{{ $item->unit }}</td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-900 font-bold">
                                             {{ number_format($item->planned, 2) }}
                                         </td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-600 font-medium">
                                             {{ number_format($item->used, 2) }}
                                         </td>
-                                        <td class="py-4 px-5 align-middle text-sm font-bold text-brand-dark font-mono">
+                                        <td class="py-4 px-5 align-middle text-sm font-bold text-brand-dark font-sans tabular-nums">
                                             {{ number_format(max(0, (float) $item->remaining), 2) }}</td>
                                         <td class="py-4 px-5 align-middle">
                                             @php
@@ -721,16 +721,16 @@
                                 
                                 <div class="grid grid-cols-3 gap-2 text-center bg-gray-50 p-3 rounded-xl border border-gray-100">
                                     <div>
-                                        <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Planned</span>
-                                        <span class="text-xs font-bold text-gray-800 font-mono">{{ number_format($item->planned, 2) }}</span>
+                                        <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Allocation</span>
+                                        <span class="text-xs font-bold text-gray-800 font-sans tabular-nums">{{ number_format($item->planned, 2) }}</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Used</span>
-                                        <span class="text-xs font-bold text-gray-800 font-mono">{{ number_format($item->used, 2) }}</span>
+                                        <span class="text-xs font-bold text-gray-800 font-sans tabular-nums">{{ number_format($item->used, 2) }}</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Remaining</span>
-                                        <span class="text-xs font-bold text-brand-dark font-mono">{{ number_format(max(0, (float) $item->remaining), 2) }}</span>
+                                        <span class="text-xs font-bold text-brand-dark font-sans tabular-nums">{{ number_format(max(0, (float) $item->remaining), 2) }}</span>
                                     </div>
                                 </div>
 
@@ -814,13 +814,13 @@
                             @if(isset($materialRequests) && $materialRequests->count() > 0)
                                 @foreach($materialRequests as $req)
                                     <tr class="hover:bg-gray-50/70 transition duration-150 group">
-                                        <td class="py-4 px-5 align-middle text-sm font-bold text-gray-900 font-mono">#{{ $req->request_id }}</td>
+                                        <td class="py-4 px-5 align-middle text-sm font-bold text-gray-900 font-sans tabular-nums">#{{ $req->request_id }}</td>
                                         <td class="py-4 px-5 align-middle">
                                             <div class="text-sm font-bold text-gray-900 leading-snug">{{ $req->material->name ?? 'Unknown Material' }}</div>
                                             <div class="text-xs text-gray-400">{{ $req->unit ?? 'unit' }}</div>
                                         </td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-500">{{ $req->project->project_name ?? 'N/A' }}</td>
-                                        <td class="py-4 px-5 align-middle text-sm font-bold text-gray-900 font-mono">{{ number_format($req->requested_quantity, 2) }}</td>
+                                        <td class="py-4 px-5 align-middle text-sm font-bold text-gray-900 font-sans tabular-nums">{{ number_format($req->requested_quantity, 2) }}</td>
                                         <td class="py-4 px-5 align-middle">
                                             @php
                                                 $reqStatusMap = [
@@ -875,7 +875,7 @@
                                 <div class="grid grid-cols-2 gap-2 text-center bg-gray-50 p-3 rounded-xl border border-gray-100">
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Quantity</span>
-                                        <span class="text-xs font-bold text-gray-800 font-mono">{{ number_format($req->requested_quantity, 2) }} {{ $req->unit ?? '' }}</span>
+                                        <span class="text-xs font-bold text-gray-800 font-sans tabular-nums">{{ number_format($req->requested_quantity, 2) }} {{ $req->unit ?? '' }}</span>
                                     </div>
                                     <div>
                                         <span class="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">Requested</span>
@@ -968,7 +968,7 @@
                                             </div>
                                         </td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-500">{{ $usage->phase->phase_name ?? 'Unknown Phase' }}</td>
-                                        <td class="py-4 px-5 align-middle text-sm font-bold text-brand-dark font-mono">-{{ number_format($usage->quantity_used, 2) }}</td>
+                                        <td class="py-4 px-5 align-middle text-sm font-bold text-brand-dark font-sans tabular-nums">-{{ number_format($usage->quantity_used, 2) }}</td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-500">{{ optional($usage->usage_date)->format('M d, Y') }}</td>
                                         <td class="py-4 px-5 align-middle text-sm text-gray-600">{{ $usage->recorder->name ?? 'Supervisor' }}</td>
                                     </tr>
@@ -1000,7 +1000,7 @@
                                             <h4 class="text-sm font-bold text-gray-900">{{ $usage->material->name ?? 'Unknown Material' }}</h4>
                                         </div>
                                     </div>
-                                    <span class="text-sm font-bold text-brand-dark font-mono">-{{ number_format($usage->quantity_used, 2) }}</span>
+                                    <span class="text-sm font-bold text-brand-dark font-sans tabular-nums">-{{ number_format($usage->quantity_used, 2) }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2 text-center bg-gray-50 p-3 rounded-xl border border-gray-100">
                                     <div>

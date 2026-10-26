@@ -1507,7 +1507,7 @@ ATTENDANCE TABLE
    ======================================================================== */
 
 .attendance-schedule-panel form button.btn-primary,
-.attendance-schedule-panel form button[type="submit"] {
+.attendance-schedule-panel form button[type="submit"]:not(.schedule-rule-update):not(.schedule-rule-delete) {
     border-color: #173824 !important;
     border-radius: 10px !important;
     background: #173824 !important;
@@ -1516,7 +1516,7 @@ ATTENDANCE TABLE
 }
 
 .attendance-schedule-panel form button.btn-primary:hover,
-.attendance-schedule-panel form button[type="submit"]:hover {
+.attendance-schedule-panel form button[type="submit"]:not(.schedule-rule-update):not(.schedule-rule-delete):hover {
     border-color: #245638 !important;
     background: #245638 !important;
 }

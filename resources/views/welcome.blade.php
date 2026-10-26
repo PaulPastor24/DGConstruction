@@ -707,6 +707,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
 </head>
 <body class="landing-page">
 <div class="page-shell">

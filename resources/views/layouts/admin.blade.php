@@ -22,7 +22,14 @@
         .sidebar-logo { flex-shrink: 0 !important; }
         .sidebar-nav { flex: 1 1 auto !important; min-height: 0 !important; overflow-x: hidden !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
         .sidebar-footer { margin-top: auto !important; flex-shrink: 0 !important; }
+        .attendance-nav-group > summary { cursor: pointer; list-style: none; }
+        .attendance-nav-group > summary::-webkit-details-marker { display: none; }
+        .attendance-nav-chevron { margin-left: auto; font-size: 12px; transition: transform .15s; }
+        .attendance-nav-group[open] .attendance-nav-chevron { transform: rotate(180deg); }
+        .attendance-nav-children { margin: 4px 12px 8px 28px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,.18); }
+        .attendance-nav-children .nav-item { font-size: 12px; padding: 10px 12px; border-radius: 10px; }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
 </head>
 <body class="{{ request()->is('admin/timeline*') ? 'page-admin-timeline' : '' }} {{ request()->is('admin/users*') ? 'page-admin-users' : '' }} {{ request()->is('admin/inventory*') ? 'page-admin-inventory' : '' }} {{ request()->is('admin/reports*') ? 'page-admin-reports' : '' }} {{ request()->is('admin/phases*') ? 'page-admin-phases' : '' }}">
     <div class="app">

@@ -82,11 +82,22 @@
 
 <div class="modal fade" id="adminEnrolledWorkersModal" tabindex="-1" aria-labelledby="adminWorkersTitle" aria-hidden="true"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 id="adminWorkersTitle">Enrolled Workers</h5><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">
 <p class="text-muted">View worker enrollment status or select a worker below to enroll or replace their face scan.</p>
-<div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Trade</th><th>Face enrollment</th></tr></thead><tbody>
+<div class="enrolled-toolbar"><label>Search workers<input id="enrolledSearch" type="search" class="form-control" placeholder="Search name or trade"></label><label>Enrollment status<select id="enrolledStatus" class="form-select"><option value="">All workers</option><option value="enrolled">Enrolled</option><option value="pending">Not enrolled</option></select></label></div>
+<div class="table-responsive enrolled-table"><table class="table"><thead><tr><th>Name</th><th>Trade</th><th>Face enrollment</th><th>Action</th></tr></thead><tbody>
 @php($enrolledIds = \Illuminate\Support\Facades\Schema::hasTable('worker_face_enrollments') ? \Illuminate\Support\Facades\DB::table('worker_face_enrollments')->whereNotNull('face_descriptors')->where('model_version', config('face_attendance.model_version'))->pluck('worker_id') : collect())
-@forelse($workers as $worker)<tr><td>{{ trim($worker->first_name.' '.$worker->last_name) }}</td><td>{{ $worker->trade ?? 'General' }}</td><td data-enrollment-status="{{ $worker->worker_id }}">{{ $enrolledIds->contains($worker->worker_id) ? 'Enrolled' : 'Not enrolled' }}</td></tr>@empty<tr><td colspan="3">No active workers.</td></tr>@endforelse
+@foreach($workers as $worker)
+<tr data-enrolled-worker data-status="{{ $enrolledIds->contains($worker->worker_id) ? 'enrolled' : 'pending' }}">
+<td data-label="Name">{{ trim($worker->first_name.' '.$worker->last_name) }}</td><td data-label="Trade">{{ $worker->trade ?? 'General' }}</td>
+<td data-label="Face enrollment" data-enrollment-status="{{ $worker->worker_id }}">{{ $enrolledIds->contains($worker->worker_id) ? 'Enrolled' : 'Not enrolled' }}</td>
+<td data-label="Action"><button class="btn btn-sm btn-success" type="button" data-enroll-worker="{{ $worker->worker_id }}">{{ $enrolledIds->contains($worker->worker_id) ? 'Replace face scan' : 'Enroll face' }}</button></td></tr>
+@endforeach
 </tbody></table></div>
+<p id="enrolledEmpty" class="text-center text-muted py-4" hidden>No workers match your filters.</p>
+<nav class="enrolled-pagination" aria-label="Worker list pages"><span id="enrolledCount" aria-live="polite"></span><div><button type="button" id="enrolledPrev" class="btn btn-outline-success">Previous</button><span id="enrolledPage" class="mx-3"></span><button type="button" id="enrolledNext" class="btn btn-outline-success">Next</button></div></nav>
+<section id="workerEnrollmentPanel" hidden>
+<div class="d-flex justify-content-between align-items-center my-3"><h6 class="mb-0">Worker face enrollment</h6><button type="button" id="closeWorkerEnrollment" class="btn btn-sm btn-outline-secondary">Close enrollment</button></div>
 <iframe id="adminEnrollmentFrame" title="Worker face enrollment" data-src="{{ route('admin.face-attendance.index', ['embedded' => 1, 'purpose' => 'enroll']) }}" style="width:100%;height:650px;border:0" allow="camera"></iframe>
+</section>
 </div></div></div></div>
 
 @vite('resources/js/face-attendance.jsx')
@@ -127,11 +138,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             for (const worker of data.faceWorkerChoices) {
                 const cell = document.querySelector('[data-enrollment-status="' + worker.worker_id + '"]');
-                if (cell) cell.textContent = worker.enrolled ? 'Enrolled' : 'Not enrolled';
+                if (cell) {
+                    cell.textContent = worker.enrolled ? 'Enrolled' : 'Not enrolled';
+                    cell.closest('tr').dataset.status = worker.enrolled ? 'enrolled' : 'pending';
+                    cell.closest('tr').querySelector('[data-enroll-worker]').textContent = worker.enrolled ? 'Replace face scan' : 'Enroll face';
+                }
             }
+            renderWorkers();
         } catch (_) { /* Status refresh can be retried by reopening the page. */ }
     });
-    enrollmentModal.addEventListener('shown.bs.modal', () => { frame.src = frame.dataset.src; });
-    enrollmentModal.addEventListener('hidden.bs.modal', () => { frame.removeAttribute('src'); });
+    const rows = [...enrollmentModal.querySelectorAll('[data-enrolled-worker]')];
+    const search = document.getElementById('enrolledSearch');
+    const status = document.getElementById('enrolledStatus');
+    const prev = document.getElementById('enrolledPrev');
+    const next = document.getElementById('enrolledNext');
+    const panel = document.getElementById('workerEnrollmentPanel');
+    let page = 1;
+    function renderWorkers() {
+        const filtered = rows.filter(row => row.textContent.toLowerCase().includes(search.value.trim().toLowerCase()) && (!status.value || row.dataset.status === status.value));
+        const pages = Math.max(1, Math.ceil(filtered.length / 10));
+        page = Math.min(page, pages);
+        rows.forEach(row => row.hidden = true);
+        filtered.slice((page - 1) * 10, page * 10).forEach(row => row.hidden = false);
+        document.getElementById('enrolledEmpty').hidden = filtered.length > 0;
+        document.getElementById('enrolledCount').textContent = filtered.length ? String((page - 1) * 10 + 1) + '?' + Math.min(page * 10, filtered.length) + ' of ' + filtered.length + ' workers' : '0 workers';
+        document.getElementById('enrolledPage').textContent = page + ' / ' + pages;
+        prev.disabled = page === 1; next.disabled = page === pages;
+    }
+    [search, status].forEach(input => input.addEventListener('input', () => { page = 1; renderWorkers(); }));
+    prev.addEventListener('click', () => { page--; renderWorkers(); });
+    next.addEventListener('click', () => { page++; renderWorkers(); });
+    enrollmentModal.querySelectorAll('[data-enroll-worker]').forEach(button => button.addEventListener('click', () => {
+        const url = new URL(frame.dataset.src, window.location.origin);
+        url.searchParams.set('worker_id', button.dataset.enrollWorker);
+        frame.src = url.href; panel.hidden = false;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    document.getElementById('closeWorkerEnrollment').addEventListener('click', () => { frame.removeAttribute('src'); panel.hidden = true; });
+    renderWorkers();
+    enrollmentModal.addEventListener('hidden.bs.modal', () => { frame.removeAttribute('src'); panel.hidden = true; });
 });
 </script>

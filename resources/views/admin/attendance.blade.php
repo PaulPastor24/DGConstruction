@@ -1,12 +1,88 @@
 @extends('layouts.admin')
 
 @section('title', 'Worker Attendance')
-@section('page_title', 'Worker Attendance')
+@php
+    $attendanceSection = request()->route('section');
+    $attendanceSectionTitles = ['preview' => 'Attendance Report Preview', 'entry' => 'Admin Attendance Entry', 'register' => 'Register Worker', 'enrolled' => 'Enrolled Workers'];
+    $attendancePanelIds = ['preview' => 'attendancePreviewModal', 'entry' => 'adminAttendanceEntryModal', 'register' => 'registerWorkerModal', 'enrolled' => 'adminEnrolledWorkersModal'];
+@endphp
+@section('page_title', $attendanceSectionTitles[$attendanceSection] ?? 'Worker Attendance')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin-attendance.css') }}?v={{ time() }}">
 
     <style>
+        .enrolled-toolbar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); gap: 16px; margin-bottom: 20px; }
+        .enrolled-toolbar label { font-size: 12px; font-weight: 600; }
+        .enrolled-toolbar input, .enrolled-toolbar select { margin-top: 6px; }
+        .enrolled-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid #e1ebe3; font-size: 13px; }
+        .enrolled-pagination > div { display: flex; align-items: center; }
+        .enrolled-table td { vertical-align: middle; }
+        @media (max-width: 767.98px) {
+            .enrolled-toolbar { grid-template-columns: 1fr; }
+            .enrolled-table table, .enrolled-table tbody { display: block; }
+            .enrolled-table thead { display: none; }
+            .enrolled-table tr:not([hidden]) { display: block; margin-bottom: 12px; padding: 12px; border: 1px solid #e1ebe3; border-radius: 12px; }
+            .enrolled-table td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; overflow-wrap: anywhere; }
+            .enrolled-table td::before { content: attr(data-label); color: #64776b; font-size: 12px; flex-shrink: 0; }
+            .enrolled-pagination { flex-direction: column; align-items: stretch; }
+            .enrolled-pagination > div { justify-content: space-between; }
+            .enrolled-pagination button { min-height: 44px; }
+        }
+        @if($attendanceSection)
+        .attendance-page { display: none !important; }
+        #{{ $attendancePanelIds[$attendanceSection] }} { display: block !important; position: static !important; width: 100%; }
+        #{{ $attendancePanelIds[$attendanceSection] }} > .modal-dialog { width: 100% !important; max-width: none !important; margin: 0 !important; height: auto !important; min-height: 0 !important; }
+        #{{ $attendancePanelIds[$attendanceSection] }} .modal-content { max-height: none !important; overflow: visible !important; }
+        #{{ $attendancePanelIds[$attendanceSection] }} .modal-body { overflow: visible !important; }
+        #{{ $attendancePanelIds[$attendanceSection] }} [data-bs-dismiss="modal"] { display: none; }
+        .attendance-dedicated-panel .modal-content { border: 1px solid #dfe9e1; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(21, 38, 26, .06); }
+        .attendance-dedicated-panel .modal-header { padding: 20px 24px; background: linear-gradient(110deg, #eef5ef, #fff); border-bottom: 1px solid #e2ebe4; }
+        .attendance-dedicated-panel .modal-body { padding: 20px 24px; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-heading { display: flex; align-items: center; gap: 14px; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-modal-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #183e2a; color: #fff; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-modal-title { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-modal-subtitle { margin: 0; color: #64776b; font-size: 13px; }
+        #registerWorkerModal.attendance-dedicated-panel #fastWorkerForm { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+        #registerWorkerModal.attendance-dedicated-panel #fastWorkerForm > section { padding: 18px; margin-bottom: 0 !important; border: 1px solid #e1ebe3; border-radius: 14px; background: #f9fcfa; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-section-heading { font-weight: 700; margin-bottom: 16px; color: #183e2a; }
+        #registerWorkerModal.attendance-dedicated-panel .enrollment-section-help { font-size: 12px; line-height: 1.6; color: #64776b; }
+        #registerWorkerModal.attendance-dedicated-panel .form-control,
+        #registerWorkerModal.attendance-dedicated-panel .form-select { min-height: 42px; border-radius: 9px; border-color: #dbe6de; }
+        #registerWorkerModal.attendance-dedicated-panel #worker-registration-camera { grid-column: 1 / -1; }
+        #registerWorkerModal.attendance-dedicated-panel #worker-registration-camera:empty { display: none; }
+        #registerWorkerModal.attendance-dedicated-panel .modal-footer { padding: 0 24px 20px !important; }
+        #registerWorkerModal.attendance-dedicated-panel #btnSaveWorkerRecord { padding: 11px 24px; border-radius: 10px; background: #183e2a; border-color: #183e2a; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-form { display: grid !important; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr) !important; gap: 16px; align-items: start; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .modal-content { box-shadow: 0 4px 16px rgba(21, 38, 26, .05) !important; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-modal-header { display: none; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-modal-body { padding: 24px; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-section { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-actions { grid-column: 1 / -1; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-schedule-details { margin-top: 16px; }
+        #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-time-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        @media (max-width: 1100px) {
+            #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-form { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 767.98px) {
+            #registerWorkerModal.attendance-dedicated-panel #fastWorkerForm { grid-template-columns: 1fr; }
+            .attendance-dedicated-panel .modal-header, .attendance-dedicated-panel .modal-body { padding: 16px; }
+            #adminAttendanceEntryModal.attendance-dedicated-panel .admin-attendance-entry-time-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+        @endif
+
+        .attendance-page .schedule-rule-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 8px; width: 100%; }
+        .attendance-page .schedule-rule-actions > form { width: 100%; margin: 0; }
+        .attendance-page .attendance-schedule-panel .schedule-rule-actions .btn { width: 100%; min-width: 0; min-height: 0; height: auto; padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.4; font-weight: 600; transition: background-color .15s, border-color .15s, color .15s; }
+        .attendance-page .attendance-schedule-panel .schedule-rule-actions .schedule-rule-update { background: #183e2a; border: 1px solid #183e2a; color: #fff; }
+        .attendance-page .attendance-schedule-panel .schedule-rule-actions .schedule-rule-update:is(:hover, :focus-visible) { background: #2563eb; border-color: #2563eb; color: #fff; }
+        .attendance-page .attendance-schedule-panel .schedule-rule-actions .schedule-rule-delete { background: #fff1f2; border: 1px solid #fecdd3; color: #b91c1c; }
+        .attendance-page .attendance-schedule-panel .schedule-rule-actions .schedule-rule-delete:is(:hover, :focus-visible) { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+        #attendanceIssues { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        #attendanceIssues .issues-header { flex-shrink: 0; }
+        #attendanceIssues .issues-list { flex: 1; min-height: 0; overflow-y: auto; display: block; }
+        #attendanceIssues .issues-empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; }
+        #attendanceIssues .issues-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; border-top: 1px solid #e5ece7; flex-shrink: 0; font-size: 12px; }
         .attendance-page .attendance-actions-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
         .attendance-page .attendance-actions-row > .btn { width: 100%; min-width: 0; white-space: normal; height: auto; min-height: 46px; }
         @media (max-width: 768px) { .attendance-page .attendance-actions-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -202,6 +278,15 @@
     ];
 
     $issues = $issues ?? collect();
+    $issuePageSize = 3;
+    $issuePage = min(max(1, request()->integer('issues_page', 1)), max(1, (int) ceil($issues->count() / $issuePageSize)));
+    $issuePaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+        $issues->forPage($issuePage, $issuePageSize)->values(),
+        $issues->count(),
+        $issuePageSize,
+        $issuePage,
+        ['path' => request()->url(), 'pageName' => 'issues_page', 'query' => request()->except('issues_page'), 'fragment' => 'attendanceIssues']
+    );
 @endphp
 
 <div class="attendance-page">
@@ -218,18 +303,6 @@
             </p>
         @endif
     </div>
-
-    <section class="attendance-hero" aria-labelledby="attendanceOverviewTitle">
-        <div class="attendance-title-wrap">
-            <span class="attendance-eyebrow"><i class="bi bi-shield-check"></i> Workforce operations</span>
-            <h1 class="attendance-title" id="attendanceOverviewTitle">Attendance overview</h1>
-            <p class="attendance-subtitle">Review worker presence, exceptions, and verified time records from one operational view.</p>
-        </div>
-        <div class="attendance-date-chip">
-            <i class="bi bi-calendar3"></i>
-            <span>{{ $filters['date'] ? \Carbon\Carbon::parse($filters['date'])->format('M d, Y') : 'All dates' }}</span>
-        </div>
-    </section>
 
     @if(session('success'))
         <div class="alert alert-success" role="alert">
@@ -324,18 +397,7 @@
             </div>
         </form>
 
-        <div class="attendance-actions-row mt-3">
 
-                <button type="button" class="btn btn-primary attendance-preview-trigger" data-bs-toggle="modal" data-bs-target="#attendancePreviewModal">
-                    <i class="bi bi-eye"></i>
-                    Preview Attendance Report
-                </button>
-            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminAttendanceEntryModal">
-                <i class="bi bi-plus-circle"></i> Admin Attendance Entry
-            </button>
-            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#registerWorkerModal"><i class="bi bi-person-plus"></i> Register Worker</button>
-            <button type="button" class="btn attendance-admin-entry-btn" data-bs-toggle="modal" data-bs-target="#adminEnrolledWorkersModal"><i class="bi bi-people"></i> Enrolled Workers</button>
-        </div>
     </section>
 
     <div class="attendance-stat-grid">
@@ -496,12 +558,12 @@
                                     <input form="schedule-form-{{ $rule->id }}" type="time" name="break_end_time" class="form-control form-control-sm" value="{{ $rule->break_end_time ? substr((string) $rule->break_end_time, 0, 5) : '' }}">
                                 </td>
                                 <td>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        <button type="submit" form="schedule-form-{{ $rule->id }}" class="btn btn-sm btn-outline-primary">Update</button>
+                                    <div class="schedule-rule-actions">
+                                        <button type="submit" form="schedule-form-{{ $rule->id }}" class="btn schedule-rule-update">Update</button>
                                         <form method="POST" action="{{ route('admin.attendance.schedules.destroy', $rule->id) }}" onsubmit="return confirm('Delete this schedule rule?');" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            <button type="submit" class="btn schedule-rule-delete">Delete</button>
                                         </form>
                                     </div>
                                 </td>
@@ -517,7 +579,7 @@
         </div>
     </section>
 
-    <section class="attendance-issues-panel attendance-no-print">
+    <section class="attendance-issues-panel attendance-no-print" id="attendanceIssues">
         <div class="issues-header">
             <div>
                 <h2>Attendance Issues / Exceptions</h2>
@@ -531,7 +593,7 @@
 
         @if($issues->count() > 0)
             <div class="issues-list">
-                @foreach($issues as $issue)
+                @foreach($issuePaginator as $issue)
                     @php
                         $issueWorker = $issue->display_worker ?? $issue->worker ?? $issue->deployment?->worker;
                         $issueProject = $issue->display_project ?? $issue->deployment?->project;
@@ -598,6 +660,21 @@
                 <i class="bi bi-check2-circle"></i>
                 No attendance issues found for the selected filter.
             </div>
+        @endif
+        @if($issuePaginator->hasPages())
+            <nav class="issues-pagination" aria-label="Attendance issues pages">
+                @if($issuePaginator->onFirstPage())
+                    <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Previous</span>
+                @else
+                    <a class="btn btn-sm btn-outline-success" href="{{ $issuePaginator->previousPageUrl() }}">Previous</a>
+                @endif
+                <span aria-live="polite">{{ $issuePaginator->currentPage() }} / {{ $issuePaginator->lastPage() }}</span>
+                @if($issuePaginator->hasMorePages())
+                    <a class="btn btn-sm btn-outline-success" href="{{ $issuePaginator->nextPageUrl() }}">Next</a>
+                @else
+                    <span class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">Next</span>
+                @endif
+            </nav>
         @endif
     </section>
 
@@ -1117,6 +1194,29 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const dedicatedPanelId = @json($attendancePanelIds[$attendanceSection] ?? null);
+        if (dedicatedPanelId) {
+            const panel = document.getElementById(dedicatedPanelId);
+            panel.classList.remove('modal', 'fade');
+            panel.classList.add('attendance-dedicated-panel');
+            panel.removeAttribute('aria-hidden');
+            panel.removeAttribute('tabindex');
+            document.querySelector('.content').prepend(panel);
+            panel.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => button.remove());
+            setTimeout(() => panel.dispatchEvent(new Event('shown.bs.modal')), 0);
+        }
+        const filtersCard = document.querySelector('.attendance-page > .attendance-filter-card');
+        const issuesCard = document.getElementById('attendanceIssues');
+        if (filtersCard && issuesCard) {
+            const matchIssuesHeight = () => {
+                issuesCard.style.height = window.innerWidth >= 900
+                    ? `${filtersCard.getBoundingClientRect().height}px`
+                    : '360px';
+            };
+            new ResizeObserver(matchIssuesHeight).observe(filtersCard);
+            window.addEventListener('resize', matchIssuesHeight);
+            matchIssuesHeight();
+        }
         const workerSelect = document.getElementById('adminAttendanceWorkerSelect');
         const workerPreview = document.getElementById('adminAttendanceWorkerPreview');
 

@@ -1644,7 +1644,7 @@ class SupervisorController extends Controller
                     ->get()
                     ->keyBy('id');
 
-                $buildInventoryItem = function ($materialId, $sourceUsageRows) use ($materialRows, $projectMaterialRows) {
+                $buildInventoryItem = function ($materialId, $sourceUsageRows) use ($materialRows, $projectMaterialRows, $metricsUsageRows) {
                     $material = $materialRows->get($materialId);
                     if (! $material) {
                         return null;
@@ -1656,30 +1656,14 @@ class SupervisorController extends Controller
                     $usedFromUsageTable = max(0.0, (float) ($sourceUsageRows->get($materialId)->total_used ?? 0));
                     $used = max($usedFromProject, $usedFromUsageTable);
 
-                    $actualStock = 0.0;
-                    if (Schema::hasColumn('materials', 'current_stock')) {
-                        $actualStock = max(0.0, (float) ($material->current_stock ?? 0));
-                    }
-
-                    $planned = $plannedFromRow > 0 ? $plannedFromRow : max($used, $actualStock);
-                    $remaining = $actualStock;
-
-                    $statusKey = 'out_of_stock';
-                    $statusText = 'Out of Stock';
-                    $statusColor = 'danger';
-
-                    if ($actualStock > 0) {
-                        $minimumStock = (float) ($material->minimum_stock_level ?? 0);
-                        if ($actualStock <= $minimumStock && $minimumStock > 0) {
-                            $statusKey = 'low_stock';
-                            $statusText = 'Low Stock';
-                            $statusColor = 'warning';
-                        } else {
-                            $statusKey = 'available';
-                            $statusText = 'Available';
-                            $statusColor = 'success';
-                        }
-                    }
+                    // Allocation and balance are project-wide, including when filtering phases.
+                    $totalUsed = max($usedFromProject, (float) ($metricsUsageRows->get($materialId)->total_used ?? 0));
+                    $planned = $plannedFromRow;
+                    $remaining = $this->normalizeRemaining($planned, $totalUsed);
+                    $status = $this->resolveMaterialStatus($remaining, $planned);
+                    $statusKey = $status['key'];
+                    $statusText = $status['text'];
+                    $statusColor = $status['color'];
 
                     return (object) [
                         'id' => $material->id,
@@ -1924,58 +1908,52 @@ class SupervisorController extends Controller
                 if (! $material) {
                     return back()->withInput()->with('error', 'The selected material could not be found.');
                 }
-                if (! $material) {
-                    return back()->withInput()->with('error', 'The selected material could not be found.');
-                }
 
-                $inventoryRow = ProjectMaterial::query()
-                    ->where('project_id', $project->project_id)
-                    ->where('material_id', $material->id)
-                    ->first();
+                DB::transaction(function () use ($validated, $project, $material, $phase, $user, $request) {
+                    $inventoryRow = ProjectMaterial::query()
+                        ->where('project_id', $project->project_id)
+                        ->where('material_id', $material->id)
+                        ->lockForUpdate()
+                        ->first();
 
-                if (! $inventoryRow) {
-                    $inventoryRow = ProjectMaterial::create([
+                    if (! $inventoryRow) {
+                        throw ValidationException::withMessages(['quantity_used' => 'This material has no project allocation. Request an allocation before recording usage.']);
+                    }
+
+                    $totalLogged = (float) MaterialUsage::query()
+                        ->where('project_id', $project->project_id)
+                        ->where('material_id', $material->id)
+                        ->sum('quantity_used');
+                    $used = max((float) $inventoryRow->used_quantity, $totalLogged);
+                    $remainingAllocation = $this->normalizeRemaining((float) $inventoryRow->planned_quantity, $used);
+
+                    if ((float) $validated['quantity_used'] > $remainingAllocation) {
+                        throw ValidationException::withMessages(['quantity_used' => 'Insufficient project allocation. Remaining: '.number_format($remainingAllocation, 2).' '.($inventoryRow->unit ?? $material->unit).'.']);
+                    }
+
+                    // Warehouse stock was deducted when the materials were allocated.
+                    $inventoryRow->used_quantity = $used + (float) $validated['quantity_used'];
+                    $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
+                    $inventoryRow->save();
+
+                    $photoPath = null;
+                    if ($request->hasFile('site_photo')) {
+                        $photoPath = $request->file('site_photo')->store('material-usage-photos', 'public');
+                    }
+
+                    MaterialUsage::create([
                         'project_id' => $project->project_id,
+                        'phase_id' => $phase->phase_id,
                         'material_id' => $material->id,
-                        'planned_quantity' => 0,
-                        'used_quantity' => 0,
-                        'unit' => $material->unit ?? 'unit',
+                        'quantity_used' => (float) $validated['quantity_used'],
+                        'unit' => $inventoryRow->unit,
+                        'usage_date' => $validated['usage_date'],
+                        'remarks' => $validated['remarks'] ?? null,
+                        'recorded_by' => $user->user_id,
+                        'site_photo_path' => $photoPath,
                     ]);
-                }
 
-                $remainingAllocation = max(0.0, (float) ($inventoryRow->planned_quantity ?? 0) - (float) ($inventoryRow->used_quantity ?? 0));
-
-                if ($remainingAllocation > 0 && $remainingAllocation < (float) $validated['quantity_used']) {
-                    return back()->withInput()->with('error', 'Insufficient project allocation. Remaining: '.number_format($remainingAllocation, 2).' '.($inventoryRow->unit ?? $material->unit).'. Requested: '.number_format($validated['quantity_used'], 2).'.');
-                }
-
-                if ((float) $material->current_stock < (float) $validated['quantity_used']) {
-                    return back()->withInput()->with('error', 'Insufficient warehouse stock. Available: '.(int) $material->current_stock.' '.$material->unit.'.');
-                }
-
-                $material->current_stock = max(0, (float) $material->current_stock - (float) $validated['quantity_used']);
-                $material->save();
-
-                $inventoryRow->used_quantity = (float) $inventoryRow->used_quantity + (float) $validated['quantity_used'];
-                $inventoryRow->unit = $inventoryRow->unit ?? $material->unit;
-                $inventoryRow->save();
-
-                $photoPath = null;
-                if ($request->hasFile('site_photo')) {
-                    $photoPath = $request->file('site_photo')->store('material-usage-photos', 'public');
-                }
-
-                MaterialUsage::create([
-                    'project_id' => $project->project_id,
-                    'phase_id' => $phase->phase_id,
-                    'material_id' => $material->id,
-                    'quantity_used' => (float) $validated['quantity_used'],
-                    'unit' => $inventoryRow->unit,
-                    'usage_date' => $validated['usage_date'],
-                    'remarks' => $validated['remarks'] ?? null,
-                    'recorded_by' => $user->user_id,
-                    'site_photo_path' => $photoPath,
-                ]);
+                });
 
                 return redirect()->route('supervisor.materials', ['project_id' => $project->project_id])->with('success', 'Material usage recorded successfully.');
             }

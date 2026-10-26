@@ -1079,6 +1079,7 @@
         }
     </style>
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>

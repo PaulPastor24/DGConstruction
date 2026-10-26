@@ -27,9 +27,18 @@
             <i class="bi bi-kanban"></i><span>Phase Management</span>
         </a>
         <div class="nav-section-label">Materials & Attendance</div>
-        <a class="nav-item {{ request()->routeIs('admin.attendance') ? 'active' : '' }}" href="{{ route('admin.attendance') }}">
-            <i class="bi bi-person-badge"></i><span>Worker Attendance</span>
-        </a>
+        <details class="attendance-nav-group" @if(request()->routeIs('admin.attendance*')) open @endif>
+            <summary class="nav-item {{ request()->routeIs('admin.attendance*') ? 'active' : '' }}">
+                <i class="bi bi-person-badge"></i><span>Worker Attendance</span><i class="bi bi-chevron-down attendance-nav-chevron"></i>
+            </summary>
+            <div class="attendance-nav-children">
+                <a class="nav-item {{ request()->routeIs('admin.attendance') ? 'active' : '' }}" @if(request()->routeIs('admin.attendance')) aria-current="page" @endif href="{{ route('admin.attendance') }}">Attendance Records</a>
+                <a class="nav-item {{ (request()->routeIs('admin.attendance.section') && request()->route('section') === 'preview') ? 'active' : '' }}" @if(request()->routeIs('admin.attendance.section') && request()->route('section') === 'preview') aria-current="page" @endif href="{{ route('admin.attendance.section', ['section' => 'preview']) }}">Preview Attendance Report</a>
+                <a class="nav-item {{ (request()->routeIs('admin.attendance.section') && request()->route('section') === 'entry') ? 'active' : '' }}" @if(request()->routeIs('admin.attendance.section') && request()->route('section') === 'entry') aria-current="page" @endif href="{{ route('admin.attendance.section', ['section' => 'entry']) }}">Admin Attendance Entry</a>
+                <a class="nav-item {{ (request()->routeIs('admin.attendance.section') && request()->route('section') === 'register') ? 'active' : '' }}" @if(request()->routeIs('admin.attendance.section') && request()->route('section') === 'register') aria-current="page" @endif href="{{ route('admin.attendance.section', ['section' => 'register']) }}">Register Worker</a>
+                <a class="nav-item {{ (request()->routeIs('admin.attendance.section') && request()->route('section') === 'enrolled') ? 'active' : '' }}" @if(request()->routeIs('admin.attendance.section') && request()->route('section') === 'enrolled') aria-current="page" @endif href="{{ route('admin.attendance.section', ['section' => 'enrolled']) }}">Enrolled Workers</a>
+            </div>
+        </details>
         <a class="nav-item {{ request()->routeIs('admin.inventory*') ? 'active' : '' }}" href="{{ route('admin.inventory') }}">
             <i class="bi bi-box-seam"></i><span>Materials & Inventory</span>
         </a>

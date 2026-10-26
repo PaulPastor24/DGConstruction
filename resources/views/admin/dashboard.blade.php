@@ -150,6 +150,78 @@
             align-items: center !important;
         }
     }
+
+    .dashboard-container .hero-banner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, .75fr) auto;
+        gap: 28px;
+        padding: 28px;
+    }
+    .dashboard-container .hero-banner::after {
+        left: 24%;
+        right: auto;
+        width: 48%;
+        clip-path: none;
+        background-image: linear-gradient(90deg, #15261a 0%, rgba(21, 38, 26, .25) 35%, rgba(21, 38, 26, .25) 65%, #15261a 100%), url('/images/image2.jpg');
+    }
+    .dashboard-container .hero-content { max-width: 100%; }
+    .dashboard-container .hero-title { font-size: clamp(24px, 2.1vw, 36px); }
+    .dashboard-container .hero-subtitle { max-width: 100%; }
+    .hero-progress {
+        grid-column: 3;
+        justify-self: end;
+        width: max-content;
+        max-width: 100%;
+        position: relative;
+        z-index: 2;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding: 24px 0 24px 24px;
+        border-left: 1px solid rgba(190, 218, 175, .18);
+        background: transparent;
+        color: #f4f8f0;
+    }
+    .hero-progress .dash-card-title { color: #f4f8f0; }
+    .hero-progress .dash-card-header { margin-bottom: 24px; }
+    .hero-progress .donut-chart-container { gap: 24px; flex-wrap: wrap; margin-bottom: 0; }
+    .hero-progress .donut-chart {
+        flex-shrink: 0;
+        box-shadow: 0 0 32px rgba(172, 205, 148, .08);
+    }
+    .hero-progress .donut-inner {
+        flex-direction: column;
+        gap: 3px;
+        background: #15261a;
+        color: #f4f8f0;
+        box-shadow: none;
+    }
+    .hero-progress .donut-inner small {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #b2c4ad;
+    }
+    .hero-progress .legend-title { color: #f4f8f0; font-size: 13px; }
+    .hero-progress .legend-sub { color: #b2c4ad; font-size: 12px; }
+    .hero-progress .legend-dot.green { background: #b4d794; }
+    .dashboard-stat-link { color: inherit; text-decoration: none; }
+    .dashboard-stat-link:hover { color: inherit; }
+    .dashboard-stat-link:focus-visible { outline: 3px solid #4d7c53; outline-offset: 4px; }
+    @media (max-width: 1199.98px) {
+        .hero-progress { padding: 20px 0 20px 16px; }
+        .hero-progress .donut-chart-container { flex-direction: column; align-items: center; }
+    }
+    @media (max-width: 575.98px) {
+        .dashboard-container .hero-banner { grid-template-columns: 1fr; padding: 24px; }
+        .dashboard-container .hero-banner::after { left: 0; width: 100%; opacity: .45; }
+        .hero-progress { grid-column: 1; justify-self: stretch; width: auto; border-left: 0; border-top: 1px solid rgba(190, 218, 175, .18); padding: 24px 0 0; }
+        .hero-progress .donut-chart-container { flex-direction: row !important; justify-content: center; }
+    }
 </style>
 @endpush
 
@@ -167,6 +239,29 @@
                     View Projects <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
+            <!-- Overall Progress inside the banner -->
+            <div class="hero-progress">
+                <div class="dash-card-header">
+                    <div class="dash-card-title">Overall Progress</div>
+                </div>
+
+                <div class="donut-chart-container">
+                    <div class="donut-chart" style="background: conic-gradient(#b4d794 0% {{ $overallProgress['percentage'] }}%, rgba(190, 218, 175, .16) {{ $overallProgress['percentage'] }}% 100%);">
+                        <div class="donut-inner">{{ $overallProgress['percentage'] }}%<small>Complete</small></div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="legend-item">
+                            <div class="legend-title"><div class="legend-dot green"></div> On Track</div>
+                            <div class="legend-sub">{{ $overallProgress['on_track'] }} Projects</div>
+                        </div>
+                        <div class="legend-item" style="margin-bottom: 0;">
+                            <div class="legend-title"><div class="legend-dot orange"></div> Delayed</div>
+                            <div class="legend-sub">{{ $overallProgress['delayed'] }} Projects</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Quick Actions -->
@@ -195,41 +290,41 @@
 
     <!-- STATS ROW -->
     <div class="stats-grid-4">
-        <div class="stat-box">
+        <a href="{{ route('admin.projects.index') }}" class="stat-box dashboard-stat-link">
             <div class="stat-icon-wrap"><i class="bi bi-building"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Active Projects</div>
                 <div class="stat-number">{{ $stats['active_projects'] ?? 0 }}</div>
                 <div class="stat-subtext link">View all &rarr;</div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-box">
+        <a href="{{ route('admin.attendance') }}" class="stat-box dashboard-stat-link">
             <div class="stat-icon-wrap"><i class="bi bi-people"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Total Workers</div>
                 <div class="stat-number">{{ $stats['total_workforce'] ?? 0 }}</div>
                 <div class="stat-subtext up"><i class="bi bi-arrow-up-short"></i> +12 this week</div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-box">
+        <a href="{{ route('admin.inventory') }}" class="stat-box dashboard-stat-link">
             <div class="stat-icon-wrap"><i class="bi bi-layers"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Materials in Stock</div>
                 <div class="stat-number">{{ $stats['inventory_count'] ?? 0 }}</div>
                 <div class="stat-subtext link"><span style="color:#10b981;">●</span> On track</div>
             </div>
-        </div>
+        </a>
 
-        <div class="stat-box">
+        <a href="{{ route('admin.reports.index') }}" class="stat-box dashboard-stat-link">
             <div class="stat-icon-wrap"><i class="bi bi-clipboard-data"></i></div>
             <div class="stat-info">
                 <div class="stat-label-top">Pending Reports</div>
                 <div class="stat-number">{{ $stats['pending_reports'] ?? 0 }}</div>
                 <div class="stat-subtext link">View reports &rarr;</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- BOTTOM ROW: Projects List & Sidebar Cards -->
@@ -316,32 +411,8 @@
             </div>
         </div>
 
-        <!-- Right Column: Chart & Recent Reports -->
+        <!-- Right Column: Recent Reports -->
         <div>
-            <!-- Overall Progress Donut -->
-            <div class="dash-card" style="margin-bottom: 24px;">
-                <div class="dash-card-header">
-                    <div class="dash-card-title">Overall Progress</div>
-                    <div class="dash-card-link" style="display:flex; align-items:center; gap:4px;">This Month <i class="bi bi-chevron-down"></i></div>
-                </div>
-
-                <div class="donut-chart-container">
-                    <div class="donut-chart" style="background: conic-gradient(#4d7c53 0% {{ $overallProgress['percentage'] }}%, #f3f4f6 {{ $overallProgress['percentage'] }}% 100%);">
-                        <div class="donut-inner">{{ $overallProgress['percentage'] }}%</div>
-                    </div>
-                    <div class="donut-legend">
-                        <div class="legend-item">
-                            <div class="legend-title"><div class="legend-dot green"></div> On Track</div>
-                            <div class="legend-sub">{{ $overallProgress['on_track'] }} Projects</div>
-                        </div>
-                        <div class="legend-item" style="margin-bottom: 0;">
-                            <div class="legend-title"><div class="legend-dot orange"></div> Delayed</div>
-                            <div class="legend-sub">{{ $overallProgress['delayed'] }} Projects</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Recent Reports -->
             <div class="dash-card">
                 <div class="dash-card-header">

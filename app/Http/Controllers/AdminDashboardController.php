@@ -1438,7 +1438,6 @@ class AdminDashboardController extends Controller
 
                 return $isLate || $isAbsent || $missingTimeout || $breakExceeded($log) || $notVerified;
             })
-            ->take(8)
             ->values();
 
         return view(

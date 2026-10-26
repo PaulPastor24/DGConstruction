@@ -168,6 +168,8 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::post('/admin/face-attendance/cancel', [FaceAttendanceController::class, 'cancel'])->name('admin.face-attendance.cancel');
     Route::delete('/admin/face-attendance/enrollments/{workerId}', [FaceAttendanceController::class, 'removeEnrollment'])->whereNumber('workerId')->name('admin.face-attendance.remove');
     Route::get('/admin/attendance', [AdminDashboardController::class, 'attendance'])->name('admin.attendance');
+    Route::get('/admin/attendance/manage/{section}', [AdminDashboardController::class, 'attendance'])
+        ->where('section', 'preview|entry|register|enrolled')->name('admin.attendance.section');
     Route::post('/admin/attendance/schedules', [AdminDashboardController::class, 'storeAttendanceSchedule'])
         ->name('admin.attendance.schedules.store');
     Route::put('/admin/attendance/schedules/{rule}', [AdminDashboardController::class, 'updateAttendanceSchedule'])

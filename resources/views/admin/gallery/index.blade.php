@@ -67,7 +67,7 @@
 <label class="form-label" for="feedback-{{ $index }}-{{ $field }}">{{ $label }}</label><textarea id="feedback-{{ $index }}-{{ $field }}" class="form-control mb-2" name="feedback[{{ $index }}][{{ $field }}]" maxlength="{{ $field === 'quote' ? 2000 : 255 }}" required>{{ old("feedback.$index.$field", $item[$field]) }}</textarea>
 @endforeach</fieldset>@endforeach</div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success">Save feedback</button></div></form></div></div></div>
     <div class="modal fade" id="editHeroModal" tabindex="-1" aria-labelledby="editHeroModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <div>
@@ -653,6 +653,22 @@
         font-size: 1.05rem;
         letter-spacing: -0.02em;
         font-weight: 800;
+    }
+
+    /* Let the form wrapper shrink so Bootstrap can scroll the modal body. */
+    :is(#editFeedbackModal, #editHeroModal, #addFeaturedProjectPanel, [id^="editGalleryModal"]) .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    :is(#editFeedbackModal, #editHeroModal, #addFeaturedProjectPanel, [id^="editGalleryModal"]) .modal-content > form > .modal-body {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     .landing-gallery-form {
