@@ -408,7 +408,10 @@ class ProjectController extends Controller
             'engineer',
             'supervisors',
             'phases',
-            'statusHistory.user'
+            'statusHistory.user',
+            'projectWorkers.worker',
+            'projectMaterials.material',
+            'materialUsages.phase',
         ]);
 
         // Verify project was loaded

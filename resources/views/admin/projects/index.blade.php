@@ -6,6 +6,12 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
+#projectDetailsSidebar { display: none !important; }
+#projectDetailsModal .modal-dialog { width: calc(100% - 2rem); max-width: 1140px; }
+#projectDetailsModal .modal-content { max-height: calc(100dvh - 2rem); }
+#projectDetailsModal .modal-body { overflow-y: auto; }
+@media(max-width:575.98px) { #projectDetailsModal .modal-dialog { width:100%; margin:0; } #projectDetailsModal .modal-content { max-height:100dvh; border-radius:0; } }
+
     :root {
         /* shared theme tokens (centralized in public/css/admin.css) */
         --mi-dark: var(--brand-dark);
@@ -1861,6 +1867,7 @@
 <!-- ========================================== -->
 <!--   PROJECT DETAILS MODAL (AJAX-loaded)      -->
 <!-- ========================================== -->
+<div class="modal fade" id="projectMaterialDetailsModal" tabindex="-1" aria-labelledby="projectMaterialDetailsTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content rounded-4"><div class="modal-header"><h5 id="projectMaterialDetailsTitle">Project material details</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="projectMaterialDetailsBody"></div><div class="modal-footer"><button type="button" class="btn btn-outline-success" id="backToProjectDetails">Back to project</button></div></div></div></div>
 <div class="modal fade project-details-modal" id="projectDetailsModal" tabindex="-1" aria-labelledby="projectDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -3209,7 +3216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const viewBtns = document.querySelectorAll('.trigger-details-panel');
         viewBtns.forEach(btn => {
             btn.removeEventListener('click', openSidebarFromButton);
-            btn.addEventListener('click', openSidebarFromButton);
+            btn.onclick = function () { const project = JSON.parse(this.getAttribute('data-project-json') || '{}'); openProjectDetailsModal(project.project_id); };
         });
     }
 
@@ -3442,6 +3449,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    const materialModalElement = document.getElementById('projectMaterialDetailsModal');
+    document.getElementById('projectDetailsModalBody')?.addEventListener('click', event => {
+        const button = event.target.closest('[data-project-material-detail]');
+        if (!button) return;
+        const template = document.getElementById(button.dataset.projectMaterialDetail);
+        if (!template) return;
+        document.getElementById('projectMaterialDetailsBody').innerHTML = template.innerHTML;
+        const projectModal = document.getElementById('projectDetailsModal');
+        projectModal.addEventListener('hidden.bs.modal', () => bootstrap.Modal.getOrCreateInstance(materialModalElement).show(), { once:true });
+        bootstrap.Modal.getOrCreateInstance(projectModal).hide();
+    });
+    document.getElementById('backToProjectDetails')?.addEventListener('click', () => {
+        materialModalElement.addEventListener('hidden.bs.modal', () => bootstrap.Modal.getOrCreateInstance(document.getElementById('projectDetailsModal')).show(), { once:true });
+        bootstrap.Modal.getOrCreateInstance(materialModalElement).hide();
+    });
     // Initial bind
     bindViewButtons();
 

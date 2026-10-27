@@ -148,7 +148,7 @@ class AdminDashboardController extends Controller
 
                     'location' => $project->project_location
                         ?? $project->location
-                        ?? 'No location',
+                     0   ?? 'No location',
 
                     'status_label' => $isDelayed ? 'Delayed' : Project::statusLabel($project->status),
 
@@ -487,6 +487,9 @@ class AdminDashboardController extends Controller
         $searchForUsage = $search;
 
         $query = Material::query();
+        if ($request->integer('project_id') > 0) {
+            $query->whereIn('id', ProjectMaterial::query()->where('project_id', $request->integer('project_id'))->select('material_id'));
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -517,7 +520,7 @@ class AdminDashboardController extends Controller
             ->orderByDesc('updated_at')
             ->orderBy('name', 'asc')
             ->paginate(10, ['*'], 'material_page')
-            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status']));
+            ->appends($request->only(['search', 'category', 'stock_status', 'usage_category', 'usage_status', 'project_id']));
 
         $usageQuery = MaterialUsage::query()->with(['project', 'phase', 'material', 'recorder']);
         $hasUserNameColumn = Schema::hasTable('users') && Schema::hasColumn('users', 'name');

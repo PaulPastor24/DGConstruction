@@ -194,6 +194,8 @@
         </div>
     </div>
 
+    @include('admin.projects.partials.workers-materials')
+
     <div class="ps-section-card">
         <div class="ps-section-head">
             <h6>Status History</h6>

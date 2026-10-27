@@ -2298,6 +2298,10 @@
                     <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
+<div class="col-md-4"><select name="project_id" class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
+<option value="">All projects ? warehouse inventory</option>
+@foreach($projects as $inventoryProject)<option value="{{ $inventoryProject->project_id }}" @selected((int) request('project_id') === (int) $inventoryProject->project_id)>{{ $inventoryProject->project_name }}</option>@endforeach
+</select></div>
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
                             <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
                             <input type="hidden" name="view" value="inventory" id="inventory-view-input">
