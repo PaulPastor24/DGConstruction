@@ -3220,6 +3220,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    document.addEventListener('click', event => {
+        const editButton = event.target.closest('.trigger-edit-project, [data-edit-project]');
+        if (!editButton) return;
+        const viewButton = editButton.matches('.trigger-edit-project')
+            ? editButton.closest('tr')?.querySelector('.trigger-details-panel')
+            : [...document.querySelectorAll('.trigger-details-panel')].find(button => {
+                try { return String(JSON.parse(button.dataset.projectJson).project_id) === editButton.dataset.editProject; }
+                catch { return false; }
+            });
+        if (!viewButton) return;
+        const project = JSON.parse(viewButton.dataset.projectJson || '{}');
+        const openEdit = () => populateEditProjectModal(project, viewButton.dataset.supervisorId, viewButton);
+        const detailsModal = document.getElementById('projectDetailsModal');
+        if (detailsModal?.classList.contains('show')) {
+            detailsModal.addEventListener('hidden.bs.modal', openEdit, { once: true });
+            bootstrap.Modal.getOrCreateInstance(detailsModal).hide();
+        } else openEdit();
+    });
+
     function populateEditProjectModal(project, supervisorId, triggerBtn) {
         const form = document.getElementById('editProjectForm');
         const modalEl = document.getElementById('editProjectModal');

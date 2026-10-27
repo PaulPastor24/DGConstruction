@@ -37,6 +37,9 @@
         <h3 id="projectDetailsModalLabel">{{ $project->project_name ?? 'Project Details' }}</h3>
         <p>ID: #{{ $project->project_id ?? 'N/A' }} &middot; {{ $project->location ?? 'Location not specified' }}</p>
     </div>
+    @if($isModal && !$isArchived)
+        <button type="button" class="btn btn-outline-success btn-sm" data-edit-project="{{ $project->project_id }}"><i class="bi bi-pencil me-1"></i>Edit project</button>
+    @endif
     @if($isModal)
         <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
     @endif

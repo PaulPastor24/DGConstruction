@@ -3103,7 +3103,6 @@
                             </div>
                         @endif
 
-<<<<<<< HEAD
                         <!-- Active Tool Loans -->
                         @if($activeToolLoans->total() > 0)
                         <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
@@ -3193,8 +3192,6 @@
                                 </div>
                             @endif
                         </div>
-=======
->>>>>>> 893827d2e6b28b1abd31ef5bd410800dc04e1d87
             </div>
 
                 </div>

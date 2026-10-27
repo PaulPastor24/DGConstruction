@@ -136,7 +136,7 @@
                                         <button type="submit" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
                                     </form>
                                 @else
-                                    <button class="btn-icon-more"><i class="bi bi-three-dots-vertical"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-success trigger-edit-project" aria-label="Edit {{ $project->project_name }}"><i class="bi bi-pencil me-1"></i>Edit</button>
                                 @endif
                             </div>
                         </td>
