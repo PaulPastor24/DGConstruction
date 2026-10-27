@@ -150,13 +150,7 @@ class AdminDashboardController extends Controller
                         ?? $project->location
                         ?? 'No location',
 
-<<<<<<< HEAD
                     'status_label' => $isDelayed ? 'Delayed' : Project::statusLabel($project->status),
-=======
-                    'status_label' => $project->hasDelayedWork()
-                        ? 'Delayed'
-                        : Project::statusLabel($project->status),
->>>>>>> 893827d2e6b28b1abd31ef5bd410800dc04e1d87
 
                     'current_phase' => $currentPhase->phase_name
                         ?? 'Phase 1: Mobilization',
@@ -188,13 +182,7 @@ class AdminDashboardController extends Controller
 
                 $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
 
-<<<<<<< HEAD
                 $delayedProjects = $allActiveProjects->filter(fn ($project) => $delayedProjectIds->contains($project->project_id));
-=======
-                $delayedProjects = $allActiveProjects->filter(
-                    fn ($project) => $project->hasDelayedWork()
-                );
->>>>>>> 893827d2e6b28b1abd31ef5bd410800dc04e1d87
 
                 $overallProgress['ongoing'] = $overallProgress['total'] - $delayedProjects->count();
                 $overallProgress['delayed'] = $delayedProjects->count();
