@@ -21,7 +21,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM projects WHERE description LIKE 'Demonstration project.%') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insert the demonstration projects and phases first.';
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM project_supervisors ps JOIN usrs u ON u.user_id=ps.supervisor_id WHERE u.is_active=1) THEN
+    IF NOT EXISTS (SELECT 1 FROM project_supervisors ps JOIN users u ON u.user_id=ps.supervisor_id WHERE u.is_active=1) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'An active assigned supervisor is required for usage records.';
     END IF;
     DROP TEMPORARY TABLE IF EXISTS demo_material_catalog;

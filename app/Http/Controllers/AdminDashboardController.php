@@ -103,6 +103,7 @@ class AdminDashboardController extends Controller
 
         $overallProgress = $predefinedMaterialCategories = [
             'percentage' => 0,
+            'ongoing_progress' => 0,
             'ongoing' => 0,
             'delayed' => 0,
             'total' => 0,
@@ -117,22 +118,19 @@ class AdminDashboardController extends Controller
                 ->orderByDesc('created_at')
                 ->take(5);
 
-            $activeProjects = $projectsQuery->get()->map(function ($project) {
+            // Count distinct projects through EXISTS, shared with Project Management.
+            $delayedProjectIds = Project::withDelayedPhases()->pluck('project_id');
+            $activeProjects = $projectsQuery->get()->map(function ($project) use ($delayedProjectIds) {
                 $phases = $project->phases;
 
                 $progressPercentage = $phases->isNotEmpty()
                     ? round($phases->avg('progress_percentage'), 2)
                     : 0;
 
-                $color = 'blue';
-
-                if ($progressPercentage >= 80) {
-                    $color = 'green';
-                } elseif ($progressPercentage < 40) {
-                    $color = 'orange';
-                }
-
-                $currentPhase = $phases->firstWhere('status', 'in_progress');
+                $isDelayed = $delayedProjectIds->contains($project->project_id);
+                $color = $isDelayed ? 'orange' : 'blue';
+                $currentPhase = $phases->firstWhere('status', 'delayed')
+                    ?? $phases->firstWhere('status', 'in_progress');
 
                 return (object) [
                     'id' => $project->project_id,
@@ -145,9 +143,7 @@ class AdminDashboardController extends Controller
                         ?? $project->location
                         ?? 'No location',
 
-                    'status_label' => ucfirst(
-                        $project->status ?? 'planning'
-                    ),
+                    'status_label' => $isDelayed ? 'Delayed' : Project::statusLabel($project->status),
 
                     'current_phase' => $currentPhase->phase_name
                         ?? 'Phase 1: Mobilization',
@@ -179,14 +175,13 @@ class AdminDashboardController extends Controller
 
                 $overallProgress['percentage'] = round($totalProgress / $overallProgress['total'], 2);
 
-                $delayedProjects = $allActiveProjects->filter(function ($project) {
-                    return $project->phases->contains(function ($phase) {
-                        return strtolower((string) ($phase->status ?? '')) === 'delayed';
-                    });
-                });
+                $delayedProjects = $allActiveProjects->filter(fn ($project) => $delayedProjectIds->contains($project->project_id));
 
                 $overallProgress['ongoing'] = $overallProgress['total'] - $delayedProjects->count();
                 $overallProgress['delayed'] = $delayedProjects->count();
+                $overallProgress['ongoing_progress'] = round($allActiveProjects
+                    ->reject(fn ($project) => $delayedProjectIds->contains($project->project_id))
+                    ->sum(fn ($project) => (float) $project->progress_percentage) / $overallProgress['total'], 2);
             }
         }
 

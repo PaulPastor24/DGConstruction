@@ -146,6 +146,18 @@ class Project extends Model
         });
     }
 
+    public function scopeWithDelayedPhases(Builder $query): Builder
+    {
+        $query->whereIn('projects.status', self::statusVariants(self::STATUS_ONGOING))
+            ->whereHas('phases', fn (Builder $phases) => $phases->where('status', 'delayed'));
+
+        if (Schema::hasColumn('projects', 'is_archived')) {
+            $query->whereRaw('COALESCE(projects.is_archived, 0) = 0');
+        }
+
+        return $query;
+    }
+
     public function canTransitionTo(?string $requestedStatus): bool
     {
         $current = self::normalizeStatus($this->getRawOriginal('status') ?? $this->status);

@@ -5,6 +5,12 @@
 
 @push('styles')
 <style>
+    .inventory-compact-pagination .pagination { flex-wrap: nowrap; }
+    .inventory-compact-pagination .page-link { min-width: 32px; text-align: center; }
+    @media (max-width: 575.98px) {
+        .inventory-compact-pagination .page-link { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    }
+
     :root {
         /* map to global brand tokens */
         --mi-dark: var(--brand-dark);
@@ -2090,7 +2096,7 @@
                     <!-- Layout Footer Summary with Pagination Links -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                         <span class="text-muted small">Showing {{ $materials->firstItem() ?? 0 }} to {{ $materials->lastItem() ?? 0 }} of {{ $materials->total() }} materials</span>
-                        <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::bootstrap-5') }}</div>
+                        <div class="w-100 w-md-auto overflow-auto">{{ $materials->links('pagination::inventory-compact') }}</div>
                     </div>
                 </div>
 
@@ -2162,7 +2168,7 @@
                     @if($allocatedMaterials instanceof \Illuminate\Pagination\LengthAwarePaginator && $allocatedMaterials->hasPages())
                         <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                             <span class="text-muted small">Showing {{ $allocatedMaterials->firstItem() ?? 0 }} to {{ $allocatedMaterials->lastItem() ?? 0 }} of {{ $allocatedMaterials->total() }} allocations</span>
-                            <div>{{ $allocatedMaterials->links('pagination::bootstrap-5') }}</div>
+                            <div>{{ $allocatedMaterials->links('pagination::inventory-compact') }}</div>
                         </div>
                     @endif
                 </div>
@@ -2355,7 +2361,7 @@
                         <div class="card-footer bg-white border-0 py-3">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                 <span class="text-muted small">Showing {{ $materialRequests->firstItem() ?? 0 }} to {{ $materialRequests->lastItem() ?? 0 }} of {{ $materialRequests->total() }} requests</span>
-                                <div>{{ $materialRequests->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                                <div>{{ $materialRequests->appends(request()->query())->links('pagination::inventory-compact') }}</div>
                             </div>
                         </div>
                     @endif
@@ -2484,7 +2490,7 @@
                         @if($usageLogs instanceof \Illuminate\Pagination\LengthAwarePaginator && $usageLogs->hasPages())
                             <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                 <span class="text-muted small">Showing {{ $usageLogs->firstItem() ?? 0 }} to {{ $usageLogs->lastItem() ?? 0 }} of {{ $usageLogs->total() }} usage records</span>
-                                <div>{{ $usageLogs->links('pagination::bootstrap-5') }}</div>
+                                <div>{{ $usageLogs->links('pagination::inventory-compact') }}</div>
                             </div>
                         @endif
 
@@ -2647,7 +2653,7 @@
                         @if($tools instanceof \Illuminate\Pagination\LengthAwarePaginator && $tools->hasPages())
                             <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                 <span class="text-muted small">Showing {{ $tools->firstItem() ?? 0 }} to {{ $tools->lastItem() ?? 0 }} of {{ $tools->total() }} tools</span>
-                                <div>{{ $tools->links('pagination::bootstrap-5') }}</div>
+                                <div>{{ $tools->links('pagination::inventory-compact') }}</div>
                             </div>
                         @endif
 
@@ -2690,7 +2696,7 @@
                             @if($activeToolLoans->hasPages())
                                 <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                     <span class="text-muted small">Showing {{ $activeToolLoans->firstItem() ?? 0 }} to {{ $activeToolLoans->lastItem() ?? 0 }} of {{ $activeToolLoans->total() }} active loans</span>
-                                    <div>{{ $activeToolLoans->links('pagination::bootstrap-5') }}</div>
+                                    <div>{{ $activeToolLoans->links('pagination::inventory-compact') }}</div>
                                 </div>
                             @endif
                         </div>
@@ -2736,7 +2742,7 @@
                             @if($allToolDeductions instanceof \Illuminate\Pagination\LengthAwarePaginator && $allToolDeductions->hasPages())
                                 <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                     <span class="text-muted small">Showing {{ $allToolDeductions->firstItem() ?? 0 }} to {{ $allToolDeductions->lastItem() ?? 0 }} of {{ $allToolDeductions->total() }} deduction records</span>
-                                    <div>{{ $allToolDeductions->links('pagination::bootstrap-5') }}</div>
+                                    <div>{{ $allToolDeductions->links('pagination::inventory-compact') }}</div>
                                 </div>
                             @endif
                         </div>
@@ -2876,7 +2882,7 @@
                 </div>
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                     <span class="text-muted small">Showing {{ $allLowStockMaterials->firstItem() ?? 0 }} to {{ $allLowStockMaterials->lastItem() ?? 0 }} of {{ $allLowStockMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allLowStockMaterials->appends(request()->query())->links('pagination::inventory-compact') }}</div>
                 </div>
             </div>
         </div>
@@ -2920,7 +2926,7 @@
                 </div>
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 border-top pt-3 mt-3">
                     <span class="text-muted small">Showing {{ $allRecentlyUpdatedMaterials->firstItem() ?? 0 }} to {{ $allRecentlyUpdatedMaterials->lastItem() ?? 0 }} of {{ $allRecentlyUpdatedMaterials->total() }} items</span>
-                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::bootstrap-5') }}</div>
+                    <div class="inventory-modal-pagination w-100 w-md-auto overflow-auto">{{ $allRecentlyUpdatedMaterials->appends(request()->query())->links('pagination::inventory-compact') }}</div>
                 </div>
             </div>
         </div>

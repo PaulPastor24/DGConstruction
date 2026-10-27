@@ -132,8 +132,7 @@ class ProjectController extends Controller
         if ($requestedStatus !== null && $requestedStatus !== '') {
             $normalizedStatus = Project::normalizeStatus($requestedStatus);
             if (in_array($requestedStatus, ['delay', 'delayed'], true)) {
-                $query->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))
-                    ->whereHas('phases', fn ($phaseQuery) => $phaseQuery->where('status', 'delayed'));
+                $query->withDelayedPhases();
                 if ($hasArchiveFlag) {
                     $query->whereRaw('COALESCE(is_archived, 0) = 0');
                 }
@@ -209,11 +208,7 @@ class ProjectController extends Controller
             'ongoing' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))->count(),
             'completed' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))->count(),
             'on_hold' => DB::table('projects')->whereIn('status', Project::statusVariants(Project::STATUS_ON_HOLD))->count(),
-            'delayed' => Project::query()
-                ->whereIn('status', Project::statusVariants(Project::STATUS_ONGOING))
-                ->when($hasArchiveFlag, fn ($query) => $query->whereRaw('COALESCE(is_archived, 0) = 0'))
-                ->whereHas('phases', fn ($query) => $query->where('status', 'delayed'))
-                ->count(),
+            'delayed' => Project::withDelayedPhases()->count(),
             'archived' => DB::table('projects')->where(function ($q) use ($hasArchiveFlag) {
                 $q->where('status', 'archived');
                 if ($hasArchiveFlag) {

@@ -246,7 +246,7 @@
                 </div>
 
                 <div class="donut-chart-container">
-                    <div class="donut-chart" style="background: conic-gradient(#b4d794 0% {{ $overallProgress['percentage'] }}%, rgba(190, 218, 175, .16) {{ $overallProgress['percentage'] }}% 100%);">
+                    <div class="donut-chart" style="background: conic-gradient(#b4d794 0% {{ $overallProgress['ongoing_progress'] }}%, #f59e0b {{ $overallProgress['ongoing_progress'] }}% {{ $overallProgress['percentage'] }}%, rgba(190, 218, 175, .16) {{ $overallProgress['percentage'] }}% 100%);">
                         <div class="donut-inner">{{ $overallProgress['percentage'] }}%<small>Complete</small></div>
                     </div>
                     <div class="donut-legend">
@@ -343,6 +343,7 @@
                         $statusClass = match(strtolower((string) ($project->status_label ?? 'Planning'))) {
                             'completed' => 'completed',
                             'ongoing', 'in progress' => 'in-progress',
+                            'delayed' => 'delayed',
                             'on hold' => 'on-hold',
                             'archived' => 'archived',
                             default => 'planning',
