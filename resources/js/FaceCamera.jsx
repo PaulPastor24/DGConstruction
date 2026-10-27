@@ -42,7 +42,7 @@ async function getEngine() {
   return engine;
 }
 
-export default function FaceCamera({ onComplete, onError, disabled, autoCapture = false }) {
+export default function FaceCamera({ onComplete, onError, disabled, autoCapture = false, captureLabel = 'Capture worker face', onClose, compactPreview = false }) {
   const video = useRef(null);
   const stream = useRef(null);
   const active = useRef(true);
@@ -163,12 +163,13 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
     } finally { capturing.current = false; }
   }
 
-  return <div>
-    <video ref={video} autoPlay muted playsInline style={{ width: '100%', maxHeight: 420, background: '#17251c', borderRadius: 12, transform: previewFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
+  return <div className="face-camera">
+    <video ref={video} autoPlay muted playsInline style={{ display: 'block', width: '100%', maxWidth: compactPreview ? 560 : '100%', maxHeight: compactPreview ? 360 : 420, aspectRatio: compactPreview ? '4 / 3' : undefined, objectFit: compactPreview ? 'cover' : undefined, margin: '0 auto', background: '#17251c', borderRadius: 12, transform: previewFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
     <p role="status">{progress}</p>
-    <div className="face-actions d-flex flex-wrap gap-2">
-      {!autoCapture && <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>Capture worker face</button>}
+    <div className="face-actions d-flex align-items-center flex-wrap gap-2">
+      {!autoCapture && <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>{captureLabel}</button>}
       <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={!ready || disabled} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>Switch camera</button>
+      {onClose && <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={disabled} onClick={onClose}>Close camera</button>}
     </div>
   </div>;
 }

@@ -26,8 +26,27 @@
         .attendance-nav-group > summary::-webkit-details-marker { display: none; }
         .attendance-nav-chevron { margin-left: auto; font-size: 12px; transition: transform .15s; }
         .attendance-nav-group[open] .attendance-nav-chevron { transform: rotate(180deg); }
-        .attendance-nav-children { margin: 4px 12px 8px 28px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,.18); }
+        .attendance-nav-children {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        .attendance-nav-group[open] .attendance-nav-children {
+            max-height: none;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .attendance-nav-group.is-animating .attendance-nav-children {
+            transition: max-height .25s ease, opacity .2s ease, transform .25s ease;
+        }
+        .attendance-nav-children { margin: 4px 12px 8px 28px; }
+        .attendance-nav-children-inner { padding-left: 8px; border-left: 1px solid rgba(255,255,255,.18); }
         .attendance-nav-children .nav-item { font-size: 12px; padding: 10px 12px; border-radius: 10px; }
+        @media (prefers-reduced-motion: reduce) {
+            .attendance-nav-chevron,
+            .attendance-nav-children { transition: none; }
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
 </head>
@@ -65,6 +84,60 @@
 
             updateToggleVisibility();
             window.addEventListener('resize', updateToggleVisibility);
+
+            const attendanceGroup = document.querySelector('.attendance-nav-group');
+            const attendanceToggle = attendanceGroup && attendanceGroup.querySelector(':scope > summary');
+            const attendanceChildren = attendanceGroup && attendanceGroup.querySelector(':scope > .attendance-nav-children');
+
+            if (attendanceGroup && attendanceToggle && attendanceChildren) {
+                let expanded = attendanceGroup.open;
+                let closeTimer;
+                const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                attendanceToggle.setAttribute('aria-expanded', String(expanded));
+
+                function finishAttendanceTransition() {
+                    window.clearTimeout(closeTimer);
+                    if (!expanded) attendanceGroup.open = false;
+                    attendanceChildren.style.maxHeight = '';
+                    attendanceGroup.classList.remove('is-animating');
+                }
+
+                function scheduleAttendanceTransitionEnd() {
+                    closeTimer = window.setTimeout(finishAttendanceTransition, reducedMotion ? 0 : 280);
+                }
+
+                attendanceToggle.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    expanded = !expanded;
+                    attendanceToggle.setAttribute('aria-expanded', String(expanded));
+                    window.clearTimeout(closeTimer);
+                    attendanceGroup.classList.add('is-animating');
+
+                    if (expanded) {
+                        attendanceGroup.open = true;
+                        attendanceChildren.style.maxHeight = '0px';
+                        requestAnimationFrame(function() {
+                            if (expanded) {
+                                attendanceChildren.style.maxHeight = `${attendanceChildren.scrollHeight}px`;
+                                scheduleAttendanceTransitionEnd();
+                            }
+                        });
+                    } else {
+                        attendanceChildren.style.maxHeight = `${attendanceChildren.scrollHeight}px`;
+                        requestAnimationFrame(function() {
+                            attendanceChildren.style.maxHeight = '0px';
+                            scheduleAttendanceTransitionEnd();
+                        });
+                    }
+                });
+
+                attendanceChildren.addEventListener('transitionend', function(event) {
+                    if (event.propertyName === 'max-height' && attendanceGroup.classList.contains('is-animating')) {
+                        finishAttendanceTransition();
+                    }
+                });
+            }
 
             if (sidebarToggle && sidebar && overlay) {
                 sidebarToggle.addEventListener('click', function(e) {

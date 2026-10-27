@@ -8,6 +8,13 @@ use App\Models\MaterialDelivery;
 use App\Models\MaterialUsage;
 use App\Models\Project;
 use App\Models\ProjectMaterial;
+use App\Models\MaterialRequest;
+use App\Models\Tool;
+use App\Models\ToolDeduction;
+use App\Models\ToolLoan;
+use App\Models\Worker;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
@@ -19,6 +26,7 @@ class InventoryCrudTest extends TestCase
     {
         parent::setUp();
 
+        $this->dropInventoryFeatureTables();
         Schema::dropIfExists('material_usages');
         Schema::dropIfExists('material_deliveries');
         Schema::dropIfExists('project_materials');
@@ -67,6 +75,19 @@ class InventoryCrudTest extends TestCase
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+    }
+
+    protected function tearDown(): void
+    {
+        $this->dropInventoryFeatureTables();
+        parent::tearDown();
+    }
+
+    private function dropInventoryFeatureTables(): void
+    {
+        foreach (['tool_deductions', 'tool_loans', 'tools', 'material_requests', 'project_materials', 'workers', 'users'] as $table) {
+            Schema::dropIfExists($table);
+        }
     }
 
     public function test_inventory_search_filters_results(): void
@@ -118,6 +139,196 @@ class InventoryCrudTest extends TestCase
         $this->assertSame(10, $materials->perPage());
         $this->assertSame(2, $materials->lastPage());
         $this->assertCount(10, $materials);
+    }
+
+    public function test_inventory_tables_page_all_requested_views_at_ten_rows(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id('user_id');
+            $table->string('name');
+            $table->timestamps();
+        });
+        Schema::create('workers', function (Blueprint $table) {
+            $table->increments('worker_id');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('trade')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('project_materials', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('project_id');
+            $table->unsignedBigInteger('material_id');
+            $table->decimal('planned_quantity', 12, 2)->default(0);
+            $table->decimal('used_quantity', 12, 2)->default(0);
+            $table->string('unit')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('material_requests', function (Blueprint $table) {
+            $table->id('request_id');
+            $table->unsignedBigInteger('project_id');
+            $table->unsignedBigInteger('material_id');
+            $table->unsignedBigInteger('requested_by');
+            $table->string('status')->default('pending');
+            $table->decimal('requested_quantity', 12, 2);
+            $table->timestamps();
+        });
+        Schema::create('tools', function (Blueprint $table) {
+            $table->id();
+            $table->string('tool_code');
+            $table->string('name');
+            $table->string('category')->nullable();
+            $table->string('type')->default('tool');
+            $table->string('unit')->nullable();
+            $table->string('condition')->default('good');
+            $table->date('purchase_date')->nullable();
+            $table->decimal('purchase_price', 12, 2)->nullable();
+            $table->text('description')->nullable();
+            $table->string('status')->default('available');
+            $table->unsignedBigInteger('current_borrower_worker_id')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('tool_loans', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('tool_id');
+            $table->unsignedBigInteger('worker_id');
+            $table->unsignedBigInteger('project_id')->nullable();
+            $table->date('expected_return_date')->nullable();
+            $table->string('condition_at_issue')->nullable();
+            $table->text('notes')->nullable();
+            $table->string('status')->default('borrowed');
+            $table->timestamp('borrowed_at')->nullable();
+            $table->timestamp('returned_at')->nullable();
+            $table->string('condition_at_return')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('tool_deductions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('tool_loan_id');
+            $table->unsignedBigInteger('tool_id');
+            $table->unsignedBigInteger('worker_id');
+            $table->decimal('amount', 12, 2);
+            $table->string('reason');
+            $table->text('remarks')->nullable();
+            $table->string('status')->default('approved');
+            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->timestamp('approved_at')->nullable();
+            $table->timestamps();
+        });
+
+        $userId = \Illuminate\Support\Facades\DB::table('users')->insertGetId([
+            'name' => 'Inventory Admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], 'user_id');
+        $worker = Worker::create(['first_name' => 'Taylor', 'last_name' => 'Worker']);
+        $project = Project::create(['project_name' => 'Pagination Project']);
+
+        for ($index = 1; $index <= 11; $index++) {
+            $material = Material::create([
+                'name' => 'Pagination Material ' . $index,
+                'category' => 'General',
+                'unit' => 'Piece',
+            ]);
+            MaterialUsage::create([
+                'material_id' => $material->id,
+                'quantity_used' => 1,
+                'usage_date' => now()->toDateString(),
+            ]);
+            ProjectMaterial::create([
+                'project_id' => $project->project_id,
+                'material_id' => $material->id,
+                'planned_quantity' => 10,
+                'used_quantity' => 1,
+                'unit' => 'Piece',
+            ]);
+            MaterialRequest::create([
+                'project_id' => $project->project_id,
+                'material_id' => $material->id,
+                'requested_by' => $userId,
+                'status' => 'pending',
+                'requested_quantity' => 2,
+            ]);
+
+            if ($index <= 10) {
+                $activeTool = Tool::create([
+                    'tool_code' => 'ACTIVE-' . $index,
+                    'name' => 'Active Tool ' . $index,
+                    'status' => 'in_use',
+                    'current_borrower_worker_id' => $worker->worker_id,
+                ]);
+                ToolLoan::create([
+                    'tool_id' => $activeTool->id,
+                    'worker_id' => $worker->worker_id,
+                    'status' => 'borrowed',
+                    'borrowed_at' => now(),
+                ]);
+                ToolLoan::create([
+                    'tool_id' => $activeTool->id,
+                    'worker_id' => $worker->worker_id,
+                    'status' => 'returned',
+                    'borrowed_at' => now()->subDays(2),
+                    'returned_at' => now()->subDay(),
+                    'condition_at_return' => 'good',
+                ]);
+            } else {
+                $lostTool = Tool::create([
+                    'tool_code' => 'LOST-' . $index,
+                    'name' => 'Lost Tool ' . $index,
+                    'status' => 'lost',
+                ]);
+                $lostLoan = ToolLoan::create([
+                    'tool_id' => $lostTool->id,
+                    'worker_id' => $worker->worker_id,
+                    'status' => 'lost',
+                    'borrowed_at' => now()->subDay(),
+                ]);
+                ToolDeduction::create([
+                    'tool_loan_id' => $lostLoan->id,
+                    'tool_id' => $lostTool->id,
+                    'worker_id' => $worker->worker_id,
+                    'amount' => 100,
+                    'reason' => 'lost',
+                    'status' => 'approved',
+                ]);
+            }
+        }
+
+        $data = (new AdminDashboardController())
+            ->inventory(Request::create('/admin/inventory', 'GET'))
+            ->getData();
+
+        foreach (['materials', 'usageLogs', 'allocatedMaterials', 'materialRequests', 'tools', 'toolHistory'] as $table) {
+            $this->assertSame(10, $data[$table]->perPage(), $table . ' should display at most ten rows.');
+            $this->assertLessThanOrEqual(10, $data[$table]->count(), $table . ' should not display more than ten rows.');
+            if ($data[$table]->total() > 10) {
+                $this->assertSame((int) ceil($data[$table]->total() / 10), $data[$table]->lastPage(), $table . ' should paginate all rows beyond the first ten.');
+                $this->assertTrue($data[$table]->hasPages(), $table . ' should expose pagination when more than ten rows exist.');
+            }
+        }
+
+        $historyPageTwoRequest = Request::create('/admin/inventory?view=tools&tool_history_page=2', 'GET');
+        Paginator::currentPageResolver(fn ($pageName) => $historyPageTwoRequest->query($pageName, 1));
+        $historyPageTwoView = (new AdminDashboardController())->inventory($historyPageTwoRequest);
+        Paginator::currentPageResolver(fn ($pageName) => request()->query($pageName, 1));
+        $historyPageTwo = $historyPageTwoView->getData()['toolHistory'];
+        $this->assertSame(2, $historyPageTwo->currentPage());
+        $this->assertSame(10, $historyPageTwo->count());
+        $this->assertSame(21, $historyPageTwo->total());
+        $lostHistory = $historyPageTwo->firstWhere('status', 'lost');
+        $this->assertNotNull($lostHistory, 'The second history page should include the recorded lost loan.');
+        $this->assertSame('lost', $lostHistory->deduction->reason);
+        $this->assertSame('approved', $lostHistory->deduction->status);
+        $this->assertSame('Lost Tool 11', $lostHistory->tool->name);
+        $this->assertStringContainsString('tool_history_page=1', $historyPageTwo->url(1));
+        $this->assertStringContainsString('#toolHistoryModal', $historyPageTwo->url(1));
+        $this->assertStringContainsString('tool_history_page=2', $historyPageTwo->url(2));
+        $this->assertStringContainsString('#toolHistoryModal', $historyPageTwo->url(2));
+
+        $lostTool = Tool::with('loans.worker')->where('status', 'lost')->firstOrFail();
+        $lostLoan = $lostTool->loans->first();
+        $this->assertNull($lostTool->currentBorrower);
+        $this->assertSame('Taylor Worker', $lostLoan->worker->full_name);
     }
 
     public function test_inventory_search_filters_material_usage_logs(): void

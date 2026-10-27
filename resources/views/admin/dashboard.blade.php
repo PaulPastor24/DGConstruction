@@ -342,6 +342,7 @@
                     @php
                         $statusClass = match(strtolower((string) ($project->status_label ?? 'Planning'))) {
                             'completed' => 'completed',
+                            'delayed' => 'delayed',
                             'ongoing', 'in progress' => 'in-progress',
                             'delayed' => 'delayed',
                             'on hold' => 'on-hold',
