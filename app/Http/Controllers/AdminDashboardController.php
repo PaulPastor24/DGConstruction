@@ -148,7 +148,7 @@ class AdminDashboardController extends Controller
 
                     'location' => $project->project_location
                         ?? $project->location
-                     0   ?? 'No location',
+                        ?? 'No location',
 
                     'status_label' => $isDelayed ? 'Delayed' : Project::statusLabel($project->status),
 
