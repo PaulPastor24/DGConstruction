@@ -148,6 +148,7 @@ class AdminDashboardController extends Controller
 
                     'location' => $project->project_location
                         ?? $project->location
+
                         ?? 'No location',
 
                     'status_label' => $isDelayed ? 'Delayed' : Project::statusLabel($project->status),
@@ -343,7 +344,7 @@ class AdminDashboardController extends Controller
             $selectedProject = Project::query()
                 ->with('phases')
                 ->find($request->input('project_id'));
-            
+
             session(['admin_selected_project_id' => $request->input('project_id')]);
         } elseif ($hasProjects) {
             $sessionProjectId = session('admin_selected_project_id');
@@ -731,6 +732,23 @@ class AdminDashboardController extends Controller
         $toolLoans = collect();
         $toolDeductions = collect();
         $toolHistory = new LengthAwarePaginator([], 0, 10);
+        $activeToolLoans = new LengthAwarePaginator([], 0, 10);
+        $allToolDeductions = new LengthAwarePaginator([], 0, 10);
+        if (Schema::hasTable('tool_loans')) {
+            $activeToolLoans = ToolLoan::query()
+                ->with(['tool', 'worker', 'project'])
+                ->where('status', 'borrowed')
+                ->orderByDesc('borrowed_at')
+                ->paginate(10, ['*'], 'active_loans_page')
+                ->appends($request->except('active_loans_page'));
+        }
+        if (Schema::hasTable('tool_deductions')) {
+            $allToolDeductions = ToolDeduction::query()
+                ->with(['tool', 'worker'])
+                ->orderByDesc('created_at')
+                ->paginate(10, ['*'], 'deductions_page')
+                ->appends($request->except('deductions_page'));
+        }
         $toolMetrics = [
             'total_tools' => 0,
             'available' => 0,
@@ -817,7 +835,7 @@ class AdminDashboardController extends Controller
             $predefinedToolCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'toolHistory', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'toolHistory', 'activeToolLoans', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**
@@ -856,13 +874,13 @@ class AdminDashboardController extends Controller
             ->where('role', 'supervisor')
             ->orderBy('user_id', 'asc')
             ->get(['user_id', 'first_name', 'last_name']);
-        
+
         $projectId = $request->filled('project_id') ? $request->input('project_id') : session('admin_selected_project_id');
-        
+
         if ($request->filled('project_id')) {
             session(['admin_selected_project_id' => $request->input('project_id')]);
         }
-        
+
         $selectedProject = $projectId ? Project::query()->find($projectId) : null;
 
         return view('admin.reports', compact('reports', 'stats', 'projects', 'phases', 'supervisors', 'selectedProject'));

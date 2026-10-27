@@ -90,6 +90,17 @@ class InventoryCrudTest extends TestCase
         }
     }
 
+    public function test_inventory_supplies_tool_ledger_paginators_when_tables_are_missing(): void
+    {
+        $view = (new AdminDashboardController())->inventory(Request::create('/admin/inventory'));
+        $data = $view->getData();
+        foreach (['activeToolLoans', 'allToolDeductions'] as $key) {
+            $this->assertArrayHasKey($key, $data);
+            $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $data[$key]);
+            $this->assertSame(0, $data[$key]->total());
+        }
+    }
+
     public function test_inventory_search_filters_results(): void
     {
         $controller = new AdminDashboardController();
