@@ -5,3 +5,5 @@
 .project-picker-option { padding: 8px 10px; font-size: .85rem; border-radius: 4px; cursor: pointer; overflow-wrap: anywhere; }
 .project-picker-option[aria-selected="true"] { background: #e8f3ec; color: #164c2a; }
 .project-picker-status { padding: 8px 10px; color: #66766b; font-size: .75rem; border-top: 1px solid #edf1ee; }
+[data-project-menu-search] { width: 100%; margin-bottom: .35rem; padding: .5rem .65rem; border: 1px solid #cbdcd0; border-radius: 6px; font-size: .85rem; }
+[data-project-menu-search]:focus { border-color: #198754; outline: 0; box-shadow: 0 0 0 .15rem rgba(25, 135, 84, .15); }

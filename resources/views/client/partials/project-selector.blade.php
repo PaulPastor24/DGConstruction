@@ -6,9 +6,11 @@
             <i class="bi bi-chevron-down project-selector-caret"></i>
         @endif
     </button>
-    <div class="project-selector-menu" id="projectSelectorMenu" hidden>
+    <div class="project-selector-menu" id="projectSelectorMenu" data-project-search-menu hidden>
+        <label class="visually-hidden" for="clientProjectSearch">Search projects</label>
+        <input type="search" id="clientProjectSearch" class="project-selector-search" data-project-menu-search placeholder="Search projects..." autocomplete="off">
         @foreach($allProjects as $project)
-            <a class="project-selector-item {{ $project->project_id == ($primaryProject?->project_id ?? null) ? 'active' : '' }}" href="{{ route('client.dashboard', ['project_id' => $project->project_id]) }}">
+            <a class="project-selector-item {{ $project->project_id == ($primaryProject?->project_id ?? null) ? 'active' : '' }}" data-project-menu-option href="{{ route('client.dashboard', ['project_id' => $project->project_id]) }}">
                 <span class="project-selector-item-icon"><i class="bi bi-building"></i></span>
                 <span>{{ $project->project_name }}</span>
                 @if($project->project_id == ($primaryProject?->project_id ?? null))

@@ -441,6 +441,26 @@ class LocalFaceAttendanceTest extends TestCase
         $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertUnprocessable();
     }
 
+    public function test_manual_attendance_requires_a_reason_and_event_time(): void
+    {
+        $payload = [
+            'worker_id' => 1,
+            'project_id' => 1,
+            'log_date' => now('Asia/Manila')->toDateString(),
+            'action' => 'time_in',
+            'manual' => true,
+        ];
+
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)
+            ->assertUnprocessable()
+            ->assertJsonFragment(['message' => 'Please provide a reason for manual attendance.']);
+
+        $payload['remarks'] = 'Camera unavailable';
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)
+            ->assertUnprocessable()
+            ->assertJsonFragment(['message' => 'Please provide the time for the manual attendance action.']);
+    }
+
     public function test_attendance_summary_counts_assigned_checked_in_and_late_for_selected_date(): void
     {
         DB::table('attendance_logs')->insert([

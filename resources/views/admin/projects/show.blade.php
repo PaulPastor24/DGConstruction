@@ -15,13 +15,28 @@
     $pdTargetEnd = $project->target_end_date;
     $pdActualEnd = $project->actual_end_date;
     $pdDuration = $pdStart && $pdTargetEnd ? max(1, $pdStart->diffInDays($pdTargetEnd) + 1) : 0;
-    $pdCompletedPhases = $project->phases()->where('status', 'completed')->count();
+    $pdPhases = $project->phases;
+    $pdPhaseCount = $pdPhases->count();
+    $pdMilestoneCount = $project->milestones()->count();
+    $pdCompletedPhases = $pdPhases->where('status', 'completed')->count();
     $pdApprovedReports = $project->reports()->where('approval_status', 'approved')->count();
     $pdMaterialsCount = $project->projectMaterials()->count();
     $pdAttendanceCount = $project->attendanceLogs()->count();
-    $pdCompletionReady = $project->completion_readiness_badge_class === 'success';
-    $pdSetupReady = $project->setup_status_badge_class === 'success';
-    $pdPhasePercent = $project->phase_count > 0 ? round(($pdCompletedPhases / max(1, $project->phase_count)) * 100) : 0;
+    $pdOverallProgress = min(100, max(0, (float) ($project->progress_percentage ?? 0)));
+    $pdPhasePercent = $pdPhaseCount > 0 ? round(($pdCompletedPhases / $pdPhaseCount) * 100) : 0;
+    $pdSetupReady = $project->client_id
+        && $project->engineer_id
+        && $pdActiveSupervisor
+        && $pdStart
+        && $pdTargetEnd
+        && $pdPhaseCount > 0;
+    $pdSetupLabel = $pdSetupReady ? 'Ready for Construction' : 'Setup Required';
+    $pdCompletionReady = $pdPhaseCount > 0
+        && $pdCompletedPhases === $pdPhaseCount
+        && $pdApprovedReports > 0
+        && $pdMaterialsCount > 0
+        && $pdAttendanceCount > 0;
+    $pdCompletionLabel = $pdCompletionReady ? 'Ready for Completion' : 'In Progress';
     $pdNormalizedStatus = $project->workflowStatus();
     $pdIsLate = $project->isLate();
     $pdStatusLabel = $pdIsLate ? 'Late' : $project->workflow_status_label;
@@ -37,9 +52,6 @@
         <h3 id="projectDetailsModalLabel">{{ $project->project_name ?? 'Project Details' }}</h3>
         <p>ID: #{{ $project->project_id ?? 'N/A' }} &middot; {{ $project->location ?? 'Location not specified' }}</p>
     </div>
-    @if($isModal && !$isArchived)
-        <button type="button" class="btn btn-outline-success btn-sm" data-edit-project="{{ $project->project_id }}"><i class="bi bi-pencil me-1"></i>Edit project</button>
-    @endif
     @if($isModal)
         <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
     @endif
@@ -61,8 +73,8 @@
             </div>
             <div class="ps-overview-status">
                 <span class="ps-field-label">Current Status</span>
-                <span class="ps-status-pill {{ $pdStatusBadgeClass === 'warning' ? 'warning' : 'success' }}">
-                    <i class="bi bi-{{ $pdNormalizedStatus === 'planning' ? 'pause-circle' : 'check-circle' }}"></i>
+                <span class="ps-status-pill {{ $pdStatusBadgeClass }}">
+                    <i class="bi bi-{{ $pdIsLate ? 'exclamation-circle' : ($pdNormalizedStatus === 'planning' || $pdNormalizedStatus === \App\Models\Project::STATUS_ON_HOLD ? 'pause-circle' : 'check-circle') }}"></i>
                     {{ $pdStatusLabel }}
                 </span>
             </div>
@@ -70,45 +82,69 @@
 
         <div class="ps-hero-summary-grid">
             <div class="ps-summary-chip">
-                <span class="ps-summary-label">Progress</span>
-                <span class="ps-summary-value">{{ number_format($project->progress_percentage ?? 0, 0) }}%</span>
+                <span class="ps-summary-label"><i class="bi bi-graph-up-arrow"></i> Progress</span>
+                <span class="ps-summary-value">{{ number_format($pdOverallProgress, 0) }}<small>%</small></span>
+                <div class="ps-progress-track" role="progressbar" aria-label="Project progress" aria-valuenow="{{ $pdOverallProgress }}" aria-valuemin="0" aria-valuemax="100">
+                    <span style="width: {{ $pdOverallProgress }}%"></span>
+                </div>
             </div>
             <div class="ps-summary-chip">
-                <span class="ps-summary-label">Phases</span>
-                <span class="ps-summary-value">{{ $project->phase_count }}</span>
+                <span class="ps-summary-label"><i class="bi bi-layers"></i> Phases</span>
+                <span class="ps-summary-value">{{ $pdPhaseCount }}</span>
+                <span class="ps-summary-detail">{{ $pdCompletedPhases }} completed</span>
             </div>
             <div class="ps-summary-chip">
-                <span class="ps-summary-label">Milestones</span>
-                <span class="ps-summary-value">{{ $project->milestone_count }}</span>
+                <span class="ps-summary-label"><i class="bi bi-flag"></i> Milestones</span>
+                <span class="ps-summary-value">{{ $pdMilestoneCount }}</span>
+                <span class="ps-summary-detail">Project schedule</span>
             </div>
             <div class="ps-summary-chip">
-                <span class="ps-summary-label">Reports</span>
-                <span class="ps-summary-value">{{ $pdApprovedReports }} approved</span>
+                <span class="ps-summary-label"><i class="bi bi-file-earmark-check"></i> Reports</span>
+                <span class="ps-summary-value">{{ $pdApprovedReports }}</span>
+                <span class="ps-summary-detail">Approved</span>
             </div>
         </div>
 
         <div class="ps-info-grid">
-            <div class="ps-info-card">
-                <div class="ps-field-label">Project Summary</div>
-                <div class="ps-field-value">{{ $project->description ?: 'No summary provided yet.' }}</div>
+            <div class="ps-info-card ps-summary-info-card">
+                <div class="ps-info-card-heading">
+                    <span class="ps-info-icon"><i class="bi bi-card-text"></i></span>
+                    <span class="ps-field-label">Project Summary</span>
+                </div>
+                <p class="ps-summary-copy {{ $project->description ? '' : 'is-empty' }}">{{ $project->description ?: 'No summary provided yet.' }}</p>
             </div>
             <div class="ps-info-card">
-                <div class="ps-field-label">Key Dates</div>
-                <div class="ps-field-value"><i class="bi bi-calendar3"></i> Start: {{ $pdStart ? $pdStart->format('M d, Y') : 'Not set' }}</div>
-                <div class="ps-field-value"><i class="bi bi-calendar3"></i> Target: {{ $pdTargetEnd ? $pdTargetEnd->format('M d, Y') : 'Not set' }}</div>
-                <div class="ps-field-value"><i class="bi bi-clock-history"></i> Duration: {{ $pdDuration > 0 ? $pdDuration . ' days' : 'Not available' }}</div>
+                <div class="ps-info-card-heading">
+                    <span class="ps-info-icon"><i class="bi bi-calendar3"></i></span>
+                    <span class="ps-field-label">Key Dates</span>
+                </div>
+                <div class="ps-detail-list">
+                    <div class="ps-detail-row"><span>Start date</span><strong>{{ $pdStart ? $pdStart->format('M d, Y') : 'Not set' }}</strong></div>
+                    <div class="ps-detail-row"><span>Target date</span><strong>{{ $pdTargetEnd ? $pdTargetEnd->format('M d, Y') : 'Not set' }}</strong></div>
+                    <div class="ps-detail-row"><span>Duration</span><strong>{{ $pdDuration > 0 ? $pdDuration . ' days' : 'Not available' }}</strong></div>
+                </div>
             </div>
             <div class="ps-info-card">
-                <div class="ps-field-label">Delivery Snapshot</div>
-                <div class="ps-field-value"><i class="bi bi-box-seam"></i> Materials: {{ $pdMaterialsCount }}</div>
-                <div class="ps-field-value"><i class="bi bi-people"></i> Attendance Logs: {{ $pdAttendanceCount }}</div>
-                <div class="ps-field-value"><i class="bi bi-graph-up"></i> Phase Completion: {{ $pdPhasePercent }}%</div>
+                <div class="ps-info-card-heading">
+                    <span class="ps-info-icon"><i class="bi bi-truck"></i></span>
+                    <span class="ps-field-label">Delivery Snapshot</span>
+                </div>
+                <div class="ps-detail-list">
+                    <div class="ps-detail-row"><span><i class="bi bi-box-seam"></i> Materials</span><strong>{{ $pdMaterialsCount }}</strong></div>
+                    <div class="ps-detail-row"><span><i class="bi bi-people"></i> Attendance logs</span><strong>{{ $pdAttendanceCount }}</strong></div>
+                    <div class="ps-detail-row"><span><i class="bi bi-check2-circle"></i> Phase completion</span><strong>{{ $pdPhasePercent }}%</strong></div>
+                </div>
             </div>
             <div class="ps-info-card">
-                <div class="ps-field-label">Project Readiness</div>
-                <div class="ps-field-value"><i class="bi bi-shield-check"></i> Setup: {{ $project->setup_status_label }}</div>
-                <div class="ps-field-value"><i class="bi bi-check2-circle"></i> Completion: {{ $project->completion_readiness_label }}</div>
-                <div class="ps-field-value"><i class="bi bi-calendar-event"></i> Created: {{ $project->created_at ? $project->created_at->format('M d, Y h:i A') : 'N/A' }}</div>
+                <div class="ps-info-card-heading">
+                    <span class="ps-info-icon"><i class="bi bi-shield-check"></i></span>
+                    <span class="ps-field-label">Project Readiness</span>
+                </div>
+                <div class="ps-detail-list">
+                    <div class="ps-detail-row"><span>Setup</span><span class="ps-readiness-pill {{ $pdSetupReady ? 'is-ready' : '' }}">{{ $pdSetupLabel }}</span></div>
+                    <div class="ps-detail-row"><span>Completion</span><span class="ps-readiness-pill {{ $pdCompletionReady ? 'is-ready' : '' }}">{{ $pdCompletionLabel }}</span></div>
+                    <div class="ps-detail-row"><span>Created</span><strong>{{ $project->created_at ? $project->created_at->format('M d, Y · h:i A') : 'N/A' }}</strong></div>
+                </div>
             </div>
         </div>
     </div>
@@ -141,17 +177,17 @@
                     <i class="bi bi-{{ $pdSetupReady ? 'check-lg' : 'exclamation-lg' }}"></i>
                 </div>
                 <div class="ps-mini-label">Setup Status</div>
-                <span class="ps-status-pill {{ $pdSetupReady ? 'success' : 'warning' }}">{{ $project->setup_status_label }}</span>
+                <span class="ps-status-pill {{ $pdSetupReady ? 'success' : 'warning' }}">{{ $pdSetupLabel }}</span>
             </div>
             <div class="ps-mini-card">
                 <div class="ps-mini-icon success"><i class="bi bi-layers"></i></div>
                 <div class="ps-mini-label">Construction Phases</div>
-                <div class="ps-mini-value">{{ $pdCompletedPhases }} / {{ $project->phase_count }} completed</div>
+                <div class="ps-mini-value">{{ $pdCompletedPhases }} / {{ $pdPhaseCount }} completed</div>
             </div>
             <div class="ps-mini-card">
                 <div class="ps-mini-icon neutral"><i class="bi bi-flag"></i></div>
                 <div class="ps-mini-label">Timeline Milestones</div>
-                <div class="ps-mini-value">{{ $project->milestone_count }} current count</div>
+                <div class="ps-mini-value">{{ $pdMilestoneCount }} total milestones</div>
             </div>
             <div class="ps-mini-card">
                 <div class="ps-mini-icon neutral"><i class="bi bi-clipboard-check"></i></div>
@@ -221,22 +257,20 @@
     </div>
 </div>
 
-<div class="ps-footer d-flex justify-content-center gap-2 flex-wrap">
-    @if($isModal)
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-    @else
+<div class="ps-footer">
+    @unless($isModal)
+        <div class="ps-footer-navigation" role="group" aria-label="Project navigation">
         <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Back to List
         </a>
-    @endif
-    <a href="{{ route('admin.projects.index') }}" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
-        <i class="bi bi-folder2-open"></i> Project Management
-    </a>
+        </div>
+    @endunless
+    <div class="ps-footer-actions" role="group" aria-label="Project actions">
     @if($isArchived)
         <form action="{{ route('admin.projects.restore', $project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="restore" data-confirm-title="Restore Project?" data-confirm-text="This project will be moved back to the Active Project list." data-confirm-button="Restore" data-cancel-button="Cancel">
             @csrf
             @method('PATCH')
-            <button type="submit" class="btn btn-sm btn-outline-success" style="border-color:#c8e6c9; color:#166534; background:#f6fff7;">
+            <button type="submit" class="btn btn-sm btn-outline-success">
                 <i class="bi bi-arrow-counterclockwise"></i> Restore
             </button>
         </form>
@@ -245,22 +279,22 @@
             <form action="{{ route('admin.projects.archive', $project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="archive" data-confirm-title="Archive Project?" data-confirm-text="This project will be removed from the Active Project list. All construction history, reports, phases, milestones, attendance, and materials will remain available." data-confirm-button="Archive" data-cancel-button="Cancel">
                 @csrf
                 @method('PATCH')
-                <button type="submit" class="btn btn-sm btn-outline-warning" style="border-color:#f5d9a0; color:#b7791f; background:#fffaf1;">
-                    <i class="bi bi-archive"></i> Archive
+                <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-archive"></i> Archive Project
                 </button>
             </form>
             <form action="{{ route('admin.projects.destroy', $project) }}" method="POST" class="d-inline project-action-form" data-project-confirm="delete" data-confirm-title="Delete Project?" data-confirm-text="This project has no construction records. This action is permanent and cannot be undone." data-confirm-button="Delete" data-cancel-button="Cancel">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-sm px-3 py-2 btn-outline-danger" style="border-color:#fecaca; color:#b91c1c; background:#fff7f7;">
-                    <i class="bi bi-trash"></i> Delete
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Delete Project
                 </button>
             </form>
         @endif
     @endif
+    </div>
 </div>
 
-@push('styles')
 <style>
     .ps-header {
         display: flex;
@@ -376,6 +410,32 @@
         font-weight: 600;
     }
 
+    .ps-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .ps-status-pill.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .ps-status-pill.warning {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    .ps-status-pill.danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
     .ps-overview-status {
         text-align: right;
         flex: 0 0 auto;
@@ -392,7 +452,7 @@
         border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 12px 14px;
-        background: #f8fafc;
+        background: linear-gradient(145deg, #fff 0%, #f8fbf8 100%);
     }
 
     .ps-summary-label {
@@ -405,10 +465,44 @@
         margin-bottom: 4px;
     }
 
+    .ps-summary-label i {
+        margin-right: 4px;
+        color: #66836d;
+    }
+
     .ps-summary-value {
+        display: block;
         font-size: 0.95rem;
         font-weight: 700;
         color: #0f172a;
+    }
+
+    .ps-summary-value small {
+        margin-left: 1px;
+        color: #64748b;
+        font-size: 0.75em;
+    }
+
+    .ps-summary-detail {
+        display: block;
+        margin-top: 2px;
+        color: #718174;
+        font-size: 0.72rem;
+    }
+
+    .ps-progress-track {
+        height: 5px;
+        margin-top: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e8eee9;
+    }
+
+    .ps-progress-track span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: #66836d;
     }
 
     .ps-info-grid {
@@ -420,13 +514,108 @@
     .ps-info-card {
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 12px 14px;
-        background: #fff;
+        padding: 15px 16px;
+        background: linear-gradient(155deg, #fff 0%, #fbfdfb 100%);
     }
 
-    .ps-info-card .ps-field-value {
-        margin-top: 5px;
-        line-height: 1.45;
+    .ps-info-card-heading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 12px;
+    }
+
+    .ps-info-icon {
+        display: inline-flex;
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #edf4ee;
+        color: #52705a;
+    }
+
+    .ps-info-card-heading .ps-field-label {
+        color: #405347;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
+    }
+
+    .ps-summary-copy {
+        margin: 0;
+        color: #334155;
+        font-size: 0.88rem;
+        line-height: 1.65;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .ps-summary-copy.is-empty {
+        color: #87938a;
+        font-style: italic;
+    }
+
+    .ps-detail-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ps-detail-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+        border-top: 1px solid #edf1ed;
+        color: #718174;
+        font-size: 0.78rem;
+        line-height: 1.4;
+    }
+
+    .ps-detail-row:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .ps-detail-row:last-child {
+        padding-bottom: 0;
+    }
+
+    .ps-detail-row > span:first-child {
+        min-width: 0;
+    }
+
+    .ps-detail-row > span:first-child i {
+        width: 17px;
+        color: #7a8e7e;
+    }
+
+    .ps-detail-row strong {
+        color: #33483a;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .ps-readiness-pill {
+        max-width: 65%;
+        padding: 3px 8px;
+        border: 1px solid #e3e8e3;
+        border-radius: 999px;
+        background: #f5f7f5;
+        color: #657168;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .ps-readiness-pill.is-ready {
+        border-color: #d7e5d9;
+        background: #edf4ee;
+        color: #48634e;
     }
 
     .ps-actions-grid {
@@ -481,9 +670,32 @@
         border-top: 1px solid #e2e8f0;
         padding: 16px 32px 22px;
         display: flex;
+        align-items: center;
         justify-content: flex-end;
-        gap: 10px;
+        gap: 12px;
+    }
+
+    .ps-footer-navigation,
+    .ps-footer-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         flex-wrap: wrap;
+    }
+
+    .ps-footer-actions form {
+        display: flex;
+        margin: 0;
+    }
+
+    .ps-footer-actions {
+        justify-content: flex-end;
+    }
+
+    .ps-footer .btn {
+        min-height: 36px;
+        padding: 0.45rem 0.8rem;
+        font-weight: 600;
     }
 
     @media (max-width: 767.98px) {
@@ -499,9 +711,38 @@
             flex-direction: column;
         }
 
+        .ps-footer {
+            align-items: stretch;
+            flex-direction: column;
+            padding: 14px 18px 18px;
+        }
+
+        .ps-footer-navigation,
+        .ps-footer-actions {
+            width: 100%;
+        }
+
+        .ps-footer-navigation {
+            justify-content: flex-start;
+        }
+
+        .ps-footer-actions {
+            justify-content: flex-end;
+        }
+
+        .ps-footer-navigation .btn,
+        .ps-footer-actions form,
+        .ps-footer-actions form .btn {
+            flex: 1 1 0;
+        }
+
+        .ps-footer-navigation .btn,
+        .ps-footer-actions form .btn {
+            justify-content: center;
+        }
+
         .ps-overview-status {
             text-align: left;
         }
     }
 </style>
-@endpush

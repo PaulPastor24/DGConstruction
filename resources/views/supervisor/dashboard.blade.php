@@ -452,7 +452,7 @@
 										<label for="dashboardProjectId" class="visually-hidden">Project</label>
 										<div class="supervisor-select-wrapper">
 											<i class="bi bi-building supervisor-select-icon"></i>
-											<select id="dashboardProjectId" name="project_id" class="form-select supervisor-project-select" onchange="this.form.submit()" {{ $assignedProjects->isEmpty() ? 'disabled' : '' }}>
+											<select id="dashboardProjectId" name="project_id" class="form-select supervisor-project-select" data-searchable-project aria-label="Select active project" onchange="this.form.submit()" {{ $assignedProjects->isEmpty() ? 'disabled' : '' }}>
 												@if($assignedProjects->isEmpty())
 													<option value="" selected>No assigned projects</option>
 												@else

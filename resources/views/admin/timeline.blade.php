@@ -2075,7 +2075,7 @@
 
         <div class="toolbar-group">
             <label for="projectSelector">Project</label>
-            <select id="projectSelector" class="toolbar-select">
+            <select id="projectSelector" class="toolbar-select" data-searchable-project aria-label="Select project timeline">
                 @foreach($projectsWithStats as $project)
                     <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                 @endforeach

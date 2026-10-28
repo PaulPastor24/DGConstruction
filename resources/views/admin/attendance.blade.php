@@ -336,7 +336,7 @@
                     Project
                 </label>
 
-                <select id="project_id" name="project_id">
+                <select id="project_id" name="project_id" data-searchable-project aria-label="Filter attendance by project">
                     <option value="">All Projects</option>
 
                     @foreach($projects as $project)

@@ -795,7 +795,8 @@ class ReportController extends Controller
 
         // Get all projects assigned to supervisor
         $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
-            $q->where('supervisor_id', $user->user_id);
+            $q->where('supervisor_id', $user->user_id)
+                ->where('project_supervisors.is_active', true);
         })->notArchived()->with(['phases' => function ($query) {
             $query->orderBy('phase_order', 'asc');
         }])->orderBy('project_name')->get();
@@ -919,7 +920,8 @@ class ReportController extends Controller
                 $q->where('project_id', $selectedProject->project_id);
             }
             $q->whereHas('supervisors', function ($sq) use ($user) {
-                $sq->where('supervisor_id', $user->user_id);
+                $sq->where('supervisor_id', $user->user_id)
+                    ->where('project_supervisors.is_active', true);
             });
         });
 
@@ -951,7 +953,8 @@ class ReportController extends Controller
         $project = Project::query()->where('project_id', $projectId)
             ->notArchived()
             ->whereHas('supervisors', function ($q) use ($user) {
-                $q->where('supervisor_id', $user->user_id);
+                $q->where('supervisor_id', $user->user_id)
+                    ->where('project_supervisors.is_active', true);
             })->firstOrFail();
 
         $phasesQuery = ConstructionPhase::query()->where('project_id', $projectId);
@@ -988,7 +991,8 @@ class ReportController extends Controller
             ->whereHas('project', function ($q) use ($user) {
                 $q->notArchived();
                 $q->whereHas('supervisors', function ($sq) use ($user) {
-                    $sq->where('supervisor_id', $user->user_id);
+                    $sq->where('supervisor_id', $user->user_id)
+                        ->where('project_supervisors.is_active', true);
                 });
             })->firstOrFail();
 
@@ -1040,7 +1044,8 @@ class ReportController extends Controller
             ->whereHas('project', function ($q) use ($user) {
                 $q->notArchived();
                 $q->whereHas('supervisors', function ($sq) use ($user) {
-                    $sq->where('supervisor_id', $user->user_id);
+                    $sq->where('supervisor_id', $user->user_id)
+                        ->where('project_supervisors.is_active', true);
                 });
             })->firstOrFail();
 
@@ -1105,7 +1110,10 @@ class ReportController extends Controller
         // Supervisor can view reports from their assigned projects
         if ($user->role === 'supervisor') {
             if ($report->project->workflowStatus() !== Project::STATUS_ARCHIVED
-                && $report->project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+                && $report->project->supervisors()
+                    ->where('supervisor_id', $user->user_id)
+                    ->wherePivot('is_active', true)
+                    ->exists()) {
                 return true;
             }
         }
@@ -1126,7 +1134,10 @@ class ReportController extends Controller
             abort(404);
         }
 
-        if (!$project->supervisors()->where('supervisor_id', auth('web')->user()->user_id)->exists()) {
+        if (!$project->supervisors()
+            ->where('supervisor_id', auth('web')->user()->user_id)
+            ->wherePivot('is_active', true)
+            ->exists()) {
             abort(403, 'You are not assigned to this project');
         }
     }
@@ -1183,7 +1194,8 @@ class ReportController extends Controller
             ->notArchived()
             ->where('project_id', $validated['project_id'])
             ->whereHas('supervisors', function ($query) use ($user) {
-                $query->where('supervisor_id', $user->user_id);
+                $query->where('supervisor_id', $user->user_id)
+                    ->where('project_supervisors.is_active', true);
             })
             ->firstOrFail();
 
@@ -1203,7 +1215,10 @@ class ReportController extends Controller
             return response()->json(['success' => false, 'message' => 'Select an unfinished phase belonging to the selected project.'], 422);
         }
 
-        if (!$project->supervisors()->where('supervisor_id', $user->user_id)->exists()) {
+        if (!$project->supervisors()
+            ->where('supervisor_id', $user->user_id)
+            ->wherePivot('is_active', true)
+            ->exists()) {
             abort(403, 'You are not assigned to this project');
         }
 

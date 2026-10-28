@@ -1064,7 +1064,7 @@
                 </div>
                 <div>
                     <label class="text-muted d-block uppercase tracking-wider mb-1" style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em;">Select Project</label>
-                     <select class="fw-semibold text-dark project-select" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 13px;">
+                     <select class="fw-semibold text-dark project-select" data-searchable-project aria-label="Select project phases" onchange="window.location='{{ route('admin.phases') }}?project_id='+this.value" style="width: auto; font-size: 13px;">
                         @foreach($projects as $projectOption)
                             <option value="{{ $projectOption->project_id }}" {{ ($selectedProject && $selectedProject->project_id == $projectOption->project_id) ? 'selected' : '' }}>
                                 {{ $projectOption->project_name }}

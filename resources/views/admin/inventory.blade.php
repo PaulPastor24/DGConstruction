@@ -3,12 +3,7 @@
 @section('title', 'Materials & Inventory')
 @section('page_title', 'Materials & Inventory')
 
-@push('scripts')
-    <script src="{{ asset('js/searchable-project-select.js') }}" defer></script>
-@endpush
-
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/searchable-project-select.css') }}">
 <style>
     .inventory-compact-pagination .pagination { flex-wrap: nowrap; }
     .inventory-compact-pagination .page-link { min-width: 32px; text-align: center; }
@@ -212,6 +207,38 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .inventory-filter-row {
+        display: grid;
+        grid-template-columns: minmax(160px, 1.25fr) minmax(150px, 1.1fr) minmax(110px, 0.9fr) minmax(105px, 0.8fr) minmax(235px, 1.8fr);
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .inventory-filter-row > * {
+        min-width: 0;
+    }
+
+    .inventory-main-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-width: 0;
+    }
+
+    .inventory-main-actions .btn {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
+        padding: 0.35rem 0.4rem;
+        font-size: 0.64rem;
+        line-height: 1.2;
+        border-radius: 8px;
+    }
+
+    .inventory-main-actions .btn i {
+        font-size: 0.72rem;
     }
 
     .inventory-mobile-table-label {
@@ -962,9 +989,86 @@
         letter-spacing: 0.035em;
     }
 
-    @media (max-width: 575.98px) {
+    @media (max-width: 767.98px) {
         #toolHistoryModal .tool-history-footer {
             padding: 1rem;
+        }
+
+        #toolHistoryModal .table-responsive {
+            overflow: visible;
+            border: 0 !important;
+        }
+
+        #toolHistoryModal .tool-history-table {
+            display: block;
+            min-width: 0;
+            table-layout: auto;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        #toolHistoryModal .tool-history-table thead {
+            display: none;
+        }
+
+        #toolHistoryModal .tool-history-table tbody {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row td {
+            min-width: 0;
+            padding: 0.7rem;
+            border: 0;
+            border-bottom: 1px solid #edf2f0;
+            overflow-wrap: anywhere;
+        }
+
+        #toolHistoryModal .tool-history-date {
+            white-space: normal;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row td::before {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #64748b;
+            content: attr(data-label);
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row td:nth-last-child(2) {
+            grid-column: span 2;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row td:last-child {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            grid-column: span 2;
+            border-bottom: 0;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-row td:last-child::before {
+            margin-bottom: 0;
+        }
+
+        #toolHistoryModal .tool-history-table .tool-history-empty {
+            display: block;
+            padding: 1rem;
+            text-align: center;
         }
 
         #toolHistoryDetailsModal .history-detail-footer {
@@ -1143,6 +1247,19 @@
 
 
     @media (max-width: 1199.98px) {
+        .inventory-filter-row {
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 2fr);
+        }
+
+        .inventory-filter-row .inventory-main-actions {
+            gap: 0.25rem;
+        }
+
+        .inventory-filter-row .inventory-main-actions .btn {
+            padding: 0.4rem 0.35rem;
+            font-size: 0.64rem;
+        }
+
         .inventory-action-stack {
             justify-content: flex-start;
             gap: 0.3rem;
@@ -1201,6 +1318,15 @@
     }
 
     @media (max-width: 767.98px) {
+        .inventory-filter-row {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .inventory-filter-row .inventory-filter-search,
+        .inventory-filter-row .inventory-main-actions {
+            grid-column: auto;
+        }
+
         .inventory-green-theme .card-body {
             padding: 1rem;
         }
@@ -2302,17 +2428,17 @@
                 <div class="card-body pt-3">
                     <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
-                    <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
-<div class="col-md-4"><select name="project_id" data-searchable-project class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
+                    <form method="GET" action="{{ route('admin.inventory') }}" class="inventory-filter-row mb-4" id="inventory-search-form">
+<div><select name="project_id" data-searchable-project class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
 <option value="">All projects / warehouse inventory</option>
 @foreach($projects as $inventoryProject)<option value="{{ $inventoryProject->project_id }}" @selected((int) request('project_id') === (int) $inventoryProject->project_id)>{{ $inventoryProject->project_name }}</option>@endforeach
 </select></div>
-                        <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
+                        <div class="inventory-filter-search position-relative search-container">
                             <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
                             <input type="hidden" name="view" value="inventory" id="inventory-view-input">
                             <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                         </div>
-                        <div class="col-md-2">
+                        <div>
                             <select name="category" class="form-select form-select-sm text-muted" >
                                 <option value="">All Categories</option>
                                 @foreach($categories as $cat)
@@ -2320,7 +2446,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div>
                             <select name="stock_status" class="form-select form-select-sm text-muted" >
                                 <option value="">All Status</option>
                                 <option value="normal" {{ $stockStatus === 'normal' ? 'selected' : '' }}>Available</option>
@@ -2328,7 +2454,7 @@
                                 <option value="out_of_stock" {{ $stockStatus === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                             </select>
                         </div>
-                        <div class="col-lg-4 col-md-12 col-12 inventory-action-stack">
+                        <div class="inventory-main-actions">
                             <button type="button" class="btn btn-outline-secondary btn-sm px-3 fw-semibold bg-white text-dark" data-bs-toggle="modal" data-bs-target="#addMaterialModal" title="Register a new material in the master catalog">
                                 <i class="bi bi-plus-lg me-1"></i> Add Material
                             </button>
@@ -2462,7 +2588,7 @@
                                                     <label class="form-label-custom">Project<span class="required-asterisk">*</span></label>
                                                     <div class="input-container-group select-caret-wrapper">
                                                         <i class="bi bi-building input-icon-left"></i>
-                                                        <select name="project_id" class="control-field-input" required>
+                                                        <select name="project_id" class="control-field-input" data-searchable-project aria-label="Select allocation project" required>
                                                             <option value="">Select project</option>
                                                             @foreach($inventoryProjectOptions as $projectOption)
                                                                 @php
@@ -3108,95 +3234,6 @@
                             </div>
                         @endif
 
-                        <!-- Active Tool Loans -->
-                        @if($activeToolLoans->total() > 0)
-                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
-                                        <tr>
-                                            <th class="border-0">Tool</th>
-                                            <th class="border-0">Code</th>
-                                            <th class="border-0">Worker</th>
-                                            <th class="border-0">Project</th>
-                                            <th class="border-0">Expected Return</th>
-                                            <th class="border-0">Condition at Issue</th>
-                                            <th class="border-0">Borrowed At</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($activeToolLoans as $loan)
-                                            <tr>
-                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
-                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
-                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @if($activeToolLoans->hasPages())
-                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                                    <span class="text-muted small">Showing {{ $activeToolLoans->firstItem() ?? 0 }} to {{ $activeToolLoans->lastItem() ?? 0 }} of {{ $activeToolLoans->total() }} active loans</span>
-                                    <div>{{ $activeToolLoans->links('pagination::inventory-compact') }}</div>
-                                </div>
-                            @endif
-                        </div>
-                        @endif
-
-                        <!-- Tool Deduction Ledger -->
-                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i>Deduction Ledger</h6>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
-                                        <tr>
-                                            <th class="border-0">Tool</th>
-                                            <th class="border-0">Worker</th>
-                                            <th class="border-0">Reason</th>
-                                            <th class="border-0">Amount</th>
-                                            <th class="border-0">Status</th>
-                                            <th class="border-0">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($allToolDeductions as $deduction)
-                                            @php
-                                                $deductionBadgeClass = $deduction->status_badge_class;
-                                                $deductionStatusLabel = $deduction->status_label;
-                                            @endphp
-                                            <tr>
-                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
-                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
-                                                <td class="fw-bold text-dark">₱{{ number_format($deduction->amount, 2) }}</td>
-                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
-                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            @if($allToolDeductions instanceof \Illuminate\Pagination\LengthAwarePaginator && $allToolDeductions->hasPages())
-                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                                    <span class="text-muted small">Showing {{ $allToolDeductions->firstItem() ?? 0 }} to {{ $allToolDeductions->lastItem() ?? 0 }} of {{ $allToolDeductions->total() }} deduction records</span>
-                                    <div>{{ $allToolDeductions->links('pagination::inventory-compact') }}</div>
-                                </div>
-                            @endif
-                        </div>
             </div>
 
                 </div>
@@ -4123,7 +4160,7 @@
                                 <label class="form-label-custom">Project (Optional)</label>
                                 <div class="input-container-group select-caret-wrapper">
                                     <i class="bi bi-building input-icon-left"></i>
-                                    <select name="project_id" class="control-field-input">
+                                    <select name="project_id" class="control-field-input" data-searchable-project aria-label="Filter stock by project">
                                         <option value="">No project</option>
                                         @foreach($projects as $projectOption)
                                             @php $pid = data_get($projectOption, 'project_id') ?? data_get($projectOption, 'id'); $pname = data_get($projectOption, 'project_name') ?? data_get($projectOption, 'name') ?? 'Unnamed'; @endphp
@@ -4434,15 +4471,15 @@
                                         ? 'bg-danger-subtle text-danger'
                                         : ($loan->status === 'borrowed' ? 'bg-warning-subtle text-dark' : 'bg-success-subtle text-success');
                                 @endphp
-                                <tr>
-                                    <td>
+                                <tr class="tool-history-row">
+                                <td data-label="Tool">
                                         <div class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Tool removed' }}</div>
                                         <div class="small text-muted">{{ $loan->tool->tool_code ?? '-' }}</div>
                                     </td>
-                                    <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
-                                    <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
-                                    <td><span class="badge rounded-pill tool-history-status {{ $historyStatusClass }}">{{ $loan->status_label }}</span></td>
-                                    <td class="tool-history-date">
+                                    <td class="text-muted" data-label="Worker">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
+                                    <td class="text-muted" data-label="Project">{{ $loan->project->project_name ?? '-' }}</td>
+                                    <td data-label="Status"><span class="badge rounded-pill tool-history-status {{ $historyStatusClass }}">{{ $loan->status_label }}</span></td>
+                                    <td class="tool-history-date" data-label="Dates">
                                         <span class="tool-history-date-label">Borrowed</span><br>
                                         {{ $loan->borrowed_at?->format('M d, Y') ?? '-' }}
                                         @if($loan->returned_at || $loan->status === 'lost')
@@ -4450,7 +4487,7 @@
                                             {{ ($loan->returned_at ?? $loan->updated_at)?->format('M d, Y') ?? '-' }}
                                         @endif
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center" data-label="Other details">
                                         <button type="button"
                                             class="tool-history-view-button btn-view-tool-history"
                                             title="View loan and loss details"
@@ -4476,7 +4513,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="text-center text-muted py-4">No tool loan history recorded yet.</td></tr>
+                                <tr class="tool-history-empty"><td colspan="6" class="text-center text-muted py-4">No tool loan history recorded yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

@@ -335,6 +335,7 @@
         }
 
     </style>
+    <link rel="stylesheet" href="{{ asset('css/searchable-project-select.css') }}">
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
     @include('partials.system-loading-head')
@@ -516,6 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
 @endif
 
 @stack('scripts')
+<script src="{{ asset('js/searchable-project-select.js') }}" defer></script>
 @include('partials.user-presence')
 </body>
 </html>

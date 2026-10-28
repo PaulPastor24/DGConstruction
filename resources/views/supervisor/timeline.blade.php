@@ -143,7 +143,7 @@
                                     <div class="project-selector-icon" aria-hidden="true">
                                         <i class="bi bi-building"></i>
                                     </div>
-                                    <select class="form-select project-theme-select" onchange="window.location.href='{{ route('supervisor.timeline') }}?project_id=' + this.value">
+                                    <select class="form-select project-theme-select" data-searchable-project aria-label="Select project timeline" onchange="window.location.href='{{ route('supervisor.timeline') }}?project_id=' + this.value">
                                         @foreach($projectsWithStats as $dropdownProject)
                                             <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $selectedProjectId ? 'selected' : '' }}>
                                                 {{ data_get($dropdownProject, 'name', 'Project') }}

@@ -48,7 +48,7 @@ class ReportUploadsTest extends TestCase
         DB::table('users')->insert([['user_id' => 1, 'role' => 'admin'], ['user_id' => 2, 'role' => 'supervisor']]);
         DB::table('projects')->insert(['project_id' => 1, 'project_name' => 'Test', 'status' => 'ongoing']);
         DB::table('construction_phases')->insert(['phase_id' => 1, 'project_id' => 1, 'phase_name' => 'Test phase', 'status' => 'in_progress']);
-        DB::table('project_supervisors')->insert(['project_id' => 1, 'supervisor_id' => 2]);
+        DB::table('project_supervisors')->insert(['project_id' => 1, 'supervisor_id' => 2, 'is_active' => true]);
     }
 
     public function test_all_admin_roles_remove_supervisor_and_client_images_on_prepare_approval_and_update(): void
@@ -90,8 +90,21 @@ class ReportUploadsTest extends TestCase
         Storage::disk('public')->assertMissing($report->attachments[0]['path']);
         $this->actingAs(User::findOrFail(1))->get(route('admin.reports.attachments.download', [$report->report_id, 0]))->assertDownload('evidence.pdf');
         $this->get(route('admin.reports.attachments.download', [$report->report_id, 1]))->assertNotFound();
-        DB::table('project_supervisors')->delete();
-        $this->actingAs(User::findOrFail(2))->get(route('supervisor.reports.attachments.download', [$report->report_id, 0]))->assertForbidden();
+        $this->actingAs(User::findOrFail(2))
+            ->get(route('supervisor.reports.attachments.download', [$report->report_id, 0]))
+            ->assertDownload('evidence.pdf');
+        DB::table('project_supervisors')->where('project_id', 1)->where('supervisor_id', 2)->update(['is_active' => false]);
+        $this->get(route('supervisor.reports.attachments.download', [$report->report_id, 0]))->assertForbidden();
+        $this->get(route('supervisor.reports.show', $report->report_id))->assertForbidden();
+        $this->get(route('supervisor.api.reports.details', $report->report_id))->assertNotFound();
+        $this->get(route('supervisor.api.reports.phases', 1))->assertNotFound();
+        $this->postJson(route('supervisor.reports.submit'), $this->submission([]))->assertForbidden();
+        $this->postJson(route('supervisor.reports.update', $report->report_id), [
+            'project_id' => 1,
+            'phase_id' => 1,
+            'report_date' => now()->format('Y-m-d\TH:i'),
+            'report_text' => 'Attempted update after assignment revocation',
+        ])->assertNotFound();
     }
 
     public function test_invalid_documents_and_upload_limits_are_rejected(): void

@@ -1974,7 +1974,7 @@
 
         <div class="toolbar-group">
             <label for="projectSelector">Project</label>
-            <select id="projectSelector" class="toolbar-select">
+            <select id="projectSelector" class="toolbar-select" data-searchable-project aria-label="Select project timeline">
                 @foreach($projectsWithStats as $project)
                     <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                 @endforeach
@@ -2212,6 +2212,7 @@
 
         resetTablePagination();
         document.getElementById('projectSelector').value = String(selectedProject.id);
+        document.getElementById('projectSelector').dispatchEvent(new Event('project-picker:sync'));
         populatePhaseFilter(selectedProject);
         renderTimeline(selectedProject);
     }
@@ -2441,7 +2442,7 @@
             planning: 'Planning',
             delayed: 'Delayed',
             on_hold: 'On Hold',
-            at_risk: 'At Risk',
+            at_risk: 'Might Be Delayed',
             behind_schedule: 'Behind Schedule',
         }[normalizedProjectStatus] || (project.status ? String(project.status).replace(/_/g, ' ') : 'Active');
         const hasDelayedSchedule = allProjectPhases.some((phase) => ['delayed', 'on_hold'].includes(String(phase.status || '').toLowerCase()))
@@ -2452,9 +2453,10 @@
                 const deadline = milestone.planned_end_date || milestone.end_date || milestone.end || milestone.start_date || milestone.start;
                 return !milestone.is_completed && !milestone.is_delayed && deadline && new Date(deadline) < new Date();
             });
+        const projectScheduleDelayed = hasDelayedSchedule || hasOverdueSchedule;
         const projectScheduleLabel = normalizedProjectStatus === 'completed'
             ? 'Completed'
-            : (hasDelayedSchedule || hasOverdueSchedule ? 'At Risk' : 'On Track');
+            : (projectScheduleDelayed ? 'Might Be Delayed' : 'On Schedule');
 
         const statusSummary = [
             { key: 'completed', label: 'Completed', count: completedCount, color: '#E8F5E9', textColor: '#2E7D32' },
@@ -2635,7 +2637,7 @@
                                     <div class="summary-stat-icon"><i class="bi bi-activity"></i></div>
                                     <div class="summary-stat-body">
                                         <span class="summary-stat-label">Project status</span>
-                                        <strong>${escapeHtml(projectScheduleLabel)} <span class="summary-stat-secondary">(${escapeHtml(projectStatusLabel)})</span></strong>
+                                        <strong class="${projectScheduleDelayed ? 'text-warning-emphasis' : 'text-success'}">${escapeHtml(projectScheduleLabel)} <span class="summary-stat-secondary">(${escapeHtml(projectStatusLabel)})</span></strong>
                                     </div>
                                 </div>
                             </div>

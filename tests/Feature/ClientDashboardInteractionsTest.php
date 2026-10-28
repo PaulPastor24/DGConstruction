@@ -53,8 +53,13 @@ class ClientDashboardInteractionsTest extends TestCase
         $response = $this->get('/client/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Project Progress Overview');
-        $response->assertSee('project-detail-trigger', false);
+        $response->assertSee('heroStatusPill', false);
+        $response->assertSee('Riverfront Villa');
+
+        $snapshot = $this->get(route('client.dashboard.project.snapshot', $project->project_id));
+        $snapshot->assertOk()
+            ->assertJsonPath('hero.status_label', 'In Progress')
+            ->assertJsonPath('stats.schedule_health_label', 'On Schedule');
     }
 
     public function test_client_my_projects_renders_project_detail_controls(): void
@@ -97,7 +102,96 @@ class ClientDashboardInteractionsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('My Projects');
-        $response->assertSee('project-detail-trigger', false);
+        $response->assertSee('data-project-card', false);
+        $response->assertSee('In Progress');
+        $response->assertSee('On Schedule');
+        $response->assertSee('70%');
+        $response->assertDontSee('At Risk');
+    }
+
+    public function test_client_project_details_show_database_status_and_schedule_updates(): void
+    {
+        $user = User::factory()->create(['role' => 'client']);
+        $client = Client::factory()->create(['user_id' => $user->user_id]);
+        $project = Project::create([
+            'project_name' => 'Harbor Renovation',
+            'project_location' => 'Cebu',
+            'client_id' => $client->client_id,
+            'engineer_id' => $user->user_id,
+            'start_date' => now()->subDays(20)->toDateString(),
+            'target_end_date' => now()->subDays(2)->toDateString(),
+            'status' => 'ongoing',
+            'description' => 'Renovation works for the harbor office.',
+        ]);
+
+        ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Structural Repairs',
+            'phase_order' => 1,
+            'planned_start_date' => now()->subDays(15)->toDateString(),
+            'planned_end_date' => now()->subDays(1)->toDateString(),
+            'completion_percentage' => 35,
+            'status' => 'in_progress',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('client.myprojects'));
+
+        $response->assertOk()
+            ->assertSee('In Progress')
+            ->assertSee('Might Be Delayed')
+            ->assertSee('status-warning', false)
+            ->assertSee('Past target date')
+            ->assertSee('Harbor Renovation')
+            ->assertDontSee('At Risk')
+            ->assertDontSee('On Track');
+    }
+
+    public function test_admin_project_details_modal_renders_live_project_metrics(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $clientUser = User::factory()->create(['role' => 'client']);
+        $client = Client::factory()->create(['user_id' => $clientUser->user_id]);
+        $project = Project::create([
+            'project_name' => 'Cedar Heights',
+            'project_location' => 'Davao',
+            'client_id' => $client->client_id,
+            'engineer_id' => $admin->user_id,
+            'start_date' => now()->subDays(12)->toDateString(),
+            'target_end_date' => now()->addDays(18)->toDateString(),
+            'status' => 'ongoing',
+            'description' => 'Live modal summary from the project record.',
+        ]);
+        $phase = ConstructionPhase::create([
+            'project_id' => $project->project_id,
+            'phase_name' => 'Foundation Works',
+            'phase_order' => 1,
+            'planned_start_date' => now()->subDays(8)->toDateString(),
+            'planned_end_date' => now()->addDays(10)->toDateString(),
+            'completion_percentage' => 45,
+            'status' => 'in_progress',
+        ]);
+        Report::create([
+            'project_id' => $project->project_id,
+            'phase_id' => $phase->phase_id,
+            'submitted_by' => $admin->user_id,
+            'report_date' => now()->toDateString(),
+            'report_text' => 'Foundation inspection completed.',
+            'approval_status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('admin.projects.show', $project->project_id));
+
+        $response->assertOk()
+            ->assertSee('Cedar Heights')
+            ->assertSee('Live modal summary from the project record.')
+            ->assertSee('45%')
+            ->assertSee('Approved')
+            ->assertSee('In Progress')
+            ->assertSee('Project Readiness')
+            ->assertDontSee('On Track')
+            ->assertSee('ps-status-pill.danger', false);
     }
 
     public function test_client_projects_are_paginated_ten_per_page(): void

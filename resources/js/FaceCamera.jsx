@@ -166,7 +166,7 @@ export default function FaceCamera({ onComplete, onError, disabled, autoCapture 
   return <div className="face-camera">
     <video ref={video} autoPlay muted playsInline style={{ display: 'block', width: '100%', maxWidth: compactPreview ? 560 : '100%', maxHeight: compactPreview ? 360 : 420, aspectRatio: compactPreview ? '4 / 3' : undefined, objectFit: compactPreview ? 'cover' : undefined, margin: '0 auto', background: '#17251c', borderRadius: 12, transform: previewFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
     <p role="status">{progress}</p>
-    <div className="face-actions d-flex align-items-center flex-wrap gap-2">
+    <div className="face-actions">
       {!autoCapture && <button type="button" className="face-button btn btn-success" disabled={!ready || disabled} onClick={capture}>{captureLabel}</button>}
       <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={!ready || disabled} onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>Switch camera</button>
       {onClose && <button type="button" className="face-button face-button-secondary btn btn-light border" disabled={disabled} onClick={onClose}>Close camera</button>}

@@ -19,7 +19,7 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
-                                <select id="regProjectId" class="form-select" required>
+                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project" required>
                                     @forelse($projects->filter(fn ($project) => $project->workflowStatus() !== \App\Models\Project::STATUS_ARCHIVED) as $project)
                                     <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
                                     @empty

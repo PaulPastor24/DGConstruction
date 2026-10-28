@@ -14,6 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/searchable-project-select.css') }}">
     @stack('styles')
     <style>
         body { font-family: 'Plus Jakarta Sans', 'Syne', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -250,6 +251,7 @@
         @endif
     </script>
     @stack('scripts')
+    <script src="{{ asset('js/searchable-project-select.js') }}" defer></script>
 @include('partials.user-presence')
 </body>
 </html>

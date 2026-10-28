@@ -67,7 +67,7 @@
                             <option value="">All Completion</option>
                             <option value="completed" {{ request('completion') === 'completed' ? 'selected' : '' }}>Completed</option>
                             <option value="in_progress" {{ request('completion') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                            <option value="at_risk" {{ request('completion') === 'at_risk' ? 'selected' : '' }}>At Risk</option>
+                            <option value="at_risk" {{ request('completion') === 'at_risk' ? 'selected' : '' }}>Might Be Delayed</option>
                         </select>
                     </div>
                 </form>

@@ -10,7 +10,6 @@
         .modal {
             z-index: 1070 !important;
         }
-
         .modal-backdrop {
             z-index: 1060 !important;
         }
@@ -1046,6 +1045,7 @@
             border-radius: 16px;
             background-color: #f8f9fa;
             transition: all 0.3s ease;
+            text-align: center;
         }
 
         .scan-pulse-container:hover {
@@ -1061,6 +1061,8 @@
             border-radius: 50% !important;
             padding: 0 !important;
             display: inline-flex !important;
+            margin-right: auto !important;
+            margin-left: auto !important;
             align-items: center !important;
             justify-content: center !important;
             font-size: 3.2rem !important;
@@ -1792,7 +1794,7 @@
                     <div class="attendance-context-fields">
                         <div class="attendance-date-field">
                             <label class="attendance-date-label" for="attendanceProjectInput"><i class="bi bi-building"></i> Attendance Project</label>
-                            <select id="attendanceProjectInput" class="form-select form-select-sm" @disabled($cameraProjects->isEmpty())>
+                            <select id="attendanceProjectInput" class="form-select form-select-sm" data-searchable-project aria-label="Select attendance project" @disabled($cameraProjects->isEmpty())>
                                 @forelse($cameraProjects as $project)
                                     <option value="{{ $project->project_id }}" @selected($activeProject?->project_id === $project->project_id)>{{ $project->project_name }}</option>
                                 @empty
@@ -1816,6 +1818,8 @@
                         </button>
 
                         <button type="button" class="btn attendance-quick-btn attendance-btn-manual"
+                                @disabled($cameraProjects->isEmpty())
+                                title="{{ $cameraProjects->isEmpty() ? 'No active attendance project is assigned.' : 'Record attendance manually with a required time and reason.' }}"
                                 data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
                             <i class="bi bi-pencil-square"></i> Manual Log
                         </button>
@@ -1946,7 +1950,7 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
-                                <select id="regProjectId" class="form-select" required>
+                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project" required>
                                     @forelse(($cameraProjects ?? collect()) as $project)
                                     <option value="{{ $project->project_id }}" @selected($activeProject?->project_id === $project->project_id)>{{ $project->project_name }}</option>
                                     @empty
@@ -2219,13 +2223,13 @@
             </div>
 
             <div class="modal-body py-3">
-                <div id="manualAttendanceStatus" class="alert alert-light border text-muted small py-2 mb-3">
+                <div id="manualAttendanceStatus" class="alert alert-light border text-muted small py-2 mb-3" role="status" aria-live="polite">
                     <i class="bi bi-info-circle-fill text-primary"></i>
                     Select a worker and attendance action.
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold text-muted">Worker</label>
+                    <label class="form-label small fw-semibold text-muted" for="manualWorkerPickerToggle">Worker</label>
                     <div class="manual-worker-picker" id="manualWorkerPicker">
                         <input type="hidden" id="manualWorkerSelect" value="">
                         <button type="button" class="form-control" id="manualWorkerPickerToggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="manualWorkerPickerOptions" disabled>
@@ -2240,7 +2244,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label small fw-semibold text-muted">Attendance Action</label>
+                    <label class="form-label small fw-semibold text-muted" for="manualActionSelect">Attendance Action</label>
                     <select id="manualActionSelect" class="form-select" required>
                         <option value="time_in">Time In</option>
                         <option value="break_out">Break Out</option>
@@ -2249,10 +2253,18 @@
                     </select>
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-muted" for="manualEventTimeInput">Attendance Time <span class="text-danger">*</span></label>
+                    <input type="time" id="manualEventTimeInput" class="form-control" required>
+                    <div class="form-text">Enter the time for the selected attendance action.</div>
+                </div>
+
                 <div class="mb-0">
-                    <label class="form-label small fw-semibold text-muted">Reason / Remarks</label>
+                    <label class="form-label small fw-semibold text-muted" for="manualReasonInput">Reason / Remarks <span class="text-danger">*</span></label>
                     <textarea id="manualReasonInput" class="form-control" rows="3"
-                              placeholder="Example: Camera unavailable / face could not be recognized."></textarea>
+                              placeholder="Example: Camera unavailable / face could not be recognized."
+                              maxlength="1000" required></textarea>
+                    <div class="form-text">A reason is required for every manual attendance change (max 1,000 characters).</div>
                 </div>
             </div>
 
@@ -2318,6 +2330,7 @@
         const manualWorkerPickerValue = document.getElementById('manualWorkerPickerValue');
         const manualWorkerPickerOptions = document.getElementById('manualWorkerPickerOptions');
         const manualActionSelect = document.getElementById('manualActionSelect');
+        const manualEventTimeInput = document.getElementById('manualEventTimeInput');
         const manualTimeInInput = document.getElementById('manualTimeInInput');
         const manualTimeOutInput = document.getElementById('manualTimeOutInput');
         const manualBreakOutInput = document.getElementById('manualBreakOutInput');
@@ -2335,6 +2348,14 @@
             capturedWorkerFace = null;
             btnSaveWorker.disabled = true;
             window.dispatchEvent(new Event('worker-registration-reset'));
+        }
+        function updateManualSaveState() {
+            btnSaveManualAttendance.disabled = btnSaveManualAttendance.dataset.saving === 'true'
+                || !selectedProjectValue()
+                || !selectedDateValue()
+                || !manualWorkerSelect?.value
+                || !manualEventTimeInput?.value
+                || !manualReasonInput?.value.trim();
         }
         document.getElementById('registerWorkerModal').addEventListener('hidden.bs.modal', resetRegistrationFace);
         document.getElementById('registerWorkerModal').addEventListener('show.bs.modal', () => window.dispatchEvent(new Event('worker-camera-close')));
@@ -3143,8 +3164,20 @@
 
             const workerId = manualWorkerSelect.value;
             const action = manualActionSelect.value || 'time_in';
-            const reason = manualReasonInput?.value.trim()
-                || 'Manual attendance log because camera recognition is unavailable.';
+            const eventTime = manualEventTimeInput?.value || '';
+            const reason = manualReasonInput?.value.trim() || '';
+
+            if (!selectedProjectValue()) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.textContent = 'Select an active attendance project before recording a manual log.';
+                return;
+            }
+
+            if (!selectedDateValue()) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.textContent = 'Select an attendance date before recording a manual log.';
+                return;
+            }
 
             if (!workerId) {
                 manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
@@ -3157,7 +3190,22 @@
                 return;
             }
 
+            if (!eventTime || !reason) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.textContent = !eventTime
+                    ? 'Please enter the attendance time.'
+                    : 'Please provide a reason for this manual attendance change.';
+                return;
+            }
+
+            if (reason.length > 1000) {
+                manualAttendanceStatus.className = 'alert alert-warning border text-dark small py-2 mb-3';
+                manualAttendanceStatus.textContent = 'The reason must be 1,000 characters or fewer.';
+                return;
+            }
+
             btnSaveManualAttendance.disabled = true;
+            btnSaveManualAttendance.dataset.saving = 'true';
             btnSaveManualAttendance.innerHTML = `
                 <span class="spinner-border spinner-border-sm me-1"></span>
                 Saving...
@@ -3185,10 +3233,7 @@
                         manual: true,
                         biometric_matched: false,
                         remarks: reason,
-                        time_in: manualTimeInInput?.value || null,
-                        break_out: manualBreakOutInput?.value || null,
-                        break_in: manualBreakInInput?.value || null,
-                        time_out: manualTimeOutInput?.value || null
+                        manual_event_time: eventTime
                     })
                 });
 
@@ -3238,6 +3283,9 @@
                 if (manualReasonInput) {
                     manualReasonInput.value = '';
                 }
+                if (manualEventTimeInput) {
+                    manualEventTimeInput.value = '';
+                }
 
                 setTimeout(() => {
                     const modalInstance = bootstrap.Modal.getInstance(manualAttendanceModal)
@@ -3255,7 +3303,8 @@
                 `;
                 await showAttendanceAlert('error', 'Attendance could not be saved', error.message || 'Failed to save manual attendance.');
             } finally {
-                btnSaveManualAttendance.disabled = !manualWorkerSelect.value;
+                delete btnSaveManualAttendance.dataset.saving;
+                updateManualSaveState();
                 btnSaveManualAttendance.innerHTML = `
                     <i class="bi bi-save"></i> Save Manual Log
                 `;
@@ -3753,8 +3802,10 @@
             bindWorkerAvatarFallbacks(manualWorkerPickerValue);
             manualWorkerPickerOptions.hidden = true;
             manualWorkerPickerToggle.setAttribute('aria-expanded', 'false');
-            btnSaveManualAttendance.disabled = false;
+            updateManualSaveState();
         });
+        manualEventTimeInput?.addEventListener('input', updateManualSaveState);
+        manualReasonInput?.addEventListener('input', updateManualSaveState);
 
         manualWorkerPickerOptions?.addEventListener('keydown', function (event) {
             const options = [...manualWorkerPickerOptions.querySelectorAll('.manual-worker-option')];

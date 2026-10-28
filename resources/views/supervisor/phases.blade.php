@@ -85,9 +85,11 @@
             </div>
             
             {{-- Dropdown Menu --}}
-            <div class="project-dropdown-menu" id="projectDropdownMenu" style="display: none;">
+            <div class="project-dropdown-menu" id="projectDropdownMenu" data-project-search-menu style="display: none;">
+                <label class="visually-hidden" for="supervisorProjectSearch">Search assigned projects</label>
+                <input type="search" id="supervisorProjectSearch" class="form-control form-control-sm mb-2" data-project-menu-search placeholder="Search projects..." autocomplete="off">
                 @forelse($assignedProjects as $project)
-                    <a href="#" class="dropdown-item" data-project-id="{{ $project->project_id }}" data-project-name="{{ $project->project_name }}">
+                    <a href="#" class="dropdown-item" data-project-menu-option data-project-id="{{ $project->project_id }}" data-project-name="{{ $project->project_name }}">
                         {{ $project->project_name }}
                     </a>
                 @empty

@@ -14,7 +14,6 @@ use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\Report;
 use App\Models\Tool;
-use App\Models\ToolDeduction;
 use App\Models\ToolLoan;
 use App\Models\User;
 use App\Models\Worker;
@@ -729,26 +728,7 @@ class AdminDashboardController extends Controller
             ];
         }
 
-        $toolLoans = collect();
-        $toolDeductions = collect();
         $toolHistory = new LengthAwarePaginator([], 0, 10);
-        $activeToolLoans = new LengthAwarePaginator([], 0, 10);
-        $allToolDeductions = new LengthAwarePaginator([], 0, 10);
-        if (Schema::hasTable('tool_loans')) {
-            $activeToolLoans = ToolLoan::query()
-                ->with(['tool', 'worker', 'project'])
-                ->where('status', 'borrowed')
-                ->orderByDesc('borrowed_at')
-                ->paginate(10, ['*'], 'active_loans_page')
-                ->appends($request->except('active_loans_page'));
-        }
-        if (Schema::hasTable('tool_deductions')) {
-            $allToolDeductions = ToolDeduction::query()
-                ->with(['tool', 'worker'])
-                ->orderByDesc('created_at')
-                ->paginate(10, ['*'], 'deductions_page')
-                ->appends($request->except('deductions_page'));
-        }
         $toolMetrics = [
             'total_tools' => 0,
             'available' => 0,
@@ -835,7 +815,7 @@ class AdminDashboardController extends Controller
             $predefinedToolCategories = [];
         }
 
-        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'toolHistory', 'activeToolLoans', 'allToolDeductions', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
+        return view('admin.inventory', compact('materials', 'metrics', 'usageLogs', 'categories', 'projects', 'search', 'category', 'stockStatus', 'usageCategory', 'usageStatus', 'activeView', 'lowStockMaterials', 'allLowStockMaterials', 'recentlyUpdatedMaterials', 'allRecentlyUpdatedMaterials', 'materialRequests', 'requestStats', 'requestStatus', 'allocatedMaterials', 'allocatedSearch', 'allocatedProjectId', 'allocatedCategory', 'tools', 'toolMetrics', 'toolHistory', 'toolCategories', 'toolsSearch', 'toolCategory', 'toolStatus', 'predefinedToolCategories', 'predefinedMaterialCategories'));
     }
 
     /**

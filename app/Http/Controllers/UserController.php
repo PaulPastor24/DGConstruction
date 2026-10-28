@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Client;
+use App\Models\SystemLog;
 use App\Services\UserPresence;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
@@ -101,6 +102,30 @@ class UserController extends Controller
         ])])->header('Cache-Control', 'no-store, private');
     }
 
+    public function auditLog(Request $request)
+    {
+        $query = SystemLog::query()
+            ->with('user')
+            ->where('action', 'like', 'User %');
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($logs) use ($search) {
+                $logs->where('action', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('ip_address', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($user) use ($search) {
+                        $user->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $activityLogs = $query->recent()->paginate(20)->withQueryString();
+
+        return view('admin.users.activity-log', compact('activityLogs'));
+    }
+
     /**
      * Store a newly created user in storage.
      */
@@ -169,6 +194,13 @@ class UserController extends Controller
                     'address' => null,
                 ]);
             }
+
+            SystemLog::create([
+                'user_id' => $request->user()->user_id,
+                'action' => 'User Created',
+                'description' => "Created account #{$user->user_id} for {$user->name} ({$user->email}), role {$user->role}.",
+                'ip_address' => $request->ip(),
+            ]);
 
             DB::commit();
 
@@ -322,6 +354,21 @@ class UserController extends Controller
                 ]);
             }
 
+            $changedFields = array_keys(array_filter(
+                $newData,
+                fn ($value, $key) => $originalData[$key] !== $value,
+                ARRAY_FILTER_USE_BOTH
+            ));
+            if ($request->filled('password')) {
+                $changedFields[] = 'password';
+            }
+            SystemLog::create([
+                'user_id' => $request->user()->user_id,
+                'action' => 'User Updated',
+                'description' => "Updated account #{$user->user_id} for {$user->name}. Changed fields: ".implode(', ', $changedFields).'.',
+                'ip_address' => $request->ip(),
+            ]);
+
             DB::commit();
 
             if ($request->wantsJson()) {
@@ -395,7 +442,16 @@ class UserController extends Controller
     public function toggleStatus(User $user)
     {
         try {
-            $user->update(['is_active' => !$user->is_active]);
+            $wasActive = (bool) $user->is_active;
+            DB::transaction(function () use ($user, $wasActive) {
+                $user->update(['is_active' => !$wasActive]);
+                SystemLog::create([
+                    'user_id' => request()->user()->user_id,
+                    'action' => 'User Status Changed',
+                    'description' => "Changed account #{$user->user_id} for {$user->name} to ".($user->is_active ? 'enabled' : 'disabled').'.',
+                    'ip_address' => request()->ip(),
+                ]);
+            });
             $status = $user->is_active ? 'activated' : 'deactivated';
 
             return redirect()
@@ -477,10 +533,15 @@ class UserController extends Controller
                 return $respond(false, 'This user cannot be deleted because they are assigned to or related to existing records.', 422);
             }
 
-            // Use the Eloquent model's own delete() rather than a raw query
-            // builder delete, so model events/observers (if any exist or
-            // are added later) still fire correctly.
-            DB::table('users')->where('user_id', $user->user_id)->delete();
+            DB::transaction(function () use ($authUser, $request, $user) {
+                SystemLog::create([
+                    'user_id' => $authUser->user_id,
+                    'action' => 'User Deleted',
+                    'description' => "Deleted account #{$user->user_id} for {$user->name} ({$user->email}), role {$user->role}.",
+                    'ip_address' => $request->ip(),
+                ]);
+                DB::table('users')->where('user_id', $user->user_id)->delete();
+            });
 
             return $respond(true, 'User deleted successfully!', 200);
 

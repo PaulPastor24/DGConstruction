@@ -15,7 +15,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-Cthk1U08.css",
+    "file": "assets/app-CwSpyNBG.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -24,7 +24,7 @@
     ]
   },
   "resources/css/supervisor.css": {
-    "file": "assets/supervisor-BOzNTxhM.css",
+    "file": "assets/supervisor-BqmuqXlL.css",
     "src": "resources/css/supervisor.css",
     "isEntry": true,
     "name": "supervisor",
@@ -48,7 +48,7 @@
     "isEntry": true
   },
   "resources/js/face-attendance.jsx": {
-    "file": "assets/face-attendance-CPDAwwpy.js",
+    "file": "assets/face-attendance-ByMLmNrF.js",
     "name": "face-attendance",
     "src": "resources/js/face-attendance.jsx",
     "isEntry": true,

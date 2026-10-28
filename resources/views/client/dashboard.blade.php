@@ -41,7 +41,7 @@
             <div class="col-md-7 p-3 p-lg-4 hero-content">
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                     <span class="badge-project-status">CURRENT PROJECT</span>
-                    <span class="project-status-pill {{ $stats['delayed_milestones_count'] > 0 ? 'status-delayed' : 'status-on-track' }}" id="heroStatusPill">{{ $stats['delayed_milestones_count'] > 0 ? 'Delayed' : 'On Track' }}</span>
+                    <span class="project-status-pill {{ $stats['hero_status_class'] ?? 'status-planning' }}" id="heroStatusPill">{{ $stats['hero_status_label'] ?? 'No Project' }}</span>
                 </div>
 
                 <div class="project-title-carousel"
@@ -127,7 +127,7 @@
             </div>
         </div>
         @php
-            $scheduleHealth = ($stats['schedule_at_risk'] ?? false) ? 'At Risk' : 'On Track';
+            $scheduleHealth = ($stats['schedule_at_risk'] ?? false) ? 'Might Be Delayed' : 'On Schedule';
             $scheduleHealthClass = ($stats['schedule_at_risk'] ?? false) ? 'text-warning' : 'text-success';
             $scheduleHealthNote = $stats['schedule_health_note'] ?? 'No delayed or overdue schedule items';
         @endphp
@@ -136,7 +136,7 @@
                 <div class="metric-icon-box bg-mint-light"><i class="bi bi-shield-check {{ $scheduleHealthClass }}" id="metricScheduleHealthIcon"></i></div>
                 <div>
                     <div class="metric-title">Schedule Health</div>
-                    <span class="metric-status-pill {{ $scheduleHealth === 'At Risk' ? 'status-delayed' : 'status-on-track' }}" id="metricScheduleHealthPill">{{ $scheduleHealth }}</span>
+                    <span class="metric-status-pill {{ $stats['schedule_at_risk'] ?? false ? 'status-warning' : 'status-on-track' }}" id="metricScheduleHealthPill">{{ $scheduleHealth }}</span>
                     <div class="metric-sub-text" id="metricScheduleHealthNote">{{ $scheduleHealthNote }}</div>
                 </div>
             </div>
@@ -357,7 +357,7 @@
 
             if (metricSchedulePill) {
                 metricSchedulePill.textContent = stats.schedule_health_label;
-                metricSchedulePill.classList.remove('status-on-track', 'status-delayed');
+                metricSchedulePill.classList.remove('status-on-track', 'status-delayed', 'status-warning');
                 metricSchedulePill.classList.add(stats.schedule_health_pill_class);
             }
             if (metricScheduleIcon) {
@@ -1399,6 +1399,10 @@
         color: #166534;
     }
     .metric-status-pill.status-delayed {
+        background: #fffbeb;
+        color: #b45309;
+    }
+    .metric-status-pill.status-warning {
         background: #fffbeb;
         color: #b45309;
     }

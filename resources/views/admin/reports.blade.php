@@ -2331,7 +2331,7 @@
                 </div>
 
                 <div class="toolbar-group">
-                    <select id="projectFilter" class="toolbar-select" name="project_id">
+                    <select id="projectFilter" class="toolbar-select" name="project_id" data-searchable-project aria-label="Filter reports by project">
                         <option value="">All Projects</option>
                         @foreach($projects as $project)
                             <option value="{{ $project->project_id }}" {{ request('project_id') == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>

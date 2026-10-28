@@ -130,7 +130,9 @@ export function mountInlineAttendance(mount) {
       {busy && <p role="status" className="mt-3">Please wait...</p>}
       {operation?.purpose === 'enroll' && !session && !matched && <div className="text-start mt-3">
         <h6>Enroll face: {operation.name || 'worker'}</h6>
-        <button className="btn btn-success" disabled={busy || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
+        <div className="face-inline-actions">
+          <button className="btn btn-success" disabled={busy || !operation.name} onClick={() => startScan(operation)}>Open enrollment camera</button>
+        </div>
       </div>}
       {session && <FaceCamera key={session.session_id} autoCapture={operation?.purpose === 'enroll'} disabled={busy} onComplete={complete} onError={reason => {
         currentSession.current = null; setSession(null); setError(reason);
@@ -144,10 +146,14 @@ export function mountInlineAttendance(mount) {
         <strong>{matched.worker.first_name} {matched.worker.last_name}</strong>
         <p>Project: <strong>{operation?.projectName}</strong></p>
         <p>Confirm the person in front of you matches this worker.</p>
-        <button className="btn btn-success" disabled={busy} onClick={save}>Confirm &amp; save {operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'}</button>
+        <div className="face-inline-actions">
+          <button className="btn btn-success" disabled={busy} onClick={save}>Confirm &amp; save {operation?.action === 'break_in' ? 'Break In' : operation?.action === 'time_out' ? 'Time Out' : 'Time In'}</button>
+        </div>
       </div>}
-      {operation?.purpose === 'attendance' && !session && !matched && !busy && <button className="btn btn-success mt-2" onClick={() => startScan(operation)}>Retry camera</button>}
-      {operation && <button className="btn btn-light border mt-2 ms-2" disabled={busy} onClick={cancel}>{matched ? 'Reject match' : 'Close camera'}</button>}
+      {operation && <div className="face-inline-actions mt-2">
+        {operation?.purpose === 'attendance' && !session && !matched && !busy && <button className="btn btn-success" onClick={() => startScan(operation)}>Retry camera</button>}
+        <button className="btn btn-light border" disabled={busy} onClick={cancel}>{matched ? 'Reject match' : 'Close camera'}</button>
+      </div>}
     </div>;
   }
   createRoot(mount).render(<InlineAttendance />);

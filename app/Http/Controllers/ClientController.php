@@ -102,16 +102,16 @@ class ClientController extends Controller
 
         $projectMilestones = $primaryMilestones;
         $delayedPhaseCount = $primaryProject?->phases?->where('status', 'delayed')->count() ?? 0;
-        $overduePhaseCount = $primaryProject?->phases?->filter(fn ($phase) => $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->isPast())->count() ?? 0;
+        $overduePhaseCount = $primaryProject?->phases?->filter(fn ($phase) => $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->lt(now()->startOfDay()))->count() ?? 0;
         $delayedMilestoneCount = $projectMilestones->where('is_delayed', true)->where('is_completed', false)->count();
         $overdueMilestoneCount = $projectMilestones->filter(function ($milestone) {
             $deadline = $milestone->end_date ?: $milestone->start_date;
 
-            return !$milestone->is_completed && !$milestone->is_delayed && $deadline && $deadline->isPast();
+            return !$milestone->is_completed && !$milestone->is_delayed && $deadline && $deadline->lt(now()->startOfDay());
         })->count();
         $projectStatus = strtolower((string) ($primaryProject->status ?? ''));
         $projectIsDelayed = in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
-        $scheduleAtRisk = $delayedPhaseCount || $overduePhaseCount || $delayedMilestoneCount || $overdueMilestoneCount || $projectIsDelayed;
+        $scheduleAtRisk = ($primaryProject?->isLate() ?? false) || $delayedPhaseCount || $overduePhaseCount || $delayedMilestoneCount || $overdueMilestoneCount || $projectIsDelayed;
 
         $latestSubmittedReport = Report::query()
             ->when($selectedProjectId, fn ($query) => $query->where('project_id', $selectedProjectId))
@@ -281,7 +281,14 @@ class ClientController extends Controller
         $carouselProjects = $allProjects->map(function ($project) use ($primaryProject, $delayedCountsByProject, $nextMilestoneByProject, $reportsByProject, $latestReportsByProject, $milestonesByProject) {
             $phases = $project->phases;
             $location = trim((string) ($project->project_location ?? $project->location ?? $project->location_address ?? ''));
-            $isDelayed = ($delayedCountsByProject->get($project->project_id, 0)) > 0;
+            $workflowStatus = $project->workflowStatus();
+            $statusLabel = Project::statusLabel($workflowStatus);
+            $statusClass = match ($workflowStatus) {
+                Project::STATUS_COMPLETED => 'status-completed',
+                Project::STATUS_ONGOING => 'status-on-track',
+                Project::STATUS_ON_HOLD => 'status-delayed',
+                default => 'status-planning',
+            };
             $nextMilestone = $nextMilestoneByProject->get($project->project_id, collect());
             // Prefer the soonest future milestone; otherwise fall back to the most
             // recent one so the embedded snapshot shows a real date, not "TBD".
@@ -305,8 +312,8 @@ class ClientController extends Controller
                 'manager' => optional($project->engineer)->name ?? 'Unassigned',
                 'supervisor' => optional($activeSupervisor)->name ?? 'Not assigned',
                 'progress' => round((float) $project->overall_progress_percentage, 2),
-                'status_label' => $isDelayed ? 'Delayed' : 'On Track',
-                'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
+                'status_label' => $statusLabel,
+                'status_class' => $statusClass,
                 'phase' => optional($phases->firstWhere('status', 'in_progress'))->phase_name ?? 'Phase pending',
                 'next_milestone_date' => optional($nextMilestone?->end_date ?? $nextMilestone?->start_date)->format('M d, Y') ?? 'Pending',
                 'snapshot' => $this->buildProjectSnapshot(
@@ -327,10 +334,18 @@ class ClientController extends Controller
             'total_projects' => $totalProjects,
             'completed_projects' => $completedProjects,
             'ongoing_projects' => $ongoingProjects,
+            'hero_status_label' => $primaryProject ? Project::statusLabel($primaryProject->workflowStatus()) : 'No Project',
+            'hero_status_class' => match ($primaryProject?->workflowStatus()) {
+                Project::STATUS_COMPLETED => 'status-completed',
+                Project::STATUS_ONGOING => 'status-on-track',
+                Project::STATUS_ON_HOLD => 'status-delayed',
+                null => 'status-planning',
+                default => 'status-planning',
+            },
             'overall_completion' => $overallCompletion,
             'delayed_milestones_count' => $delayedMilestones->count(),
             'schedule_at_risk' => $scheduleAtRisk,
-            'schedule_health_note' => $scheduleAtRisk ? 'Delayed or overdue schedule items detected' : 'No delayed or overdue schedule items',
+            'schedule_health_note' => $scheduleAtRisk ? 'Some timeline items may need an update' : 'No timeline updates needed right now',
             'upcoming_milestones_count' => $upcomingMilestones->count(),
             'recent_updates_count' => $recentReports->count(),
             'latest_report_status' => $latestSubmittedReport?->approval_status ?? 'No report',
@@ -390,10 +405,14 @@ class ClientController extends Controller
                 ->get();
         }
 
-        $isDelayed = $milestones
-            ->where('is_delayed', true)
-            ->where('is_completed', false)
-            ->count() > 0;
+        $workflowStatus = $project->workflowStatus();
+        $statusLabel = Project::statusLabel($workflowStatus);
+        $statusClass = match ($workflowStatus) {
+            Project::STATUS_COMPLETED => 'status-completed',
+            Project::STATUS_ONGOING => 'status-on-track',
+            Project::STATUS_ON_HOLD => 'status-delayed',
+            default => 'status-planning',
+        };
 
         $nextMilestone = $milestones
             ->filter(function ($milestone) {
@@ -412,15 +431,15 @@ class ClientController extends Controller
         }
 
         $delayedPhaseCount = $phases->where('status', 'delayed')->count();
-        $overduePhaseCount = $phases->filter(fn ($phase) => $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->isPast())->count();
+        $overduePhaseCount = $phases->filter(fn ($phase) => $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->lt(now()->startOfDay()))->count();
         $delayedMilestoneCount = $milestones->where('is_delayed', true)->where('is_completed', false)->count();
         $overdueMilestoneCount = $milestones->filter(function ($milestone) {
             $deadline = $milestone->end_date ?: $milestone->start_date;
 
-            return !$milestone->is_completed && !$milestone->is_delayed && $deadline && $deadline->isPast();
+            return !$milestone->is_completed && !$milestone->is_delayed && $deadline && $deadline->lt(now()->startOfDay());
         })->count();
         $projectStatus = strtolower((string) $project->status);
-        $scheduleAtRisk = $delayedPhaseCount || $overduePhaseCount || $delayedMilestoneCount || $overdueMilestoneCount || in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
+        $scheduleAtRisk = $project->isLate() || $delayedPhaseCount || $overduePhaseCount || $delayedMilestoneCount || $overdueMilestoneCount || in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
 
         $currentPhase = $phases->firstWhere('status', 'in_progress')
             ?? $phases->firstWhere('status', 'delayed')
@@ -515,8 +534,8 @@ class ClientController extends Controller
                 'manager' => optional($project->engineer)->name ?? 'Unassigned',
                 'supervisor' => $supervisorName,
                 'progress' => $progress,
-                'status_label' => $isDelayed ? 'Delayed' : 'On Track',
-                'status_class' => $isDelayed ? 'status-delayed' : 'status-on-track',
+                'status_label' => $statusLabel,
+                'status_class' => $statusClass,
                 'phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
                 'phase_status' => $phaseStatusLabel,
                 'next_milestone_date' => optional($nextMilestone?->end_date ?? $nextMilestone?->start_date)->format('M d, Y') ?? 'Pending',
@@ -524,10 +543,10 @@ class ClientController extends Controller
             'stats' => [
                 'current_phase' => optional($currentPhase)->phase_name ?? 'Phase pending',
                 'current_phase_status' => $phaseStatusLabel,
-                'schedule_health_label' => $scheduleAtRisk ? 'At Risk' : 'On Track',
-                'schedule_health_pill_class' => $scheduleAtRisk ? 'status-delayed' : 'status-on-track',
+                'schedule_health_label' => $scheduleAtRisk ? 'Might Be Delayed' : 'On Schedule',
+                'schedule_health_pill_class' => $scheduleAtRisk ? 'status-warning' : 'status-on-track',
                 'schedule_health_at_risk' => $scheduleAtRisk,
-                'schedule_health_note' => $scheduleAtRisk ? 'Delayed or overdue schedule items detected' : 'No delayed or overdue schedule items',
+                'schedule_health_note' => $scheduleAtRisk ? 'Some timeline items may need an update' : 'No timeline updates needed right now',
                 'next_milestone_name' => optional($nextMilestone)->milestone_name ?? 'Next milestone pending',
                 'next_milestone_date' => optional($nextMilestone?->end_date ?? $nextMilestone?->start_date)->format('M d, Y') ?? 'Pending',
                 'latest_report_status' => optional($latestSubmittedReport)->approval_status ?? 'No report',

@@ -123,7 +123,7 @@
             <div class="form-grid">
                 <div class="field-group field-group--project">
                     <label for="project_id">Project</label>
-                    <select id="project_id" name="project_id" class="form-select" required>
+                    <select id="project_id" name="project_id" class="form-select" data-searchable-project aria-label="Select a completed project" required>
                         <option value="">Select a completed project</option>
                         @foreach($projects as $project)
                         <option
@@ -304,7 +304,7 @@
                                         <div class="form-grid">
                                             <div class="field-group">
                                                 <label for="edit_project_id_{{ $galleryImage->id }}">Project</label>
-                                                <select id="edit_project_id_{{ $galleryImage->id }}" name="project_id" class="form-select edit-project-select" data-external-target="edit-external-{{ $galleryImage->id }}" {{ $galleryImage->is_external ? '' : 'required' }}>
+                                                <select id="edit_project_id_{{ $galleryImage->id }}" name="project_id" class="form-select edit-project-select" data-searchable-project aria-label="Select a project" data-external-target="edit-external-{{ $galleryImage->id }}" {{ $galleryImage->is_external ? '' : 'required' }}>
                                                     <option value="">Select a completed project</option>
                                                     @foreach($projects as $project)
                                                         <option value="{{ $project->project_id }}" @selected((string) $galleryImage->project_id === (string) $project->project_id)>{{ $project->project_name }}</option>

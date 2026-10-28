@@ -237,6 +237,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     });
 
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/audit-log', [UserController::class, 'auditLog'])->name('auditLog');
         Route::get('/activity', [UserController::class, 'activity'])->name('activity');
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');

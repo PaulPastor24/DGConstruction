@@ -3,12 +3,7 @@
 @section('title', 'Workers & Allocation')
 @section('page_title', 'Workers & Allocation')
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/searchable-project-select.css') }}">
-@endpush
-
 @push('scripts')
-    <script src="{{ asset('js/searchable-project-select.js') }}" defer></script>
     <script src="{{ asset('js/worker-allocation.js') }}" defer></script>
 @endpush
 

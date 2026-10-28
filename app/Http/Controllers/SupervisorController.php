@@ -492,6 +492,7 @@ class SupervisorController extends Controller
             'break_in' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'time_out' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
             'manual' => ['nullable', 'boolean'],
+            'manual_event_time' => ['nullable', 'date_format:H:i'],
             'verification_method' => ['nullable', Rule::in(['passkey', 'face'])],
             'supervisor_confirmed_identity' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string', 'max:1000'],
@@ -527,14 +528,33 @@ class SupervisorController extends Controller
         $requestedTimeOut = $this->normalizeAttendanceTimeValue($request->input('time_out'));
         $hasWorkerId = Schema::hasColumn('attendance_logs', 'worker_id');
 
-        // The authenticated supervisor can log attendance manually with a reason.
+        // The authenticated supervisor can record a manually verified attendance event.
         // Time In consumes a fresh passkey or camera proof; Break In and Time Out require camera proof.
         // Device passkeys do NOT identify a worker's real face/fingerprint.
         $manualReason = trim((string) ($validated['remarks'] ?? ''));
-        if ($manualMode && in_array($action, ['time_in', 'break_in', 'time_out'], true) && $manualReason === '') {
+        $actionTimeField = [
+            'time_in' => 'time_in',
+            'break_out' => 'break_out',
+            'break_in' => 'break_in',
+            'time_out' => 'time_out',
+        ][$action];
+        $manualEventTime = $validated['manual_event_time'] ?? $request->input($actionTimeField);
+        if ($manualMode && $manualReason === '') {
             return response()->json([
                 'message' => 'Please provide a reason for manual attendance.',
             ], 422);
+        }
+        if ($manualMode && ! $manualEventTime) {
+            return response()->json([
+                'message' => 'Please provide the time for the manual attendance action.',
+            ], 422);
+        }
+        if ($manualMode) {
+            $manualTimeValue = $this->normalizeAttendanceTimeValue($manualEventTime);
+            $requestedTimeIn = $action === 'time_in' ? $manualTimeValue : null;
+            $requestedBreakOut = $action === 'break_out' ? $manualTimeValue : null;
+            $requestedBreakIn = $action === 'break_in' ? $manualTimeValue : null;
+            $requestedTimeOut = $action === 'time_out' ? $manualTimeValue : null;
         }
 
         if (! $manualMode && in_array($action, ['time_in', 'break_in', 'time_out'], true)) {
@@ -588,6 +608,46 @@ class SupervisorController extends Controller
             ->where('deployment_id', $deployment->deployment_id)
             ->whereDate('log_date', $date)
             ->first();
+
+        if ($manualMode) {
+            $manualAt = Carbon::parse($date.' '.$manualEventTime);
+            if ($manualAt->gt($now)) {
+                return response()->json([
+                    'message' => 'Manual attendance time cannot be in the future.',
+                ], 422);
+            }
+
+            $storedTimes = array_filter([
+                'time_in' => $existingLog->time_in ?? null,
+                'break_out' => $existingLog->break_out ?? null,
+                'break_in' => $existingLog->break_in ?? null,
+                'time_out' => $existingLog->time_out ?? null,
+            ]);
+            $timeOrder = ['time_in' => 0, 'break_out' => 1, 'break_in' => 2, 'time_out' => 3];
+            foreach ($storedTimes as $field => $storedTime) {
+                if ($field === $action || $storedTime === null || ! isset($timeOrder[$field], $timeOrder[$action])) {
+                    continue;
+                }
+                $storedAt = Carbon::parse($date.' '.$storedTime);
+                if (($timeOrder[$field] < $timeOrder[$action] && $manualAt->lte($storedAt))
+                    || ($timeOrder[$field] > $timeOrder[$action] && $manualAt->gte($storedAt))) {
+                    return response()->json([
+                        'message' => 'Attendance times must remain in chronological order.',
+                    ], 422);
+                }
+            }
+
+            if ($action !== 'time_in' && ! $existingLog?->time_in) {
+                return response()->json([
+                    'message' => 'Record Time In before attempting break or Time Out.',
+                ], 422);
+            }
+            if ($action === 'break_in' && ! $existingLog?->break_out) {
+                return response()->json([
+                    'message' => 'Record Break Out before attempting Break In.',
+                ], 422);
+            }
+        }
 
         if (! $existingLog && $action !== 'time_in') {
             return response()->json([
@@ -717,8 +777,9 @@ class SupervisorController extends Controller
             if ($action === 'time_out') {
                 $scheduledEnd = data_get($worker, 'schedule_end') ?: '17:00:00';
                 $timeOutAllowed = Carbon::parse($date.' '.$scheduledEnd);
+                $timeOutAt = Carbon::parse($date.' '.($requestedTimeOut ?? $now->format('H:i:s')));
 
-                if ($now->lt($timeOutAllowed)) {
+                if ((! $manualMode && $now->lt($timeOutAllowed)) || ($manualMode && $timeOutAt->lt($timeOutAllowed))) {
                     return response()->json([
                         'message' => 'Time out is only allowed from 5:00 PM onwards.',
                     ], 422);
@@ -737,8 +798,8 @@ class SupervisorController extends Controller
                 }
 
                 $updates['time_out'] = $requestedTimeOut ?? $now->format('H:i:s');
-                $updates['overtime_minutes'] = $now->gt($timeOutAllowed)
-                    ? $timeOutAllowed->diffInMinutes($now)
+                $updates['overtime_minutes'] = $timeOutAt->gt($timeOutAllowed)
+                    ? $timeOutAllowed->diffInMinutes($timeOutAt)
                     : 0;
                 $updates['remarks'] = trim(($existingLog->remarks ?? '').' Time out recorded.');
 

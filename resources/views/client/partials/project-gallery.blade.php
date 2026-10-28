@@ -5,21 +5,17 @@
         $phaseName = optional($summary['current_phase'])->phase_name ?? $projectItem->current_phase ?? 'Planning & Design';
         $projectImage = $projectItem->image_url ?: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=900&q=80';
         
-        $statusLabel = match ($projectItem->status) {
-            'completed' => 'Completed',
-            'ongoing' => 'On Track',
-            'planning' => 'Planning',
-            'on_hold' => 'Delayed',
-            'delayed' => 'Delayed',
-            default => ucfirst((string) ($projectItem->status ?? 'Planning')),
+        $statusLabel = match ($projectItem->workflowStatus()) {
+            \App\Models\Project::STATUS_COMPLETED => 'Completed',
+            \App\Models\Project::STATUS_ONGOING => 'In Progress',
+            \App\Models\Project::STATUS_ON_HOLD => 'On Hold',
+            default => 'Planning',
         };
         
-        $statusClass = match ($projectItem->status) {
-            'completed' => 'status-completed',
-            'ongoing' => 'status-on-track',
-            'planning' => 'status-planning',
-            'on_hold' => 'status-delayed',
-            'delayed' => 'status-delayed',
+        $statusClass = match ($projectItem->workflowStatus()) {
+            \App\Models\Project::STATUS_COMPLETED => 'status-completed',
+            \App\Models\Project::STATUS_ONGOING => 'status-on-track',
+            \App\Models\Project::STATUS_ON_HOLD => 'status-delayed',
             default => 'status-planning',
         };
         
@@ -29,20 +25,12 @@
                 && (in_array($phase->status, ['delayed', 'on_hold'], true)
                     || ($phase->planned_end_date && $phase->planned_end_date->lt(now()->startOfDay())));
         })->values();
-        $hasDelayedPhase = $delayedPhases->isNotEmpty();
-        $hasDelayedMilestone = $projectMilestones->contains(fn ($milestone) => $milestone->is_delayed && ! $milestone->is_completed);
-        $hasOverduePhase = $projectItem->phases->contains(function ($phase) {
-            return $phase->status !== 'completed' && $phase->planned_end_date && $phase->planned_end_date->isPast();
-        });
-        $hasOverdueMilestone = $projectMilestones->contains(function ($milestone) {
-            $deadline = $milestone->end_date ?: $milestone->start_date;
-
-            return ! $milestone->is_completed && ! $milestone->is_delayed && $deadline && $deadline->isPast();
-        });
         $projectStatus = strtolower((string) $projectItem->status);
-        $scheduleAtRisk = $hasDelayedPhase || $hasDelayedMilestone || $hasOverduePhase || $hasOverdueMilestone || in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
-        $scheduleHealth = $projectStatus === 'completed' ? 'Completed' : ($scheduleAtRisk ? 'At Risk' : 'On Track');
-        $scheduleHealthClass = $scheduleHealth === 'Completed' ? 'status-completed' : ($scheduleAtRisk ? 'status-delayed' : 'status-on-track');
+        $scheduleAtRisk = $projectItem->hasDelayedWork() || in_array($projectStatus, ['delayed', 'behind_schedule', 'at_risk', 'on_hold'], true);
+        $scheduleHealth = $projectItem->workflowStatus() === \App\Models\Project::STATUS_COMPLETED
+            ? 'Completed'
+            : ($scheduleAtRisk ? 'Might Be Delayed' : 'On Schedule');
+        $scheduleHealthClass = $scheduleHealth === 'Completed' ? 'status-completed' : ($scheduleAtRisk ? 'status-warning' : 'status-on-track');
         
         // Resolve the canonical stored location while allowing legacy location columns.
         $projectLocation = trim((string) (
@@ -53,9 +41,9 @@
         
         $startDate = $projectItem->start_date ? $projectItem->start_date->format('M d, Y') : 'TBD';
         $targetEndDate = $projectItem->target_end_date ? $projectItem->target_end_date->format('M d, Y') : 'TBD';
-        $daysRemaining = $projectItem->target_end_date
-            ? max(0, (int) ceil(now()->diffInDays($projectItem->target_end_date, false)))
-            : 0;
+        $daysRemaining = $projectItem->target_end_date && $projectItem->target_end_date->greaterThanOrEqualTo(now()->startOfDay())
+            ? (int) now()->startOfDay()->diffInDays($projectItem->target_end_date, false)
+            : null;
         $projectManager = optional($projectItem->engineer)->name ?? 'Unassigned';
         $siteSupervisor = optional($projectItem->activeSupervisor)->name ?? 'Not assigned';
         
@@ -204,7 +192,7 @@
                             </div>
                             <span class="command-panel-subtext-lbl mt-1">Timeline Baseline Status</span>
                             <div class="client-schedule-health-tooltip" id="clientScheduleHealthTooltip-{{ $projectItem->project_id }}" role="tooltip">
-                                <strong>Delayed phases</strong>
+                                <strong>Timeline updates</strong>
                                 @if($delayedPhases->isNotEmpty())
                                     <ul>
                                         @foreach($delayedPhases as $delayedPhase)
@@ -212,7 +200,7 @@
                                         @endforeach
                                     </ul>
                                 @else
-                                    <p>No delayed phases for this project. Schedule health may reflect milestones or project status.</p>
+                                    <p>No delayed phases are currently recorded. The schedule status may also reflect milestones or the project target date.</p>
                                 @endif
                             </div>
                         </div>
@@ -225,7 +213,15 @@
                                 </div>
                                 <div class="command-panel-split-copy">
                                     <strong class="command-panel-medium-display-val brand-dark-green-header">{{ $targetEndDate }}</strong>
-                                    <span class="command-panel-subtext-lbl">{{ $daysRemaining }} Days Remaining</span>
+                                    <span class="command-panel-subtext-lbl">
+                                        @if($projectItem->workflowStatus() === \App\Models\Project::STATUS_COMPLETED)
+                                            Project completed
+                                        @elseif($daysRemaining === null)
+                                            {{ $projectItem->target_end_date ? 'Past target date' : 'Not scheduled' }}
+                                        @else
+                                            {{ $daysRemaining }} {{ \Illuminate\Support\Str::plural('day', $daysRemaining) }} remaining
+                                        @endif
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -420,6 +416,7 @@
     .status-on-track { background-color: #e6f7ed !important; color: #10b981 !important; }
     .status-completed { background-color: #f1f5f9 !important; color: #475569 !important; }
     .status-delayed { background-color: #fef2f2 !important; color: #ef4444 !important; }
+    .status-warning { background-color: #fffbeb !important; color: #b45309 !important; }
     .status-planning { background-color: #eff6ff !important; color: #2563eb !important; }
 
     .project-dashboard-content {

@@ -1413,7 +1413,7 @@
     <form id="filterForm" method="GET" class="row g-3 align-items-end">
         <div class="col-6 col-md-3">
             <label class="form-label small fw-bold text-muted">Project</label>
-            <select name="project_id" class="form-select form-select-sm" onchange="this.form.submit()">
+            <select name="project_id" class="form-select form-select-sm" data-searchable-project aria-label="Filter reports by project" onchange="this.form.submit()">
                 <option value="" {{ request('project_id') === null || request('project_id') === '' ? 'selected' : '' }}>All Projects</option>
                 @foreach($assignedProjects as $project)
                     <option value="{{ $project->project_id }}" {{ request('project_id') == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
@@ -1662,7 +1662,7 @@
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label small fw-bold text-muted">Project</label>
-                                                            <select id="editProjectId-{{ $report->report_id }}" class="form-select form-select-sm edit-project-select">
+                                                            <select id="editProjectId-{{ $report->report_id }}" class="form-select form-select-sm edit-project-select" data-searchable-project aria-label="Select report project">
                                                                 @foreach($assignedProjects as $project)
                                                                     <option value="{{ $project->project_id }}" {{ $report->project_id == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
                                                                 @endforeach
@@ -1957,7 +1957,7 @@
                     <div class="row">
                                 <div class="col-12 col-md-6 cms-form-group">
                             <label for="modal_project_id" class="cms-form-label">Project Assignment <span class="text-danger">*</span></label>
-                            <select name="project_id" id="modal_project_id" class="form-select cms-form-control" required>
+                            <select name="project_id" id="modal_project_id" class="form-select cms-form-control" data-searchable-project aria-label="Select report project" required>
                                 @if($assignedProjects->isEmpty())
                                     <option value="" selected disabled>No assigned projects available</option>
                                 @else

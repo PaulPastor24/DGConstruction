@@ -70,3 +70,25 @@
     border-radius: 50%;
     object-fit: cover;
 }
+.face-camera .face-actions,
+.face-inline .face-inline-actions {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.face-camera .face-button,
+.face-inline .face-inline-actions .btn {
+    display: inline-flex;
+    flex: 1 1 12rem;
+    min-width: min(100%, 12rem);
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    text-align: center;
+}
+.attendance-workspace .scan-pulse-container .face-trigger-btn {
+    display: flex !important;
+    margin: 0 auto 1rem !important;
+}

@@ -2,7 +2,7 @@
 
 **Purpose:** Describe how the current system works: its roles, features, business logic, and the connections between users and modules.
 
-**Basis:** Review of the Laravel routes, controllers, models, migrations, and main role-specific views in this repository, as of October 20, 2026. This guide describes behavior represented in the code; deployed configuration can affect features such as scheduled jobs, email, and biometric authentication.
+**Basis:** Review of the Laravel routes, controllers, models, migrations, and main role-specific views in this repository, as of October 28, 2026. This guide describes behavior represented in the code; deployed configuration can affect features such as scheduled jobs, email, and biometric authentication.
 
 ## 1. System at a glance
 
@@ -74,6 +74,17 @@ Public pages include landing/gallery content and public gallery project/demo end
 4. Supervisor records actual material usage against a project phase.
 5. The system updates stock/allocation quantities and keeps a material usage record.
 
+## 4. Core permissions, status gates, and operational rules
+
+The system relies on a layered role and workflow model rather than a single global permission check. Authenticated access is enforced at route level, but several operations also require additional business conditions beyond the route's base role.
+
+- Route groups are role-specific, but some actions are stricter than the group itself. For example, report approval is limited to the `engineer` role even though the engineer/admin route group includes multiple administrator-like roles.
+- Progress and status changes are intentionally filtered through review paths. Supervisors can submit accomplishment reports, but direct phase progress/status updates are restricted and the expected approval path is through review rather than direct mutation.
+- Client visibility is filtered to approved and published reports and to the client's own project associations. Public gallery content is not a private client dashboard and has separate access rules.
+- Operational data integrity rules are enforced before updates: material requests must reference assigned project stock, attendance actions must respect time ordering and scheduled constraints, and tool loans cannot overlap with active loans.
+- Notifications and scheduled jobs create workflow reminders, but they do not replace the required approval and review steps. The code keeps separate records for notifications, client publication, and scheduled automation.
+
+This means the system is not just a set of roles; it is a managed workflow with approval gates, visibility limits, and operational safeguards that must be satisfied before state changes become effective.
 
 ## 5. Module-by-module functionality and logic
 

@@ -680,6 +680,10 @@
                     </div>
 
                     <div class="col-md-auto ms-auto ps-3">
+                        <a href="{{ route('admin.users.auditLog') }}" class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Activity Logs</span>
+                        </a>
                     </div>
                 </div>
             </form>

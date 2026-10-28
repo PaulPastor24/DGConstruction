@@ -47,6 +47,7 @@ class SupervisorReportFilteringTest extends TestCase
             $table->id();
             $table->bigInteger('project_id');
             $table->bigInteger('supervisor_id');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
@@ -75,10 +76,12 @@ class SupervisorReportFilteringTest extends TestCase
 
         $firstProject = Project::create(['project_name' => 'Alpha Project', 'status' => 'ongoing']);
         $secondProject = Project::create(['project_name' => 'Beta Project', 'status' => 'ongoing']);
+        $revokedProject = Project::create(['project_name' => 'Revoked Project', 'status' => 'ongoing']);
 
         DB::table('project_supervisors')->insert([
-            ['project_id' => $firstProject->project_id, 'supervisor_id' => $user->user_id, 'created_at' => now(), 'updated_at' => now()],
-            ['project_id' => $secondProject->project_id, 'supervisor_id' => $user->user_id, 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => $firstProject->project_id, 'supervisor_id' => $user->user_id, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => $secondProject->project_id, 'supervisor_id' => $user->user_id, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => $revokedProject->project_id, 'supervisor_id' => $user->user_id, 'is_active' => false, 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $firstPhase = ConstructionPhase::create([
@@ -91,6 +94,13 @@ class SupervisorReportFilteringTest extends TestCase
         $secondPhase = ConstructionPhase::create([
             'project_id' => $secondProject->project_id,
             'phase_name' => 'Structure',
+            'phase_order' => 1,
+            'status' => 'in_progress',
+        ]);
+
+        $revokedPhase = ConstructionPhase::create([
+            'project_id' => $revokedProject->project_id,
+            'phase_name' => 'Restricted Phase',
             'phase_order' => 1,
             'status' => 'in_progress',
         ]);
@@ -115,10 +125,22 @@ class SupervisorReportFilteringTest extends TestCase
             'approval_status' => 'pending',
         ]);
 
+        Report::create([
+            'project_id' => $revokedProject->project_id,
+            'phase_id' => $revokedPhase->phase_id,
+            'submitted_by' => $user->user_id,
+            'report_date' => '2026-07-03',
+            'report_text' => 'Revoked assignment report',
+            'site_images' => null,
+            'approval_status' => 'pending',
+        ]);
+
         $response = $this->actingAs($user)->get(route('supervisor.reports'));
 
         $response->assertOk();
         $response->assertSee('First report');
         $response->assertSee('Second report');
+        $response->assertDontSee('Revoked Project');
+        $response->assertDontSee('Revoked assignment report');
     }
 }

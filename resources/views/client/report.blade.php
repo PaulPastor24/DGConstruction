@@ -123,7 +123,7 @@
                 <label class="form-label small fw-bold text-muted" for="projectSelect">
                     <i class="bi bi-building me-1" aria-hidden="true"></i>Project
                 </label>
-                <select name="project_id" id="projectSelect" class="form-select form-select-sm report-project-select" onchange="this.form.submit()">
+                <select name="project_id" id="projectSelect" class="form-select form-select-sm report-project-select" data-searchable-project aria-label="Filter client reports by project" onchange="this.form.submit()">
                     @php
                         $selectedProjectFilter = $activeProjectId ?? request('project_id');
                     @endphp

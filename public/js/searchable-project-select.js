@@ -118,19 +118,50 @@
             }
         });
         select.addEventListener('change', syncLabel);
+        select.addEventListener('project-picker:sync', syncLabel);
         select.form?.addEventListener('reset', () => setTimeout(close, 0));
         syncLabel();
     }
 
+    function enhanceProjectMenu(menu) {
+        if (menu.dataset.projectMenuReady) return;
+        const search = menu.querySelector('[data-project-menu-search]');
+        if (!search) return;
+        menu.dataset.projectMenuReady = 'true';
+        const options = Array.from(menu.querySelectorAll('[data-project-menu-option]'));
+        const status = document.createElement('div');
+        status.className = 'project-picker-status';
+        status.setAttribute('role', 'status');
+        menu.appendChild(status);
+
+        const filter = () => {
+            const term = search.value.trim().toLocaleLowerCase();
+            let visible = 0;
+            options.forEach(option => {
+                const matches = option.textContent.trim().toLocaleLowerCase().includes(term);
+                option.hidden = !matches;
+                if (matches) visible++;
+            });
+            status.textContent = visible === 0
+                ? 'No matching projects. Try a different name.'
+                : `${visible} project${visible === 1 ? '' : 's'} found.`;
+        };
+        search.addEventListener('input', filter);
+        filter();
+    }
+
     function scan(root) {
         if (!(root instanceof Element || root instanceof Document)) return;
-        if (root.matches?.('select[data-searchable-project]')) enhance(root);
-        root.querySelectorAll('select[data-searchable-project]').forEach(enhance);
+        const projectSelect = 'select[data-searchable-project], select[name="project_id"]';
+        if (root.matches?.(projectSelect)) enhance(root);
+        if (root.matches?.('[data-project-search-menu]')) enhanceProjectMenu(root);
+        root.querySelectorAll(projectSelect).forEach(enhance);
+        root.querySelectorAll('[data-project-search-menu]').forEach(enhanceProjectMenu);
     }
 
     function start() {
         scan(document);
-        // Inventory panels are replaced after AJAX filtering and pagination.
+        // Project selectors may be added when role-specific panels are refreshed.
         new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(scan)))
             .observe(document.body, { childList: true, subtree: true });
     }
