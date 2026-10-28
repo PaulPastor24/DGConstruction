@@ -15,8 +15,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="{{ asset('css/numbers.css') }}?v={{ filemtime(public_path('css/numbers.css')) }}">
+    @include('partials.system-loading-head')
 </head>
 <body>
+    @include('partials.system-loading')
 
 <div class="login-shell">
     <!-- LEFT SIDE HERO OVERLAY -->
