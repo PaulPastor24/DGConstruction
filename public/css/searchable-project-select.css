@@ -1,0 +1,7 @@
+.project-picker { position: relative; min-width: 0; }
+.project-picker-input { padding-right: 2rem; text-overflow: ellipsis; }
+.project-picker-icon { position: absolute; right: .7rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #587062; }
+.project-picker-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1050; background: #fff; border: 1px solid #cbdcd0; border-radius: 8px; box-shadow: 0 8px 24px #163c2426; padding: 4px; }
+.project-picker-option { padding: 8px 10px; font-size: .85rem; border-radius: 4px; cursor: pointer; overflow-wrap: anywhere; }
+.project-picker-option[aria-selected="true"] { background: #e8f3ec; color: #164c2a; }
+.project-picker-status { padding: 8px 10px; color: #66766b; font-size: .75rem; border-top: 1px solid #edf1ee; }

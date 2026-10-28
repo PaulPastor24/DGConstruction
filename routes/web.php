@@ -140,9 +140,12 @@ Route::middleware('auth')->group(function () {
 
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
 Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function () {
+    Route::get('/admin/workers', [\App\Http\Controllers\WorkerAllocationController::class, 'index'])->name('admin.workers.index');
+    Route::post('/admin/workers/{workerId}/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'allocate'])->whereNumber('workerId')->name('admin.workers.allocate');
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
+    Route::get('/admin/reports/{reportId}/attachments/{index}', [ReportController::class, 'downloadAttachment'])->whereNumber('index')->name('admin.reports.attachments.download');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
     Route::get('/admin/reports/data', [AdminDashboardController::class, 'reportsData'])->name('admin.reports.data');
     Route::get('/admin/reports/{id}/details', [AdminDashboardController::class, 'reportDetails'])->name('admin.reports.details');
@@ -256,6 +259,8 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
 
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
 Route::middleware(['auth', 'role:supervisor'])->group(function () {
+    Route::get('/supervisor/workers', [\App\Http\Controllers\WorkerAllocationController::class, 'index'])->name('supervisor.workers.index');
+    Route::post('/supervisor/workers/{workerId}/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'allocate'])->whereNumber('workerId')->name('supervisor.workers.allocate');
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');
     Route::get('/supervisor/phases', [SupervisorController::class, 'phases'])->name('supervisor.phases');
@@ -275,6 +280,7 @@ Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::post('/supervisor/materials', [SupervisorController::class, 'logDelivery'])->name('supervisor.materials.log');
     Route::post('/supervisor/materials/request', [SupervisorController::class, 'requestMaterial'])->name('supervisor.materials.request');
 
+    Route::get('/supervisor/reports/{reportId}/attachments/{index}', [ReportController::class, 'downloadAttachment'])->whereNumber('index')->name('supervisor.reports.attachments.download');
     Route::get('/supervisor/reports', [ReportController::class, 'supervisorReports'])->name('supervisor.reports');
 
     // Reports API endpoints

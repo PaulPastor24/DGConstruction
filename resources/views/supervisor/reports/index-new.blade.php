@@ -1641,6 +1641,14 @@
                                                     </div>
 
                                                     <div class="js-report-view-section">
+                                                        @if(!empty($report->attachments))
+                                                            <div class="mb-3">
+                                                                <div class="detail-section-title">Documents</div>
+                                                                @foreach($report->attachments as $index => $attachment)
+                                                                    <a class="d-block" href="{{ route('supervisor.reports.attachments.download', ['reportId' => $report->report_id, 'index' => $index]) }}">{{ $attachment['name'] }}</a>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
                                                         <div class="detail-report-text p-4 rounded-3 mb-4">
                                                             <div class="detail-section-title">Construction Accomplishment</div>
                                                             <p class="mb-0 text-dark small" id="staticReportText-{{ $report->report_id }}">{{ $report->client_report_text ?: 'No description logs reported.' }}</p>
@@ -1674,6 +1682,11 @@
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label small fw-bold text-muted">Add Images</label>
+                                                            <label class="form-label">Add documents (up to 10 total, 10 MB each)</label>
+                                                            <input type="file" class="form-control mb-2 edit-report-documents" multiple accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                                            @foreach(($report->attachments ?? []) as $index => $attachment)
+                                                                <a class="d-block" href="{{ route('supervisor.reports.attachments.download', ['reportId' => $report->report_id, 'index' => $index]) }}">{{ $attachment['name'] }}</a>
+                                                            @endforeach
                                                             <input type="file" id="editReportImages-{{ $report->report_id }}" class="d-none edit-report-images" multiple accept="image/png,image/jpeg,image/jpg,image/webp">
                                                             <button type="button" class="btn btn-sm btn-outline-success js-add-edit-images">
                                                                 <i class="bi bi-plus-lg"></i> Add Images
@@ -1997,6 +2010,11 @@
                     </div>
                 </div>
 
+                <div class="px-4 pb-3">
+                    <label for="reportDocuments" class="form-label fw-bold">Documents (optional)</label>
+                    <input type="file" id="reportDocuments" name="attachments[]" class="form-control" multiple accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    <small class="text-muted">Up to 10 PDF, Word, or Excel files, 10 MB each. Hold Ctrl to select multiple files.</small>
+                </div>
                 <div class="modal-footer create-report-modal-footer">
                     <button type="button" class="btn-cms-secondary me-2" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn-cms-primary d-flex align-items-center gap-2">
@@ -2876,6 +2894,7 @@
                 formData.append('report_text', reportText);
 
                 editSelectedFiles.forEach(file => formData.append('site_images[]', file));
+                modal.querySelectorAll('.edit-report-documents').forEach(input => Array.from(input.files).forEach(file => formData.append('attachments[]', file)));
 
                 const removeImages = modal.querySelectorAll('.js-remove-image-checkbox:checked');
                 removeImages.forEach(cb => formData.append('remove_site_images[]', cb.value));

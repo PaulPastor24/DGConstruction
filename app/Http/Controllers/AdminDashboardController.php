@@ -1022,6 +1022,10 @@ class AdminDashboardController extends Controller
                     return $report->imageUrl($image);
                 }, (array) ($report->site_images ?? [])))),
                 'site_image_paths' => array_values((array) ($report->site_images ?? [])),
+                'attachments' => collect($report->attachments ?? [])->map(fn ($file, $index) => [
+                    'name' => $file['name'],
+                    'url' => route('admin.reports.attachments.download', ['reportId' => $report->report_id, 'index' => $index]),
+                ])->values(),
                 'material_usage' => $materialUsage,
                 'attendance_summary' => $attendanceSummary,
             ],

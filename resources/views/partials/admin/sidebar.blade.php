@@ -27,6 +27,9 @@
             <i class="bi bi-kanban"></i><span>Phase Management</span>
         </a>
         <div class="nav-section-label">Materials & Attendance</div>
+        <a class="nav-item {{ request()->routeIs('admin.workers.*') ? 'active' : '' }}" href="{{ route('admin.workers.index') }}">
+            <i class="bi bi-people"></i><span>Workers & Allocation</span>
+        </a>
         <details class="attendance-nav-group" @if(request()->routeIs('admin.attendance*')) open @endif>
             <summary class="nav-item {{ request()->routeIs('admin.attendance*') ? 'active' : '' }}">
                 <i class="bi bi-person-badge"></i><span>Worker Attendance</span><i class="bi bi-chevron-down attendance-nav-chevron"></i>

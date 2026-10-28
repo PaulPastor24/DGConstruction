@@ -11,6 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
@@ -100,16 +101,13 @@ class ReportController extends Controller
 
         $report = Report::findOrFail($reportId);
 
-        // Only engineers can approve
-        if (auth('web')->user()->role !== 'engineer') {
-            abort(403, 'Only engineers can approve reports');
+        // Only administrators can approve
+        if (! in_array(auth('web')->user()->role, ['engineer', 'admin', 'administrator'], true)) {
+            abort(403, 'Only administrators can approve reports');
         }
 
         // Allow re-approving if admin is updating an already reviewed report
         $isReApproval = $report->approval_status !== 'pending';
-        if ($isReApproval && auth('web')->user()->role !== 'engineer') {
-            return response()->json(['success' => false, 'message' => 'Only engineers can update reviewed reports.']);
-        }
 
         try {
             $validated = $request->validate([
@@ -198,7 +196,7 @@ class ReportController extends Controller
                 'reviewed_at' => now(),
                 'approved_by' => auth('web')->user()->user_id,
                 'approved_at' => now(),
-                'approval_remarks' => $validated['approval_remarks'],
+                'approval_remarks' => $validated['approval_remarks'] ?? null,
                 'accomplishment_percentage' => $approvedProgress,
                 'is_published_to_client' => $publishToClient,
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
@@ -215,6 +213,7 @@ class ReportController extends Controller
                 $updateData['approved_by'] = auth('web')->user()->user_id;
             }
 
+            $removedImageFiles = $this->applyImageRemovals($report, $request, $updateData);
             $report->update($updateData);
 
             if ($report->phase && $request->filled('accomplishment_percentage')) {
@@ -267,6 +266,7 @@ class ReportController extends Controller
             }
 
             DB::commit();
+            $this->deleteUnusedReportImages($removedImageFiles);
 
             if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -306,9 +306,9 @@ class ReportController extends Controller
     {
         $report = Report::findOrFail($reportId);
 
-        // Only engineers can reject
-        if (auth('web')->user()->role !== 'engineer') {
-            abort(403, 'Only engineers can reject reports');
+        // Only administrators can reject
+        if (!in_array(auth('web')->user()->role, ['engineer', 'admin', 'administrator'], true)) {
+            abort(403, 'Only administrators can reject reports');
         }
 
         if ($report->approval_status !== 'pending') {
@@ -404,6 +404,8 @@ class ReportController extends Controller
             'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             'site_images' => 'nullable|array|max:20',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'attachments' => 'nullable|array|max:10',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
         ]);
 
         $project = Project::query()->notArchived()->findOrFail($validated['project_id']);
@@ -436,6 +438,7 @@ class ReportController extends Controller
                 'report_date' => $validated['report_date'],
                 'report_text' => $validated['report_text'],
                 'site_images' => $images,
+                'attachments' => $this->storeAttachments($request),
                 'approval_status' => 'pending',
                 'accomplishment_percentage' => $request->filled('accomplishment_percentage')
                     ? round(min(100, max(0, (float) $request->input('accomplishment_percentage'))), 2)
@@ -535,8 +538,8 @@ class ReportController extends Controller
     {
         $report = Report::findOrFail($reportId);
 
-        if (auth('web')->user()->role !== 'engineer') {
-            abort(403, 'Only engineers can prepare reports');
+        if (!in_array(auth('web')->user()->role, ['engineer', 'admin', 'administrator'], true)) {
+            abort(403, 'Only administrators can prepare reports');
         }
 
         try {
@@ -599,11 +602,13 @@ class ReportController extends Controller
 
             $finalAdminImages = array_values(array_unique(array_merge($existingAdminImages, $includedOriginalImages, $adminImages)));
 
-            $report->update([
+            $updateData = [
                 'admin_report_text' => $validated['admin_report_text'] ?? $report->admin_report_text,
                 'admin_site_images' => !empty($finalAdminImages) ? $finalAdminImages : null,
                 'admin_explanation' => $validated['admin_explanation'] ?? $report->admin_explanation,
-            ]);
+            ];
+            $removedImageFiles = $this->applyImageRemovals($report, $request, $updateData);
+            $report->update($updateData);
 
             $this->logAction(
                 'Report Prepared',
@@ -611,6 +616,7 @@ class ReportController extends Controller
             );
 
             DB::commit();
+            $this->deleteUnusedReportImages($removedImageFiles);
 
             if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -639,8 +645,8 @@ class ReportController extends Controller
     {
         $report = Report::findOrFail($reportId);
 
-        if (auth('web')->user()->role !== 'engineer') {
-            abort(403, 'Only engineers can update reports');
+        if (!in_array(auth('web')->user()->role, ['engineer', 'admin', 'administrator'], true)) {
+            abort(403, 'Only administrators can update reports');
         }
 
         try {
@@ -649,6 +655,8 @@ class ReportController extends Controller
                 'admin_explanation' => 'nullable|string|max:2000',
                 'admin_site_images' => 'nullable|array|max:20',
                 'admin_site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_site_images' => 'nullable|array',
+                'remove_site_images.*' => 'string',
                 'remove_admin_images' => 'nullable|array',
                 'remove_admin_images.*' => 'string',
                 'include_original_images' => 'nullable|array|max:20',
@@ -748,6 +756,7 @@ class ReportController extends Controller
                 }
             }
 
+            $removedImageFiles = $this->applyImageRemovals($report, $request, $updateData);
             $report->update($updateData);
 
             $this->logAction(
@@ -756,6 +765,7 @@ class ReportController extends Controller
             );
 
             DB::commit();
+            $this->deleteUnusedReportImages($removedImageFiles);
 
             if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -1158,9 +1168,16 @@ class ReportController extends Controller
             'accomplishment_percentage' => 'nullable|numeric|min:0|max:100',
             'site_images' => 'nullable|array|max:20',
             'site_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'attachments' => 'nullable|array|max:10',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
             'remove_site_images' => 'nullable|array',
             'remove_site_images.*' => 'string',
         ]);
+
+        if (count($report->attachments ?? []) + count($request->file('attachments', [])) > 10
+            || count(array_diff($report->site_images ?? [], $request->input('remove_site_images', []))) + count($request->file('site_images', [])) > 20) {
+            throw ValidationException::withMessages(['attachments' => 'A report can contain up to 10 documents and 20 images.']);
+        }
 
         $project = Project::query()
             ->notArchived()
@@ -1217,6 +1234,7 @@ class ReportController extends Controller
                 'report_date' => $validated['report_date'],
                 'report_text' => $validated['report_text'],
                 'site_images' => !empty($finalImages) ? $finalImages : null,
+                'attachments' => array_merge($report->attachments ?? [], $this->storeAttachments($request)),
                 'approval_status' => 'pending',
                 'approval_remarks' => null,
                 'is_published_to_client' => false,
@@ -1257,6 +1275,70 @@ class ReportController extends Controller
                 return response()->json(['success' => false, 'message' => 'Failed to update report.'], 500);
             }
             return back()->withErrors('Failed to update report');
+        }
+    }
+
+    private function storeAttachments(Request $request): array
+    {
+        $attachments = [];
+        foreach ($request->file('attachments', []) as $file) {
+            $path = $file->store('reports/attachments', 'local');
+            if (!$path) {
+                throw new \RuntimeException('Unable to store report attachment.');
+            }
+            $attachments[] = ['path' => $path, 'name' => basename($file->getClientOriginalName())];
+        }
+        return $attachments;
+    }
+
+    public function downloadAttachment($reportId, $index)
+    {
+        $report = Report::findOrFail($reportId);
+        $this->authorizeViewReport($report);
+        $attachment = ($report->attachments ?? [])[(int) $index] ?? null;
+        abort_unless($attachment && Storage::disk('local')->exists($attachment['path']), 404);
+        return Storage::disk('local')->download($attachment['path'], $attachment['name'], [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    private function applyImageRemovals(Report $report, Request $request, array &$data): array
+    {
+        $normalize = static fn ($path) => str_contains($path, '/storage/')
+            ? Str::after($path, '/storage/') : ltrim($path, '/');
+        $removed = array_map($normalize, array_merge(
+            $request->input('remove_site_images', []), $request->input('remove_admin_images', [])
+        ));
+        $old = array_merge($report->site_images ?? [], $report->admin_site_images ?? []);
+        foreach (['site_images', 'admin_site_images'] as $field) {
+            $images = array_key_exists($field, $data) ? $data[$field] : $report->$field;
+            $remaining = array_values(array_filter($images ?? [],
+                fn ($path) => !in_array($normalize($path), $removed, true)));
+            $data[$field] = $remaining ?: null;
+        }
+        return array_values(array_intersect(array_map($normalize, $old), $removed));
+    }
+
+    private function deleteUnusedReportImages(array $paths): void
+    {
+        // Files are deleted only after the database commit, and only if no report uses them.
+        try {
+            foreach (array_unique($paths) as $path) {
+                if (!str_starts_with($path, 'reports/') || str_contains($path, '..')) {
+                    continue;
+                }
+                $used = Report::query()->select(['report_id', 'site_images', 'admin_site_images'])->get()
+                    ->contains(function ($report) use ($path) {
+                        foreach (array_merge($report->site_images ?? [], $report->admin_site_images ?? []) as $image) {
+                            $image = str_contains($image, '/storage/') ? Str::after($image, '/storage/') : ltrim($image, '/');
+                            if ($image === $path) return true;
+                        }
+                        return false;
+                    });
+                if (!$used) Storage::disk('public')->delete($path);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Report image cleanup failed: ' . $e->getMessage());
         }
     }
 }

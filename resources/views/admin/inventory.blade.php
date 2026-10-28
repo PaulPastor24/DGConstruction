@@ -3,7 +3,12 @@
 @section('title', 'Materials & Inventory')
 @section('page_title', 'Materials & Inventory')
 
+@push('scripts')
+    <script src="{{ asset('js/searchable-project-select.js') }}" defer></script>
+@endpush
+
 @push('styles')
+    <link rel="stylesheet" href="{{ asset('css/searchable-project-select.css') }}">
 <style>
     .inventory-compact-pagination .pagination { flex-wrap: nowrap; }
     .inventory-compact-pagination .page-link { min-width: 32px; text-align: center; }
@@ -2298,8 +2303,8 @@
                     <div id="inventory-view" class="inventory-view-panel {{ $activeInventoryView !== 'inventory' ? 'd-none' : '' }}">
                     <!-- Filters Grid Alignment Matching Reference Layout Layout Header -->
                     <form method="GET" action="{{ route('admin.inventory') }}" class="row g-2 align-items-center mb-4" id="inventory-search-form">
-<div class="col-md-4"><select name="project_id" class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
-<option value="">All projects ? warehouse inventory</option>
+<div class="col-md-4"><select name="project_id" data-searchable-project class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
+<option value="">All projects / warehouse inventory</option>
 @foreach($projects as $inventoryProject)<option value="{{ $inventoryProject->project_id }}" @selected((int) request('project_id') === (int) $inventoryProject->project_id)>{{ $inventoryProject->project_name }}</option>@endforeach
 </select></div>
                         <div class="col-lg-4 col-md-6 col-12 position-relative search-container">
@@ -2524,7 +2529,7 @@
                             <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                         </div>
                         <div class="col-md-4 col-6">
-                            <select name="allocated_project_id" class="form-select form-select-sm text-muted" aria-label="Filter by project" onchange="this.form.submit()">
+                            <select name="allocated_project_id" data-searchable-project class="form-select form-select-sm text-muted" aria-label="Filter by project" onchange="this.form.submit()">
                                 <option value="">All Projects</option>
                                 @foreach($projects as $projectOption)
                                     <option value="{{ $projectOption->project_id }}" {{ (string) $allocatedProjectId === (string) $projectOption->project_id ? 'selected' : '' }}>{{ $projectOption->project_name }}</option>
@@ -2793,7 +2798,7 @@
                                 <i class="bi bi-search position-absolute top-50 translate-middle-y mi-search-icon text-muted small"></i>
                             </div>
                             <div class="col-md-3">
-                                <select name="project_id" id="usageProjectFilter" class="form-select form-select-sm text-muted">
+                                <select name="project_id" id="usageProjectFilter" data-searchable-project class="form-select form-select-sm text-muted">
                                     <option value="">All Projects</option>
                                     @foreach($inventoryProjectOptions as $projectOption)
                                         @php
@@ -3720,19 +3725,51 @@
 </div>
 
 @foreach($materials as $material)
-<div class="modal fade" id="viewMaterialModal{{ $material->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content rounded-4 border-0">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-dark">{{ $material->name }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="viewMaterialModal{{ $material->id }}" tabindex="-1" aria-labelledby="viewMaterialTitle{{ $material->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header px-4 py-3 bg-success-subtle">
+                <h5 class="modal-title fw-semibold text-dark" id="viewMaterialTitle{{ $material->id }}"><i class="bi bi-box-seam me-2" aria-hidden="true"></i>Material details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close material details"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted mb-2">Category Segment: <strong class="text-dark">{{ $material->category ?? 'General' }}</strong></p>
-                <p class="text-muted mb-2">Unit Classification: <strong class="text-dark">{{ $material->unit }}</strong></p>
-                <p class="text-muted mb-2">Current Active Stock: <strong class="text-dark">{{ number_format($material->current_stock, 2) }}</strong></p>
-                <p class="text-muted mb-2">Minimum Level Bound: <strong class="text-dark">{{ number_format($material->minimum_stock_level, 2) }}</strong></p>
-                <p class="text-muted mb-0">Assigned Vendor: <strong class="text-dark">{{ $material->supplier ?? 'Not specified' }}</strong></p>
+            <div class="modal-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+                    <div>
+                        <h2 class="h4 fw-semibold mb-1 text-break">{{ $material->name }}</h2>
+                        <p class="text-muted small mb-0">{{ $material->category ?? 'General' }}</p>
+                    </div>
+                    @if($material->current_stock <= 0)
+                        <span class="badge bg-danger-subtle text-danger">Out of stock</span>
+                    @elseif($material->current_stock <= $material->minimum_stock_level)
+                        <span class="badge bg-warning-subtle text-warning-emphasis">Low stock</span>
+                    @else
+                        <span class="badge bg-success-subtle text-success">Available</span>
+                    @endif
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3 h-100 bg-light">
+                            <div class="text-muted small mb-1">Current stock</div>
+                            <div class="h3 fw-semibold mb-0 text-break">{{ number_format($material->current_stock, 2) }}</div>
+                            <div class="small text-muted">{{ $material->unit }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-muted small mb-1">Minimum stock</div>
+                            <div class="h3 fw-semibold mb-0 text-break">{{ number_format($material->minimum_stock_level, 2) }}</div>
+                            <div class="small text-muted">{{ $material->unit }}</div>
+                        </div>
+                    </div>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal mb-2">Category</dt><dd class="col-sm-8 mb-3">{{ $material->category ?? 'General' }}</dd>
+                    <dt class="col-sm-4 text-muted fw-normal mb-2">Unit</dt><dd class="col-sm-8 mb-3">{{ $material->unit }}</dd>
+                    <dt class="col-sm-4 text-muted fw-normal mb-2">Supplier</dt><dd class="col-sm-8 mb-0 text-break">{{ $material->supplier ?? 'Not specified' }}</dd>
+                </dl>
+            </div>
+            <div class="modal-footer px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

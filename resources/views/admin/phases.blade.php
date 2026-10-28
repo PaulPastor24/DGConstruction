@@ -338,17 +338,13 @@
         margin-bottom: 1.5rem;
     }
 
-    /* ===== Workspace Split Layout ===== */
+    /* ===== Full-width Phase Workspace ===== */
     .workspace-layout {
         display: flex;
         align-items: flex-start;
         gap: 0;
         width: 100%;
         min-width: 0;
-        transition: gap 0.35s ease;
-    }
-    .workspace-layout.is-panel-open {
-        gap: 1.25rem;
     }
     .workspace-left-col {
         display: flex;
@@ -359,51 +355,6 @@
         margin: 0 auto;
     }
 
-    /* Right Side: Sticky Details Panel */
-    .details-sidebar-card {
-        background: #f8fafc;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 28px;
-        padding: 0;
-        width: 0;
-        max-width: 360px;
-        min-width: 0;
-        flex: 0 0 0;
-        overflow: hidden;
-        opacity: 0;
-        pointer-events: none;
-        transform: translateX(24px);
-        position: sticky;
-        top: 1.5rem;
-        box-shadow: 0 28px 90px rgba(15, 32, 21, 0.08);
-        transition: width 0.35s ease, flex-basis 0.35s ease, padding 0.35s ease, opacity 0.25s ease, transform 0.35s ease;
-        align-self: start;
-    }
-    .details-sidebar-card.is-open {
-        width: 360px;
-        flex: 0 0 360px;
-        padding: 1.75rem;
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateX(0);
-    }
-    .phase-detail-content {
-        min-height: 100%;
-        overflow-y: auto;
-        transition: opacity 0.2s ease, transform 0.25s ease;
-    }
-    .phase-detail-content.is-switching {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    .details-sidebar-card::before {
-        content: '';
-        display: block;
-        height: 5px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(134, 239, 172, 0.95), rgba(34, 197, 94, 0.95));
-        margin-bottom: 1rem;
-    }
     .sidebar-header {
         display: flex;
         justify-content: space-between;
@@ -429,28 +380,6 @@
         max-width: 18rem;
         font-family: 'DM Sans', sans-serif !important;
     }
-    .btn-close-sidebar {
-        background: none;
-        border: none;
-        color: #94a3b8;
-        cursor: pointer;
-        font-size: 1.1rem;
-    }
-
-    @media (max-width: 1400px) {
-        .workspace-layout {
-            flex-wrap: wrap;
-        }
-        .details-sidebar-card {
-            position: static;
-            max-width: 100%;
-        }
-        .details-sidebar-card.is-open {
-            width: 100%;
-            flex: 1 1 100%;
-        }
-    }
-
     .phase-detail-empty-state {
         display: grid;
         justify-items: center;
@@ -1441,13 +1370,17 @@
             </div>
         </div>
 
-        <!-- Right Side Details Sidebar -->
-        <div class="details-sidebar-card" id="phaseDetailsSidebarCard" aria-hidden="true">
-            <div id="phaseDetailContent" class="phase-detail-content">
-                <div class="phase-detail-empty-state">
-                    <div class="avatar-pill avatar-pill-large">?</div>
-                    <div class="fw-semibold text-dark">Choose a phase to inspect its full details.</div>
-                    <div class="text-muted small">The selected record will open here with a smooth transition.</div>
+        <div class="modal fade" id="phaseDetailsModal" tabindex="-1" aria-labelledby="phaseDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+                <div class="modal-content border-0 rounded-4 shadow-lg">
+                    <div class="modal-header px-4 py-3 bg-success-subtle">
+                        <h5 class="modal-title fw-semibold" id="phaseDetailsModalLabel"><i class="bi bi-layers me-2" aria-hidden="true"></i>Phase details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close phase details"></button>
+                    </div>
+                    <div id="phaseDetailContent" class="modal-body phase-detail-content p-4"></div>
+                    <div class="modal-footer px-4 py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1673,7 +1606,7 @@
             });
         }
         const workspaceLayout = document.getElementById('phasesWorkspaceLayout');
-        const detailsSidebarCard = document.getElementById('phaseDetailsSidebarCard');
+        const detailsModalEl = document.getElementById('phaseDetailsModal');
         const detailsPanel = document.getElementById('phaseDetailContent');
         const searchInput = document.getElementById('phaseSearchInput');
         const searchableSelect = document.getElementById('phaseSearchableSelect');
@@ -1687,17 +1620,16 @@
         let emptyStateRow = document.getElementById('phaseTableEmptyState');
         const resultsCount = document.getElementById('phaseResultsCount');
 
-        if (!workspaceLayout || !detailsSidebarCard || !detailsPanel) {
+        if (!workspaceLayout || !detailsModalEl || !detailsPanel) {
             return;
         }
 
-        const FALLBACK_MARKUP = `
-            <div class="phase-detail-empty-state">
-                <div class="avatar-pill avatar-pill-large">?</div>
-                <div class="fw-semibold text-dark">Choose a phase to inspect its full details.</div>
-                <div class="text-muted small">The selected record will open here with a smooth transition.</div>
-            </div>
-        `;
+        document.body.appendChild(detailsModalEl);
+        const detailsModal = bootstrap.Modal.getOrCreateInstance(detailsModalEl);
+        let detailsTrigger = null;
+        detailsModalEl.addEventListener('hidden.bs.modal', () => {
+            if (detailsTrigger?.isConnected) detailsTrigger.focus();
+        });
 
         const escapeHtml = (value) => String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -1705,29 +1637,6 @@
             .replace(/>/g, '&gt;')
             .replace(/\"/g, '&quot;')
             .replace(/'/g, '&#39;');
-
-        function setDetailsPanelOpen(isOpen) {
-            workspaceLayout.classList.toggle('is-panel-open', isOpen);
-            detailsSidebarCard.classList.toggle('is-open', isOpen);
-            detailsSidebarCard.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-        }
-
-        function beginDetailsTransition() {
-            detailsPanel.classList.remove('is-switching');
-            void detailsPanel.offsetWidth;
-            detailsPanel.classList.add('is-switching');
-        }
-
-        function finishDetailsTransition() {
-            window.requestAnimationFrame(() => {
-                detailsPanel.classList.remove('is-switching');
-            });
-        }
-
-        function closeDetailsPanel() {
-            setDetailsPanelOpen(false);
-            detailsPanel.innerHTML = FALLBACK_MARKUP;
-        }
 
         function getOrCreateEmptyStateRow() {
             if (!phaseTableBody) {
@@ -1978,22 +1887,21 @@
                         </span>
                     </div>
                 `).join('')
-                : '<p class="text-muted mb-0" style="font-size: 12px;">No milestones recorded for this phase yet.</p>';
+                : '<p class="text-muted mb-0" style="font-size: 14px;">No milestones recorded for this phase yet.</p>';
 
             detailsPanel.innerHTML = `
                 <div class="sidebar-header">
                     <div>
-                        <p class="sidebar-label">Phase Details</p>
-                        <h2 class="sidebar-title">${escapeHtml(payload.phase_name || 'Phase details')}</h2>
+                        <h2 class="h4 fw-semibold mb-1">${escapeHtml(payload.phase_name || 'Phase details')}</h2>
+                        <p class="text-muted small mb-0">${escapeHtml(payload.project_name || '')}</p>
                     </div>
-                    <button class="btn-close-sidebar js-close-phase-panel" type="button"><i class="bi bi-x-lg"></i></button>
                 </div>
 
                 <div class="d-flex justify-content-end mb-3">
-                    <span class="badge ${escapeHtml(payload.status_class || 'status-pending')} px-2 py-1 rounded" style="font-size: 11px;">${escapeHtml(payload.status_label || 'Pending')}</span>
+                    <span class="badge ${escapeHtml(payload.status_class || 'status-pending')} px-2 py-1 rounded" style="font-size: 13px;">${escapeHtml(payload.status_label || 'Pending')}</span>
                 </div>
 
-                <div class="d-flex flex-column gap-2.5 mb-4" style="font-size: 13px;">
+                <div class="d-flex flex-column gap-2.5 mb-4" style="font-size: 14px;">
                     <div class="d-flex justify-content-between">
                         <span class="text-muted"><i class="bi bi-list-ol me-2"></i>Phase Order</span>
                         <span class="fw-bold text-dark">${escapeHtml(payload.phase_order || '—')}</span>
@@ -2016,43 +1924,47 @@
                         </div>
                     </div>
                     ${payload.admin_progress_override !== null && payload.admin_progress_override !== undefined ? `
-                        <div class="mt-2 p-2 rounded bg-info-subtle border border-info-subtle" style="font-size: 11px;">
+                        <div class="mt-2 p-2 rounded bg-info-subtle border border-info-subtle" style="font-size: 13px;">
                             <strong>Manual override:</strong> ${escapeHtml(payload.admin_progress_override)}%
                             <div class="text-muted mt-1">${escapeHtml(payload.override_reason || 'No reason provided')}</div>
                             ${payload.override_applied_at ? `<div class="text-muted">Applied ${escapeHtml(payload.override_applied_at)}${payload.override_applied_by_name ? ` by ${escapeHtml(payload.override_applied_by_name)}` : ''}</div>` : ''}
                         </div>
-                    ` : '<div class="text-muted mt-2" style="font-size: 11px;">Progress is calculated from completed milestones.</div>'}
+                    ` : '<div class="text-muted mt-2" style="font-size: 13px;">Progress is calculated from completed milestones.</div>'}
                 </div>
 
                 <hr class="text-muted opacity-25">
 
                 <div class="mb-4">
-                    <h6 class="details-section-title text-uppercase text-muted fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Description</h6>
-                    <p class="text-secondary mb-0" style="font-size: 12px; line-height: 1.6;">${escapeHtml(payload.description || 'No description available for this phase yet.')}</p>
+                    <h6 class="details-section-title text-uppercase text-muted fw-bold" style="font-size: 12px; letter-spacing: 0.5px;">Description</h6>
+                    <p class="text-secondary mb-0" style="font-size: 14px; line-height: 1.6;">${escapeHtml(payload.description || 'No description available for this phase yet.')}</p>
                 </div>
 
                 <hr class="text-muted opacity-25">
 
                 <div class="mb-4">
-                    <h6 class="details-section-title text-uppercase text-muted fw-bold mb-3" style="font-size: 10px; letter-spacing: 0.5px;">Associated Milestones (${escapeHtml(String(Array.isArray(payload.milestones) ? payload.milestones.length : 0))})</h6>
-                    <div class="d-flex flex-column gap-2" style="font-size: 12px;">${milestonesMarkup}</div>
+                    <button type="button" class="btn btn-light border w-100 d-flex justify-content-between align-items-center text-start" data-bs-toggle="collapse" data-bs-target="#phaseDetailsMilestones" aria-expanded="false" aria-controls="phaseDetailsMilestones">
+                        <span>Associated milestones (${escapeHtml(String(Array.isArray(payload.milestones) ? payload.milestones.length : 0))})</span>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="collapse" id="phaseDetailsMilestones">
+                        <div class="d-flex flex-column gap-2 pt-3" style="font-size: 14px;">${milestonesMarkup}</div>
+                    </div>
                 </div>
 
                 <hr class="text-muted opacity-25">
 
-                <div class="d-flex flex-column gap-2" style="font-size: 11px;">
+                <div class="d-flex flex-column gap-2" style="font-size: 13px;">
                     <div>
-                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.3px;">Updated</span>
+                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 0.3px;">Updated</span>
                         <span class="text-dark fw-medium"><i class="bi bi-clock me-1"></i> ${escapeHtml(payload.updated_at || 'Not available')}</span>
                     </div>
                     <div>
-                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.3px;">Project</span>
+                        <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 11px; letter-spacing: 0.3px;">Project</span>
                         <span class="text-dark fw-medium"><i class="bi bi-building me-1"></i> ${escapeHtml(payload.project_name || 'N/A')}</span>
                     </div>
                 </div>
             `;
 
-            finishDetailsTransition();
         }
 
         const phaseModalEl = document.getElementById('phaseModal');
@@ -2762,31 +2674,15 @@
         });
 
         function openPanel(payload) {
-            const wasAlreadyOpen = detailsSidebarCard.classList.contains('is-open');
-            setDetailsPanelOpen(true);
-            beginDetailsTransition();
-
-            if (wasAlreadyOpen) {
-                setTimeout(() => {
-                    renderPhaseDetails(payload);
-                }, 200);
-            } else {
-                requestAnimationFrame(() => {
-                    renderPhaseDetails(payload);
-                });
-            }
+            detailsTrigger = document.activeElement;
+            renderPhaseDetails(payload);
+            detailsModal.show();
         }
 
         [statusFilter, sortSelect].forEach((control) => {
             if (control) {
                 control.addEventListener('input', applyPhaseFilters);
                 control.addEventListener('change', applyPhaseFilters);
-            }
-        });
-
-        document.body.addEventListener('click', function (event) {
-            if (event.target.closest('.js-close-phase-panel')) {
-                closeDetailsPanel();
             }
         });
 
@@ -2800,7 +2696,6 @@
             }
         });
 
-        closeDetailsPanel();
         updateSearchClearButton();
         renderPhaseSearchOptions();
         applyPhaseFilters();

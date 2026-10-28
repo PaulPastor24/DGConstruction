@@ -20,6 +20,7 @@ class Report extends Model
         'report_date',
         'report_text',
         'site_images',
+        'attachments',
         'approval_status',
         'ai_status',
         'approval_remarks',
@@ -37,6 +38,7 @@ class Report extends Model
     protected $casts = [
         'report_date' => 'date',
         'site_images' => 'array',
+        'attachments' => 'array',
         'admin_site_images' => 'array',
         'reviewed_at' => 'datetime',
         'approved_at' => 'datetime',

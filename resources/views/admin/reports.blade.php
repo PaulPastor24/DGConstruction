@@ -3246,6 +3246,20 @@
                     </div>
                 ` : '<div class="text-muted small border rounded-3 p-3 mb-3" style="background: #f8faf9;">No site images were attached to this report.</div>';
 
+                const documentList = document.createElement('div');
+                documentList.className = 'modal-detail-card mb-3';
+                if (Array.isArray(report.attachments) && report.attachments.length) {
+                    const heading = document.createElement('h6');
+                    heading.textContent = 'Supervisor documents';
+                    documentList.appendChild(heading);
+                    report.attachments.forEach(file => {
+                        const link = document.createElement('a');
+                        link.className = 'd-block mb-2';
+                        link.textContent = file.name;
+                        link.href = file.url;
+                        documentList.appendChild(link);
+                    });
+                }
                 detailsPanel.innerHTML = `
                     <div class="row gx-3 gy-3">
                         <div class="col-12 col-xl-7">
@@ -3546,6 +3560,7 @@
 
                 removedAdminImageUrls = new Set();
                 removedOriginalImagePaths = new Set();
+                if (documentList.childElementCount) detailsPanel.prepend(documentList);
                 includedOriginalImagePaths = new Set(report.status === 'pending' && Array.isArray(report.site_image_paths)
                     ? report.site_image_paths
                     : []);
@@ -3559,6 +3574,8 @@
                             const imagePath = wrapper.getAttribute('data-image-path');
                             if (imagePath) {
                                 removedAdminImageUrls.add(imagePath);
+                                includedOriginalImagePaths.delete(imagePath);
+                                removedOriginalImagePaths.add(imagePath);
                                 window.reviewedClientImagePaths.delete(imagePath);
                             }
                             wrapper.remove();
