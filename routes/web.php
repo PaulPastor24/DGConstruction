@@ -141,6 +141,7 @@ Route::middleware('auth')->group(function () {
 // ==================== ENGINEER / ADMIN MANAGEMENT ====================
 Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function () {
     Route::get('/admin/workers', [\App\Http\Controllers\WorkerAllocationController::class, 'index'])->name('admin.workers.index');
+    Route::post('/admin/workers/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'bulkAllocate'])->name('admin.workers.bulk-allocate');
     Route::post('/admin/workers/{workerId}/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'allocate'])->whereNumber('workerId')->name('admin.workers.allocate');
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
@@ -260,6 +261,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
 // ==================== SUPERVISOR GROUP ROUTING LAYER ====================
 Route::middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/supervisor/workers', [\App\Http\Controllers\WorkerAllocationController::class, 'index'])->name('supervisor.workers.index');
+    Route::post('/supervisor/workers/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'bulkAllocate'])->name('supervisor.workers.bulk-allocate');
     Route::post('/supervisor/workers/{workerId}/allocate', [\App\Http\Controllers\WorkerAllocationController::class, 'allocate'])->whereNumber('workerId')->name('supervisor.workers.allocate');
     Route::get('/supervisor/dashboard', [SupervisorController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/supervisor/timeline', [SupervisorController::class, 'timeline'])->name('supervisor.timeline');

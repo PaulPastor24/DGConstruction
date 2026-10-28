@@ -5,6 +5,37 @@
 
 @push('styles')
 <style>
+    .dashboard-container .dashboard-recent-card {
+        height: 480px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .dashboard-recent-card .dash-card-header { flex-shrink: 0; gap: 12px; flex-wrap: wrap; }
+    .dashboard-recent-card .dashboard-recent-list {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior-y: contain;
+        scrollbar-gutter: stable;
+    }
+    .dashboard-recent-list:focus-visible { outline: 2px solid #198754; outline-offset: -2px; }
+    .dashboard-recent-card .report-list-item { text-decoration: none; flex-shrink: 0; }
+    @media (max-width: 575.98px) {
+        .dashboard-container .dashboard-recent-card {
+            height: 360px;
+            height: clamp(280px, 60svh, 380px);
+            padding: 16px;
+        }
+        .dashboard-recent-card .project-list-item { flex-wrap: wrap; gap: 10px; padding: 12px 4px; }
+        .dashboard-recent-card .proj-details { flex: 1 1 calc(100% - 64px); }
+        .dashboard-recent-card .proj-progress-wrapper { flex: 1 1 140px; min-width: 0; width: auto; }
+        .dashboard-recent-card .report-list-item { flex-direction: column; align-items: stretch; gap: 8px; }
+        .dashboard-recent-card .report-meta-right { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+        .dashboard-recent-card .report-title, .dashboard-recent-card .report-meta { white-space: normal; overflow-wrap: anywhere; }
+    }
     .project-list-item {
         display: flex;
         align-items: center;
@@ -299,12 +330,12 @@
             </div>
         </a>
 
-        <a href="{{ route('admin.attendance') }}" class="stat-box dashboard-stat-link">
+        <a href="{{ route('admin.workers.index', ['status' => 'active']) }}" class="stat-box dashboard-stat-link">
             <div class="stat-icon-wrap"><i class="bi bi-people"></i></div>
             <div class="stat-info">
-                <div class="stat-label-top">Total Workers</div>
+                <div class="stat-label-top">Active Workers</div>
                 <div class="stat-number">{{ $stats['total_workforce'] ?? 0 }}</div>
-                <div class="stat-subtext up"><i class="bi bi-arrow-up-short"></i> +12 this week</div>
+                <div class="stat-subtext link">View workers &rarr;</div>
             </div>
         </a>
 
@@ -331,13 +362,13 @@
     <div class="bottom-row-grid">
 
         <!-- Left: Recent Projects -->
-        <div class="dash-card">
+        <div class="dash-card dashboard-recent-card">
             <div class="dash-card-header">
                 <div class="dash-card-title">Recent Projects</div>
                 <a href="{{ route('admin.projects.index') }}" class="dash-card-link">View all projects &rarr;</a>
             </div>
 
-            <div class="project-list">
+            <div class="project-list dashboard-recent-list" tabindex="0" role="region" aria-label="Recent projects">
                 @forelse($activeProjects ?? [] as $project)
                     @php
                         $statusClass = match(strtolower((string) ($project->status_label ?? 'Planning'))) {
@@ -413,18 +444,16 @@
             </div>
         </div>
 
-        <!-- Right Column: Recent Reports -->
-        <div>
-            <!-- Recent Reports -->
-            <div class="dash-card">
+        <!-- Recent Reports -->
+            <div class="dash-card dashboard-recent-card">
                 <div class="dash-card-header">
                     <div class="dash-card-title">Recent Reports</div>
                     <a href="{{ route('admin.reports.index') }}" class="dash-card-link">View all reports &rarr;</a>
                 </div>
 
-                <div class="reports-list">
+                <div class="reports-list dashboard-recent-list" tabindex="0" role="region" aria-label="Recent reports">
                     @forelse($recentReports ?? [] as $report)
-                        <div class="report-list-item" onclick="window.location.href='{{ route('admin.reports.index') }}'" style="cursor: pointer;">
+                        <a class="report-list-item" href="{{ route('admin.reports.index') }}">
                             <div class="report-info">
                                 <div class="report-title">{{ $report->title }}</div>
                                 <div class="report-meta">{{ $report->project_name }} &middot; {{ $report->phase_name }}</div>
@@ -433,7 +462,7 @@
                                 <span class="report-badge {{ $report->status_class }}">{{ $report->status_label }}</span>
                                 <div class="report-date">{{ $report->submitted_at }}</div>
                             </div>
-                        </div>
+                        </a>
                     @empty
                         <div class="report-list-item">
                             <div class="report-info">
@@ -445,7 +474,6 @@
                 </div>
             </div>
 
-        </div>
     </div>
 
     <!-- Project Detail Modal -->

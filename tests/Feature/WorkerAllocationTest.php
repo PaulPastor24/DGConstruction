@@ -101,7 +101,57 @@ class WorkerAllocationTest extends TestCase
         foreach (['admin', 'supervisor'] as $prefix) {
             $this->get(route($prefix.'.workers.index'))->assertRedirect('/login');
             $this->postJson(route($prefix.'.workers.allocate', 1), ['project_id' => 2, 'mode' => 'transfer'])->assertRedirect('/login');
+            $this->postJson(route($prefix.'.workers.bulk-allocate'), ['worker_ids' => [1], 'project_id' => 2, 'mode' => 'transfer'])->assertRedirect('/login');
         }
         $this->assertDatabaseCount('project_workers', 1);
+    }
+
+    public function test_all_roles_can_allocate_a_group_without_duplicate_active_assignments(): void
+    {
+        DB::table('workers')->insert(['worker_id' => 3, 'first_name' => 'Second', 'last_name' => 'Active', 'is_active' => true]);
+        foreach (['admin', 'administrator', 'engineer', 'supervisor'] as $role) {
+            $user = User::findOrFail(1);
+            $user->update(['role' => $role]);
+            $this->actingAs($user);
+            $prefix = $role === 'supervisor' ? 'supervisor' : 'admin';
+            $this->postJson(route($prefix.'.workers.bulk-allocate'), [
+                'worker_ids' => [3, 1], 'project_id' => 2, 'mode' => 'assign',
+            ])->assertOk()->assertJson(['success' => true])->assertSessionHas('success', '2 workers allocated successfully.');
+        }
+        $this->assertDatabaseCount('project_workers', 3);
+        $this->assertDatabaseHas('project_workers', ['deployment_id' => 1, 'is_active' => true]);
+        $this->assertDatabaseHas('project_workers', ['worker_id' => 3, 'project_id' => 2, 'is_active' => true]);
+        $this->assertDatabaseCount('system_logs', 8);
+    }
+
+    public function test_bulk_transfer_preserves_each_workers_previous_deployment(): void
+    {
+        DB::table('workers')->insert(['worker_id' => 3, 'first_name' => 'Second', 'last_name' => 'Active', 'is_active' => true]);
+        DB::table('project_workers')->insert(['project_id' => 1, 'worker_id' => 3, 'deployed_date' => '2026-10-01']);
+        $this->postJson(route('supervisor.workers.bulk-allocate'), [
+            'worker_ids' => [1, 3], 'project_id' => 2, 'mode' => 'transfer',
+        ])->assertOk();
+        foreach ([1, 3] as $id) {
+            $this->assertDatabaseHas('project_workers', ['worker_id' => $id, 'project_id' => 1, 'is_active' => false]);
+            $this->assertDatabaseHas('project_workers', ['worker_id' => $id, 'project_id' => 2, 'is_active' => true]);
+        }
+        $this->assertDatabaseHas('attendance_logs', ['deployment_id' => 1, 'log_date' => '2026-10-01']);
+        $this->assertDatabaseCount('project_workers', 4);
+    }
+
+    public function test_invalid_bulk_requests_leave_every_worker_unchanged(): void
+    {
+        foreach ([
+            ['worker_ids' => [1, 2], 'project_id' => 2], // Inactive member invalidates the entire group.
+            ['worker_ids' => [1, 99], 'project_id' => 2],
+            ['worker_ids' => [1, 1], 'project_id' => 2],
+            ['worker_ids' => [], 'project_id' => 2],
+            ['worker_ids' => [1], 'project_id' => 3],
+        ] as $data) {
+            $this->postJson(route('supervisor.workers.bulk-allocate'), $data + ['mode' => 'transfer'])->assertUnprocessable();
+            $this->assertDatabaseHas('project_workers', ['deployment_id' => 1, 'is_active' => true]);
+            $this->assertDatabaseCount('project_workers', 1);
+            $this->assertDatabaseCount('system_logs', 0);
+        }
     }
 }

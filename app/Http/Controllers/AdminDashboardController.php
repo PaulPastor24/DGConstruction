@@ -77,9 +77,9 @@ class AdminDashboardController extends Controller
 
             'completion_rate_label' => "↑ {$executionRate}% execution rate",
 
-            'total_workforce' => Schema::hasTable('users')
-                ? DB::table('users')
-                    ->where('role', 'supervisor')
+            'total_workforce' => Schema::hasTable('workers')
+                ? DB::table('workers')
+                    ->where('is_active', true)
                     ->count()
                 : 0,
 
@@ -205,7 +205,7 @@ class AdminDashboardController extends Controller
             $recentReports = Report::with(['project', 'phase', 'submittedBy'])
                 ->orderByDesc('report_date')
                 ->orderByDesc('created_at')
-                ->take(2)
+                ->take(10)
                 ->get()
                 ->map(function ($report) {
                     return (object) [

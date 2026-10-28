@@ -13,9 +13,6 @@
 
     <nav class="sidebar-nav" aria-label="Supervisor navigation">
         <div class="nav-section-label">Core</div>
-        <a class="nav-item {{ request()->routeIs('supervisor.workers.*') ? 'active' : '' }}" href="{{ route('supervisor.workers.index') }}">
-            <i class="bi bi-people"></i><span>Workers & Allocation</span>
-        </a>
         <a class="nav-item {{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}" href="{{ route('supervisor.dashboard') }}">
             <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
         </a>
@@ -27,6 +24,9 @@
         </a>
         <a class="nav-item {{ request()->routeIs('supervisor.attendance') ? 'active' : '' }}" href="{{ route('supervisor.attendance') }}">
             <i class="bi bi-person-check"></i><span>Attendance</span>
+        </a>
+        <a class="nav-item {{ request()->routeIs('supervisor.workers.*') ? 'active' : '' }}" href="{{ route('supervisor.workers.index') }}">
+            <i class="bi bi-people"></i><span>Workers & Allocation</span>
         </a>
         <a class="nav-item {{ request()->routeIs('supervisor.materials') ? 'active' : '' }}" href="{{ route('supervisor.materials') }}">
             <i class="bi bi-box-seam"></i><span>Materials</span>
