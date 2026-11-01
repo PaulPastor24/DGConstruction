@@ -557,6 +557,23 @@ class SupervisorController extends Controller
             $requestedTimeOut = $action === 'time_out' ? $manualTimeValue : null;
         }
 
+        if ($manualMode && $action === 'time_in') {
+            $alreadyRecorded = DB::table('attendance_logs')
+                ->where(function ($query) use ($hasWorkerId, $validated) {
+                    if ($hasWorkerId) {
+                        $query->where('worker_id', $validated['worker_id']);
+                    }
+                    $query->orWhereIn('deployment_id', DB::table('project_workers')
+                        ->where('worker_id', $validated['worker_id'])->select('deployment_id'));
+                })
+                ->whereDate('log_date', $date)->exists();
+            if ($alreadyRecorded) {
+                return response()->json([
+                    'message' => 'This worker already has an attendance record for the selected day. Use the existing record for breaks or Time Out.',
+                ], 409);
+            }
+        }
+
         if (! $manualMode && in_array($action, ['time_in', 'break_in', 'time_out'], true)) {
             if ($action !== 'time_in' && $verificationMethod !== 'face') {
                 return response()->json(['message' => 'Fresh facial recognition is required for Break In and Time Out.'], 403);
@@ -610,6 +627,11 @@ class SupervisorController extends Controller
             ->first();
 
         if ($manualMode) {
+            if ($existingLog && ! empty($existingLog->{$actionTimeField})) {
+                return response()->json([
+                    'message' => 'This attendance action is already recorded for the selected day.',
+                ], 409);
+            }
             $manualAt = Carbon::parse($date.' '.$manualEventTime);
             if ($manualAt->gt($now)) {
                 return response()->json([
@@ -2222,20 +2244,21 @@ class SupervisorController extends Controller
             'schedule_start' => ['required', 'date_format:H:i'],
             'schedule_end' => ['required', 'date_format:H:i', 'after:schedule_start'],
             'break_minutes' => ['required', 'integer', 'min:0', 'max:480'],
-            'project_id' => ['required', 'integer'],
+            'project_id' => ['nullable', 'integer', 'min:1'],
             'model_version' => ['required', Rule::in([config('face_attendance.model_version')])],
             'face_samples' => ['required', 'array', 'size:3'],
             'face_samples.*' => ['required', 'array', 'size:1024'],
             'face_samples.*.*' => ['required', 'numeric', 'between:-100,100'],
         ]);
         abort_unless(config('face_attendance.enabled'), 503, 'Face attendance is not enabled.');
-        $projectQuery = Project::query()->notArchived()->where('project_id', $data['project_id']);
-        if (! in_array(strtolower(Auth::user()->role), ['engineer', 'admin', 'administrator'], true)) {
-            $projectQuery->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
-                ->where('project_supervisors.is_active', 1));
+        if (! empty($data['project_id'])) {
+            $projectQuery = Project::query()->notArchived()->where('project_id', $data['project_id']);
+            if (! in_array(strtolower(Auth::user()->role), ['engineer', 'admin', 'administrator'], true)) {
+                $projectQuery->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
+                    ->where('project_supervisors.is_active', 1));
+            }
+            abort_unless($projectQuery->exists(), 403, 'Choose a project actively assigned to your supervisor account.');
         }
-        $project = $projectQuery->first();
-        abort_unless($project, 403, 'Choose a project actively assigned to your supervisor account.');
 
         try {
             $matcher->validateSamples($data['face_samples']);
@@ -2261,17 +2284,19 @@ class SupervisorController extends Controller
                     'break_minutes' => $data['break_minutes'], 'is_active' => 1,
                     'created_at' => now(), 'updated_at' => now(),
                 ], 'worker_id');
-                $deployment = [
-                    'project_id' => $data['project_id'], 'worker_id' => $id,
-                    'is_active' => 1, 'created_at' => now(),
-                ];
-                // Both deployment schemas exist in installations of this project.
-                foreach (['deployed_date', 'start_date'] as $column) {
-                    if (Schema::hasColumn('project_workers', $column)) {
-                        $deployment[$column] = now('Asia/Manila')->toDateString();
+                if (! empty($data['project_id'])) {
+                    $deployment = [
+                        'project_id' => $data['project_id'], 'worker_id' => $id,
+                        'is_active' => 1, 'created_at' => now(),
+                    ];
+                    // Both deployment schemas exist in installations of this project.
+                    foreach (['deployed_date', 'start_date'] as $column) {
+                        if (Schema::hasColumn('project_workers', $column)) {
+                            $deployment[$column] = now('Asia/Manila')->toDateString();
+                        }
                     }
+                    DB::table('project_workers')->insert($deployment);
                 }
-                DB::table('project_workers')->insert($deployment);
                 DB::table('worker_face_enrollments')->insert([
                     'worker_id' => $id, 'aws_face_id' => 'local:'.Str::uuid(),
                     'face_descriptors' => Crypt::encryptString(json_encode($data['face_samples'], JSON_THROW_ON_ERROR)),
@@ -2297,7 +2322,9 @@ class SupervisorController extends Controller
         $worker = DB::table('workers')->where('worker_id', $workerId)->first();
 
         return response()->json([
-            'success' => true, 'message' => 'Worker and verified face samples saved. Ready for attendance.',
+            'success' => true, 'message' => empty($data['project_id'])
+                ? 'Worker registered and face enrolled. Assign a project from the Workers page before recording attendance.'
+                : 'Worker and verified face samples saved. Ready for attendance.',
             'worker' => [
                 'worker_id' => $worker->worker_id, 'first_name' => $worker->first_name,
                 'last_name' => $worker->last_name, 'trade' => $worker->trade,

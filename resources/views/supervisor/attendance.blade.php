@@ -1949,14 +1949,14 @@
                         <h6 class="enrollment-section-heading" id="enrollmentDetailsHeading">Worker Details</h6>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
-                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project" required>
-                                    @forelse(($cameraProjects ?? collect()) as $project)
-                                    <option value="{{ $project->project_id }}" @selected($activeProject?->project_id === $project->project_id)>{{ $project->project_name }}</option>
-                                    @empty
-                                    <option value="">No active project assigned</option>
-                                    @endforelse
+                                <label for="regProjectId" class="form-label small fw-semibold">Assigned project (optional)</label>
+                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project">
+                                    <option value="">Unassigned — assign later</option>
+                                    @foreach(($cameraProjects ?? collect()) as $project)
+                                    <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
+                                    @endforeach
                                 </select>
+                                <div class="form-text">Register in the overall worker roster now and assign a project later from Workers. Attendance requires a project assignment.</div>
                             </div>
                             <div class="col-sm-6">
                                 <label for="regFirstName" class="form-label small fw-semibold">First name <span class="text-danger">*</span></label>
@@ -3928,7 +3928,7 @@
                         schedule_start: scheduleStart,
                         schedule_end: scheduleEnd,
                         break_minutes: Number(breakMinutes),
-                        project_id: Number(document.getElementById('regProjectId').value),
+                        project_id: document.getElementById('regProjectId').value ? Number(document.getElementById('regProjectId').value) : null,
                         model_version: capturedWorkerFace.model_version,
                         face_samples: capturedWorkerFace.samples
                     })
@@ -3963,7 +3963,7 @@
                     }
                 }
 
-                // Worker details, project assignment, and face enrollment were saved together.
+                // Refresh the project roster after saving; unassigned workers appear on the Workers page.
                 await loadWorkers(1);
 
                 const registerModalElement = document.getElementById('registerWorkerModal');
@@ -3986,6 +3986,7 @@
                     <i class="bi bi-check-circle-fill"></i>
                     New worker enrolled:
                     <strong>${escapeHtml(savedWorker.first_name)} ${escapeHtml(savedWorker.last_name)}</strong>
+                    <br>${escapeHtml(result.message || 'Worker registered successfully.')}
                     ${profileImageUploadFailed ? '<br><span>Photo upload failed. Use Enrolled Workers to retry.</span>' : ''}
                 `;
                 await showAttendanceAlert(

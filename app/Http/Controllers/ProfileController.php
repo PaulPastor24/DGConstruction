@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -55,12 +55,9 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        Auth::logout();
-        $user->delete(null);
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        abort_unless($user->canDeleteUsers(), 403, 'Only the designated administrator can delete user accounts.');
+        throw ValidationException::withMessages([
+            'account' => 'You cannot delete your own account while logged in.',
+        ])->errorBag('userDeletion');
     }
 }

@@ -42,7 +42,14 @@ class User extends Authenticatable implements HasPasskeys
         return [
             'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
+            'can_delete_users' => 'boolean',
         ];
+    }
+
+    public function canDeleteUsers(): bool
+    {
+        return $this->is_active && $this->can_delete_users
+            && in_array($this->role, ['engineer', 'admin', 'administrator'], true);
     }
 
     public function getProfilePhotoUrlAttribute(): ?string

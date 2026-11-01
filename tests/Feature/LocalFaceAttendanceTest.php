@@ -427,18 +427,102 @@ class LocalFaceAttendanceTest extends TestCase
             'action' => 'time_in', 'manual' => true, 'remarks' => 'Camera unavailable', 'time_in' => '07:00'];
         $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
         $payload['project_id'] = 1;
-        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
-        $this->assertDatabaseCount('attendance_logs', 2);
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertConflict()
+            ->assertJsonFragment(['message' => 'This worker already has an attendance record for the selected day. Use the existing record for breaks or Time Out.']);
+        $this->assertDatabaseCount('attendance_logs', 1);
         $payload['project_id'] = 2; $payload['time_in'] = '08:00';
-        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
-        $this->assertDatabaseHas('attendance_logs', ['project_id' => 1, 'time_in' => '07:00:00']);
-        $this->assertDatabaseHas('attendance_logs', ['project_id' => 2, 'time_in' => '08:00:00']);
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertConflict();
+        $this->assertDatabaseHas('attendance_logs', ['project_id' => 2, 'time_in' => '07:00:00']);
         $payload['worker_id'] = 2;
         $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
         $payload['project_id'] = 999;
         $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertForbidden();
         unset($payload['project_id']);
         $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertUnprocessable();
+    }
+
+    public function test_all_registration_roles_can_enroll_without_any_project_and_assign_later(): void
+    {
+        DB::table('project_workers')->delete();
+        DB::table('project_supervisors')->delete();
+        DB::table('projects')->delete();
+
+        foreach (['supervisor', 'admin', 'administrator', 'engineer'] as $index => $role) {
+            $user = auth()->user();
+            $user->update(['role' => $role]);
+            $this->actingAs($user);
+            $prefix = $role === 'supervisor' ? 'supervisor' : 'admin';
+            $this->get(route($prefix.'.attendance'))->assertOk()
+                ->assertSee('Assigned project (optional)')->assertSee('Unassigned');
+            $payload = [
+                'first_name' => 'Unassigned', 'last_name' => $role,
+                'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+                'model_version' => config('face_attendance.model_version'), 'face_samples' => $this->samples($index + 1),
+            ];
+            if ($index % 2 === 0) {
+                $payload['project_id'] = null;
+            }
+            $response = $this->postJson(route($prefix.'.workers.register_camera'), $payload)->assertOk();
+            $id = $response->json('worker.worker_id');
+            $this->assertDatabaseHas('workers', ['worker_id' => $id, 'is_active' => 1]);
+            $this->assertDatabaseHas('worker_face_enrollments', ['worker_id' => $id]);
+            $this->assertDatabaseMissing('project_workers', ['worker_id' => $id]);
+        }
+        $this->assertDatabaseCount('attendance_logs', 0);
+    }
+
+    public function test_optional_registration_project_still_requires_supervisor_authorization(): void
+    {
+        DB::table('projects')->insert(['project_id' => 2, 'project_name' => 'Other supervisor site']);
+        $payload = [
+            'first_name' => 'New', 'last_name' => 'Worker', 'project_id' => 2,
+            'schedule_start' => '07:00', 'schedule_end' => '17:00', 'break_minutes' => 60,
+            'model_version' => config('face_attendance.model_version'), 'face_samples' => $this->samples(),
+        ];
+        $this->postJson(route('supervisor.workers.register_camera'), $payload)->assertForbidden();
+        $payload['project_id'] = 0;
+        $this->postJson(route('supervisor.workers.register_camera'), $payload)->assertUnprocessable();
+        $this->assertDatabaseCount('workers', 2);
+    }
+
+    public function test_manual_time_in_preserves_camera_attendance_but_allows_new_break_events(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-10-31 18:00', 'Asia/Manila'));
+        DB::table('attendance_logs')->insert([
+            'worker_id' => 1, 'project_id' => 1, 'deployment_id' => 1,
+            'log_date' => '2026-10-31', 'time_in' => '07:00:00', 'remarks' => 'Camera attendance',
+        ]);
+        $payload = ['worker_id' => 1, 'project_id' => 1, 'log_date' => '2026-10-31',
+            'manual' => true, 'action' => 'time_in', 'manual_event_time' => '08:00', 'remarks' => 'Camera unavailable'];
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertConflict();
+        $this->assertDatabaseHas('attendance_logs', ['worker_id' => 1, 'time_in' => '07:00:00', 'remarks' => 'Camera attendance']);
+        $payload['action'] = 'break_out'; $payload['manual_event_time'] = '12:00';
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertOk();
+        $payload['manual_event_time'] = '12:15';
+        $this->postJson(route('supervisor.attendance.logWorker'), $payload)->assertConflict();
+        $this->assertDatabaseHas('attendance_logs', ['worker_id' => 1, 'break_out' => '12:00:00']);
+        $this->assertDatabaseCount('attendance_logs', 1);
+    }
+
+    public function test_admin_manual_entry_rejects_existing_worker_day_including_legacy_deployments(): void
+    {
+        DB::table('attendance_logs')->insert([
+            'deployment_id' => 1, 'log_date' => '2026-10-30', 'time_in' => '07:00:00',
+        ]);
+        foreach (['admin', 'administrator', 'engineer'] as $role) {
+            $user = auth()->user(); $user->update(['role' => $role]); $this->actingAs($user);
+            $payload = ['worker_id' => 1, 'log_date' => '2026-10-30', 'time_in' => '08:00', 'status' => 'present'];
+            $this->from(route('admin.attendance'))->post(route('admin.attendance.store'), $payload)
+                ->assertRedirect(route('admin.attendance'))->assertSessionHasErrors('worker_id');
+        }
+        $this->assertDatabaseCount('attendance_logs', 1);
+        $this->assertDatabaseHas('attendance_logs', ['deployment_id' => 1, 'time_in' => '07:00:00']);
+        $this->get(route('admin.attendance'))->assertOk()
+            ->assertSee('This worker already has an attendance record for the selected day.');
+        $this->post(route('admin.attendance.store'), [
+            'worker_id' => 1, 'log_date' => '2026-10-29', 'time_in' => '07:00', 'status' => 'present',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('attendance_logs', 2);
     }
 
     public function test_manual_attendance_requires_a_reason_and_event_time(): void

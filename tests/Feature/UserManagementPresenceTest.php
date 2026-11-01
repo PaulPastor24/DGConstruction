@@ -24,6 +24,7 @@ class UserManagementPresenceTest extends TestCase
             $table->string('profile_photo')->nullable();
             $table->string('contact_number')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('can_delete_users')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });
@@ -66,6 +67,132 @@ class UserManagementPresenceTest extends TestCase
             'first_name' => 'Test', 'last_name' => 'User', 'email' => $email,
             'password' => bcrypt('password'), 'role' => $role, 'is_active' => $active,
         ]);
+    }
+
+    public function test_designated_admin_can_delete_other_management_roles_when_an_active_admin_remains(): void
+    {
+        $actor = $this->user('remaining-admin@example.com', 'admin');
+        $actor->forceFill(['can_delete_users' => true])->save();
+        $this->actingAs($actor);
+        foreach (['engineer', 'admin', 'administrator'] as $role) {
+            $target = $this->user($role.'-delete@example.com', $role);
+            $this->deleteJson(route('admin.users.destroy', $target))->assertOk()
+                ->assertJsonPath('success', true);
+            $this->assertDatabaseMissing('users', ['user_id' => $target->user_id]);
+        }
+        $this->assertDatabaseHas('users', ['user_id' => $actor->user_id, 'is_active' => true]);
+    }
+
+    public function test_other_admins_can_create_users_but_cannot_delete_or_grant_deletion_permission(): void
+    {
+        $target = $this->user('protected-target@example.com', 'client');
+        foreach (['engineer', 'admin', 'administrator'] as $role) {
+            $actor = $this->user($role.'-ordinary@gmail.com', $role);
+            $this->actingAs($actor)->get(route('admin.users.index'))->assertOk()
+                ->assertDontSee('title="Delete User Account"', false);
+            $this->deleteJson(route('admin.users.destroy', $target))->assertForbidden()
+                ->assertJsonPath('message', 'Only the designated administrator can delete user accounts.');
+            $this->deleteJson(route('profile.destroy'), ['password' => 'password'])->assertForbidden();
+            $this->postJson(route('admin.users.store'), [
+                'first_name' => 'New', 'last_name' => 'Supervisor', 'email' => $role.'-created@gmail.com',
+                'password' => 'TestPass123!', 'password_confirmation' => 'TestPass123!',
+                'role' => 'supervisor', 'can_delete_users' => true,
+            ])->assertOk();
+            $created = User::where('email', $role.'-created@gmail.com')->firstOrFail();
+            $this->assertFalse($created->canDeleteUsers());
+            $this->putJson(route('admin.users.update', $actor), [
+                'first_name' => 'Test', 'last_name' => 'User', 'email' => $actor->email,
+                'role' => $role, 'is_active' => 1, 'can_delete_users' => true,
+            ])->assertOk();
+            $this->assertFalse($actor->fresh()->canDeleteUsers());
+        }
+        $this->assertDatabaseHas('users', ['user_id' => $target->user_id]);
+    }
+
+    public function test_other_admin_cannot_take_over_the_designated_account(): void
+    {
+        $owner = $this->user('dgcon.ad@gmail.com', 'engineer');
+        $owner->forceFill(['can_delete_users' => true])->save();
+        $other = $this->user('other-admin@gmail.com', 'admin');
+        $this->actingAs($other)->putJson(route('admin.users.update', $owner), [
+            'first_name' => 'Changed', 'last_name' => 'Owner', 'email' => 'changed-owner@gmail.com',
+            'password' => 'TestPass123!', 'password_confirmation' => 'TestPass123!', 'role' => 'engineer',
+        ])->assertForbidden();
+        $this->patchJson(route('admin.users.toggleStatus', $owner))->assertForbidden();
+        $this->assertDatabaseHas('users', ['user_id' => $owner->user_id, 'email' => 'dgcon.ad@gmail.com', 'is_active' => true]);
+    }
+
+    public function test_migration_grants_permission_only_to_the_existing_designated_account(): void
+    {
+        Schema::table('users', fn ($table) => $table->dropColumn('can_delete_users'));
+        $owner = $this->user('dgcon.ad@gmail.com', 'engineer');
+        $other = $this->user('another-admin@gmail.com', 'admin');
+        (require database_path('migrations/2026_10_31_000001_add_user_deletion_permission.php'))->up();
+        $this->assertTrue($owner->fresh()->canDeleteUsers());
+        $this->assertFalse($other->fresh()->canDeleteUsers());
+        $this->actingAs($owner->fresh())->get(route('admin.users.index'))->assertOk()
+            ->assertSee('title="Delete User Account"', false);
+        $owner->update(['email' => 'renamed-owner@gmail.com']);
+        $replacement = $this->user('dgcon.ad@gmail.com', 'admin');
+        $this->assertTrue($owner->fresh()->canDeleteUsers());
+        $this->assertFalse($replacement->fresh()->canDeleteUsers());
+    }
+
+    public function test_management_self_deletion_is_blocked_through_both_routes(): void
+    {
+        foreach (['engineer', 'admin', 'administrator'] as $role) {
+            $actor = $this->user($role.'-self@example.com', $role);
+            $actor->forceFill(['can_delete_users' => true])->save();
+            $this->actingAs($actor);
+            $this->deleteJson(route('admin.users.destroy', $actor))->assertUnprocessable()
+                ->assertJsonPath('message', 'You cannot delete your own account while logged in.');
+            $this->deleteJson(route('profile.destroy'), ['password' => 'password'])
+                ->assertUnprocessable()->assertJsonValidationErrors('account');
+            $this->assertAuthenticatedAs($actor);
+            $this->assertDatabaseHas('users', ['user_id' => $actor->user_id]);
+        }
+    }
+
+    public function test_last_active_admin_cannot_be_disabled_or_demoted_even_with_inactive_admins(): void
+    {
+        $actor = $this->user('last-active@gmail.com', 'admin');
+        $this->user('inactive-peer@example.com', 'engineer', false);
+        $this->actingAs($actor);
+        foreach (['engineer', 'admin', 'administrator'] as $role) {
+            $actor->update(['role' => $role]);
+            $this->patch(route('admin.users.toggleStatus', $actor))->assertRedirect()->assertSessionHas('error');
+            $this->assertTrue($actor->fresh()->is_active);
+            $payload = ['first_name' => 'Test', 'last_name' => 'User', 'email' => $actor->email,
+                'role' => 'supervisor', 'is_active' => 1];
+            $this->putJson(route('admin.users.update', $actor), $payload)->assertUnprocessable()
+                ->assertJsonFragment(['message' => 'At least one active Engineer/Administrator account must remain. Create or activate another administrator first.']);
+            $payload['role'] = $role; $payload['is_active'] = 0;
+            $this->putJson(route('admin.users.update', $actor), $payload)->assertUnprocessable();
+            $this->assertDatabaseHas('users', ['user_id' => $actor->user_id, 'role' => $role, 'is_active' => true]);
+        }
+    }
+
+    public function test_another_active_admin_allows_disabling_or_demoting_a_management_account(): void
+    {
+        $actor = $this->user('remaining@example.com', 'administrator');
+        $target = $this->user('changeable@gmail.com', 'engineer');
+        $this->actingAs($actor)->patch(route('admin.users.toggleStatus', $target))
+            ->assertRedirect()->assertSessionHas('success');
+        $this->assertFalse($target->fresh()->is_active);
+        $this->putJson(route('admin.users.update', $target), [
+            'first_name' => 'Test', 'last_name' => 'User', 'email' => $target->email,
+            'role' => 'supervisor', 'is_active' => 1,
+        ])->assertOk()->assertJsonPath('success', true);
+    }
+
+    public function test_guard_rejects_deleting_the_last_active_management_account(): void
+    {
+        $actor = $this->user('sole-admin@example.com', 'administrator');
+        $this->user('disabled-admin@example.com', 'admin', false);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($actor) {
+            app(\App\Services\AdminAccountGuard::class)->ensureAdminRemains($actor);
+        });
     }
 
     public function test_management_renders_saved_photo_and_refreshes_photo_and_presence_from_database(): void
@@ -154,6 +281,7 @@ class UserManagementPresenceTest extends TestCase
     public function test_user_creation_update_and_deletion_are_logged_and_searchable(): void
     {
         $admin = $this->user('admin@example.com');
+        $admin->forceFill(['can_delete_users' => true])->save();
         $this->actingAs($admin);
 
         $this->post(route('admin.users.store'), [

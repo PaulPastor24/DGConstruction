@@ -1678,6 +1678,20 @@ class AdminDashboardController extends Controller
     public function storeAttendance(Request $request)
     {
         $data = $this->attendanceTimes($request);
+        $alreadyRecorded = Attendance::query()
+            ->where(function ($query) use ($data) {
+                if (Schema::hasColumn('attendance_logs', 'worker_id')) {
+                    $query->where('worker_id', $data['worker_id']);
+                }
+                $query->orWhereIn('deployment_id', DB::table('project_workers')
+                    ->where('worker_id', $data['worker_id'])->select('deployment_id'));
+            })
+            ->whereDate('log_date', $data['log_date'])->exists();
+        if ($alreadyRecorded) {
+            throw ValidationException::withMessages([
+                'worker_id' => 'This worker already has an attendance record for the selected day. Edit the existing record instead.',
+            ]);
+        }
         $worker = DB::table('workers')->where('worker_id', $data['worker_id'])->first();
         $deploymentId = $this->deploymentForWorker($data['worker_id'], $data['deployment_id'] ?? null);
 

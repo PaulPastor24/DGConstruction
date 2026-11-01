@@ -3234,6 +3234,95 @@
                             </div>
                         @endif
 
+                        <!-- Active Tool Loans -->
+                        @if($activeToolLoans->total() > 0)
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat text-success me-2"></i>Active Tool Loans</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Code</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Project</th>
+                                            <th class="border-0">Expected Return</th>
+                                            <th class="border-0">Condition at Issue</th>
+                                            <th class="border-0">Borrowed At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($activeToolLoans as $loan)
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $loan->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->tool->tool_code ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $loan->project->project_name ?? '-' }}</td>
+                                                <td class="text-muted">{{ $loan->expected_return_date?->format('M d, Y') ?? '-' }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 bg-warning-subtle text-warning" style="font-size: 11px; font-weight: 600;">{{ ucfirst($loan->condition_at_issue ?? '-') }}</span></td>
+                                                <td class="text-muted">{{ $loan->borrowed_at?->format('M d, Y h:i A') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="7" class="text-center text-muted py-4">No active loans.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if($activeToolLoans->hasPages())
+                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                    <span class="text-muted small">Showing {{ $activeToolLoans->firstItem() ?? 0 }} to {{ $activeToolLoans->lastItem() ?? 0 }} of {{ $activeToolLoans->total() }} active loans</span>
+                                    <div>{{ $activeToolLoans->links('pagination::inventory-compact') }}</div>
+                                </div>
+                            @endif
+                        </div>
+                        @endif
+
+                        <!-- Tool Deduction Ledger -->
+                        <div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i>Deduction Ledger</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                    <thead class="table-light text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;">
+                                        <tr>
+                                            <th class="border-0">Tool</th>
+                                            <th class="border-0">Worker</th>
+                                            <th class="border-0">Reason</th>
+                                            <th class="border-0">Amount</th>
+                                            <th class="border-0">Status</th>
+                                            <th class="border-0">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allToolDeductions as $deduction)
+                                            @php
+                                                $deductionBadgeClass = $deduction->status_badge_class;
+                                                $deductionStatusLabel = $deduction->status_label;
+                                            @endphp
+                                            <tr>
+                                                <td class="fw-semibold text-dark">{{ $deduction->tool->name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ $deduction->worker->full_name ?? 'Unknown' }}</td>
+                                                <td class="text-muted">{{ ucfirst(str_replace('_', ' ', $deduction->reason)) }}</td>
+                                                <td class="fw-bold text-dark">₱{{ number_format($deduction->amount, 2) }}</td>
+                                                <td><span class="badge rounded-pill px-2.5 py-1.5 {{ $deductionBadgeClass }}" style="font-size: 11px; font-weight: 600;">{{ $deductionStatusLabel }}</span></td>
+                                                <td class="text-muted">{{ $deduction->created_at?->format('M d, Y') ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="6" class="text-center text-muted py-4">No deduction records found.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if($allToolDeductions instanceof \Illuminate\Pagination\LengthAwarePaginator && $allToolDeductions->hasPages())
+                                <div class="card-footer bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                    <span class="text-muted small">Showing {{ $allToolDeductions->firstItem() ?? 0 }} to {{ $allToolDeductions->lastItem() ?? 0 }} of {{ $allToolDeductions->total() }} deduction records</span>
+                                    <div>{{ $allToolDeductions->links('pagination::inventory-compact') }}</div>
+                                </div>
+                            @endif
+                        </div>
             </div>
 
                 </div>

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Client;
 use App\Models\SystemLog;
 use App\Services\UserPresence;
+use App\Services\AdminAccountGuard;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Database\QueryException;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -300,6 +302,8 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user)
     {
+        abort_if($user->can_delete_users && ! $request->user()->canDeleteUsers(), 403,
+            'Only the designated administrator can update this account.');
         try {
             DB::beginTransaction();
 
@@ -344,6 +348,7 @@ class UserController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
+            app(AdminAccountGuard::class)->ensureAdminRemains($user, $data['role'], (bool) $data['is_active']);
             $user->update($data);
 
             if ($newData['role'] === 'client' && !$user->client) {
@@ -383,6 +388,14 @@ class UserController extends Controller
                 ->route('admin.users.index')
                 ->with('success', 'User updated successfully!');
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage(), 'errors' => $e->errors()], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
         } catch (QueryException $e) {
             DB::rollBack();
 
@@ -441,9 +454,12 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user)
     {
+        abort_if($user->can_delete_users && ! request()->user()->canDeleteUsers(), 403,
+            'Only the designated administrator can change this account status.');
         try {
             $wasActive = (bool) $user->is_active;
             DB::transaction(function () use ($user, $wasActive) {
+                app(AdminAccountGuard::class)->ensureAdminRemains($user, $user->role, ! $wasActive);
                 $user->update(['is_active' => !$wasActive]);
                 SystemLog::create([
                     'user_id' => request()->user()->user_id,
@@ -482,29 +498,14 @@ class UserController extends Controller
                 ->with($success ? 'success' : 'error', $message);
         };
 
-        // Only engineers/administrators may delete accounts (matches
-        // StoreUserRequest/UpdateUserRequest authorization for this module).
         $authUser = $request->user();
-        if (!$authUser || !in_array($authUser->role, ['engineer', 'admin', 'administrator'], true)) {
-            return $respond(false, 'You are not authorized to perform this action.', 403);
+        if (! $authUser || ! $authUser->canDeleteUsers()) {
+            return $respond(false, 'Only the designated administrator can delete user accounts.', 403);
         }
 
         // Never allow a user to delete their own account mid-session.
         if ($authUser->user_id === $user->user_id) {
             return $respond(false, 'You cannot delete your own account while logged in.', 422);
-        }
-
-        // Never allow the last remaining engineer/administrator account to
-        // be deleted, or the system becomes unmanageable.
-        if ($user->role === 'engineer') {
-            $remainingEngineers = DB::table('users')
-                ->where('role', 'engineer')
-                ->where('user_id', '!=', $user->user_id)
-                ->count();
-
-            if ($remainingEngineers === 0) {
-                return $respond(false, 'Cannot delete the last remaining Engineer/Administrator account.', 422);
-            }
         }
 
         try {
@@ -534,6 +535,7 @@ class UserController extends Controller
             }
 
             DB::transaction(function () use ($authUser, $request, $user) {
+                app(AdminAccountGuard::class)->ensureAdminRemains($user);
                 SystemLog::create([
                     'user_id' => $authUser->user_id,
                     'action' => 'User Deleted',
@@ -545,6 +547,8 @@ class UserController extends Controller
 
             return $respond(true, 'User deleted successfully!', 200);
 
+        } catch (ValidationException $e) {
+            return $respond(false, $e->getMessage(), 422);
         } catch (QueryException $e) {
             // MySQL error code 1451 = FK constraint violation (some related
             // record we didn't explicitly check still references this

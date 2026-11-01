@@ -18,14 +18,14 @@
                         <h6 class="enrollment-section-heading" id="enrollmentDetailsHeading">Worker Details</h6>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label for="regProjectId" class="form-label small fw-semibold">Assigned project <span class="text-danger">*</span></label>
-                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project" required>
-                                    @forelse($projects->filter(fn ($project) => $project->workflowStatus() !== \App\Models\Project::STATUS_ARCHIVED) as $project)
+                                <label for="regProjectId" class="form-label small fw-semibold">Assigned project (optional)</label>
+                                <select id="regProjectId" class="form-select" data-searchable-project aria-label="Select assigned project">
+                                    <option value="">Unassigned — assign later</option>
+                                    @foreach($projects->filter(fn ($project) => $project->workflowStatus() !== \App\Models\Project::STATUS_ARCHIVED) as $project)
                                     <option value="{{ $project->project_id }}">{{ $project->project_name }}</option>
-                                    @empty
-                                    <option value="">No active project assigned</option>
-                                    @endforelse
+                                    @endforeach
                                 </select>
+                                <div class="form-text">Register in the overall worker roster now and assign a project later from Workers. Attendance requires a project assignment.</div>
                             </div>
                             <div class="col-sm-6">
                                 <label for="regFirstName" class="form-label small fw-semibold">First name <span class="text-danger">*</span></label>

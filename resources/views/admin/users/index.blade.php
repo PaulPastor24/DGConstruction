@@ -764,6 +764,7 @@
                                             data-update-url="{{ route('admin.users.update', $user) }}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
+                                    @if(auth()->user()->canDeleteUsers())
                                     <button type="button" class="btn btn-sm btn-icon-only border rounded-3 bg-white shadow-sm text-danger" title="Delete User Account" onclick="confirmUserDeletion('{{ $user->user_id }}', '{{ $user->first_name }} {{ $user->last_name }}')">
                                         <i class="bi bi-trash3-fill"></i>
                                     </button>
@@ -771,6 +772,7 @@
                                         @csrf
                                         @method('DELETE')
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
