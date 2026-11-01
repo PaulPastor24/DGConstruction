@@ -90,6 +90,7 @@ class SupervisorMaterialUsageTest extends TestCase
             $table->id();
             $table->bigInteger('project_id');
             $table->bigInteger('supervisor_id');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

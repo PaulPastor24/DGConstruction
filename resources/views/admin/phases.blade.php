@@ -2217,6 +2217,10 @@
                     }
 
                     if (payload.success) {
+                        if (payload.project_completed) {
+                            window.location.assign(@json(route('admin.phases')));
+                            return;
+                        }
                         const updated = payload.phase;
                         const previousPhase = updatePhaseRow(updated);
                         updateDashboardCounters(previousPhase, updated);

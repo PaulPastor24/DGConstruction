@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <select class="form-select form-select-sm @error('supervisor_id') is-invalid @enderror" 
                                         id="supervisor_id" 
                                         name="supervisor_id">
-                                    <option value="" disabled selected hidden>-- Select Assigned Supervisor (Optional) --</option>
+                                    <option value="">Automatically assign to the least-loaded supervisor</option>
                                     @foreach($supervisors as $supervisor)
                                         <option value="{{ $supervisor->user_id }}" {{ old('supervisor_id') == $supervisor->user_id ? 'selected' : '' }}>
                                             {{ $supervisor->name }}

@@ -3377,6 +3377,13 @@ let milestoneFormSnapshot = null;
                 },
                 credentials: 'same-origin'
             });
+            if (response.status === 404) {
+                // Completed projects leave milestone management after the final update.
+                const url = new URL(window.location.href);
+                url.searchParams.delete('project_id');
+                window.location.replace(url.toString());
+                return true;
+            }
             const data = await response.json().catch(() => ({}));
 
             if (response.ok && data.success && data.project) {

@@ -30,7 +30,7 @@ class StoreProjectRequest extends FormRequest
             ],
             'project_location' => ['required', 'string'],
             'client_id' => ['required', 'exists:clients,client_id'],
-            'supervisor_id' => ['nullable', 'exists:users,user_id'],
+            'supervisor_id' => ['nullable', Rule::exists('users', 'user_id')->where('role', 'supervisor')->where('is_active', true)],
             'start_date' => ['required', 'date'],
             'target_end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'actual_end_date' => ['nullable', 'date', 'after_or_equal:start_date'],

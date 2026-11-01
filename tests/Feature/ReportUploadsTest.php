@@ -138,6 +138,34 @@ class ReportUploadsTest extends TestCase
         $this->assertCount(10, $report->fresh()->attachments);
     }
 
+    public function test_missing_attachments_column_returns_clear_message_without_saving_files(): void
+    {
+        Schema::table('accomplishment_reports', fn ($table) => $table->dropColumn('attachments'));
+        $this->actingAs(User::findOrFail(2))->postJson(route('supervisor.reports.submit'), $this->submission([
+            'attachments' => [UploadedFile::fake()->createWithContent('evidence.pdf', "%PDF-1.4\nDocument")],
+        ]))->assertStatus(503)->assertJsonFragment([
+            'message' => 'Report submission is temporarily unavailable. Ask the administrator to apply the report attachments database update, then try again.',
+        ])->assertDontSee('SQLSTATE')->assertDontSee('insert into');
+        $this->assertDatabaseCount('accomplishment_reports', 0);
+        $this->assertSame([], Storage::disk('local')->allFiles());
+    }
+
+    public function test_database_submission_errors_do_not_expose_sql_to_the_user(): void
+    {
+        Schema::table('accomplishment_reports', fn ($table) => $table->dropColumn('admin_explanation'));
+        $this->actingAs(User::findOrFail(2))->postJson(route('supervisor.reports.submit'), $this->submission([]))
+            ->assertStatus(500)->assertJsonFragment([
+                'message' => 'The report could not be submitted. Please try again or contact the administrator.',
+            ])->assertDontSee('SQLSTATE')->assertDontSee('insert into');
+        $this->assertDatabaseCount('accomplishment_reports', 0);
+    }
+
+    public function test_attachments_migration_can_run_after_a_manual_column_addition(): void
+    {
+        (require database_path('migrations/2026_10_28_000001_add_attachments_to_accomplishment_reports.php'))->up();
+        $this->assertTrue(Schema::hasColumn('accomplishment_reports', 'attachments'));
+    }
+
     private function submission(array $extra): array
     {
         return array_merge(['project_id' => 1, 'phase_id' => 1, 'report_date' => now()->toDateString(), 'report_text' => 'Daily progress'], $extra);

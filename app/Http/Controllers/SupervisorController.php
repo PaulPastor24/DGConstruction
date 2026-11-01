@@ -404,7 +404,7 @@ class SupervisorController extends Controller
 
     private function attendanceProject(Request $request): Project
     {
-        $projects = Project::query()->notArchived()->whereHas('supervisors', fn ($query) => $query
+        $projects = Project::query()->notArchived()->whereHas('activeSupervisors', fn ($query) => $query
             ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1));
         if ($request->filled('project_id')) {
             return $projects->where('project_id', $request->integer('project_id'))->first()
@@ -579,7 +579,7 @@ class SupervisorController extends Controller
                 return response()->json(['message' => 'Fresh facial recognition is required for Break In and Time Out.'], 403);
             }
             if ($verificationMethod === 'face') {
-                $assignedProjects = Project::query()->whereHas('supervisors', fn ($q) => $q
+                $assignedProjects = Project::query()->whereHas('activeSupervisors', fn ($q) => $q
                     ->where('supervisor_id', Auth::id())->where('project_supervisors.is_active', 1))
                     ->pluck('project_id');
                 if (! DB::table('project_workers')->whereIn('project_id', $assignedProjects)
@@ -885,7 +885,7 @@ class SupervisorController extends Controller
     {
         $user = Auth::user();
 
-        $assignedProjects = Project::whereHas('supervisors', function ($q) use ($user) {
+        $assignedProjects = Project::whereHas('activeSupervisors', function ($q) use ($user) {
             $q->where('supervisor_id', $user->user_id);
         })->notArchived()->with(['phases', 'client.user', 'engineer'])
             ->orderBy('created_at', 'desc')
@@ -1072,9 +1072,9 @@ class SupervisorController extends Controller
     {
         $user = Auth::user();
 
-        $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
+        $assignedProjects = Project::whereHas('activeSupervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
-        })->notArchived()
+        })->forProgressMonitoring()
             ->with(['supervisors' => function ($query) {
                 $query->select('users.user_id', 'users.first_name', 'users.last_name');
             }, 'phases' => function ($query) {
@@ -1213,10 +1213,10 @@ class SupervisorController extends Controller
         $selectedProjectId = $request->query('project_id') ?: session('supervisor_selected_project_id');
 
         // Get all assigned projects
-        $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
+        $assignedProjects = Project::whereHas('activeSupervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
         })
-            ->notArchived()
+            ->forProgressMonitoring()
             ->with(['phases' => function ($query) {
                 $query->orderBy('phase_order')->orderBy('planned_start_date');
             }])
@@ -1368,7 +1368,7 @@ class SupervisorController extends Controller
     public function attendance(Request $request)
     {
         $user = Auth::user();
-        $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
+        $assignedProjects = Project::whereHas('activeSupervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
         })->notArchived()->with(['projectWorkers.worker'])->get();
 
@@ -1394,7 +1394,7 @@ class SupervisorController extends Controller
     public function profile()
     {
         $user = Auth::user();
-        $assignedProjects = Project::whereHas('supervisors', function ($query) use ($user) {
+        $assignedProjects = Project::whereHas('activeSupervisors', function ($query) use ($user) {
             $query->where('supervisor_id', $user->user_id);
         })->notArchived()->orderBy('created_at', 'desc')->get();
 
@@ -1596,7 +1596,7 @@ class SupervisorController extends Controller
 
         $assignedProjects = Project::query()
             ->notArchived()
-            ->whereHas('supervisors', function ($q) use ($user) {
+            ->whereHas('activeSupervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
             ->orderBy('created_at', 'desc')
@@ -1969,7 +1969,7 @@ class SupervisorController extends Controller
                 $project = Project::query()
                     ->where('project_id', $validated['project_id'])
                     ->notArchived()
-                    ->whereHas('supervisors', function ($q) use ($user) {
+                    ->whereHas('activeSupervisors', function ($q) use ($user) {
                         $q->where('supervisor_id', $user->user_id);
                     })
                     ->first();
@@ -2097,7 +2097,7 @@ class SupervisorController extends Controller
 
         // Get the phase and verify authorization
         $phase = ConstructionPhase::with('project', 'milestones', 'reports')
-            ->whereHas('project', fn ($query) => $query->notArchived())
+            ->whereHas('project', fn ($query) => $query->forProgressMonitoring())
             ->where('phase_id', $phaseId)
             ->first();
 
@@ -2106,8 +2106,8 @@ class SupervisorController extends Controller
         }
 
         // Verify supervisor has access to this project
-        $hasAccess = Project::query()->notArchived()->where('project_id', $phase->project_id)
-            ->whereHas('supervisors', function ($q) use ($user) {
+        $hasAccess = Project::query()->forProgressMonitoring()->where('project_id', $phase->project_id)
+            ->whereHas('activeSupervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
             ->exists();
@@ -2171,8 +2171,8 @@ class SupervisorController extends Controller
         $projectId = $request->input('project_id') ?: session('supervisor_selected_project_id');
 
         // Verify authorization
-        $project = Project::query()->notArchived()->where('project_id', $projectId)
-            ->whereHas('supervisors', function ($q) use ($user) {
+        $project = Project::query()->forProgressMonitoring()->where('project_id', $projectId)
+            ->whereHas('activeSupervisors', function ($q) use ($user) {
                 $q->where('supervisor_id', $user->user_id);
             })
             ->first();
@@ -2254,7 +2254,7 @@ class SupervisorController extends Controller
         if (! empty($data['project_id'])) {
             $projectQuery = Project::query()->notArchived()->where('project_id', $data['project_id']);
             if (! in_array(strtolower(Auth::user()->role), ['engineer', 'admin', 'administrator'], true)) {
-                $projectQuery->whereHas('supervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
+                $projectQuery->whereHas('activeSupervisors', fn ($q) => $q->where('supervisor_id', Auth::id())
                     ->where('project_supervisors.is_active', 1));
             }
             abort_unless($projectQuery->exists(), 403, 'Choose a project actively assigned to your supervisor account.');

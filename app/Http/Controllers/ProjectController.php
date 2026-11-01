@@ -304,16 +304,14 @@ class ProjectController extends Controller
 
             $project = Project::create($projectData);
 
-            // Assign supervisor if provided
-            if ($request->supervisor_id) {
-                $project->supervisors()->attach($request->supervisor_id, [
-                    'assigned_date' => now(),
-                    'is_active' => true,
-                ]);
+            $assignedSupervisorId = app(\App\Services\ProjectSupervisorAssignment::class)->assignNewProject(
+                $project, $request->filled('supervisor_id') ? $request->integer('supervisor_id') : null
+            );
+            if ($assignedSupervisorId) {
 
                 // Notify the assigned supervisor
                 try {
-                    \App\Services\NotificationService::notifySupervisor($request->supervisor_id, [
+                    \App\Services\NotificationService::notifySupervisor($assignedSupervisorId, [
                         'type' => 'project',
                         'title' => 'Project Assignment',
                         'message' => "You have been assigned to Project '{$project->project_name}'",
@@ -911,7 +909,7 @@ class ProjectController extends Controller
     public function phaseManagement(Request $request)
     {
         $projects = Project::query()
-            ->notArchived()
+            ->forProgressMonitoring()
             ->select(['project_id', 'project_name'])
             ->orderBy('project_name')
             ->get();

@@ -70,7 +70,7 @@ class PhaseController extends Controller
     {
         $query = Project::with(['phases' => function ($q) {
             $q->orderBy('phase_order');
-        }])->where('engineer_id', auth('web')->user()->user_id);
+        }])->forProgressMonitoring()->where('engineer_id', auth('web')->user()->user_id);
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -91,7 +91,7 @@ class PhaseController extends Controller
      */
     public function show($projectId)
     {
-        $project = Project::findOrFail($projectId);
+        $project = Project::query()->forProgressMonitoring()->findOrFail($projectId);
 
         $phases = $project->phases()
             ->orderBy('phase_order')
@@ -105,7 +105,7 @@ class PhaseController extends Controller
      */
     public function create($projectId)
     {
-        $project = Project::findOrFail($projectId);
+        $project = Project::query()->forProgressMonitoring()->findOrFail($projectId);
 
         $nextPhaseOrder = $project->phases()->max('phase_order') + 1 ?? 1;
 
@@ -117,6 +117,8 @@ class PhaseController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(Project::query()->where('project_id', $request->input('project_id'))
+            ->whereIn('status', Project::statusVariants(Project::STATUS_COMPLETED))->exists(), 404);
         try {
             $project = Project::findOrFail($request->input('project_id'));
 
@@ -307,7 +309,7 @@ class PhaseController extends Controller
      */
     public function edit($projectId, $phaseId)
     {
-        $project = Project::findOrFail($projectId);
+        $project = Project::query()->forProgressMonitoring()->findOrFail($projectId);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)
@@ -322,7 +324,7 @@ class PhaseController extends Controller
      */
     public function update(Request $request, $projectId, $phaseId)
     {
-        $project = Project::findOrFail($projectId);
+        $project = Project::query()->forProgressMonitoring()->findOrFail($projectId);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)
@@ -619,6 +621,7 @@ class PhaseController extends Controller
                     'success' => true,
                     'message' => 'Phase updated successfully.',
                     'phase' => $phasePayload,
+                    'project_completed' => $project->workflowStatus() === Project::STATUS_COMPLETED,
                     'auto_completed' => $autoCompleted,
                     'redirect' => route('admin.phases', ['project_id' => $project->project_id]),
                 ], 200);
@@ -657,7 +660,7 @@ class PhaseController extends Controller
      */
     public function destroy(Request $request, $projectId, $phaseId)
     {
-        $project = Project::findOrFail($projectId);
+        $project = Project::query()->forProgressMonitoring()->findOrFail($projectId);
 
         $phase = ConstructionPhase::query()
             ->where('phase_id', $phaseId)

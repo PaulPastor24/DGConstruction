@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        if (Schema::hasColumn('accomplishment_reports', 'attachments')) {
+            return;
+        }
         Schema::table('accomplishment_reports', function (Blueprint $table) {
             $table->json('attachments')->nullable();
         });

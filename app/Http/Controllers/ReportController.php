@@ -420,6 +420,14 @@ class ReportController extends Controller
 
         $this->authorizeSupervisor($project);
 
+        if (! Schema::hasColumn('accomplishment_reports', 'attachments')) {
+            $message = 'Report submission is temporarily unavailable. Ask the administrator to apply the report attachments database update, then try again.';
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 503);
+            }
+            return back()->withErrors(['report' => $message])->withInput();
+        }
+
         try {
             DB::beginTransaction();
 
@@ -469,7 +477,7 @@ class ReportController extends Controller
             Log::error('Report submission failed: ' . $e->getMessage());
 
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => 'The report could not be submitted. Please try again or contact the administrator.'], 500);
             }
 
             return back()->withErrors('Failed to submit report');

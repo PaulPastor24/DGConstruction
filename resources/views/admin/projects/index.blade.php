@@ -1612,12 +1612,11 @@
                             </div>
 
                             <div>
-                                <label for="modal_supervisor_id" class="form-label modal-custom-label">Assigned Supervisor <span class="text-danger">*</span></label>
+                                <label for="modal_supervisor_id" class="form-label modal-custom-label">Assigned Supervisor</label>
                                 <select class="form-select modal-custom-input w-100 @error('supervisor_id') is-invalid @enderror"
                                         id="modal_supervisor_id"
-                                        name="supervisor_id"
-                                        required>
-                                    <option value="" disabled selected hidden>Select supervisor</option>
+                                        name="supervisor_id">
+                                    <option value="">Automatically assign to the least-loaded supervisor</option>
                                     @foreach($supervisors as $supervisor)
                                         <option value="{{ $supervisor->user_id }}" {{ old('supervisor_id') == $supervisor->user_id ? 'selected' : '' }}>
                                             {{ $supervisor->name }}

@@ -16,6 +16,7 @@ class TimelineController extends Controller
     public function adminTimeline()
     {
         $projects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+            ->forProgressMonitoring()
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -34,7 +35,7 @@ class TimelineController extends Controller
         $user = Auth::user();
         
         $projects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
-            ->notArchived()
+            ->forProgressMonitoring()
             ->whereHas('supervisors', function ($query) use ($user) {
                 $query->where('project_supervisors.supervisor_id', $user->user_id)
                     ->where('project_supervisors.is_active', true);
@@ -108,6 +109,7 @@ class TimelineController extends Controller
      public function timelineData(Request $request, Project $project)
     {
         $project = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
+            ->forProgressMonitoring()
             ->where('project_id', $project->project_id)
             ->firstOrFail();
 

@@ -22,6 +22,7 @@
         menu.className = 'project-picker-menu';
         menu.hidden = true;
         const list = document.createElement('div');
+        list.className = 'project-picker-options';
         list.id = `project-picker-${++nextId}`;
         list.setAttribute('role', 'listbox');
         input.setAttribute('aria-controls', list.id);
@@ -29,6 +30,8 @@
         status.className = 'project-picker-status';
         status.setAttribute('role', 'status');
         menu.append(list, status);
+        // Keep the search focused while using the dropdown's scrollbar.
+        menu.addEventListener('mousedown', event => event.preventDefault());
         wrapper.append(input, icon, menu);
         select.before(wrapper);
         select.hidden = true;
@@ -47,13 +50,19 @@
             syncLabel();
         }
 
-        function setActive(index) {
+        function setActive(index, scroll = false) {
             activeIndex = index;
             Array.from(list.children).forEach((element, i) => {
                 element.setAttribute('aria-selected', String(i === index));
             });
             if (list.children[index]) input.setAttribute('aria-activedescendant', list.children[index].id);
             else input.removeAttribute('aria-activedescendant');
+            if (scroll && list.children[index]) {
+                const row = list.children[index].getBoundingClientRect();
+                const viewport = list.getBoundingClientRect();
+                if (row.top < viewport.top) list.scrollTop -= viewport.top - row.top;
+                else if (row.bottom > viewport.bottom) list.scrollTop += row.bottom - viewport.bottom;
+            }
         }
 
         function choose(index) {
@@ -70,9 +79,10 @@
             const options = Array.from(select.options).filter(option => !option.disabled && !option.hidden);
             const reset = options.find(option => option.value === '');
             const matches = options.filter(option => option.value !== '' && option.textContent.toLocaleLowerCase().includes(term));
-            // Keep reset accessible and show at most eight choices, regardless of project count.
-            visibleOptions = [...(reset ? [reset] : []), ...matches.slice(0, reset ? 7 : 8)];
+            // Include every matching project so users can browse without knowing its name.
+            visibleOptions = [...(reset ? [reset] : []), ...matches];
             list.replaceChildren();
+            list.scrollTop = 0;
             visibleOptions.forEach((option, index) => {
                 const row = document.createElement('div');
                 row.id = `${list.id}-option-${index}`;
@@ -87,8 +97,7 @@
                 list.appendChild(row);
             });
             status.textContent = matches.length === 0 ? 'No matching projects. Try a different name.'
-                : matches.length > (reset ? 7 : 8) ? `${matches.length} projects found. Type more to narrow the list.`
-                : `${matches.length} project${matches.length === 1 ? '' : 's'} found.`;
+                : `${matches.length} project${matches.length === 1 ? '' : 's'} found. Scroll to browse or type to filter.`;
             menu.hidden = false;
             input.setAttribute('aria-expanded', 'true');
             setActive(term && matches.length ? (reset ? 1 : 0) : -1);
@@ -110,7 +119,7 @@
                 if (visibleOptions.length) {
                     const next = activeIndex < 0 ? (step > 0 ? 0 : visibleOptions.length - 1)
                         : (activeIndex + step + visibleOptions.length) % visibleOptions.length;
-                    setActive(next);
+                    setActive(next, true);
                 }
             } else if (event.key === 'Enter') {
                 event.preventDefault();

@@ -146,6 +146,14 @@ class Project extends Model
         });
     }
 
+    public function scopeForProgressMonitoring(Builder $query): Builder
+    {
+        return $query->notArchived()->where(function (Builder $statuses) {
+            $statuses->whereNull($this->qualifyColumn('status'))
+                ->orWhereNotIn($this->qualifyColumn('status'), self::statusVariants(self::STATUS_COMPLETED));
+        });
+    }
+
     public function scopeWithDelayedPhases(Builder $query): Builder
     {
         $query->whereIn('projects.status', self::statusVariants(self::STATUS_ONGOING))
@@ -381,6 +389,11 @@ class Project extends Model
     {
         return $this->belongsToMany(User::class, 'project_supervisors', 'project_id', 'supervisor_id', 'project_id', 'user_id')
             ->withPivot('assigned_date', 'is_active');
+    }
+
+    public function activeSupervisors()
+    {
+        return $this->supervisors()->wherePivot('is_active', true);
     }
 
     /**

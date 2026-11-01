@@ -565,7 +565,7 @@ class MilestoneController extends Controller
      */
     private function authorizeProject(Project $project)
     {
-        if ($project->workflowStatus() === Project::STATUS_ARCHIVED) {
+        if (in_array($project->workflowStatus(), [Project::STATUS_ARCHIVED, Project::STATUS_COMPLETED], true)) {
             abort(404);
         }
 

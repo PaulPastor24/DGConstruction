@@ -20,7 +20,8 @@ class PhasesExportController extends Controller
             $status = $request->input('status');
             $search = $request->input('search');
 
-            $query = ConstructionPhase::query();
+            $query = ConstructionPhase::query()
+                ->whereHas('project', fn ($project) => $project->forProgressMonitoring());
 
             if ($projectId) {
                 $query->where('project_id', $projectId);
@@ -82,7 +83,8 @@ class PhasesExportController extends Controller
             $status = $request->input('status');
             $search = $request->input('search');
 
-            $query = ConstructionPhase::query();
+            $query = ConstructionPhase::query()
+                ->whereHas('project', fn ($project) => $project->forProgressMonitoring());
 
             if ($projectId) {
                 $query->where('project_id', $projectId);

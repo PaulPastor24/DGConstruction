@@ -19,7 +19,7 @@ class ProjectPolicy
 
         // Supervisor can view if assigned
         if ($user->role === 'supervisor') {
-            return $project->supervisors()->where('supervisor_id', $user->user_id)->exists();
+            return $project->activeSupervisors()->where('supervisor_id', $user->user_id)->exists();
         }
 
         // Client can view if it's their project
