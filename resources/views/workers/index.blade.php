@@ -83,7 +83,7 @@
                     </tbody>
                 </table>
             </div>
-            {{ $workers->links() }}
+            {{ $workers->links('pagination::bootstrap-5-limited') }}
         </div>
     </div>
 </div>

@@ -259,7 +259,18 @@
                         <a href="{{ $projectPhases->previousPageUrl() }}" class="pag-btn"><i class="bi bi-chevron-left"></i></a>
                     @endif
 
-                    @for($i = 1; $i <= $projectPhases->lastPage(); $i++)
+                    @php
+                        $startPage = max($projectPhases->currentPage() - 1, 1);
+                        $endPage = min($projectPhases->currentPage() + 1, $projectPhases->lastPage());
+                        if ($endPage - $startPage < 2) {
+                            if ($startPage === 1) {
+                                $endPage = min($startPage + 2, $projectPhases->lastPage());
+                            } else {
+                                $startPage = max($endPage - 2, 1);
+                            }
+                        }
+                    @endphp
+                    @for($i = $startPage; $i <= $endPage; $i++)
                         @if($i == $projectPhases->currentPage())
                             <button class="pag-btn pag-btn-active">{{ $i }}</button>
                         @else

@@ -2450,9 +2450,20 @@
                 <div id="reportsPagination" class="pagination-bar">
                     @if($reports->lastPage() > 1)
                         <button type="button" class="pagination-button" data-page="{{ max(1, $reports->currentPage() - 1) }}" {{ $reports->onFirstPage() ? 'disabled' : '' }} aria-label="Previous page">‹</button>
-                        @foreach(range(1, $reports->lastPage()) as $page)
+                        @php
+                            $startPage = max($reports->currentPage() - 1, 1);
+                            $endPage = min($reports->currentPage() + 1, $reports->lastPage());
+                            if ($endPage - $startPage < 2) {
+                                if ($startPage === 1) {
+                                    $endPage = min($startPage + 2, $reports->lastPage());
+                                } else {
+                                    $startPage = max($endPage - 2, 1);
+                                }
+                            }
+                        @endphp
+                        @for($page = $startPage; $page <= $endPage; $page++)
                             <button type="button" class="pagination-button {{ $page == $reports->currentPage() ? 'active' : '' }}" data-page="{{ $page }}" aria-label="Page {{ $page }}">{{ $page }}</button>
-                        @endforeach
+                        @endfor
                         <button type="button" class="pagination-button" data-page="{{ min($reports->lastPage(), $reports->currentPage() + 1) }}" {{ $reports->hasMorePages() ? '' : 'disabled' }} aria-label="Next page">›</button>
                     @endif
                 </div>
