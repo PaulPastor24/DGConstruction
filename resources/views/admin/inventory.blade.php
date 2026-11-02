@@ -2236,7 +2236,7 @@
             ->unique(fn ($phase) => data_get($phase, 'phase_id') ?? data_get($phase, 'id') ?? data_get($phase, 'phase_name') ?? (is_object($phase) ? spl_object_id($phase) : md5(json_encode($phase))))
             ->values();
 
-        $selectedInventoryProjectId = request('project_id', session('admin_selected_project_id', ''));
+        $selectedInventoryProjectId = request()->integer('project_id');
         $selectedInventoryPhaseId = request('phase_id', '');
 
     @endphp
@@ -4759,6 +4759,9 @@
             Array.from(data.entries()).forEach(function ([key, value]) {
                 if (value !== null && String(value).trim() !== '') {
                     url.searchParams.set(key, value);
+                } else if (key === 'project_id') {
+                    // Keep an explicit warehouse selection when clearing the project picker.
+                    url.searchParams.set(key, '');
                 } else {
                     url.searchParams.delete(key);
                 }

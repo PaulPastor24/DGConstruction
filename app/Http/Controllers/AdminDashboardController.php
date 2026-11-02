@@ -478,13 +478,8 @@ class AdminDashboardController extends Controller
      */
     public function inventory(Request $request)
     {
-        $selectedProjectId = $request->input('project_id', session('admin_selected_project_id'));
-        if ($request->filled('project_id') && Project::query()->whereKey($selectedProjectId)->exists()) {
-            session(['admin_selected_project_id' => $selectedProjectId]);
-        } elseif (! $request->query->has('project_id') && $selectedProjectId && Project::query()->whereKey($selectedProjectId)->exists()) {
-            $request->merge(['project_id' => $selectedProjectId]);
-        }
-
+        // Inventory is warehouse-wide unless this page explicitly requests a project.
+        // A project selected on timelines/reports must not silently restrict stock.
         $search = trim((string) $request->input('search', ''));
         $category = trim((string) $request->input('category', ''));
         $stockStatus = trim((string) $request->input('stock_status', ''));
