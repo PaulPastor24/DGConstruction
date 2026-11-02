@@ -1359,7 +1359,18 @@
                         @if($phases->hasPages())
                             <div class="pagination-bar">
                                 <a class="pagination-button {{ $phases->onFirstPage() ? 'disabled' : '' }}" href="{{ $phases->previousPageUrl() ?? '#' }}" aria-label="Previous page">‹</a>
-                                @for ($page = 1; $page <= $phases->lastPage(); $page++)
+                                @php
+                                    $startPage = max($phases->currentPage() - 1, 1);
+                                    $endPage = min($phases->currentPage() + 1, $phases->lastPage());
+                                    if ($endPage - $startPage < 2) {
+                                        if ($startPage === 1) {
+                                            $endPage = min($startPage + 2, $phases->lastPage());
+                                        } else {
+                                            $startPage = max($endPage - 2, 1);
+                                        }
+                                    }
+                                @endphp
+                                @for ($page = $startPage; $page <= $endPage; $page++)
                                     <a class="pagination-button {{ $page == $phases->currentPage() ? 'active' : '' }}" href="{{ $phases->url($page) }}" aria-label="Page {{ $page }}">{{ $page }}</a>
                                 @endfor
                                 <a class="pagination-button {{ $phases->hasMorePages() ? '' : 'disabled' }}" href="{{ $phases->nextPageUrl() ?? '#' }}" aria-label="Next page">›</a>

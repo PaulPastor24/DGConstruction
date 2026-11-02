@@ -89,7 +89,7 @@
     </div>
 
     <div class="d-flex justify-content-end mt-4 flex-wrap gap-2 project-pagination" id="projectPagination">
-        {{ $projects->links('pagination::bootstrap-5') }}
+        {{ $projects->links('pagination::bootstrap-5-limited') }}
     </div>
 
     <script>

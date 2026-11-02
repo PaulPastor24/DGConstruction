@@ -2334,7 +2334,7 @@
                     <select id="projectFilter" class="toolbar-select" name="project_id" data-searchable-project aria-label="Filter reports by project">
                         <option value="">All Projects</option>
                         @foreach($projects as $project)
-                            <option value="{{ $project->project_id }}" {{ request('project_id') == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                            <option value="{{ $project->project_id }}" {{ (string) ($selectedProject?->project_id ?? request('project_id')) === (string) $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -3094,7 +3094,17 @@
                 const buttons = [];
                 buttons.push(`<button type="button" class="pagination-button" data-page="${Math.max(1, pagination.current_page - 1)}" ${pagination.current_page === 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>`);
 
-                for (let page = 1; page <= pagination.last_page; page += 1) {
+                let startPage = Math.max(pagination.current_page - 1, 1);
+                let endPage = Math.min(pagination.current_page + 1, pagination.last_page);
+                if (endPage - startPage < 2) {
+                    if (startPage === 1) {
+                        endPage = Math.min(startPage + 2, pagination.last_page);
+                    } else {
+                        startPage = Math.max(endPage - 2, 1);
+                    }
+                }
+
+                for (let page = startPage; page <= endPage; page += 1) {
                     buttons.push(`<button type="button" class="pagination-button ${page === pagination.current_page ? 'active' : ''}" data-page="${page}" aria-label="Page ${page}">${page}</button>`);
                 }
 

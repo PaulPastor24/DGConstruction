@@ -13,7 +13,7 @@ class TimelineController extends Controller
     /**
      * Admin Timeline - View all projects
      */
-    public function adminTimeline()
+    public function adminTimeline(Request $request)
     {
         $projects = Project::with(['client.user', 'engineer', 'supervisors', 'phases'])
             ->forProgressMonitoring()
@@ -24,7 +24,16 @@ class TimelineController extends Controller
             return $this->enrichProjectData($project);
         });
 
-        return view('admin.timeline', compact('projectsWithStats'));
+        $requestedProjectId = $request->query('project_id', session('admin_selected_project_id'));
+        $selectedProject = $projectsWithStats->firstWhere('id', (int) $requestedProjectId);
+        $selectedProjectId = data_get($selectedProject, 'id')
+            ?? data_get($projectsWithStats->first(), 'id');
+
+        if ($selectedProjectId !== null) {
+            session(['admin_selected_project_id' => $selectedProjectId]);
+        }
+
+        return view('admin.timeline', compact('projectsWithStats', 'selectedProjectId'));
     }
 
     /**
@@ -71,7 +80,13 @@ class TimelineController extends Controller
         // always RENDER every assigned project so the timeline's project dropdown can
         // switch between them. Previously we filtered the collection to a single
         // project, which made every other project vanish from the selector.
-        $selectedProjectId = $request->query('project_id') ?? session('client_selected_project_id');
+        $requestedProjectId = $request->query('project_id', session('client_selected_project_id'));
+        $selectedProjectId = $allProjects->contains('project_id', (int) $requestedProjectId)
+            ? (int) $requestedProjectId
+            : $allProjects->first()?->project_id;
+        if ($request->filled('project_id') && $selectedProjectId) {
+            session(['client_selected_project_id' => $selectedProjectId]);
+        }
 
         $projectsWithStats = $allProjects->map(function ($project) {
             return $this->enrichProjectData($project);
@@ -112,6 +127,8 @@ class TimelineController extends Controller
             ->forProgressMonitoring()
             ->where('project_id', $project->project_id)
             ->firstOrFail();
+
+        session(['admin_selected_project_id' => $project->project_id]);
 
         return response()->json([
             'success' => true,

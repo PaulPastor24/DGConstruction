@@ -11,6 +11,8 @@
     border-radius: 18px !important;
     box-shadow: 0 4px 20px rgba(28, 51, 38, .035) !important;
 }
+.attendance-workspace .attendance-control-card { overflow: visible !important; position: relative; z-index: 2; }
+.attendance-workspace .attendance-control-card .project-picker-menu { z-index: 1080; }
 .attendance-workspace .attendance-control-card .card-body { padding: 26px 28px !important; }
 .attendance-workspace .attendance-control-layout { grid-template-columns: 1fr !important; gap: 24px !important; }
 .attendance-workspace .attendance-control-copy { gap: 8px; }

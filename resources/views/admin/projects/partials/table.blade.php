@@ -155,6 +155,15 @@
     @php
         $currentPage = max(1, (int) $projects->currentPage());
         $lastPage = max(1, (int) $projects->lastPage());
+        $startPage = max($currentPage - 1, 1);
+        $endPage = min($currentPage + 1, $lastPage);
+        if ($endPage - $startPage < 2) {
+            if ($startPage === 1) {
+                $endPage = min($startPage + 2, $lastPage);
+            } else {
+                $startPage = max($endPage - 2, 1);
+            }
+        }
         $queryParams = request()->query();
     @endphp
 
@@ -172,7 +181,7 @@
                 </span>
             @endif
 
-            @for($page = 1; $page <= $lastPage; $page++)
+            @for($page = $startPage; $page <= $endPage; $page++)
                 @if($page === $currentPage)
                     <span class="btn btn-sm btn-success px-3">{{ $page }}</span>
                 @else

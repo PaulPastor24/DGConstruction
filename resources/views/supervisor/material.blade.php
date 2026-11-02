@@ -752,7 +752,7 @@
                     </span>
                     <div class="flex items-center gap-1">
                         @if($inventory->hasPages())
-                            {{ $inventory->links('pagination::bootstrap-5') }}
+                            {{ $inventory->links('pagination::bootstrap-5-limited') }}
                         @endif
                     </div>
                 </div>
@@ -897,7 +897,7 @@
                     </span>
                     <div class="flex items-center gap-1">
                         @if(isset($materialRequests) && $materialRequests->hasPages())
-                            {{ $materialRequests->links('pagination::bootstrap-5') }}
+                            {{ $materialRequests->links('pagination::bootstrap-5-limited') }}
                         @endif
                     </div>
                 </div>
@@ -1032,7 +1032,7 @@
                     <div class="flex items-center gap-1">
                         @if($recentUsages instanceof \Illuminate\Pagination\LengthAwarePaginator && $recentUsages->hasPages())
                             @php($recentUsages->setPageName('recent_page'))
-                            {{ $recentUsages->links('pagination::bootstrap-5') }}
+                            {{ $recentUsages->links('pagination::bootstrap-5-limited') }}
                         @endif
                     </div>
                 </div>

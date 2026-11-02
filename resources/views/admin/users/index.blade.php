@@ -879,7 +879,7 @@
                     Showing <span class="text-dark">{{ $users->firstItem() ?? 0 }}</span> to <span class="text-dark">{{ $users->lastItem() ?? 0 }}</span> of <span class="text-dark">{{ $users->total() }}</span> recorded entries
                 </div>
                 <div class="pagination-layout-wrapper">
-                    {{ $users->appends(request()->query())->links('pagination::bootstrap-5') }}
+                    {{ $users->appends(request()->query())->links('pagination::bootstrap-5-limited') }}
                 </div>
             </div>
         @endif

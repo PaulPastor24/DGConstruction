@@ -146,6 +146,7 @@ Route::middleware(['auth', 'role:engineer,admin,administrator'])->group(function
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/timeline', [TimelineController::class, 'adminTimeline'])->name('admin.timeline');
     Route::get('/admin/timeline/data/{project}', [TimelineController::class, 'timelineData'])->name('admin.timeline.data');
+    Route::post('/admin/projects/{project}/select', [ProjectController::class, 'selectProject'])->name('admin.projects.select');
     Route::get('/admin/reports/{reportId}/attachments/{index}', [ReportController::class, 'downloadAttachment'])->whereNumber('index')->name('admin.reports.attachments.download');
     Route::get('/admin/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports.index');
     Route::get('/admin/reports/data', [AdminDashboardController::class, 'reportsData'])->name('admin.reports.data');

@@ -627,7 +627,7 @@
 
 <div class="p-3 bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 border-top">
             <div class="small text-muted">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} reports</div>
-            <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'sort']))->links('pagination::bootstrap-5') }}</div>
+            <div>{{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'sort']))->links('pagination::bootstrap-5-limited') }}</div>
         </div>
     </section>
 </div>

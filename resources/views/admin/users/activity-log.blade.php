@@ -53,7 +53,7 @@
                 </table>
             </div>
             @if($activityLogs->hasPages())
-                <div class="pt-3">{{ $activityLogs->links() }}</div>
+                <div class="pt-3">{{ $activityLogs->links('pagination::bootstrap-5-limited') }}</div>
             @endif
         </div>
     </div>

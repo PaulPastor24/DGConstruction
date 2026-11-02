@@ -1110,9 +1110,9 @@
         <div class="col-12 col-md-3">
             <label class="form-label small fw-bold text-muted">Project</label>
             <select name="project_id" class="form-select form-select-sm" data-searchable-project aria-label="Filter reports by project" onchange="this.form.submit()">
-                <option value="" {{ request('project_id') === null || request('project_id') === '' ? 'selected' : '' }}>All Projects</option>
+                <option value="" {{ !$selectedProject && (request('project_id') === null || request('project_id') === '') ? 'selected' : '' }}>All Projects</option>
                 @foreach($assignedProjects as $project)
-                    <option value="{{ $project->project_id }}" {{ request('project_id') == $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
+                    <option value="{{ $project->project_id }}" {{ (string) optional($selectedProject)->project_id === (string) $project->project_id ? 'selected' : '' }}>{{ $project->project_name }}</option>
                 @endforeach
             </select>
         </div>
@@ -1523,7 +1523,7 @@
         </div>
         <div>
             @if($reports->hasPages())
-                {{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']))->links('pagination::bootstrap-5') }}
+                {{ $reports->appends(request()->only(['project_id', 'phase_id', 'status', 'report_date', 'report_date_from', 'report_date_to', 'search']))->links('pagination::bootstrap-5-limited') }}
             @else
                 <nav aria-label="Report pagination" class="pagination">
                     <span class="page-item active"><span class="page-link">1</span></span>

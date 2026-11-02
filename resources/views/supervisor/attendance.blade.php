@@ -1398,6 +1398,21 @@
             overflow: hidden !important;
         }
 
+        .attendance-control-card {
+            overflow: visible !important;
+            position: relative;
+            z-index: 2;
+        }
+
+        .attendance-control-card .attendance-project-field {
+            position: relative;
+            z-index: 3;
+        }
+
+        .attendance-control-card .project-picker-menu {
+            z-index: 1080;
+        }
+
         .attendance-page,
         .attendance-main-grid,
         .attendance-main-grid > [class*="col-"],
@@ -1792,7 +1807,7 @@
                 </div>
                 <div class="attendance-action-panel">
                     <div class="attendance-context-fields">
-                        <div class="attendance-date-field">
+                        <div class="attendance-date-field attendance-project-field">
                             <label class="attendance-date-label" for="attendanceProjectInput"><i class="bi bi-building"></i> Attendance Project</label>
                             <select id="attendanceProjectInput" class="form-select form-select-sm" data-searchable-project aria-label="Select attendance project" @disabled($cameraProjects->isEmpty())>
                                 @forelse($cameraProjects as $project)

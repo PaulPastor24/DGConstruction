@@ -478,6 +478,13 @@ class AdminDashboardController extends Controller
      */
     public function inventory(Request $request)
     {
+        $selectedProjectId = $request->input('project_id', session('admin_selected_project_id'));
+        if ($request->filled('project_id') && Project::query()->whereKey($selectedProjectId)->exists()) {
+            session(['admin_selected_project_id' => $selectedProjectId]);
+        } elseif (! $request->query->has('project_id') && $selectedProjectId && Project::query()->whereKey($selectedProjectId)->exists()) {
+            $request->merge(['project_id' => $selectedProjectId]);
+        }
+
         $search = trim((string) $request->input('search', ''));
         $category = trim((string) $request->input('category', ''));
         $stockStatus = trim((string) $request->input('stock_status', ''));
@@ -887,6 +894,10 @@ class AdminDashboardController extends Controller
 
     public function reportsData(Request $request)
     {
+        if ($request->filled('project_id') && Project::query()->whereKey($request->input('project_id'))->exists()) {
+            session(['admin_selected_project_id' => $request->input('project_id')]);
+        }
+
         $hasReports = Schema::hasTable('accomplishment_reports');
         if (! $hasReports) {
             return response()->json([
@@ -1266,6 +1277,11 @@ class AdminDashboardController extends Controller
      */
     public function attendance(Request $request)
     {
+        $selectedProjectId = $request->input('project_id', session('admin_selected_project_id'));
+        if ($request->filled('project_id') && Project::query()->whereKey($selectedProjectId)->exists()) {
+            session(['admin_selected_project_id' => $selectedProjectId]);
+        }
+
         $workers = Schema::hasTable('workers')
             ? DB::table('workers')->where('is_active', true)->orderBy('first_name')->orderBy('last_name')->get()
             : collect();
@@ -1279,7 +1295,7 @@ class AdminDashboardController extends Controller
 
         $filters = $predefinedMaterialCategories = [
             'date' => $request->input('date', Carbon::today()->toDateString()),
-            'project_id' => $request->input('project_id'),
+            'project_id' => $selectedProjectId,
             'status' => $request->input('status'),
             'biometric' => $request->input('biometric'),
             'search' => $request->input('search'),

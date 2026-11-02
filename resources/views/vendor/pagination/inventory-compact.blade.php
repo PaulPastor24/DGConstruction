@@ -2,9 +2,15 @@
     @php
         $current = $paginator->currentPage();
         $last = $paginator->lastPage();
-        $pages = collect([1, $current - 1, $current, $current + 1, $last])
-            ->filter(fn ($page) => $page >= 1 && $page <= $last)->unique()->sort()->values();
-        $previousNumber = 0;
+        $start = max($current - 1, 1);
+        $end = min($current + 1, $last);
+        if ($end - $start < 2) {
+            if ($start === 1) {
+                $end = min($start + 2, $last);
+            } else {
+                $start = max($end - 2, 1);
+            }
+        }
     @endphp
     <nav aria-label="Inventory pages" class="inventory-compact-pagination">
         <ul class="pagination mb-0">
@@ -15,10 +21,7 @@
                     <a class="page-link" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Previous page">&lsaquo;</a>
                 @endif
             </li>
-            @foreach($pages as $page)
-                @if($previousNumber && $page > $previousNumber + 1)
-                    <li class="page-item disabled d-none d-sm-block"><span class="page-link">&hellip;</span></li>
-                @endif
+            @for($page = $start; $page <= $end; $page++)
                 <li class="page-item d-none d-sm-block {{ $page == $current ? 'active' : '' }}">
                     @if($page == $current)
                         <span class="page-link" aria-current="page">{{ $page }}</span>
@@ -26,8 +29,7 @@
                         <a class="page-link" href="{{ $paginator->url($page) }}" aria-label="Page {{ $page }}">{{ $page }}</a>
                     @endif
                 </li>
-                @php($previousNumber = $page)
-            @endforeach
+            @endfor
             <li class="page-item d-sm-none"><span class="page-link">{{ $current }} / {{ $last }}</span></li>
             <li class="page-item {{ $paginator->hasMorePages() ? '' : 'disabled' }}">
                 @if($paginator->hasMorePages())

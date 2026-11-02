@@ -823,11 +823,12 @@ class ReportController extends Controller
         $assignedProjectIds = $assignedProjects->pluck('project_id')->toArray();
         $selectedProject = null;
 
-        if ($request->query->has('project_id')) {
-            $projectId = $request->query('project_id');
-            if ($projectId !== '' && $projectId !== null) {
-                $selectedProject = $assignedProjects->firstWhere('project_id', (int) $projectId);
-            }
+        $projectId = $request->query('project_id', session('supervisor_selected_project_id'));
+        if ($projectId !== '' && $projectId !== null) {
+            $selectedProject = $assignedProjects->firstWhere('project_id', (int) $projectId);
+        }
+        if ($request->query->has('project_id') && $request->filled('project_id') && $selectedProject) {
+            session(['supervisor_selected_project_id' => $selectedProject->project_id]);
         }
 
         $modalProject = $selectedProject ?? $assignedProjects->first();

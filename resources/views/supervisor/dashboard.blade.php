@@ -85,12 +85,11 @@
     }
 
     .supervisor-select-icon {
-        position: absolute;
-        left: 12px;
-        color: #166534;
-        pointer-events: none;
-        z-index: 2;
-        font-size: 0.9rem;
+        display: none;
+    }
+
+    .supervisor-select-wrapper .project-picker {
+        width: 100%;
     }
 
     .supervisor-project-select {

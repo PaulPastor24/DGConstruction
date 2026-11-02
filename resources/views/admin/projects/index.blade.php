@@ -2780,12 +2780,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (paginationEl) {
             paginationEl.innerHTML = '';
             if (visibleRows.length > pageSize) {
+                let startPage = Math.max(safePage - 1, 1);
+                let endPage = Math.min(safePage + 1, totalPages);
+                if (endPage - startPage < 2) {
+                    if (startPage === 1) {
+                        endPage = Math.min(startPage + 2, totalPages);
+                    } else {
+                        startPage = Math.max(endPage - 2, 1);
+                    }
+                }
+
                 const prevItem = document.createElement('li');
                 prevItem.className = 'page-item' + (safePage === 1 ? ' disabled' : '');
                 prevItem.innerHTML = '<a class="page-link" href="#" tabindex="-1" style="color:#198754;" aria-label="Previous page" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + (safePage - 1) + ');"><i class="bi bi-chevron-left"></i></a>';
                 paginationEl.appendChild(prevItem);
 
-                for (let page = 1; page <= totalPages; page++) {
+                for (let page = startPage; page <= endPage; page++) {
                     const item = document.createElement('li');
                     item.className = 'page-item' + (page === safePage ? ' active' : '');
                     item.innerHTML = '<a class="page-link" href="#" style="' + (page === safePage ? 'background-color:#198754; border-color:#198754; color:#fff;' : 'color:#198754;') + '" onclick="event.preventDefault(); window.renderArchivedProjectsPage(' + page + ');">' + page + '</a>';

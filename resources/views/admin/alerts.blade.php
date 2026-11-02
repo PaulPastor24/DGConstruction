@@ -648,7 +648,7 @@
                         Showing <span class="text-dark">{{ $notifications->firstItem() ?? 0 }}</span> to <span class="text-dark">{{ $notifications->lastItem() ?? 0 }}</span> of <span class="text-dark">{{ $notifications->total() }}</span> recorded entries
                     </div>
                     <div>
-                        {{ $notifications->links('pagination::bootstrap-5') }}
+                        {{ $notifications->links('pagination::bootstrap-5-limited') }}
                     </div>
                 </div>
                 @endif

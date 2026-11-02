@@ -356,7 +356,7 @@
             Showing {{ $notifications->firstItem() ?? 0 }} to {{ $notifications->lastItem() ?? 0 }} of {{ $notifications->total() ?? $notifications->count() }} notifications
         </div>
         <nav aria-label="Page navigation example">
-            {!! $notifications->links('pagination::bootstrap-5') !!}
+            {!! $notifications->links('pagination::bootstrap-5-limited') !!}
         </nav>
     </div>
 </section>

@@ -19,6 +19,16 @@ use Illuminate\Support\Facades\Schema;
 
 class ProjectController extends Controller
 {
+    public function selectProject(Project $project)
+    {
+        session(['admin_selected_project_id' => $project->project_id]);
+
+        return response()->json([
+            'success' => true,
+            'project_id' => $project->project_id,
+        ]);
+    }
+
     /**
      * Display a listing of projects.
      */

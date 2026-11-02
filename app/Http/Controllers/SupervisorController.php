@@ -1376,12 +1376,20 @@ class SupervisorController extends Controller
         $workers = $deployments->map(fn ($d) => $d->worker)->unique('worker_id')->values();
         $assignedProjects = $assignedProjects->filter(fn ($project) => $project->supervisors()
             ->where('supervisor_id', $user->user_id)->where('project_supervisors.is_active', 1)->exists());
-        $requestedProjectId = $request->query('project_id', session('supervisor_attendance_project_id'));
+        $requestedProjectId = $request->query(
+            'project_id',
+            session('supervisor_selected_project_id', session('supervisor_attendance_project_id'))
+        );
         if ($request->filled('project_id')) {
             abort_unless($assignedProjects->contains('project_id', (int) $requestedProjectId), 403);
         }
         $activeProject = $assignedProjects->firstWhere('project_id', (int) $requestedProjectId) ?? $assignedProjects->first();
-        if ($activeProject) session(['supervisor_attendance_project_id' => $activeProject->project_id]);
+        if ($activeProject) {
+            session([
+                'supervisor_selected_project_id' => $activeProject->project_id,
+                'supervisor_attendance_project_id' => $activeProject->project_id,
+            ]);
+        }
 
         $activeDeployments = $activeProject ? $activeProject->projectWorkers()->with('worker')->get() : collect();
 
@@ -1603,7 +1611,7 @@ class SupervisorController extends Controller
             ->get(['project_id', 'project_name', 'location', 'status']);
 
         $selectedProject = null;
-        $selectedProjectId = $request->query('project_id');
+        $selectedProjectId = $request->query('project_id', session('supervisor_selected_project_id'));
 
         if ($selectedProjectId) {
             $selectedProject = $assignedProjects->firstWhere('project_id', (int) $selectedProjectId);

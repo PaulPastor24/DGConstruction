@@ -140,9 +140,6 @@
                             <div class="col-auto d-flex gap-3 align-items-center flex-wrap">
                                 
                                 <div class="project-selector-dropdown-wrapper">
-                                    <div class="project-selector-icon" aria-hidden="true">
-                                        <i class="bi bi-building"></i>
-                                    </div>
                                     <select class="form-select project-theme-select" data-searchable-project aria-label="Select project timeline" onchange="window.location.href='{{ route('supervisor.timeline') }}?project_id=' + this.value">
                                         @foreach($projectsWithStats as $dropdownProject)
                                             <option value="{{ data_get($dropdownProject, 'id') }}" {{ data_get($dropdownProject, 'id') == $selectedProjectId ? 'selected' : '' }}>
@@ -557,12 +554,8 @@
         align-items: center;
     }
 
-    .project-selector-icon {
-        position: absolute;
-        left: 10px;
-        color: #166534;
-        pointer-events: none;
-        z-index: 2;
+    .project-selector-dropdown-wrapper > .project-picker {
+        width: 100%;
     }
     
     .project-theme-select {

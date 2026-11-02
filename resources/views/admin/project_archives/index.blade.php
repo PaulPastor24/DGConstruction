@@ -138,7 +138,18 @@
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
-                            @for($page = 1; $page <= $archives->lastPage(); $page++)
+                            @php
+                                $startPage = max($archives->currentPage() - 1, 1);
+                                $endPage = min($archives->currentPage() + 1, $archives->lastPage());
+                                if ($endPage - $startPage < 2) {
+                                    if ($startPage === 1) {
+                                        $endPage = min($startPage + 2, $archives->lastPage());
+                                    } else {
+                                        $startPage = max($endPage - 2, 1);
+                                    }
+                                }
+                            @endphp
+                            @for($page = $startPage; $page <= $endPage; $page++)
                                 <li class="page-item {{ $page == $archives->currentPage() ? 'active' : '' }}">
                                     <a class="page-link" href="{{ $archives->url($page) }}" style="{{ $page == $archives->currentPage() ? 'background-color:#198754; border-color:#198754; color:#fff;' : 'color:#198754;' }}">{{ $page }}</a>
                                 </li>

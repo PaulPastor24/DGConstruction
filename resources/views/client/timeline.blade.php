@@ -1976,7 +1976,7 @@
             <label for="projectSelector">Project</label>
             <select id="projectSelector" class="toolbar-select" data-searchable-project aria-label="Select project timeline">
                 @foreach($projectsWithStats as $project)
-                    <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
+                <option value="{{ $project['id'] }}" {{ (string) $project['id'] === (string) $selectedProjectId ? 'selected' : '' }}>{{ $project['name'] }}</option>
                 @endforeach
             </select>
         </div>
@@ -2042,7 +2042,17 @@
             `<button type="button" class="pagination-button" data-table="${tableKey}" data-page="${previousPage}" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous page">‹</button>`
         ];
 
-        for (let page = 1; page <= totalPages; page += 1) {
+        let startPage = Math.max(currentPage - 1, 1);
+        let endPage = Math.min(currentPage + 1, totalPages);
+        if (endPage - startPage < 2) {
+            if (startPage === 1) {
+                endPage = Math.min(startPage + 2, totalPages);
+            } else {
+                startPage = Math.max(endPage - 2, 1);
+            }
+        }
+
+        for (let page = startPage; page <= endPage; page += 1) {
             buttons.push(`
                 <button type="button" class="pagination-button ${page === currentPage ? 'active' : ''}" data-table="${tableKey}" data-page="${page}" aria-label="Page ${page}">${page}</button>
             `);
@@ -2215,6 +2225,20 @@
         document.getElementById('projectSelector').dispatchEvent(new Event('project-picker:sync'));
         populatePhaseFilter(selectedProject);
         renderTimeline(selectedProject);
+
+        const selectProjectUrl = "{{ route('client.dashboard.project.select', ['project' => '__PROJECT_ID__']) }}"
+            .replace('__PROJECT_ID__', encodeURIComponent(selectedProject.id));
+        fetch(selectProjectUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        }).then((response) => {
+            if (!response.ok) throw new Error('Unable to save selected project.');
+        }).catch((error) => console.error(error));
     }
 
     function populatePhaseFilter(project) {

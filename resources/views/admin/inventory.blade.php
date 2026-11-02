@@ -2236,7 +2236,7 @@
             ->unique(fn ($phase) => data_get($phase, 'phase_id') ?? data_get($phase, 'id') ?? data_get($phase, 'phase_name') ?? (is_object($phase) ? spl_object_id($phase) : md5(json_encode($phase))))
             ->values();
 
-        $selectedInventoryProjectId = request('project_id', '');
+        $selectedInventoryProjectId = request('project_id', session('admin_selected_project_id', ''));
         $selectedInventoryPhaseId = request('phase_id', '');
 
     @endphp
@@ -2431,7 +2431,7 @@
                     <form method="GET" action="{{ route('admin.inventory') }}" class="inventory-filter-row mb-4" id="inventory-search-form">
 <div><select name="project_id" data-searchable-project class="form-select form-select-sm" aria-label="Filter materials by project" onchange="this.form.requestSubmit()">
 <option value="">All projects / warehouse inventory</option>
-@foreach($projects as $inventoryProject)<option value="{{ $inventoryProject->project_id }}" @selected((int) request('project_id') === (int) $inventoryProject->project_id)>{{ $inventoryProject->project_name }}</option>@endforeach
+@foreach($projects as $inventoryProject)<option value="{{ $inventoryProject->project_id }}" @selected((int) $selectedInventoryProjectId === (int) $inventoryProject->project_id)>{{ $inventoryProject->project_name }}</option>@endforeach
 </select></div>
                         <div class="inventory-filter-search position-relative search-container">
                             <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm mi-search-input" placeholder="Search materials or usage logs...">
@@ -4610,7 +4610,7 @@
                 @if($toolHistory->hasPages())
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mt-3">
                         <span class="text-muted small">Showing {{ $toolHistory->firstItem() ?? 0 }} to {{ $toolHistory->lastItem() ?? 0 }} of {{ $toolHistory->total() }} records</span>
-                        <div class="inventory-modal-pagination">{{ $toolHistory->links('pagination::bootstrap-5') }}</div>
+                        <div class="inventory-modal-pagination">{{ $toolHistory->links('pagination::bootstrap-5-limited') }}</div>
                     </div>
                 @endif
             </div>

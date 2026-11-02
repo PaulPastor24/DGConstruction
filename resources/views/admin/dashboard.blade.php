@@ -565,6 +565,20 @@
         const projectProgress = el.getAttribute('data-project-progress') || '0';
         const projectImage = el.getAttribute('data-project-image') || '';
 
+        if (projectId) {
+            fetch(`/admin/projects/${encodeURIComponent(projectId)}/select`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            }).then((response) => {
+                if (!response.ok) throw new Error('Unable to save selected project.');
+            }).catch((error) => console.error(error));
+        }
+
         const modalEl = document.getElementById('projectDetailModal');
         if (!modalEl) return;
 

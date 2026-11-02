@@ -107,6 +107,54 @@ class TimelineViewsTest extends TestCase
         $this->assertNotNull($projectsData);
     }
 
+    public function test_admin_timeline_project_selection_is_shared_with_other_admin_pages()
+    {
+        $this->seedDatabase();
+        $admin = User::query()->where('role', 'engineer')->firstOrFail();
+        $project = Project::query()->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.projects.select', $project))
+            ->assertOk()
+            ->assertJsonPath('project_id', $project->project_id);
+
+        $this->assertEquals($project->project_id, session('admin_selected_project_id'));
+
+        $this->get(route('admin.timeline'))
+            ->assertOk()
+            ->assertViewHas('selectedProjectId', $project->project_id);
+    }
+
+    public function test_client_timeline_selection_is_saved_for_other_client_pages()
+    {
+        $this->seedDatabase();
+        $clientUser = User::query()->where('role', 'client')->firstOrFail();
+        $project = Project::query()->firstOrFail();
+
+        $this->actingAs($clientUser)
+            ->get(route('client.timeline', ['project_id' => $project->project_id]))
+            ->assertOk()
+            ->assertViewHas('selectedProjectId', $project->project_id);
+
+        $this->assertEquals($project->project_id, session('client_selected_project_id'));
+    }
+
+    public function test_supervisor_attendance_uses_the_dashboard_project_selection()
+    {
+        $this->seedDatabase();
+        $supervisor = User::query()->where('role', 'supervisor')->firstOrFail();
+        $project = Project::query()->firstOrFail();
+
+        $this->actingAs($supervisor)
+            ->withSession(['supervisor_selected_project_id' => $project->project_id])
+            ->get(route('supervisor.attendance'))
+            ->assertOk()
+            ->assertViewHas('activeProject', fn ($activeProject) => $activeProject->project_id === $project->project_id);
+
+        $this->assertEquals($project->project_id, session('supervisor_selected_project_id'));
+        $this->assertEquals($project->project_id, session('supervisor_attendance_project_id'));
+    }
+
     public function test_supervisor_cannot_access_admin_timeline()
     {
         $this->seedDatabase();
