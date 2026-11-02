@@ -2,7 +2,7 @@
 
 **Purpose:** Describe how the current system works: its roles, features, business logic, and the connections between users and modules.
 
-**Basis:** Review of the Laravel routes, controllers, models, migrations, and main role-specific views in this repository, as of October 28, 2026. This guide describes behavior represented in the code; deployed configuration can affect features such as scheduled jobs, email, and biometric authentication.
+**Basis:** Review of the Laravel routes, controllers, models, migrations, and main role-specific views in this repository, as of October 29, 2026. This guide describes behavior represented in the code; deployed configuration can affect features such as scheduled jobs, email, and face-recognition attendance.
 
 ## 1. System at a glance
 
@@ -14,6 +14,8 @@ The system is a role-based construction project monitoring and operations applic
 - **Public visitor:** Can view public landing-page/gallery content. This is separate from authenticated project dashboards.
 
 After login, users are directed to a dashboard appropriate to their role. Access to role-specific routes is protected by authentication and role middleware.
+
+The application uses Laravel with server-rendered Blade pages and React components for selected interactive features, including camera-based face attendance. The current repository contains no Python source or Python execution path; an `ai_analysis_results` table remains in the initial migration, but no current application processing flow for it was found. The dashboard's circular progress visualization is CSS-based, and the project timeline uses DHTMLX Gantt; Chart.js and ApexCharts are not current project dependencies.
 
 ## 2. Main workflows by role
 
@@ -32,7 +34,7 @@ After login, users are directed to a dashboard appropriate to their role. Access
 
 1. Select or work within a project assigned to them.
 2. View assigned-project dashboards, progress, phases, and timelines.
-3. Record worker attendance. Workers can be enrolled for browser/device biometric authentication (WebAuthn/passkey, such as a supported fingerprint reader, Face ID, or Touch ID). Manual attendance is also supported when biometric verification is unavailable; records indicate whether biometric matching was used.
+3. Record worker attendance using camera-based face recognition. Enroll a worker's face, scan a worker during attendance, and confirm the matched identity before saving the attendance action. Manual attendance is also supported when face recognition is unavailable.
 4. Submit a material request for an assigned project. Requests are sent for administrator review and can be viewed by status.
 5. Record material usage against a project and its construction phase. The record can include quantity, date, remarks, and an optional site photo. Usage updates the material stock and project allocation quantities.
 6. Submit an accomplishment report by selecting the project and phase, entering the report date and narrative, optionally adding accomplishment percentage and site images, and submitting it for review.
@@ -92,7 +94,8 @@ This section describes each module's behavior, rules, and dependencies. Where a 
 
 ### Authentication, accounts, and profiles
 
-- Login, logout, registration, password reset, email verification, password confirmation, and Google sign-in routes are present. User passkey routes are also registered by the authentication package.
+- Login, logout, registration, password reset, email verification, password confirmation, and Google sign-in routes are present. User passkey routes are also registered by the authentication package; they are separate from worker attendance, which uses face recognition.
+- The checked-in session configuration defaults to a 120-minute idle lifetime, and `.env.example` sets `SESSION_LIFETIME=120`; deployed environment configuration can override this value.
 - The authenticated `/dashboard` route redirects to the dashboard for the user's role: engineer/admin/administrator, supervisor, or client. Unknown roles are denied.
 - Role-specific management routes require authentication and a matching role. The engineer/admin management route group includes `engineer`, `admin`, and `administrator`; some individual operations are stricter. For instance, report approval checks specifically for `engineer`.
 - Engineer/Admin users can create, edit, activate/deactivate, search, filter, and delete user accounts. User records carry role and active status; client accounts can be associated with a Client profile.
@@ -116,7 +119,7 @@ This section describes each module's behavior, rules, and dependencies. Where a 
 - Phase statuses include Not Started, In Progress, Delayed, and Completed. Status transitions are constrained by the current status, and a completed phase is locked against reopening through the normal transition helper.
 - A phase's displayed progress is derived from completed milestones as a percentage when milestones exist. If no milestones exist, stored completion percentage is used. An Administrator can apply an audited progress override with a reason; where present, the override is used as the displayed progress.
 - Project overall progress is the average of its phase progress values; phases with no progress remain in the average. It is not a weighted calculation based on budget, duration, or work size.
-- The Engineer/Admin dashboard shows average progress for ongoing projects and separates delayed projects when the project, a phase, or an incomplete milestone is explicitly delayed or past its target end date. Recent project badges use the same delay classification.
+- The Engineer/Admin dashboard shows overall progress for ongoing projects, delayed-project counts/status, active-project and active-worker counts, materials in stock, pending reports, recent projects, and recent reports. It does not show an attendance KPI; attendance records and summaries are available in the attendance module. The dashboard's materials-in-stock KPI is distinct from inventory alerts and detailed inventory reports.
 - A phase is ready for completion when progress is at least 100% and no milestone remains incomplete. Milestone synchronization can update phase progress and completion status; actual end date is filled when the phase completes.
 - Each milestone belongs to one phase, and each phase belongs to one project. Milestones store name, dates, completion flag, delayed flag, and status. Display status prioritizes Completed, then Delayed, then the stored status.
 - Engineer/Admin users can create, edit, delete, complete, or mark milestones delayed. Timeline views present project/phase schedules and derived progress. Engineer/Admin and supervisors can export phase data; client timeline routes expose data for that client's own projects.
@@ -138,11 +141,11 @@ This section describes each module's behavior, rules, and dependencies. Where a 
 ### Worker deployment and attendance
 
 - A Worker is distinct from an authenticated User. Workers are deployed to projects through `project_workers`, which records project, worker, assignment role, dates, and active state. Attendance links to the worker and may link to a specific project deployment.
-- Supervisors can add/register workers, edit worker details and profile images, re-enroll an active worker's biometric credential, and deactivate a worker. Deactivation removes the worker from the active roster while preserving historical records; it is not the same as deleting the worker's past attendance.
-- Supervisor attendance is scoped to projects assigned to that Supervisor. Active workers can be enrolled or re-enrolled using a browser/device WebAuthn credential; a credential is verified server-side. Compatible devices may use fingerprint, Face ID, Touch ID, or another passkey authenticator. The server persists credential data, not a readable image of a fingerprint.
-- Attendance can also be recorded manually when a biometric device/flow is unavailable. Attendance records indicate whether biometric verification matched; manual entries are marked unverified.
+- Supervisors can add/register workers, edit worker details and profile images, enroll or re-enroll an active worker's face, and deactivate a worker. Deactivation removes the worker from the active roster while preserving historical records; it is not the same as deleting the worker's past attendance.
+- Supervisor attendance is scoped to projects assigned to that Supervisor. Face enrollment and attendance use the device camera and face-recognition models processed in the browser. The browser sends three face descriptor samples to the server for matching against enrolled workers; face templates are encrypted before storage. A successful match still requires supervisor confirmation before attendance is saved.
+- Attendance can also be recorded manually when face recognition is unavailable. Attendance records indicate whether verification matched; manual entries are marked unverified.
 - Attendance supports time-in, break-out, break-in, and time-out actions. The system prevents duplicate or out-of-order actions in the attendance workflow and records date, times, status, remarks, recorder, worker, and deployment. Break-in depends on a recorded break-out; time-out depends on time-in, is limited by the worker's scheduled end time, and duplicate time-outs are rejected.
-- Attendance status is calculated using the configured schedule logic; the admin interface supports filtering by date, project, status, biometric verification, and worker/search terms.
+- Attendance status is calculated using the configured schedule logic; the admin interface supports filtering by date, project, status, face-verification result, and worker/search terms.
 - Administrator functions include viewing, manually creating, editing, and deleting attendance entries, setting worker schedules, managing attendance schedule rules, previewing a daily report, and sending attendance reports by email.
 - Overtime can be derived from time-out relative to the configured logic/cutoff and displayed as minutes/hours. This calculation is an attendance feature, not a payroll module.
 
@@ -243,7 +246,10 @@ The following tasks are registered in the Laravel scheduler. Their actual execut
 ## 8. System behavior and deployment dependencies
 
 - Scheduled jobs run only when the server invokes Laravel's scheduler. Attendance report email additionally depends on working mail configuration.
-- Biometric/passkey authentication requires a supported browser/device and valid HTTPS origin/relying-party configuration. The system supports device authenticators; it does not mean every worker uses a dedicated fingerprint scanner.
+- Face-recognition attendance requires a supported camera, browser camera permission, deployed face-recognition model files, and the face-attendance feature to be enabled. It is an attendance verification flow, not face-based account login.
+- The production system is hosted on a cloud server, as confirmed by the system owner. This repository's working copy is under a local XAMPP `htdocs` directory; that local development path does not establish the production server software.
+- The application migration creates a `system_logs` table (plural). The configured database choices include SQLite, MySQL, MariaDB, and PostgreSQL; `.env.example` defaults to SQLite. The repository does not establish that production runs MySQL 8.0. Likewise, it does not identify whether the cloud server uses Apache or Nginx.
+- The current data relationship map describes entities and associations, not a complete column-level schema. Migration files are the source of truth for actual column definitions, key types, and foreign-key constraints.
 - The behavior described here is based on the current code. Actual availability can vary with deployment configuration, database migrations, role permissions, and enabled integrations.
 - Material receipts and approved material requests currently create delivery records with `total_price = null`; material cost entry is not supported. Tool/equipment purchase prices and loss-related deductions are separate records, not consolidated project cost accounting.
 - The system does not implement full payroll, labor-cost capture, logistics-cost capture, budget-versus-actual accounting, or a unified all-category project expense dashboard.
