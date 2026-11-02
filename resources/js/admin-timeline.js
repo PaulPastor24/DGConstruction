@@ -80,7 +80,7 @@ if (!document.getElementById('gantt-compact-styles')) {
         #dhtmlxGantt *::-webkit-scrollbar {
             width: 0 !important;
             height: 0 !important;
-            display: none !important;
+            display: none;
         }
         .gantt-scroll-shell {
             scrollbar-width: none !important;
@@ -153,6 +153,18 @@ if (!document.getElementById('gantt-compact-styles')) {
             justify-content: center !important;
             text-align: center !important;
             padding: 0 8px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+        }
+        .gantt-task-label {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
         }
         .gantt_task_content {
             color: #f8fafc !important;
@@ -258,44 +270,76 @@ if (!document.getElementById('gantt-compact-styles')) {
             line-height: 1 !important;
         }
         .gantt-flag-popover {
-            position: absolute !important;
-            left: 50% !important;
-            top: calc(100% + 10px) !important;
-            transform: translateX(-50%) !important;
-            min-width: 220px !important;
-            max-width: 260px !important;
+            position: fixed !important;
+            left: 0;
+            top: 0;
+            width: 240px;
+            min-width: 0 !important;
+            max-width: min(260px, calc(100vw - 24px)) !important;
+            max-height: min(240px, 45vh);
+            overflow-y: auto;
             padding: 10px 12px !important;
             border-radius: 12px !important;
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
             color: #0f172a !important;
             font-size: 11px !important;
             line-height: 1.45 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+            box-sizing: border-box !important;
             box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
             border: 1px solid #dcfce7 !important;
             pointer-events: none !important;
-            z-index: 99999 !important;
-            display: none !important;
+            z-index: 2147483647 !important;
+            display: none;
+        }
+        .gantt-flag-popover::before {
+            content: '' !important;
+            position: absolute !important;
+            left: var(--popover-arrow-left, 50%) !important;
+            top: -7px !important;
+            transform: translateX(-50%) !important;
+            width: 0 !important;
+            height: 0 !important;
+            border-left: 7px solid transparent !important;
+            border-right: 7px solid transparent !important;
+            border-bottom: 7px solid #ffffff !important;
+        }
+        .gantt-flag-popover.is-above::before {
+            top: auto !important;
+            bottom: -7px !important;
+            border-top: 7px solid #ffffff !important;
+            border-bottom: 0 !important;
         }
         .gantt-flag-popover .popover-title {
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
+            display: block !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
             margin-bottom: 7px !important;
             font-size: 12px !important;
             font-weight: 800 !important;
             color: #166534 !important;
+            line-height: 1.4 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
         }
         .gantt-flag-popover .popover-title::before {
             content: '' !important;
+            display: inline-block !important;
             width: 8px !important;
             height: 8px !important;
+            margin: 0 6px 1px 0 !important;
             border-radius: 999px !important;
             background: linear-gradient(135deg, #86efac 0%, #22c55e 100%) !important;
             box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16) !important;
         }
         .gantt-flag-popover .popover-meta {
-            display: flex !important;
+            display: grid !important;
+            grid-template-columns: minmax(58px, auto) minmax(0, 1fr) !important;
             justify-content: space-between !important;
+            align-items: start !important;
             gap: 8px !important;
             margin-top: 3px !important;
             opacity: 0.95 !important;
@@ -307,6 +351,9 @@ if (!document.getElementById('gantt-compact-styles')) {
             color: #0f172a !important;
             text-align: right !important;
             font-weight: 600 !important;
+            min-width: 0 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
         }
         .gantt-progress-flag:hover .gantt-flag-popover,
         .gantt-progress-flag.is-active .gantt-flag-popover {
@@ -329,7 +376,9 @@ gantt.templates.progress_text = function (start, end, task) {
 };
 
 gantt.templates.task_text = function (start, end, task) {
-    return task.text || task.name || '';
+    const text = task.text || task.name || '';
+    const escapedText = escapePopoverText(text);
+    return `<span class="gantt-task-label" title="${escapedText}">${escapedText}</span>`;
 };
 
 gantt.templates.tooltip_text = function (start, end, task) {
@@ -714,30 +763,63 @@ function buildMilestonePopoverContent(milestone) {
     const actualDateValue = milestone?.end_date || milestone?.actual_date || milestone?.completed_date || milestone?.actual_end_date;
     const actualDateRow = `<div class="popover-meta"><span class="label">End date</span><span class="value">${actualDateValue ? formatMilestoneDate(actualDateValue) : 'TBD'}</span></div>`;
     return `
-        <div class="popover-title">${name}</div>
+        <div class="popover-title">${escapePopoverText(name)}</div>
         <div class="popover-meta"><span class="label">Start date</span><span class="value">${startDate}</span></div>
         ${actualDateRow}
     `;
 }
 
+function escapePopoverText(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    })[character]);
+}
+
 function showMilestonePopover(flag, milestone) {
     if (!flag) return;
-    let popover = flag.querySelector('.gantt-flag-popover');
+    let popover = flag._milestonePopover;
     if (!popover) {
         popover = document.createElement('div');
         popover.className = 'gantt-flag-popover';
-        flag.appendChild(popover);
+        document.body.appendChild(popover);
+        flag._milestonePopover = popover;
     }
     popover.innerHTML = buildMilestonePopoverContent(milestone);
     popover.style.display = 'block';
+    const flagRect = flag.getBoundingClientRect();
+    const horizontalPadding = 12;
+    const availableWidth = Math.max(140, Math.min(260, window.innerWidth - horizontalPadding * 2));
+    popover.style.width = `${availableWidth}px`;
+    popover.style.left = '0px';
+    popover.style.top = '0px';
+    const popoverRect = popover.getBoundingClientRect();
+    const flagCenter = flagRect.left + (flagRect.width / 2);
+    const left = Math.max(
+        horizontalPadding,
+        Math.min(flagCenter - (popoverRect.width / 2), window.innerWidth - popoverRect.width - horizontalPadding)
+    );
+    const belowTop = flagRect.bottom + 12;
+    const aboveTop = flagRect.top - popoverRect.height - 12;
+    const placeAbove = belowTop + popoverRect.height > window.innerHeight - 8 && aboveTop >= 8;
+    const top = placeAbove ? aboveTop : belowTop;
+    const arrowLeft = Math.max(12, Math.min(flagCenter - left, popoverRect.width - 12));
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+    popover.style.setProperty('--popover-arrow-left', `${arrowLeft}px`);
+    popover.classList.toggle('is-above', placeAbove);
     flag.classList.add('is-active');
 }
 
 function hideMilestonePopover(flag) {
     if (!flag) return;
-    const popover = flag.querySelector('.gantt-flag-popover');
+    const popover = flag._milestonePopover;
     if (popover) {
-        popover.style.display = 'none';
+        popover.remove();
+        flag._milestonePopover = null;
     }
     flag.classList.remove('is-active');
 }
