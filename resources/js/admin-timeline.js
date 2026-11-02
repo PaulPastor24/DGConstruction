@@ -518,11 +518,6 @@ function attachGanttScrollHooks() {
                 startScrollLeft = scrollTarget.scrollLeft;
                 isDragging = false;
                 activePointerId = event.pointerId;
-                try {
-                    dragSurface.setPointerCapture?.(event.pointerId);
-                } catch (error) {
-                    // Continue tracking on window when pointer capture is unavailable.
-                }
             });
 
             const movePointer = (event) => {
@@ -566,6 +561,7 @@ function attachGanttScrollHooks() {
             // and update the internal horizontal scroller directly.
             const startMouse = (event) => {
                 if (event.button !== 0) return;
+                if (!dragSurface.contains(event.target)) return;
                 if (mouseDragActive) return;
                 const scrollTarget = getScrollTarget();
                 startX = event.clientX;
@@ -574,19 +570,7 @@ function attachGanttScrollHooks() {
                 isDragging = false;
                 dragSurface.style.cursor = 'grab';
 
-                const panLayer = document.createElement('div');
-                panLayer.className = 'gantt-mouse-pan-layer';
-                panLayer.style.cssText = 'position:absolute; inset:0; z-index:1000; cursor:grab; background:transparent;';
-                const dataArea = root.querySelector('.gantt_data_area');
-                if (dataArea) {
-                    dataArea.appendChild(panLayer);
-                    panLayer.addEventListener('mousemove', moveMouse, { passive: false });
-                    panLayer.addEventListener('mouseup', finishMouse);
-                    panLayer.addEventListener('mouseleave', (moveEvent) => {
-                        if (mouseDragActive) moveMouse(moveEvent);
-                    });
-                    panLayer.dataset.active = 'true';
-                }
+                // Leave click targets uncovered until a real drag starts.
             };
 
             const moveMouse = (event) => {
@@ -596,6 +580,12 @@ function attachGanttScrollHooks() {
                 isDragging = true;
                 suppressNextClick = true;
                 dragSurface.style.cursor = 'grabbing';
+                if (!root.querySelector('.gantt-mouse-pan-layer')) {
+                    const panLayer = document.createElement('div');
+                    panLayer.className = 'gantt-mouse-pan-layer';
+                    panLayer.style.cssText = 'position:absolute; inset:0; z-index:1000; cursor:grabbing; background:transparent;';
+                    root.querySelector('.gantt_data_area')?.appendChild(panLayer);
+                }
                 event.preventDefault();
                 const nextScrollLeft = startScrollLeft - distance;
                 window.requestAnimationFrame(() => setTimelineScroll(nextScrollLeft));
@@ -844,6 +834,8 @@ function applyTaskStyling() {
                 flag.style.color = '#166534';
                 flag.setAttribute('title', milestone.milestone_name || 'Milestone');
                 flag.setAttribute('aria-label', milestone.milestone_name || 'Milestone');
+                flag.setAttribute('role', 'button');
+                flag.tabIndex = 0;
                 flag.onmouseenter = () => showMilestonePopover(flag, milestone);
                 flag.onmousemove = () => showMilestonePopover(flag, milestone);
                 flag.onmouseleave = () => hideMilestonePopover(flag);
@@ -851,7 +843,15 @@ function applyTaskStyling() {
                 flag.onblur = () => hideMilestonePopover(flag);
                 flag.onclick = (event) => {
                     event.stopPropagation();
-                    showMilestonePopover(flag, milestone);
+                    hideMilestonePopover(flag);
+                    window.openMilestoneEditModal?.(task.id, milestone.milestone_id ?? milestone.id);
+                };
+                flag.onkeydown = (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        flag.click();
+                    }
                 };
 
                 if (!flag.isConnected) {

@@ -3064,7 +3064,8 @@
         document.getElementById('milestoneName').value = milestone?.milestone_name || '';
         document.getElementById('milestoneStartDate').value = milestone?.start_date ? String(milestone.start_date).slice(0, 10) : '';
         document.getElementById('milestoneEndDate').value = milestone?.end_date ? String(milestone.end_date).slice(0, 10) : '';
-        const displayStatus = milestone?.display_status || milestone?.status || 'pending';
+        const displayStatus = milestone?.is_completed ? 'completed' : milestone?.is_delayed ? 'delayed'
+            : (['pending', 'in_progress', 'completed', 'delayed'].includes(milestone?.status) ? milestone.status : 'pending');
         const statusSelect = document.getElementById('milestoneStatus');
         if (statusSelect) statusSelect.value = displayStatus;
         document.getElementById('milestoneCompleted').value = displayStatus === 'completed' ? '1' : '0';
@@ -3581,8 +3582,88 @@ let milestoneFormSnapshot = null;
         await refreshTimelineFromServer();
     };
 
-    window.openPhaseModal = window.openPhaseModal || function () {
-        return true;
+    window.openPhaseModal = async function (phaseId) {
+        const phase = getProjectPhasesForModal().find(item => String(item.phase_id ?? item.id) === String(phaseId));
+        if (!phase || !selectedProject) return;
+        const milestones = getPhaseMilestones(phase);
+        const completed = milestones.filter(item => item.is_completed).length;
+        const percentage = phase.admin_progress_override_raw ?? phase.admin_progress_override
+            ?? (milestones.length ? completed / milestones.length * 100 : Number(phase.completion_percentage || 0));
+        const canComplete = percentage >= 100 && completed === milestones.length;
+        const currentStatus = phase.status || 'not_started';
+        const phaseName = phase.phase_name || phase.name || 'Construction phase';
+        const result = await Swal.fire({
+            titleText: phaseName,
+            width: 620,
+            html: `<div class="text-start">
+                <p class="text-muted">Progress: <strong>${Number(percentage).toFixed(0)}%</strong> · ${completed}/${milestones.length} milestones completed</p>
+                <label class="form-label" for="timelinePhaseStatus">Phase status</label>
+                <select id="timelinePhaseStatus" class="form-select mb-3">
+                    ${[['not_started', 'Not Started'], ['in_progress', 'In Progress'], ['delayed', 'Delayed'], ['completed', 'Completed']].map(([value, label]) =>
+                        `<option value="${value}" ${value === currentStatus ? 'selected' : ''} ${(value === 'completed' && !canComplete) || (currentStatus === 'completed' && value !== 'completed') ? 'disabled' : ''}>${label}</option>`).join('')}
+                </select>
+                <p class="small text-muted">Completion requires 100% progress and every milestone completed. Update individual milestones below to increase progress.</p>
+                <div id="timelinePhaseDelayFields" ${currentStatus === 'delayed' ? '' : 'hidden'}>
+                    <label class="form-label" for="timelinePhaseDelayReason">Delay reason</label>
+                    <select id="timelinePhaseDelayReason" class="form-select mb-3">
+                        <option value="">Select reason</option>
+                        ${[['weather', 'Weather'], ['materials', 'Materials'], ['permits', 'Permits'], ['design_change', 'Design change'], ['labor', 'Labor'], ['equipment', 'Equipment'], ['other', 'Other']].map(([value, label]) => `<option value="${value}" ${phase.delay_reason === value ? 'selected' : ''}>${label}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="border-top pt-3"><strong>Milestone status</strong>
+                    <div class="mt-2" style="max-height:220px;overflow-y:auto">
+                        ${milestones.length ? milestones.map(item => `<button type="button" class="btn btn-light border w-100 text-start mb-2" data-edit-phase-milestone="${escapeHtml(String(item.milestone_id ?? item.id))}">${escapeHtml(item.milestone_name || item.name || 'Milestone')} <span class="float-end">${item.is_completed ? 'Completed' : 'Edit status'}</span></button>`).join('') : '<p class="text-muted small">No milestones have been added to this phase.</p>'}
+                    </div>
+                </div>
+            </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Save status',
+            cancelButtonText: 'Close',
+            confirmButtonColor: '#166534',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: () => !Swal.isLoading(),
+            didOpen: () => {
+                const popup = Swal.getPopup();
+                popup.querySelector('#timelinePhaseStatus').addEventListener('change', event => {
+                    popup.querySelector('#timelinePhaseDelayFields').hidden = event.target.value !== 'delayed';
+                });
+                popup.querySelectorAll('[data-edit-phase-milestone]').forEach(button => button.addEventListener('click', () => {
+                    Swal.close();
+                    window.openMilestoneEditModal(phaseId, button.dataset.editPhaseMilestone);
+                }));
+            },
+            preConfirm: async () => {
+                const status = document.getElementById('timelinePhaseStatus').value;
+                const delayReason = document.getElementById('timelinePhaseDelayReason').value;
+                if (status === 'delayed' && !delayReason) {
+                    Swal.showValidationMessage('Select a delay reason.');
+                    return false;
+                }
+                try {
+                    const response = await fetch(getAdminUrl(`/admin/projects/${selectedProject.id}/phases/${phaseId}`), {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                        body: JSON.stringify({
+                            phase_name: phaseName, phase_order: phase.phase_order,
+                            planned_start_date: toDateInputValue(phase.planned_start_date_raw || phase.planned_start_date),
+                            planned_end_date: toDateInputValue(phase.planned_end_date_raw || phase.planned_end_date),
+                            actual_start_date: toDateInputValue(phase.actual_start_date_raw || phase.actual_start_date) || null,
+                            actual_end_date: toDateInputValue(phase.actual_end_date_raw || phase.actual_end_date) || null,
+                            depends_on_phase_id: phase.depends_on_phase_id || null,
+                            status, delay_reason: status === 'delayed' ? delayReason : null,
+                            delay_notes: phase.delay_notes || null, notes: phase.notes || null,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(Object.values(data.errors || {}).flat()[0] || data.message || 'Unable to update phase status.');
+                    return data;
+                } catch (error) {
+                    Swal.showValidationMessage(error.message);
+                    return false;
+                }
+            },
+        });
+        if (result.isConfirmed) await refreshTimelineFromServer();
     };
 
     window.openMilestoneCreateModal = function () {

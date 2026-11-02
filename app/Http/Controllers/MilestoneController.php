@@ -360,7 +360,7 @@ class MilestoneController extends Controller
 
             DB::commit();
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Milestone updated successfully',
@@ -569,7 +569,7 @@ class MilestoneController extends Controller
             abort(404);
         }
 
-        if ($project->engineer_id !== auth('web')->user()->user_id) {
+        if (! in_array(auth('web')->user()?->role, ['engineer', 'admin', 'administrator'], true)) {
             abort(403, 'Unauthorized to manage milestones for this project');
         }
     }

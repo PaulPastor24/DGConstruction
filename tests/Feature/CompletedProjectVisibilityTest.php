@@ -83,6 +83,42 @@ class CompletedProjectVisibilityTest extends TestCase
         $this->assertDatabaseHas('construction_phases', ['phase_id' => $phase->phase_id]);
     }
 
+    public function test_admin_timeline_editors_save_milestone_status_and_refresh_phase_progress(): void
+    {
+        Schema::table('timeline_milestones', function ($table) {
+            $table->renameColumn('planned_date', 'start_date');
+            $table->renameColumn('actual_date', 'end_date');
+        });
+        $owner = User::factory()->create(['role' => 'engineer']);
+        $supervisor = User::factory()->create(['role' => 'supervisor']);
+        foreach (['engineer', 'admin', 'administrator'] as $role) {
+            $editor = User::factory()->create(['role' => $role]);
+            $project = $this->project($owner, $supervisor, 'Editable '.$role.' project');
+            $phase = $project->phases->first();
+            $milestone = Milestone::create([
+                'phase_id' => $phase->phase_id, 'milestone_name' => 'First milestone',
+                'start_date' => now()->toDateString(), 'end_date' => now()->addDay()->toDateString(),
+            ]);
+            Milestone::create([
+                'phase_id' => $phase->phase_id, 'milestone_name' => 'Remaining milestone',
+                'start_date' => now()->toDateString(), 'end_date' => now()->addDay()->toDateString(),
+            ]);
+            $this->actingAs($editor)->get(route('admin.timeline'))->assertOk()
+                ->assertSee('timelinePhaseStatus')->assertSee('Save status')->assertSee('Milestone status');
+            $this->putJson(route('admin.milestones.update', ['project' => $project, 'phase' => $phase, 'milestone' => $milestone]), [
+                'milestone_name' => $milestone->milestone_name,
+                'start_date' => now()->toDateString(), 'end_date' => now()->addDay()->toDateString(), 'status' => 'completed',
+            ])->assertOk()->assertJsonPath('success', true);
+            $this->assertTrue($milestone->fresh()->is_completed);
+            $this->assertSame(50.0, $phase->fresh()->progress_percentage);
+            $this->getJson(route('admin.timeline.data', $project))->assertOk();
+            $this->actingAs($supervisor)->putJson(route('admin.milestones.update', [
+                'project' => $project, 'phase' => $phase, 'milestone' => $milestone,
+            ]), ['status' => 'pending'])->assertRedirect('/login');
+            $this->assertTrue($milestone->fresh()->is_completed);
+        }
+    }
+
     public function test_completing_the_final_milestone_removes_project_from_progress_monitoring(): void
     {
         // The existing date-renaming migration runs on MySQL but skips SQLite.
