@@ -751,34 +751,12 @@
                 @php
                     $heroImage = asset('images/h4.jpg');
                     $heroAlt = 'D&G Construction Inc.';
-                    $firstGalleryImageId = null;
 
                     if (! empty($landingPageSetting?->hero_image_path)) {
                         $heroImage = asset('storage/' . ltrim($landingPageSetting->hero_image_path, '/'));
                     }
-
-                    if ($galleryImages->isNotEmpty()) {
-                        $first = $galleryImages->first();
-                        $path = $first->image_path ?? null;
-                        $project = $first->project ?? null;
-                        $isExternal = $first->is_external ?? false;
-                        $firstGalleryImageId = $first->id ?? null;
-
-                        if (! $landingPageSetting?->hero_image_path && $isExternal) {
-                            $heroImage = $path ? asset('storage/' . ltrim($path, '/')) : $heroImage;
-                            $heroAlt = $first->external_project_name ?? 'D&G Construction Inc.';
-                        } elseif (! $landingPageSetting?->hero_image_path && $project) {
-                            $isDemo = is_string($project->project_id ?? null) && str_starts_with($project->project_id, 'demo-');
-                            if ($isDemo && filter_var($path, FILTER_VALIDATE_URL)) {
-                                $heroImage = $path;
-                            } elseif ($path) {
-                                $heroImage = asset('storage/' . ltrim($path, '/'));
-                            }
-                            $heroAlt = $project->project_name ?? 'D&G Construction Inc.';
-                        }
-                    }
                 @endphp
-                <img src="{{ $heroImage }}" alt="{{ $heroAlt }}" data-landing-hero-image="true" @if($firstGalleryImageId) data-gallery-image-id="{{ $firstGalleryImageId }}" @endif>
+                <img src="{{ $heroImage }}" alt="{{ $heroAlt }}" data-landing-hero-image="true">
             </div>
         </section>
 

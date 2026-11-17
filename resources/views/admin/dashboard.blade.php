@@ -401,44 +401,11 @@
                         </div>
                     </div>
                 @empty
-                    <!-- Fallback UI Mock Data -->
                     <div class="project-list-item">
-                        <img src="https://images.unsplash.com/photo-1541888086225-f6740f9e8af5?w=150&q=80" alt="Greenview" class="proj-thumb">
                         <div class="proj-details">
-                            <div class="proj-title">Greenview Residences</div>
-                            <div class="proj-sub">Phase 2 - Construction</div>
+                            <div class="proj-title">No projects yet</div>
+                            <div class="proj-sub">Projects will appear here after you add them.</div>
                         </div>
-                        <div class="proj-progress-wrapper">
-                            <div class="progress-bar-bg"><div class="progress-bar-fill green" style="width: 85%"></div></div>
-                            <div class="proj-percent">85%</div>
-                        </div>
-                        <div><div class="proj-badge on-track">On Track</div></div>
-                    </div>
-
-                    <div class="project-list-item">
-                        <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=150&q=80" alt="Skyline" class="proj-thumb">
-                        <div class="proj-details">
-                            <div class="proj-title">Skyline Tower</div>
-                            <div class="proj-sub">Structural Works</div>
-                        </div>
-                        <div class="proj-progress-wrapper">
-                            <div class="progress-bar-bg"><div class="progress-bar-fill green" style="width: 65%"></div></div>
-                            <div class="proj-percent">65%</div>
-                        </div>
-                        <div><div class="proj-badge in-progress">In Progress</div></div>
-                    </div>
-
-                    <div class="project-list-item">
-                        <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=150&q=80" alt="Riverside" class="proj-thumb">
-                        <div class="proj-details">
-                            <div class="proj-title">Riverside Phase 2</div>
-                            <div class="proj-sub">Finishing Works</div>
-                        </div>
-                        <div class="proj-progress-wrapper">
-                            <div class="progress-bar-bg"><div class="progress-bar-fill orange" style="width: 35%"></div></div>
-                            <div class="proj-percent">35%</div>
-                        </div>
-                        <div><div class="proj-badge delayed">Delayed</div></div>
                     </div>
                 @endforelse
             </div>

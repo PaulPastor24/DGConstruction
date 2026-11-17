@@ -48,7 +48,7 @@ class Material extends Model
         $minimumStock = (float) $this->minimum_stock_level;
 
         if ($currentStock <= 0) {
-            return 'Out of Stock';
+            retur n 'Out of Stock';
         }
 
         if ($currentStock <= $minimumStock) {
