@@ -10,7 +10,8 @@
 @php
     $isModal = $isModal ?? true;
     $isArchived = $project->workflowStatus() === \App\Models\Project::STATUS_ARCHIVED;
-    $pdActiveSupervisor = $project->active_supervisor;
+    $pdActiveSupervisors = $project->supervisors->filter(fn ($supervisor) => (bool) $supervisor->pivot?->is_active)->values();
+    $pdActiveSupervisor = $pdActiveSupervisors->first();
     $pdStart = $project->start_date;
     $pdTargetEnd = $project->target_end_date;
     $pdActualEnd = $project->actual_end_date;
@@ -67,7 +68,7 @@
                     <div class="ps-overview-id">Project ID: #{{ $project->project_id }}</div>
                     <div class="ps-overview-meta">
                         <span class="ps-meta-pill"><i class="bi bi-geo-alt"></i> {{ $project->location ?? 'Location not specified' }}</span>
-                        <span class="ps-meta-pill"><i class="bi bi-person-workspace"></i> {{ $pdActiveSupervisor?->name ?? 'Supervisor pending' }}</span>
+                        <span class="ps-meta-pill"><i class="bi bi-person-workspace"></i> {{ $pdActiveSupervisors->pluck('name')->join(', ') ?: 'Supervisor pending' }}</span>
                     </div>
                 </div>
             </div>
@@ -224,12 +225,21 @@
                 <div class="ps-team-name">{{ optional($project->engineer)->name ?? 'Not assigned' }}</div>
                 <div class="ps-team-sub">{{ optional($project->engineer)->email ?? 'No email' }}</div>
             </div>
-            <div class="ps-team-card">
-                <div class="ps-team-icon"><i class="bi bi-person-badge"></i></div>
-                <div class="ps-team-role">Site Supervisor</div>
-                <div class="ps-team-name">{{ $pdActiveSupervisor?->name ?? 'Not assigned' }}</div>
-                <div class="ps-team-sub">{{ $pdActiveSupervisor?->email ?? 'No email' }}</div>
-            </div>
+            @forelse($pdActiveSupervisors as $supervisor)
+                <div class="ps-team-card">
+                    <div class="ps-team-icon"><i class="bi bi-person-badge"></i></div>
+                    <div class="ps-team-role">Site Supervisor</div>
+                    <div class="ps-team-name">{{ $supervisor->name }}</div>
+                    <div class="ps-team-sub">{{ $supervisor->email ?? 'No email' }}</div>
+                </div>
+            @empty
+                <div class="ps-team-card">
+                    <div class="ps-team-icon"><i class="bi bi-person-badge"></i></div>
+                    <div class="ps-team-role">Site Supervisor</div>
+                    <div class="ps-team-name">Not assigned</div>
+                    <div class="ps-team-sub">No email</div>
+                </div>
+            @endforelse
         </div>
     </div>
 
