@@ -2103,6 +2103,7 @@
 
     .project-success-modal .modal-body,
     .project-details-modal .modal-body {
+        position: relative;
         padding: 0;
         max-height: 85vh;
         overflow-y: auto;
@@ -2148,8 +2149,10 @@
     }
 
     .ps-close {
-        flex: 0 0 auto;
-        margin-left: auto;
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        z-index: 2;
     }
 
     .ps-body {

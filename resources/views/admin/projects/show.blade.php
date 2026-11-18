@@ -47,16 +47,9 @@
     ], true) ? 'success' : 'warning');
 @endphp
 
-<div class="ps-header">
-    <div class="ps-header-icon"><i class="bi bi-building"></i></div>
-    <div class="ps-header-text">
-        <h3 id="projectDetailsModalLabel">{{ $project->project_name ?? 'Project Details' }}</h3>
-        <p>ID: #{{ $project->project_id ?? 'N/A' }} &middot; {{ $project->location ?? 'Location not specified' }}</p>
-    </div>
-    @if($isModal)
-        <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
-    @endif
-</div>
+@if($isModal)
+    <button type="button" class="btn-close ps-close" data-bs-dismiss="modal" aria-label="Close"></button>
+@endif
 
 <div class="ps-body">
     <div class="ps-overview-card">
@@ -306,45 +299,6 @@
 </div>
 
 <style>
-    .ps-header {
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 28px 32px 10px;
-        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-    }
-
-    .ps-header-icon {
-        flex: 0 0 auto;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: #dcfce7;
-        color: #16a34a;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.45rem;
-    }
-
-    .ps-header-text {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .ps-header-text h3 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 4px;
-    }
-
-    .ps-header-text p {
-        font-size: 0.88rem;
-        color: #64748b;
-        margin: 0;
-    }
-
     .ps-body {
         padding: 20px 32px 28px;
         display: flex;
